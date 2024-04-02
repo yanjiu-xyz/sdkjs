@@ -326,6 +326,11 @@
 	//внутри пока простой объект {groups: true}
 	this.drawRestrictions = null;
 
+	//for version history - changed ranges
+	this.oHistoryChangedRanges = null;
+
+	this.customFunctionEngine = null;
+
 	return this;
   }
 
@@ -5690,6 +5695,61 @@
 	WorkbookView.prototype.stepGoalSeek = function() {
 		this.model.stepGoalSeek();
 	};
+	WorkbookView.prototype.addToHistoryChangedRanges = function(sheetId, range, userColor) {
+		if (!range) {
+			return;
+		}
+		if (Array.isArray(range)) {
+			for (let i in range) {
+				this._addToHistoryChangedRanges(sheetId, range[i], userColor);
+			}
+		} else {
+			this._addToHistoryChangedRanges(sheetId, range, userColor);
+		}
+	};
+	WorkbookView.prototype._addToHistoryChangedRanges = function(sheetId, range, userColor) {
+		if (!range) {
+			return;
+		}
+		if (!this.historyChangedRanges) {
+			this.historyChangedRanges = {};
+		}
+		if (!this.historyChangedRanges[sheetId]) {
+			this.historyChangedRanges[sheetId] = [];
+		}
+		let changedRanges = this.historyChangedRanges[sheetId];
+		if (changedRanges.length) {
+			for (let i in changedRanges) {
+				if (!changedRanges[i]) {
+					continue;
+				}
+				let _addedRange = changedRanges[i].range;
+				let _addedColor = changedRanges[i].color;
+				if (!_addedRange || !_addedColor || (userColor && userColor.IsEqual && !userColor.IsEqual(_addedColor))) {
+					continue;
+				}
+				if (_addedRange.isEqual(range)) {
+					return;
+				} else if (_addedRange.intersection(range)) {
+					let _difference = _addedRange.difference(range);
+					if (_difference) {
+						for (let j in _difference) {
+							changedRanges.push({range: _difference[j], color: userColor});
+						}
+					}
+					return;
+				}
+			}
+		}
+		changedRanges.push({range: range, color: userColor});
+	};
+
+	WorkbookView.prototype.addCustomFunction = function(func, options) {
+		if (!this.customFunctionEngine) {
+			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
+		}
+		this.customFunctionEngine.add(func, options);
+	};
 
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
@@ -5951,7 +6011,8 @@
 		if (-1 !== this.CurId) {
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
-			let ws = this.wb.getActiveWS();
+			// it's necessary because into the docbuilder "this.wb.wsActive" is "-1" and search doesn't work
+			let ws = this.wb.model.getActiveWs();
 			let selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
 
 			let activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;

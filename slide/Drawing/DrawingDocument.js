@@ -1128,9 +1128,12 @@ function CDrawingDocument()
 		let isShow = false;
 		if (isNeedTarget)
 		{
-			if (oThis.m_oWordControl.m_oApi.isBlurEditor)
+			let api = oThis.m_oWordControl.m_oApi;
+			if (api.isBlurEditor)
 				isShow = true;
-			else if ("block" != oThis.TargetHtmlElement.style.display)
+			else if (api.isViewMode || api.isRestrictionView())
+				isShow = true;
+			else if ("block" !== oThis.TargetHtmlElement.style.display)
 				isShow = true;
 		}
 
@@ -5661,9 +5664,6 @@ function CSlideDrawer()
 			g.init(this.CachedCanvasCtx, w_px, h_px, w_mm, h_mm);
 			g.m_oFontManager = AscCommon.g_fontManager;
 
-			if (AscCommon.AscBrowser.isCustomScalingAbove2())
-				g.IsRetina = true;
-
 			g.m_oCoordTransform.tx = -this.BoundsChecker.Bounds.min_x + this.SlideEps;
 			g.m_oCoordTransform.ty = -this.BoundsChecker.Bounds.min_y + this.SlideEps;
 			g.transform(1, 0, 0, 1, 0, 0);
@@ -5766,9 +5766,6 @@ function CSlideDrawer()
 			var g = new AscCommon.CGraphics();
 			g.init(outputCtx, w_px, h_px, w_mm, h_mm);
 			g.m_oFontManager = AscCommon.g_fontManager;
-
-			if (AscCommon.AscBrowser.isCustomScalingAbove2())
-				g.IsRetina = true;
 
 			g.m_oCoordTransform.tx = _x - _bounds.min_x;
 			g.m_oCoordTransform.ty = _y - _bounds.min_y;
@@ -5921,7 +5918,7 @@ function CNotesDrawer(page)
 
 		if (AscCommon.GlobalSkin.Type === "dark")
 		{
-			g.darkModeOverride();
+			g.setDarkMode(1);
 		}
 
 		g.SaveGrState();
@@ -6441,7 +6438,7 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 
 		if (AscCommon.GlobalSkin.Type === "dark")
 		{
-			g.darkModeOverride();
+			g.setDarkMode(1);
 		}
 		oControl.draw(g);
 		g.RestoreGrState();

@@ -41,11 +41,6 @@ function (window, undefined) {
 	var g_oTableId = AscCommon.g_oTableId;
 	var History = AscCommon.History;
 
-	var comments_NoComment = 0;
-	var comments_NonActiveComment = 1;
-	var comments_ActiveComment = 2;
-
-
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_Position] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_Change] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo] = AscDFH.CChangesDrawingsLong;
@@ -873,7 +868,7 @@ function (window, undefined) {
 
 		this.Lock = new AscCommon.CLock(); // Зажат ли комментарий другим пользователем
 		if (false === AscCommon.g_oIdCounter.m_bLoad) {
-			this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+			this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 			AscCommon.CollaborativeEditing.Add_Unlock2(this);
 		}
 
@@ -982,11 +977,11 @@ function (window, undefined) {
 		graphics.DrawPresentationComment(Flags, this.x, this.y, w, h);
 
 		var oLock = this.Lock;
-		if (oLock && AscCommon.locktype_None !== oLock.Get_Type()) {
+		if (oLock && AscCommon.c_oAscLockTypes.kLockTypeNone !== oLock.Get_Type()) {
 			var bCoMarksDraw = true;
 			var oApi = editor || Asc['editor'];
 			if (oApi) {
-				bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.locktype_Mine !== oLock.Get_Type());
+				bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
 			}
 			if (bCoMarksDraw) {
 				graphics.DrawLockObjectRect(oLock.Get_Type(), this.x, this.y, w, h);
@@ -1162,10 +1157,6 @@ function (window, undefined) {
 
 //--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
-
-	window['AscCommon'].comments_NoComment = comments_NoComment;
-	window['AscCommon'].comments_NonActiveComment = comments_NonActiveComment;
-	window['AscCommon'].comments_ActiveComment = comments_ActiveComment;
 
 	window['AscCommon'].comment_type_Common = comment_type_Common;
 	window['AscCommon'].comment_type_HdrFtr = comment_type_HdrFtr;

@@ -69,6 +69,7 @@
 			"common/hash/hash.js",
 			"common/keychainstorage.js",
 
+			"common/Drawings/GraphicsBase.js",
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
@@ -299,8 +300,8 @@
 			"word/Editor/FootnotesChanges.js",
 			"word/Editor/Endnotes.js",
 			"word/Editor/EndnotesChanges.js",
-		    "word/Editor/GlossaryDocument.js",
-		    "word/Editor/GlossaryDocumentChanges.js",
+			"word/Editor/GlossaryDocument.js",
+			"word/Editor/GlossaryDocumentChanges.js",
 			"word/Editor/DocumentProtection.js",
 			"word/Editor/Comparison.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",

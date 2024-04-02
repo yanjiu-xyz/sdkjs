@@ -101,7 +101,7 @@ function CDocumentContent(Parent, DrawingDocument, X, Y, XLimit, YLimit, Split, 
     this.Split = Split; // Разделяем ли на страницы
     this.bPresentation = bPresentation; // Разделяем ли на страницы
 
-    this.Content[0] = new Paragraph( DrawingDocument, this, bPresentation );
+    this.Content[0] = new AscWord.Paragraph(this, bPresentation);
     this.Content[0].Correct_Content();
     this.Content[0].Set_DocumentNext( null );
     this.Content[0].Set_DocumentPrev( null );
@@ -1433,10 +1433,7 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
     if (CurPage < 0 || CurPage >= this.Pages.length)
         return;
 
-    if (pGraphics.Start_Command)
-    {
-        pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
-    }
+    pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
 
 	var nPixelError = this.DrawingDocument && this.DrawingDocument.GetMMPerDot(1);
 
@@ -1489,17 +1486,12 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
 		pGraphics.RestoreGrState();
 	}
 
-
-
     if (ClipInfo)
     {
         pGraphics.RestoreGrState();
     }
 
-    if (pGraphics.End_Command)
-    {
-        pGraphics.End_Command();
-    }
+    pGraphics.End_Command();
 };
 CDocumentContent.prototype.GetAllComments = function(AllComments)
 {
@@ -1885,8 +1877,8 @@ CDocumentContent.prototype.SetHdrFtrPageNum = function(nAlignType, sStyleId)
 
 	this.ClearContent(false);
 
-	var oPara1 = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
-	var oPara2 = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
+	var oPara1 = new AscWord.Paragraph(this, this.bPresentation === true);
+	var oPara2 = new AscWord.Paragraph(this, this.bPresentation === true);
 
 	this.AddToContent(0, oPara1);
 	this.AddToContent(1, oPara2);
@@ -1931,7 +1923,7 @@ CDocumentContent.prototype.Clear_Content                 = function()
     this.Internal_Content_RemoveAll();
 
     // Добавляем новый параграф
-    var Para = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
+    var Para = new AscWord.Paragraph(this, this.bPresentation === true);
     this.Internal_Content_Add(0, Para);
 };
 CDocumentContent.prototype.Add_Content = function(OtherContent)
@@ -1961,7 +1953,7 @@ CDocumentContent.prototype.ClearContent = function(isAddEmptyPara)
 	this.Internal_Content_RemoveAll();
 
 	if (false !== isAddEmptyPara)
-		this.Internal_Content_Add(0, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
+		this.Internal_Content_Add(0, new AscWord.Paragraph(this, this.bPresentation === true));
 };
 /**
  * Присоединяем к содержимому массив новых элементов (параграфов, таблиц)
@@ -2708,7 +2700,7 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
             {
                 var ItemReviewType = Item.GetReviewType();
                 // Создаем новый параграф
-                var NewParagraph   = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
+                var NewParagraph   = new AscWord.Paragraph(this, this.bPresentation === true);
 
 				if (Item.IsCursorAtBegin())
 				{
@@ -2816,7 +2808,7 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 
 			if (-1 !== newPos)
 			{
-				let newParagraph = new Paragraph(this.DrawingDocument, this);
+				let newParagraph = new AscWord.Paragraph(this);
 				this.Internal_Content_Add(newPos, newParagraph);
 				this.CurPos.ContentPos = newPos;
 				
@@ -2859,7 +2851,7 @@ CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
 
     while (true)
     {
-        var NewParagraph = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
+        var NewParagraph = new AscWord.Paragraph(this, this.bPresentation === true);
 		var NewRun       = new ParaRun(NewParagraph, false);
 		NewParagraph.Add_ToContent(0, NewRun);
 
@@ -3206,7 +3198,7 @@ CDocumentContent.prototype.AddInlineTable = function(nCols, nRows, nMode)
 				}
 				else
 				{
-					var NewParagraph = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
+					var NewParagraph = new AscWord.Paragraph(this, this.bPresentation === true);
 					Item.Split(NewParagraph);
 
 					this.AddToContent(nContentPos + 1, NewParagraph);
@@ -3440,7 +3432,7 @@ CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 				else
 				{
 					var oNewTable = Item.Split();
-					var oNewPara  = new Paragraph(this.DrawingDocument, this);
+					var oNewPara  = new AscWord.Paragraph(this);
 
 					var nCurPos = this.CurPos.ContentPos;
 					if (oNewTable)
@@ -7216,7 +7208,7 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 		&& !this.Content[this.Content.length - 1].IsParagraph()
 		&& !this.Content[this.Content.length - 1].IsBlockLevelSdt()
 		&& !this.IsBlockLevelSdtContent())
-		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
+		this.Internal_Content_Add(this.Content.length, new AscWord.Paragraph(this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);
 	this.OnContentChange();
@@ -7251,7 +7243,7 @@ CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, i
 			|| (!this.Content[this.Content.length - 1].IsParagraph()
 				&& !this.Content[this.Content.length - 1].IsBlockLevelSdt()
 				&& !this.IsBlockLevelSdtContent())))
-		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
+		this.Internal_Content_Add(this.Content.length, new AscWord.Paragraph(this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);
 	this.OnContentChange();
@@ -8724,12 +8716,12 @@ CDocumentContent.prototype.MakeSingleParagraphContent = function()
 {
 	if (this.Content.length <= 0)
 	{
-		this.AddToContent(0, new Paragraph(this.DrawingDocument, this));
+		this.AddToContent(0, new AscWord.Paragraph());
 	}
 	else if (this.Content.length > 1 || !this.Content[0].IsParagraph())
 	{
 		this.RemoveFromContent(0, this.Content.length, true);
-		this.AddToContent(0, new Paragraph(this.DrawingDocument, this));
+		this.AddToContent(0, new AscWord.Paragraph());
 	}
 
 	return this.Content[0];

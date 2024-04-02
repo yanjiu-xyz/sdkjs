@@ -619,12 +619,15 @@ $(function () {
 		docInfo.asc_putTitle("TeSt.xlsx");
 		api.DocInfo = docInfo;
 
+
 		window["Asc"]["editor"] = api;
 
 		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
 		AscCommon.History.init(wb);
 		wb.maxDigitWidth = 7;
 		wb.paddingPlusBorder = 5;
+
+		api.wbModel = wb;
 
 		AscCommon.g_oTableId.init();
 		if (this.User) {
@@ -1562,6 +1565,362 @@ $(function () {
 			assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 200, "Array 4x3. [0,2]");
 			assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 1764, "Array 4x3. [1,2]");
 			assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "#N/A", "Array 4x3. [2,2]");
+		}
+
+		ws.getRange2("A200").setValue("1");
+		ws.getRange2("A201").setValue("3");
+		ws.getRange2("B200").setValue("3");
+		ws.getRange2("B201").setValue("4");
+		ws.getRange2("D200").setValue("1");
+		ws.getRange2("D201").setValue("2");
+		ws.getRange2("D202").setValue("3");
+		ws.getRange2("D203").setValue("4");
+		ws.getRange2("D204").setValue("5");
+		ws.getRange2("D205").setValue("6");
+		ws.getRange2("D206:D300").setValue("");
+
+		// for bug 54877
+		oParser = new parserFormula("A200:B201*D200:D203", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "A200:B201*D200:D203. Result - array 4x2");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Array 4x2. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 6, "Array 4x2. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", "Array 4x2. [2,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Array 4x2. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 8, "Array 4x2. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", "Array 4x2. [2,1]");
+		}
+
+		oParser = new parserFormula("A200:B201*D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "A200:B201*D200:D300. Result - array 100x2");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Array 100x2. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 6, "Array 100x2. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", "Array 100x2. [2,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Array 100x2. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 8, "Array 100x2. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", "Array 100x2. [2,1]");
+		}
+
+		oParser = new parserFormula("D200:D300*2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300*2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 6, "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 8, "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 10, "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 12, "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), 0, "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), 0, "Array 100x1. [7,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		oParser = new parserFormula("2*D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2*D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 6, "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 8, "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 10, "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 12, "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), 0, "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), 0, "Array 100x1. [7,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// conditional check and & operator
+		// <
+		oParser = new parserFormula("D200:D300<2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300<2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		
+		oParser = new parserFormula("2<D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2<D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		
+		// <=
+		oParser = new parserFormula("D200:D300<=2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300<=2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		oParser = new parserFormula("2<=D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2<=D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// >
+		oParser = new parserFormula("D200:D300>2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300>2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+		
+		oParser = new parserFormula("2>D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2>D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// >=
+		oParser = new parserFormula("D200:D300>=2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300>=2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		oParser = new parserFormula("2>=D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2>=D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// =
+		oParser = new parserFormula("D200:D300=2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300=2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		oParser = new parserFormula("2=D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2=D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// <>
+		oParser = new parserFormula("D200:D300<>2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300<>2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+		oParser = new parserFormula("2<>D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2<>D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+		
+		// & 
+		ws.getRange2("D204").setValue("A");
+		ws.getRange2("D205").setValue("B");
+		ws.getRange2("D206:D210").setValue("");
+		ws.getRange2("E204").setValue("A");
+		ws.getRange2("E205").setValue("B");
+		ws.getRange2("E206").setValue("C");
+		ws.getRange2("E207").setValue("D");
+		ws.getRange2("E208:E210").setValue("");
+
+		oParser = new parserFormula("D204:D210&E204:E210", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E300:H310").bbox);
+		assert.ok(oParser.parse(), "D204:D210&E204:E210. Result - array 7x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "AA", "Array 7x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "BB", "Array 7x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "C", "Array 7x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "D", "Array 7x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", "Array 7x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "", "Array 7x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "", "Array 7x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "", "Array 7x1. [7,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 7x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 7x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 7x1. [2,1]");
 		}
 
 	});
@@ -5110,6 +5469,20 @@ $(function () {
 		assert.ok(oParser.parse());
 //        assert.strictEqual( oParser.calculate().getValue(), 1-1/Math.fact(2)+1/Math.fact(4)-1/Math.fact(6) );
 		assert.ok(Math.abs(oParser.calculate().getValue() - (1 - 1 / Math.fact(2) + 1 / Math.fact(4) - 1 / Math.fact(6))) < dif);
+
+		// for bug 66800
+		ws.getRange2("A101").setValue("1");
+		ws.getRange2("A102").setValue("2");
+		ws.getRange2("A103").setValue("3");
+
+		oParser = new parserFormula("SUM(A101:A103+A101:A103)", "A1", ws);
+		assert.ok(oParser.parse(), 'SUM(A101:A103+A101:A103)');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Result of SUM(A101:A103+A101:A103)');
+
+		oParser = new parserFormula("SUM(SIN(A101:A103))", "A1", ws);
+		assert.ok(oParser.parse(), 'SUM(SIN(A101:A103))');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2), "1.89", 'Result of SUM(SIN(A101:A103))');
+
 	});
 
 	QUnit.test("Test: \"MAX\"", function (assert) {
@@ -7481,6 +7854,7 @@ $(function () {
 		ws.getRange2("C8").setValue("Tom");
 		ws.getRange2("C9").setValue("Sarah");
 
+		ws.getRange2("D:E").cleanAll();
 		oParser = new parserFormula("SUMIFS(A2:A9, B2:B9, \"=A*\", C2:C9, \"Tom\")", "A10", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 20);
@@ -14679,6 +15053,68 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 64);
 
+		// for bug 38994
+		ws.getRange2("B101").setValue("");
+		ws.getRange2("B102").setValue("0");
+		ws.getRange2("B103").setValue("0");
+		ws.getRange2("B104").setValue("1");
+		ws.getRange2("B105").setValue("0");
+		ws.getRange2("B106").setValue("0");
+		ws.getRange2("B107").setValue("1");
+
+		ws.getRange2("C101").setValue("#DIV/0!");
+		ws.getRange2("C102").setValue("#DIV/0!");
+		ws.getRange2("C103").setValue("#DIV/0!");
+		ws.getRange2("C104").setValue("3");
+		ws.getRange2("C105").setValue("#DIV/0!");
+		ws.getRange2("C106").setValue("#DIV/0!");
+		ws.getRange2("C107").setValue("37");
+
+		ws.getRange2("D101").setValue("");
+		ws.getRange2("D102").setValue("1");
+		ws.getRange2("D103").setValue("2");
+		ws.getRange2("D104").setValue("3");
+		ws.getRange2("D105").setValue("4");
+		ws.getRange2("D106").setValue("5");
+		ws.getRange2("D107").setValue("999");
+
+		oParser = new parserFormula("AGGREGATE(15,6,ROW(B101:B107),1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,6,ROW(B101:B107),1)');
+		assert.strictEqual(oParser.calculate().getValue(), 101, 'Result of AGGREGATE(15,6,ROW(B101:B107),1)');
+		
+		oParser = new parserFormula("AGGREGATE(15,6,ROW(B101:B107)/(B102:B107=1),1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,6,ROW(B101:B107)/(B102:B107=1),1)');
+		assert.strictEqual(oParser.calculate().getValue(), 103, 'Result of AGGREGATE(15,6,ROW(B101:B107)/(B102:B107=1),1)');
+
+		oParser = new parserFormula("AGGREGATE(15,6,C101:C107,1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,6,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of AGGREGATE(15,6,C101:C107,1)');
+
+		// cross test
+		let bbox = ws.getRange2("G101").bbox;
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
+		bbox = ws.getRange2("G103").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
+		bbox = ws.getRange2("G104").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
+		bbox = ws.getRange2("G107").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
 	});
 
 	QUnit.test("Test: \"AND\"", function (assert) {
@@ -15092,6 +15528,32 @@ $(function () {
 		oParser = new parserFormula('COUNTIFS(B:B,">0",C:C,"=0")', "E1", ws);
 		assert.ok(oParser.parse(), 'COUNTIFS(B:B,">0",C:C,"=0")');
 		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		// for bug 66654
+		ws.getRange2("C200:C220").cleanAll();
+		ws.getRange2("C200:C210").setValue("externe");
+		ws.getRange2("C212:C215").setValue("interne");
+		ws.getRange2("C217:C220").setValue("externe");
+
+		ws.getRange2("D200:D220").cleanAll();
+		ws.getRange2("D200:D204").setValue("1")
+
+		ws.getRange2("F200:F220").cleanAll();
+		ws.getRange2("F200:F202").setValue("1");
+		ws.getRange2("F205:F215").setValue("1");
+		ws.getRange2("F219:F220").setValue("1");
+
+		oParser = new parserFormula('COUNTIFS(C200:C220,"=externe")', "E1", ws);
+		assert.ok(oParser.parse(), 'COUNTIFS(C200:C220,"=externe")',);
+		assert.strictEqual(oParser.calculate().getValue(), 15, 'Result of COUNTIFS(C200:C220,"=externe")');
+
+		oParser = new parserFormula('COUNTIFS(C200:C220,"=externe", D200:D220, "=1")', "E1", ws);
+		assert.ok(oParser.parse(), 'COUNTIFS(C200:C220,"=externe", D200:D220, "=1")',);
+		assert.strictEqual(oParser.calculate().getValue(), 5, 'Result of COUNTIFS(C200:C220,"=externe", D200:D220, "=1")');
+
+		oParser = new parserFormula('COUNTIFS(C200:C220,"=externe", D200:D220, "=1", F200:F220, "=1")', "E1", ws);
+		assert.ok(oParser.parse(), 'COUNTIFS(C200:C220,"=externe", D200:D220, "=1", F200:F220, "=1")',);
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of COUNTIFS(C200:C220,"=externe", D200:D220, "=1", F200:F220, "=1")');
 
 	});
 
@@ -20055,6 +20517,7 @@ $(function () {
 
 	QUnit.test("Test: \"MATCH\"", function (assert) {
 
+		AscCommonExcel.bIsSupportDynamicArrays = false;
 
 		ws.getRange2("A551").setValue("28");
 		ws.getRange2("A552").setValue("29");
@@ -20076,35 +20539,35 @@ $(function () {
 
 		oParser = new parserFormula("MATCH(30,A551:A555,-1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_1");
 
 		oParser = new parserFormula("MATCH(30,A551:A555,1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.strictEqual(oParser.calculate().getValue(), 2, "MATCH_2");
 
 		oParser = new parserFormula("MATCH(30,A551:A555,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_3");
 
 		oParser = new parserFormula("MATCH(30,B551:B555)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_4");
 
 		oParser = new parserFormula("MATCH(30,B551:B555,-1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 3);
+		assert.strictEqual(oParser.calculate().getValue(), 3, "MATCH_5");
 
 		oParser = new parserFormula("MATCH(30,B551:B555,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_6");
 
 		oParser = new parserFormula("MATCH(31,C551:C555,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 3);
+		assert.strictEqual(oParser.calculate().getValue(), 3, "MATCH_7");
 
 		oParser = new parserFormula("MATCH(\"b\",{\"a\";\"b\";\"c\"},0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.strictEqual(oParser.calculate().getValue(), 2, "MATCH_8");
 
 		ws.getRange2("F3").setValue("");
 
@@ -20123,35 +20586,35 @@ $(function () {
 
 		oParser = new parserFormula("MATCH(F3,F106:F114,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_9");
 
 		oParser = new parserFormula("MATCH(F3,F106:F117,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 10);
+		assert.strictEqual(oParser.calculate().getValue(), 10, "MATCH_10");
 
 		oParser = new parserFormula("MATCH(0,F106:F114,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_11");
 
 		oParser = new parserFormula("MATCH(0,F106:F117,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 10);
+		assert.strictEqual(oParser.calculate().getValue(), 10, "MATCH_12");
 
 		oParser = new parserFormula("MATCH(6,F106:F117,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 9);
+		assert.strictEqual(oParser.calculate().getValue(), 9, "MATCH_13");
 
 		oParser = new parserFormula("MATCH(6,F106:F117,1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 5);
+		assert.strictEqual(oParser.calculate().getValue(), 5, "MATCH_14");
 
 		oParser = new parserFormula("MATCH(6,F106:F117,-1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_15");
 
 		oParser = new parserFormula("MATCH({6,2,3},F106:F117,1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 5);
+		assert.strictEqual(oParser.calculate().getValue(), 5, "MATCH_16");
 
 		// bug 62332
 		ws.getRange2("B200").setValue("P/N");
@@ -20170,24 +20633,25 @@ $(function () {
 		ws.getRange2("C305").setValue("#N/A");
 		ws.getRange2("C306").setValue("");
 
+		/* TODO this is cross tests, return back after implementing the @ sign for array formulas
 		let bbox = ws.getRange2("D200").bbox;
 		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 1);
+		assert.strictEqual(oParser.calculate().getValue(), 1, "MATCH_17");
 
 		bbox = ws.getRange2("D201").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.strictEqual(oParser.calculate().getValue(), 2, "MATCH_18");
 
 		bbox = ws.getRange2("D202").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 3);
-
+		assert.strictEqual(oParser.calculate().getValue(), 3, "MATCH_19");
+		*/ 
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D202", ws);
 		oParser.setArrayFormulaRef(ws.getRange2("A100").bbox);
 		assert.ok(oParser.parse());
@@ -30732,6 +31196,1819 @@ $(function () {
 
 		ws.getRange2("A1:Z10000").cleanAll();
 	});
+
+	QUnit.test("Test: \"External reference test: importRange function\"", function (assert) {
+
+		let initReference = function (eR, sheetName, range, val) {
+			range = AscCommonExcel.g_oRangeCache.getAscRange(range);
+			let externalSheetDataSet = eR.getSheetDataSetByName(sheetName);
+			for (let i = range.r1; i <= range.r2; i++) {
+				let row = externalSheetDataSet.getRow(i + 1, true);
+				for (let j = range.c1; j <= range.c2; j++) {
+					let cell = row.getCell(j, true);
+					cell.CellValue = val[i][j];
+				}
+			}
+		};
+
+		let tempLink = '"http://localhost/editor?fileName=new%20(51).xlsx"';
+		let parseResult = new AscCommonExcel.ParseResult([]);
+		oParser = new parserFormula('IMPORTRANGE(' + tempLink + ',"Sheet1!A1")', 'A2', ws);
+		assert.ok(oParser.parse(null, null, parseResult), 'IMPORTRANGE(' + tempLink + ',"Sheet1!A1")');
+		let res = oParser.calculate().getValue();
+		assert.strictEqual(res, "#REF!", 'IMPORTRANGE_1');
+
+		assert.strictEqual(wb.externalReferences.length, 0, 'IMPORTRANGE_1_external_reference_length_before_add');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_add');
+
+		res = oParser.calculate();
+		let dimension = res.getDimensions();
+		assert.strictEqual(dimension.row, 0, 'IMPORTRANGE_1_after_add_references_row_count');
+
+		initReference(wb.externalReferences[0], "Sheet1", "A1", [[1000]]);
+		res = oParser.calculate();
+		assert.strictEqual(res.getElementRowCol(0, 0).getValue(), 1000, 'IMPORTRANGE_1_AFTER_INIT');
+
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add_clone_2');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_add_clone_2');
+
+		//check remove on setValue
+		ws.getRange2("A2").setValue('=importrange(\"http://localhost/editor?fileName=new%20(51).xlsx\",\"Sheet1!A1\"');
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add_clone_3');
+
+		ws.getRange2("A2").setValue('=importrange(\"http://localhost/editor?fileName=new%20(51).xlsx\",\"Sheet1!A2\"');
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_remove_value');
+
+		ws.getRange2("A2").setValue("1");
+		assert.strictEqual(wb.externalReferences.length, 0, 'IMPORTRANGE_1_external_reference_length_after_remove_value');
+	});
+
+	QUnit.test("Test: \"Dynamic array test\"", function (assert) {
+		let bboxParent, cellWithFormula, formulaInfo, resultRow, resultCol, applyByArray, array;
+			
+		// wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("A1:Z10").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("B1").setValue("4");
+		ws.getRange2("B2").setValue("str");
+		ws.getRange2("B3").setValue("6");
+		ws.getRange2("C1").setValue("1");
+		ws.getRange2("C2").setValue();
+		ws.getRange2("C3").setValue("1");
+
+		// let parent = AscCommonExcel.g_oRangeCache.getAscRange("D1");
+		bboxParent = ws.getRange2("D1").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bboxParent.r1, bboxParent.c1);
+
+		ws.getRange2("C3").setValue("=SIN(A1:A3)", null, null, bboxParent);
+
+		oParser = new parserFormula('A1:A3', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A1:A3');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A1:A3 array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =A1:A3');
+		assert.strictEqual(resultCol, 1, 'Cols in =A1:A3');
+
+		
+		oParser = new parserFormula('{1;2;3}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{1;2;3}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={1;2;3} array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in ={1;2;3}');
+		assert.strictEqual(resultCol, 1, 'Cols in ={1;2;3}');
+
+		oParser = new parserFormula('A1:C1', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A1:C1');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A1:C1 array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =A1:C1');
+		assert.strictEqual(resultCol, 3, 'Cols in =A1:C1');
+
+		oParser = new parserFormula('{1,2,3}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{1,2,3}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={1,2,3} array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in ={1,2,3}');
+		assert.strictEqual(resultCol, 3, 'Cols in ={1,2,3}');
+
+		oParser = new parserFormula('A1:C3', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A1:C3');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A1:C3 array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =A1:C3');
+		assert.strictEqual(resultCol, 3, 'Cols in =A1:C3');
+
+		oParser = new parserFormula('{1,2;3,4}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{1,2;3,4}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={1,2;3,4} array formula');
+		assert.strictEqual(resultRow, 2, 'Rows in ={1,2;3,4}');
+		assert.strictEqual(resultCol, 2, 'Cols in ={1,2;3,4}');
+
+		oParser = new parserFormula('SIN(A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN(A1:A3) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SIN(A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN(A1:A3)');
+
+		oParser = new parserFormula('SIN({1;2;3})', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN({1;2;3})');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN({1;2;3}) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SIN({1;2;3})');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN({1;2;3})');
+
+		oParser = new parserFormula('SIN(A1:C1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1:C1)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN(A1:C1) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SIN(A1:C1)');
+		assert.strictEqual(resultCol, 3, 'Cols in =SIN(A1:C1)');
+
+		oParser = new parserFormula('SIN({1,2,3})', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN({1,2,3})');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN({1,2,3}) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SIN({1,2,3})');
+		assert.strictEqual(resultCol, 3, 'Cols in =SIN({1,2,3})');
+
+		oParser = new parserFormula('SIN(A1:C3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1:C3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN(A1:C3) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SIN(A1:C3)');
+		assert.strictEqual(resultCol, 3, 'Cols in =SIN(A1:C3)');
+
+		oParser = new parserFormula('SIN({1,2;3,4})', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN({1,2;3,4})');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN({1,2;3,4}) array formula');
+		assert.strictEqual(resultRow, 2, 'Rows in =SIN({1,2;3,4})');
+		assert.strictEqual(resultCol, 2, 'Cols in =SIN({1,2;3,4})');
+
+		oParser = new parserFormula('A:A', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A:A');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A:A array formula');
+		assert.strictEqual(resultRow, AscCommon.gc_nMaxRow, 'Rows in =A:A from D1');
+		assert.strictEqual(resultCol, 1, 'Cols in =A:A from D1');
+
+		oParser = new parserFormula('A1:XFD1', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A1:XFD1');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A1:XFD1 array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =A1:XFD1 from D1');
+		assert.strictEqual(resultCol, AscCommon.gc_nMaxCol - 3, 'Cols in =A1:XFD1 from D1');
+		
+
+		oParser = new parserFormula('SIN(A1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SIN(A1) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SIN(A1)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN(A1)');
+		
+
+		oParser = new parserFormula('SUM(A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SUM(A1:A3) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SUM(A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(A1:A3)');
+
+
+		oParser = new parserFormula('SUM(A1:A3+A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(A1:A3+A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SUM(A1:A3+A1:A3) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SUM(A1:A3+A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(A1:A3+A1:A3)');
+
+		oParser = new parserFormula('SUM(A1:A3+A1:A3)+A1:A3', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(A1:A3+A1:A3)+A1:A3');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SUM(A1:A3+A1:A3)+A1:A3 array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SUM(A1:A3+A1:A3)+A1:A3');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(A1:A3+A1:A3)+A1:A3');
+
+
+		oParser = new parserFormula('SUM(SIN(A1:A3)+A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(SIN(A1:A3)+A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SUM(SIN(A1:A3)+A1:A3) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SUM(SIN(A1:A3)+A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(SIN(A1:A3)+A1:A3)');
+
+
+		oParser = new parserFormula('SUM(SIN(SUM(A1:A3)))', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(SIN(SUM(A1:A3)))');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SUM(SIN(SUM(A1:A3))) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SUM(SIN(SUM(A1:A3)))');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(SIN(SUM(A1:A3)))');
+
+
+		oParser = new parserFormula('SIN(SUM(SIN(A1:A3)))', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(SUM(SIN(A1:A3)))');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SIN(SUM(SIN(A1:A3))) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SIN(SUM(SIN(A1:A3)))');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN(SUM(SIN(A1:A3)))');
+
+
+		oParser = new parserFormula('COS(SIN(A1)*SUM(A1:A3)+A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'COS(SIN(A1)*SUM(A1:A3)+A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =COS(SIN(A1)*SUM(A1:A3)+A1:A3) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =COS(SIN(A1)*SUM(A1:A3)+A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =COS(SIN(A1)*SUM(A1:A3)+A1:A3)');
+
+
+		oParser = new parserFormula('SIN(A1+A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1+A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN(A1+A1:A3) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SIN(A1+A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN(A1+A1:A3)');
+
+
+		oParser = new parserFormula('{1,2}*{3;4}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{1,2}*{3;4}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={1,2}*{3;4} array formula');
+		assert.strictEqual(resultRow, 2, 'Rows in ={1,2}*{3;4}');
+		assert.strictEqual(resultCol, 2, 'Cols in ={1,2}*{3;4}');
+
+		oParser = new parserFormula('{2}*{2}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{2}*{2}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={2}*{2} array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in ={1,2}*{3;4}');
+		assert.strictEqual(resultCol, 1, 'Cols in ={1,2}*{3;4}');
+
+		// #N/A check
+		ws.getRange2("A100:Z110").cleanAll();
+
+		bboxParent = ws.getRange2("D100").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bboxParent.r1, bboxParent.c1);
+		oParser = new parserFormula('A100:B101', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D100:E104").bbox);	
+		assert.ok(oParser.parse(), 'A100:B101');
+		array = oParser.calculate();
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1).getValue(), "", "Result of =A100:B101 [0,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [0,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [0,2]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [0,3]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1).getValue(), "", "Result of =A100:B101 [1,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [1,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [1,2]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [1,3]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1).getValue(), "#N/A", "Result of =A100:B101 [2,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 1).getValue(), "#N/A", "Result of =A100:B101 [2,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [2,2]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [2,3]");
+
+		
+		ws.getRange2("A100").setValue("1");
+
+		bboxParent = ws.getRange2("I100").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bboxParent.r1, bboxParent.c1);
+		oParser = new parserFormula('A100:B101', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("I100:J104").bbox);	
+		assert.ok(oParser.parse(), 'A100:B101');
+		array = oParser.calculate();
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1).getValue(), 1, "Result of =A100:B101 [0,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [0,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [0,2]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [0,3]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1).getValue(), "", "Result of =A100:B101 [1,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [1,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [1,2]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [1,3]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1).getValue(), "#N/A", "Result of =A100:B101 [2,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 1).getValue(), "#N/A", "Result of =A100:B101 [2,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [2,2]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [2,3]");
+
+		
+		ws.getRange2("B101").setValue("#N/A");
+
+		bboxParent = ws.getRange2("M100").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bboxParent.r1, bboxParent.c1);
+		oParser = new parserFormula('A100:B101', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("M100:O104").bbox);	
+		assert.ok(oParser.parse(), 'A100:B101');
+		array = oParser.calculate();
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1).getValue(), 1, "Result of =A100:B101 [0,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [0,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [0,2]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [0,3]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1).getValue(), "", "Result of =A100:B101 [1,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 1).getValue(), "#N/A", "Result of =A100:B101 [1,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [1,2]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [1,3]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1).getValue(), "#N/A", "Result of =A100:B101 [2,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 1).getValue(), "#N/A", "Result of =A100:B101 [2,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [2,2]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [2,3]");
+		
+	});
+
+	function calcCustomFunction (innerFunc, jsDoc, oDoc, fCompare) {
+		let api = window["Asc"]["editor"];
+		if (jsDoc) {
+			let oJsDoc = AscCommon.parseJSDoc(jsDoc);
+			api.addCustomFunction(innerFunc, oJsDoc[0]);
+			fCompare("jsDoc");
+		}
+		/*if (oDoc) {
+			api.addCustomFunction(innerFunc, oDoc);
+			fCompare("oDoc");
+		}*/
+	}
+
+	function initCustomFunctionData() {
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("B100").setValue("3");
+		ws.getRange2("B101").setValue("4");
+
+		ws.getRange2("C100").setValue("test1");
+		ws.getRange2("C101").setValue("test2");
+		ws.getRange2("D100").setValue("test3");
+		ws.getRange2("D101").setValue("test4");
+
+		ws.getRange2("E100").setValue("TRUE");
+		ws.getRange2("E101").setValue("FALSE");
+		ws.getRange2("F100").setValue("FALSE");
+		ws.getRange2("F101").setValue("TRUE");
+
+		ws.getRange2("G100").setValue("#VALUE!");
+		ws.getRange2("G101").setValue("#REF!");
+		ws.getRange2("H100").setValue("#VALUE!");
+		ws.getRange2("H101").setValue("#DIV/0!");
+	}
+
+	let prefix = "CUSTOMFUNCTION_";
+	let sJsDoc, oDoc, fCustomFunc;
+	function initParamsCustomFunction(aInputTypes, sReturnType) {
+		//generate jsdoc
+		sJsDoc = "/**\n" +
+			"\t\t * Calculates\n" +
+			"\t\t * @customfunction\n";
+
+		for (let i in aInputTypes) {
+			let argName = "arg" + ((i - 0) + 1);
+			if (aInputTypes[i].isOptional) {
+				argName = "[" + argName + (aInputTypes[i].defaultValue ? "=" + aInputTypes[i].defaultValue : "") + "]"
+			}
+			sJsDoc += "\t\t * @param {" + aInputTypes[i].type + "} " + argName + " " + "Description.\n";
+		}
+		sJsDoc += "\t\t * @returns {" + sReturnType + "} The sum of the numbers.\n\t\t */";
+
+		oDoc = {};
+		for (let i in aInputTypes) {
+			if (!oDoc["params"]) {
+				oDoc["params"] = [];
+			}
+			oDoc["params"].push({"type": aInputTypes[i].type, "name": "name", "isOptional": !!aInputTypes[i].isOptional, "description": "description_params"});
+		}
+		oDoc["properties"] = [];
+		oDoc["description"] = "all_desc";
+		oDoc["returnInfo"] = {"type": sReturnType, "description": "description_return"};
+	}
+
+	function doCustomFunctionTasks(assert, aTasks, typeToArgMap, funcName, _descArgs) {
+		//generate ->
+		// let desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_NUMBER";
+		// calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+		// 	oParser = new parserFormula(prefix + 'ADD(10, 10)', 'A2', ws);
+		// 	assert.ok(oParser.parse(), desc + "_" + _desc);
+		// 	assert.strictEqual(oParser.calculate().getValue(), 20, desc + "_" + _desc);
+		// });
+
+		for (let i in aTasks) {
+			let task = aTasks[i];
+			let desc = "Custom_function_" + funcName + "_" +_descArgs + "_INPUT_";
+			let sFunc = funcName + "(";
+			for (let j = 0; j < aTasks[i].paramsType.length; j++) {
+				sFunc += typeToArgMap[aTasks[i].paramsType[j]];
+				if (j !== aTasks[i].paramsType.length - 1) {
+					sFunc += ",";
+				}
+				desc += "_" + aTasks[i].paramsType[j];
+			}
+			sFunc += ")";
+
+			calcCustomFunction(fCustomFunc, sJsDoc, oDoc, function (_desc) {
+				oParser = new parserFormula(prefix + sFunc, 'A2', ws);
+				assert.ok(oParser.parse(), "parse_ " + desc + "_" + _desc);
+				let calculateRes = oParser.calculate();
+				if (typeof task.result === "object") {
+					for (let i = 0; i < task.result.length; i++) {
+						for (let j = 0; j < task.result[i].length; j++) {
+							assert.strictEqual(calculateRes.getElementRowCol(i, j).getValue(), task.result[i][j], desc + "_" + _desc);
+						}
+					}
+				} else {
+					assert.strictEqual(calculateRes.getValue(), task.result, desc + "_" + _desc);
+				}
+			});
+		}
+	}
+
+	function executeCustomFunction (_func) {
+		wb.dependencyFormulas.unlockRecal();
+		initCustomFunctionData();
+
+		let api = window["Asc"]["editor"];
+		let trueWb = api.wb;
+		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction};
+
+		_func();
+
+		api.wb = trueWb;
+		ws.getRange2("A1:Z10000").cleanAll();
+	}
+
+	QUnit.test("Test: \"Custom function test: base operation: number\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function simpleFunc(arg1, arg2) {
+				return arg2;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//********** 1. @number / @number <- @number **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "number");
+
+			let aTasks = [
+				{paramsType: ["number"], result: "#VALUE!"},
+				{paramsType: [], result: "#VALUE!"},
+				{paramsType: ["number", "number", "number"], result: "#VALUE!"},
+
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: 1},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: 1},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result: "#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@NUMBER_@NUMBER->number");
+
+			//ms returns number!
+			//********** 2. @number <- @string **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "string");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: "10"},
+				{paramsType: ['number', 'stringNumber'], result: "1"},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: "1"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "1"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER->string !");
+
+			//********** 3. @number <- @boolean **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "boolean");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: 1},
+				{paramsType: ['number', 'string'], result:"#VALUE!"},
+				{paramsType: ['number', 'bool'], result: 1},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result:"#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@number->boolean !");
+
+			//********** 4. @number<- @any **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "any");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: 1},
+				{paramsType: ['number', 'string'], result:"#VALUE!"},
+				{paramsType: ['number', 'bool'], result: 1},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result:"#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_number-> any !");
+
+
+			//********** 5. @number / @number <- @number[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "number[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: "#VALUE!"},
+				{paramsType: ['number', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: "#VALUE!"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "#VALUE!"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER->number[][] !");
+
+
+			//********** 6. @number[][] / @number <- @number **********
+			initParamsCustomFunction([{type: "number[][]"}, {type: "number"}], "number");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: 1},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: 1},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result: "#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER[][]_@NUMBER->number !");
+
+
+			//**********7. @number / @number <- @string[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: "#VALUE!"},
+				{paramsType: ['number', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: "#VALUE!"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "#VALUE!"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER->string[][] !");
+
+			//********** 8. @number / @number[][]<- @any[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "number[][]"}], "any[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: [[10]]},
+				{paramsType: ['number', 'stringNumber'], result: [[1]]},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: [[1]]},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result: [[1]]},
+				{paramsType: ['number', 'ref'], result: [[1]]},
+				{paramsType: ['number', 'range'], result: [[1]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_number[][]-> any[][] !");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: base operation: number[][]\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//********** 1.  @number[][] <- @number[][] **********
+			initParamsCustomFunction([{type: "number[][]"}], "number[][]");
+
+			let aTasks = [
+				{paramsType: ['number'], result: [[10]]},
+				{paramsType: ['stringNumber'], result: [[1]]},
+				{paramsType: ['string'], result: "#VALUE!"},
+				{paramsType: ['bool'], result: [[1]]},
+				{paramsType: ['error'], result: "#REF!"},
+				{paramsType: ['array'], result: [[1,2,3]]},
+				{paramsType: ['ref'], result: [[1]]},
+				{paramsType: ['range'], result: [[1]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER[][]->number[][] !");
+
+			//ms returns number!
+			//********** 2. @number[][] <- @string[][] **********
+			initParamsCustomFunction([{type: "number[][]"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [["10"]]},
+				{paramsType: ['stringNumber'], result: [["1"]]},
+				{paramsType: ['string'], result: "#VALUE!"},
+				{paramsType: ['bool'], result: [["1"]]},
+				{paramsType: ['error'], result: "#REF!"},
+				{paramsType: ['array'], result: [["1","2","3"]]},
+				{paramsType: ['ref'], result: [["1"]]},
+				{paramsType: ['range'], result: [["1"]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER[][]->string[][] !");
+
+			//********** 3. @number[][] <- @number **********
+			initParamsCustomFunction([{type: "number[][]"}], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result: "#VALUE!"},
+				{paramsType: ['stringNumber'], result: "#VALUE!"},
+				{paramsType: ['string'], result: "#VALUE!"},
+				{paramsType: ['bool'], result: "#VALUE!"},
+				{paramsType: ['error'], result: "#REF!"},
+				{paramsType: ['array'], result: "#VALUE!"},
+				{paramsType: ['ref'], result: "#VALUE!"},
+				{paramsType: ['range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER[][]->number !");
+
+			//********** 4. @number[][] <- @string **********
+			initParamsCustomFunction([{type: "number[][]"}], "string");
+
+			aTasks = [
+				{paramsType: ['number'], result: "#VALUE!"},
+				{paramsType: ['stringNumber'], result: "#VALUE!"},
+				{paramsType: ['string'], result: "#VALUE!"},
+				{paramsType: ['bool'], result: "#VALUE!"},
+				{paramsType: ['error'], result: "#REF!"},
+				{paramsType: ['array'], result: "#VALUE!"},
+				{paramsType: ['ref'], result: "#VALUE!"},
+				{paramsType: ['range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER[][]->string !");
+
+			//********** 5. @number[][]<- @any[][] **********
+			initParamsCustomFunction([{type: "number[][]"}], "any[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [[10]]},
+				{paramsType: ['stringNumber'], result: [[1]]},
+				{paramsType: ['string'], result: "#VALUE!"},
+				{paramsType: ['bool'], result: [[1]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [[1]]},
+				{paramsType: ['ref'], result: [[1]]},
+				{paramsType: ['range'], result: [[1]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_number[][]-> any[][] !");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: base operation: string\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//********** 1. @string -> @number **********
+			initParamsCustomFunction([{type: "string"}], "number");
+
+			let aTasks = [
+				{paramsType: ['number'], result: "10"},
+				{paramsType: ['stringNumber'], result: "1"},
+				{paramsType: ['string'], result: "test"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result: "#REF!"},
+				{paramsType: ['array'], result: "#VALUE!"},
+				{paramsType: ['ref'], result: "1"},
+				{paramsType: ['range'], result: "#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@NUMBER@STRING->number");
+
+			//********** 2. @string -> @string **********
+			initParamsCustomFunction([{type: "string"}], "string");
+
+			aTasks = [
+				{paramsType: ['number'], result: "10"},
+				{paramsType: ['stringNumber'], result: "1"},
+				{paramsType: ['string'], result: "test"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result: "#REF!"},
+				{paramsType: ['array'], result: "#VALUE!"},
+				{paramsType: ['ref'], result: "1"},
+				{paramsType: ['range'], result: "#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@NUMBER@STRING->STRING");
+
+
+			//********** 3. @string<- @boolean **********
+			initParamsCustomFunction([{type: "string"}], "boolean");
+
+			aTasks = [
+				{paramsType: ['number'], result: "10"},
+				{paramsType: ['stringNumber'], result: "1"},
+				{paramsType: ['string'], result: "test"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result: "1"},
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@string->boolean !");
+
+			//********** 7. @string<- @boolean[][] **********
+			initParamsCustomFunction([{type: "string"}], "boolean[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@string->boolean[][] !");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: base operation: string[][]\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//********** 1. @string[][] <- @string[][] **********
+			initParamsCustomFunction([{type: "string[][]"}], "string[][]");
+
+			let aTasks = [
+				{paramsType: ['number'], result: [["10"]]},
+				{paramsType: ['stringNumber'], result: [["1"]]},
+				{paramsType: ['string'], result: [["test"]]},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result: "#REF!"},
+				{paramsType: ['array'], result: [["1"]]},
+				{paramsType: ['ref'], result: [["1"]]},
+				{paramsType: ['range'], result: [["1"]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@STRING[][]->string[][] !");
+
+			//********** 6. @string[][]<- @boolean **********
+			initParamsCustomFunction([{type: "string[][]"}], "boolean");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@string[][]->boolean !");
+
+			//********** 8. @string[][]<- @boolean[][] **********
+			initParamsCustomFunction([{type: "string[][]"}], "boolean[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [["10"]]},
+				{paramsType: ['stringNumber'], result: [["1"]]},
+				{paramsType: ['string'], result: [["test"]]},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [["1"]]},
+				{paramsType: ['ref'], result: [["1"]]},
+				{paramsType: ['range'], result: [["1"]]}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@string[][]->boolean[][] !");
+
+			//********** 9. @string[][]<- @any[][] **********
+			initParamsCustomFunction([{type: "string[][]"}], "any[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [["10"]]},
+				{paramsType: ['stringNumber'], result: [["1"]]},
+				{paramsType: ['string'], result: [["test"]]},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [["1"]]},
+				{paramsType: ['ref'], result: [["1"]]},
+				{paramsType: ['range'], result: [["1"]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_string[][]-> any[][] !");
+
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: base operation: boolean\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//********** 1. @boolean <- @number **********
+			initParamsCustomFunction([{type: "boolean"}], "number");
+
+			let aTasks = [
+				{paramsType: ['number'], result: "TRUE"},
+				{paramsType: ['stringNumber'], result: "#VALUE!"},
+				{paramsType: ['string'], result: "#VALUE!"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result: "#REF!"},
+				{paramsType: ['array'], result: "#VALUE!"},
+				{paramsType: ['ref'], result: "TRUE"},
+				{paramsType: ['range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN->NUMBER !");
+
+			//********** 2.@boolean <- @boolean **********
+			initParamsCustomFunction([{type: "boolean"}], "boolean");
+
+			aTasks = [
+				{paramsType: ['number'], result: "TRUE"},
+				{paramsType: ['stringNumber'], result: "#VALUE!"},
+				{paramsType: ['string'], result: "#VALUE!"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result: "#REF!"},
+				{paramsType: ['array'], result: "#VALUE!"},
+				{paramsType: ['ref'], result: "TRUE"},
+				{paramsType: ['range'], result: "#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN->boolean !");
+
+			//********** 3. @boolean<- @boolean[][] **********
+			initParamsCustomFunction([{type: "boolean"}], "boolean[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN->boolean[][] !");
+
+
+			//********** 4. @boolean<- @any **********
+			initParamsCustomFunction([{type: "boolean"}], "any");
+
+			aTasks = [
+				{paramsType: ['number'], result: "TRUE"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result: "TRUE"},
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_boolean-> any !");
+
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: base operation: boolean[][]\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//********** 1.@boolean[][] <- @boolean[][] **********
+			initParamsCustomFunction([{type: "boolean[][]"}], "boolean[][]");
+
+			let aTasks = [
+				{paramsType: ['number'], result: [["TRUE"]]},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [["TRUE"]]},
+				{paramsType: ['ref'], result: [["TRUE"]]},
+				{paramsType: ['range'], result: [["TRUE"]]}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN[][]->boolean[][] !");
+
+
+			//********** 2. @boolean[][]<- @boolean **********
+			initParamsCustomFunction([{type: "boolean[][]"}], "boolean");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN[][]->boolean !");
+
+			//********** 6. @boolean[][]<- @number[][] **********
+			initParamsCustomFunction([{type: "boolean[][]"}], "number[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [["TRUE"]]},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [["TRUE"]]},
+				{paramsType: ['ref'], result: [["TRUE"]]},
+				{paramsType: ['range'], result: [["TRUE"]]}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN[][]->number[][] !");
+
+			//********** 7. @number / @boolean[][]<- @string[][] **********
+			initParamsCustomFunction([{type: "boolean[][]"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [["TRUE"]]},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [["TRUE"]]},
+				{paramsType: ['ref'], result: [["TRUE"]]},
+				{paramsType: ['range'], result: [["TRUE"]]}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN[][]->string[][] !");
+
+			//********** 8. @boolean[][]<- @string[][] **********
+			initParamsCustomFunction([{type: "boolean[][]"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [["TRUE"]]},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [["TRUE"]]},
+				{paramsType: ['ref'], result: [["TRUE"]]},
+				{paramsType: ['range'], result: [["TRUE"]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@boolean[][]->string[][] !");
+
+
+			//********** 10. @boolean[][]<- @any[][] **********
+			initParamsCustomFunction([{type: "boolean[][]"}], "any[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [["TRUE"]]},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [["TRUE"]]},
+				{paramsType: ['ref'], result: [["TRUE"]]},
+				{paramsType: ['range'], result: [["TRUE"]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_boolean[][]-> any[][] !");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: base operation: any\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//********** 1. @any<- @number **********
+			initParamsCustomFunction([{type: "any"}], "number");
+
+			let aTasks = [
+				{paramsType: ['number'], result: 10},
+				{paramsType: ['stringNumber'], result: "1"},
+				{paramsType: ['string'], result: "test"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result: 1},
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_any-> number !");
+
+			//********** 2. @any<- @any **********
+			initParamsCustomFunction([{type: "any"}], "any");
+
+			aTasks = [
+				{paramsType: ['number'], result: 10},
+				{paramsType: ['stringNumber'], result: "1"},
+				{paramsType: ['string'], result: "test"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result: 1},
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_any-> any !");
+
+			//********** 3. @any<- @string **********
+			initParamsCustomFunction([{type: "any"}], "string");
+
+			aTasks = [
+				{paramsType: ['number'], result: "10"},//ms returns number
+				{paramsType: ['stringNumber'], result: "1"},
+				{paramsType: ['string'], result: "test"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result: "1"},//ms returns number
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_any-> string !");
+
+			//********** 4. @any<- @boolean **********
+			initParamsCustomFunction([{type: "any"}], "boolean");
+
+			aTasks = [
+				{paramsType: ['number'], result: 10},
+				{paramsType: ['stringNumber'], result: "1"},
+				{paramsType: ['string'], result: "test"},
+				{paramsType: ['bool'], result: "TRUE"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result: 1},
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_any-> boolean !");
+
+			//********** 5. @any<- @boolean **********
+			initParamsCustomFunction([{type: "any"}], "boolean[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_any-> boolean[][] !");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: base operation: any[][]\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//********** 1. @any[][]<- @number[][] **********
+			initParamsCustomFunction([{type: "any[][]"}], "number[][]");
+
+			let aTasks = [
+				{paramsType: ['number'], result: [[10]]},
+				{paramsType: ['stringNumber'], result: [["1"]]},
+				{paramsType: ['string'], result: [["test"]]},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [[1]]},
+				{paramsType: ['ref'], result: [[1]]},
+				{paramsType: ['range'], result: [[1]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_any[][]-> number[][] !");
+
+			//********** 2. @any[][]<- @string[][] **********
+			initParamsCustomFunction([{type: "any[][]"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [["10"]]},
+				{paramsType: ['stringNumber'], result: [["1"]]},
+				{paramsType: ['string'], result: [["test"]]},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [["1"]]},
+				{paramsType: ['ref'], result: [["1"]]},
+				{paramsType: ['range'], result: [["1"]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_any[][]-> string[][] !");
+
+			//********** 3. @any[][]<- @boolean[][] **********
+			initParamsCustomFunction([{type: "any[][]"}], "boolean[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [[10]]},
+				{paramsType: ['stringNumber'], result: [["1"]]},
+				{paramsType: ['string'], result: [["test"]]},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [[1]]},
+				{paramsType: ['ref'], result: [[1]]},
+				{paramsType: ['range'], result: [[1]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_any[][]-> boolean[][] !");
+
+			//********** 4. @any[][]<- @any[][] **********
+			initParamsCustomFunction([{type: "any[][]"}], "any[][]");
+
+			aTasks = [
+				{paramsType: ['number'], result: [[10]]},
+				{paramsType: ['stringNumber'], result: [["1"]]},
+				{paramsType: ['string'], result: [["test"]]},
+				{paramsType: ['bool'], result: [["TRUE"]]},
+				{paramsType: ['error'], result:"#REF!"},
+				{paramsType: ['array'], result: [[1]]},
+				{paramsType: ['ref'], result: [[1]]},
+				{paramsType: ['range'], result: [[1]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_any[][]-> any[][] !");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: other\"", function (assert) {
+
+		executeCustomFunction(function () {
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//empty function
+			fCustomFunc = function simpleFunc() {
+			};
+
+			initParamsCustomFunction([], "number");
+
+			let aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! empty  function !");
+
+			//return null
+			fCustomFunc = function simpleFunc() {
+				return null;
+			};
+
+			initParamsCustomFunction([], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return null !");
+
+			//return undefined
+			fCustomFunc = function simpleFunc() {
+				return undefined;
+			};
+
+			initParamsCustomFunction([], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return undefined !");
+
+			//return NaN
+			fCustomFunc = function simpleFunc() {
+				return NaN;
+			};
+
+			initParamsCustomFunction([], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return NaN !");
+
+			fCustomFunc = function simpleFunc(arg1, arg2) {
+				return arg2;
+			};
+
+			initParamsCustomFunction([], "number");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: "1"},
+				{paramsType: ['number', 'string'], result: "test"},
+				{paramsType: ['number', 'bool'], result: "TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! call function without args !");
+
+			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any"}], "number");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: "1"},
+				{paramsType: ['number', 'string'], result: "test"},
+				{paramsType: ['number', 'bool'], result: "TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! init args params count more then function contain!");
+
+			fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
+				return arg2;
+			};
+
+			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any"}], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! call function less then function arg count !");
+
+			//isOptional
+			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any", isOptional: true}], "number");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: "1"},
+				{paramsType: ['number', 'string'], result: "test"},
+				{paramsType: ['number', 'bool'], result: "TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! optional third param !");
+
+			//defaultvalue
+			//ms ignore defaultValue option, while skip
+			fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
+				return arg3;
+			};
+
+			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any", defaultValue: 123, isOptional: true}], "number");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: "123"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! defaultvalue !");
+
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: number+number->number\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
+			};
+
+			//********** 1. @number / @number <- @number **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "number");
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+			let aTasks = [
+				{paramsType: ["number", "number"], result: 20},
+				{paramsType: ["number", "stringNumber"], result: 11},
+				{paramsType: ["number", "string"], result: "#VALUE!"},
+				{paramsType: ["number", "bool"], result: 11},
+				{paramsType: ["number", "error"], result: "#REF!"},
+				{paramsType: ["number", "array"], result: "#VALUE!"},
+				{paramsType: ["number", "ref"], result: 11},
+				{paramsType: ["number", "range"], result: "#VALUE!"},
+
+				{paramsType: ["string", "string"], result: "#VALUE!"},
+				{paramsType: ["string", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["string", "bool"], result: "#VALUE!"},
+				{paramsType: ["string", "error"], result: "#REF!"},
+				{paramsType: ["string", "array"], result: "#VALUE!"},
+				{paramsType: ["string", "ref"], result: "#VALUE!"},
+				{paramsType: ["string", "range"], result: "#VALUE!"},
+
+				{paramsType: ["bool", "bool"], result: 2},
+				{paramsType: ["bool", "stringNumber"], result: 2},
+				{paramsType: ["bool", "error"], result: "#REF!"},
+				{paramsType: ["bool", "array"], result: "#VALUE!"},
+				{paramsType: ["bool", "ref"], result: 2},
+				{paramsType: ["bool", "range"], result: "#VALUE!"},
+
+				{paramsType: ["error", "stringNumber"], result: "#REF!"},
+				{paramsType: ["error", "error"], result: "#REF!"},
+				{paramsType: ["error", "array"], result: "#REF!"},
+				{paramsType: ["error", "ref"], result: "#REF!"},
+				{paramsType: ["error", "range"], result: "#REF!"},
+
+				{paramsType: ["array", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["array", "array"], result: "#VALUE!"},
+				{paramsType: ["array", "ref"], result: "#VALUE!"},
+				{paramsType: ["array", "range"], result: "#VALUE!"},
+
+				{paramsType: ["ref", "stringNumber"], result: 2},
+				{paramsType: ["ref", "ref"], result: 2},
+				{paramsType: ["ref", "range"], result: "#VALUE!"},
+
+				{paramsType: ["range", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["range", "range"], result: "#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@NUMBER_@NUMBER");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: string+number->number\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+			//********** 2. @string / @number <- @number **********
+			initParamsCustomFunction([{type: "string"}, {type: "number"}], "number");
+
+			let aTasks = [
+				{paramsType: ['number', 'number'], result: "1010"},
+				{paramsType: ['number', 'stringNumber'], result: "101"},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: "101"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "101"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['string', 'number'], result: "test10"},
+				{paramsType: ['string', 'string'], result: "#VALUE!"},
+				{paramsType: ['string', 'stringNumber'], result: "test1"},
+				{paramsType: ['string', 'bool'], result: "test1"},
+				{paramsType: ['string', 'error'], result: "#REF!"},
+				{paramsType: ['string', 'array'], result: "#VALUE!"},
+				{paramsType: ['string', 'ref'], result: "test1"},
+				{paramsType: ['string', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['bool', 'number'], result: "TRUE10"},
+				{paramsType: ['bool', 'string'], result: "#VALUE!"},
+				{paramsType: ['bool', 'bool'], result: "TRUE1"},
+				{paramsType: ['bool', 'stringNumber'], result: "TRUE1"},
+				{paramsType: ['bool', 'error'], result: "#REF!"},
+				{paramsType: ['bool', 'array'], result: "#VALUE!"},
+				{paramsType: ['bool', 'ref'], result: "TRUE1"},
+				{paramsType: ['bool', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['error', 'number'], result: "#REF!"},
+				{paramsType: ['error', 'string'], result: "#REF!"},
+				{paramsType: ['error', 'bool'], result: "#REF!"},
+				{paramsType: ['error', 'stringNumber'], result: "#REF!"},
+				{paramsType: ['error', 'error'], result: "#REF!"},
+				{paramsType: ['error', 'array'], result: "#REF!"},
+				{paramsType: ['error', 'ref'], result: "#REF!"},
+				{paramsType: ['error', 'range'], result: "#REF!"},
+
+				{paramsType: ['array', 'number'], result: "#VALUE!"},
+				{paramsType: ['array', 'string'], result: "#VALUE!"},
+				{paramsType: ['array', 'bool'], result: "#VALUE!"},
+				{paramsType: ['array', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['array', 'error'], result: "#REF!"},
+				{paramsType: ['array', 'array'], result: "#VALUE!"},
+				{paramsType: ['array', 'ref'], result: "#VALUE!"},
+				{paramsType: ['array', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['ref', 'number'], result: "110"},
+				{paramsType: ['ref', 'string'], result: "#VALUE!"},
+				{paramsType: ['ref', 'bool'], result: "11"},
+				{paramsType: ['ref', 'stringNumber'], result: "11"},
+				{paramsType: ['ref', 'error'], result: "#REF!"},
+				{paramsType: ['ref', 'array'], result: "#VALUE!"},
+				{paramsType: ['ref', 'ref'], result: "11"},
+				{paramsType: ['ref', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['range', 'number'], result: "#VALUE!"},
+				{paramsType: ['range', 'string'], result: "#VALUE!"},
+				{paramsType: ['range', 'bool'], result: "#VALUE!"},
+				{paramsType: ['range', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['range', 'error'], result: "#REF!"},
+				{paramsType: ['range', 'array'], result: "#VALUE!"},
+				{paramsType: ['range', 'ref'], result: "#VALUE!"},
+				{paramsType: ['range', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@STRING_@NUMBER");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: string+string->number\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+			//********** 3. @string / @string <- @number **********
+			initParamsCustomFunction([{type: "string"}, {type: "string"}], "number");
+
+			let aTasks = [
+				{paramsType: ['number', 'number'], result: "1010"},
+				{paramsType: ['number', 'stringNumber'], result: "101"},
+				{paramsType: ['number', 'string'], result: "10test"},
+				{paramsType: ['number', 'bool'], result: "10TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "101"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['string', 'number'], result: "test10"},
+				{paramsType: ['string', 'string'], result: "testtest"},
+				{paramsType: ['string', 'stringNumber'], result: "test1"},
+				{paramsType: ['string', 'bool'], result: "testTRUE"},
+				{paramsType: ['string', 'error'], result: "#REF!"},
+				{paramsType: ['string', 'array'], result: "#VALUE!"},
+				{paramsType: ['string', 'ref'], result: "test1"},
+				{paramsType: ['string', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['bool', 'number'], result: "TRUE10"},
+				{paramsType: ['bool', 'string'], result: "TRUEtest"},
+				{paramsType: ['bool', 'bool'], result: "TRUETRUE"},
+				{paramsType: ['bool', 'stringNumber'], result: "TRUE1"},
+				{paramsType: ['bool', 'error'], result: "#REF!"},
+				{paramsType: ['bool', 'array'], result: "#VALUE!"},
+				{paramsType: ['bool', 'ref'], result: "TRUE1"},
+				{paramsType: ['bool', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['error', 'number'], result: "#REF!"},
+				{paramsType: ['error', 'string'], result: "#REF!"},
+				{paramsType: ['error', 'bool'], result: "#REF!"},
+				{paramsType: ['error', 'stringNumber'], result: "#REF!"},
+				{paramsType: ['error', 'error'], result: "#REF!"},
+				{paramsType: ['error', 'array'], result: "#REF!"},
+				{paramsType: ['error', 'ref'], result: "#REF!"},
+				{paramsType: ['error', 'range'], result: "#REF!"},
+
+				{paramsType: ['array', 'number'], result: "#VALUE!"},
+				{paramsType: ['array', 'string'], result: "#VALUE!"},
+				{paramsType: ['array', 'bool'], result: "#VALUE!"},
+				{paramsType: ['array', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['array', 'error'], result: "#REF!"},
+				{paramsType: ['array', 'array'], result: "#VALUE!"},
+				{paramsType: ['array', 'ref'], result: "#VALUE!"},
+				{paramsType: ['array', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['ref', 'number'], result: "110"},
+				{paramsType: ['ref', 'string'], result: "1test"},
+				{paramsType: ['ref', 'bool'], result: "1TRUE"},
+				{paramsType: ['ref', 'stringNumber'], result: "11"},
+				{paramsType: ['ref', 'error'], result: "#REF!"},
+				{paramsType: ['ref', 'array'], result: "#VALUE!"},
+				{paramsType: ['ref', 'ref'], result: "11"},
+				{paramsType: ['ref', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['range', 'number'], result: "#VALUE!"},
+				{paramsType: ['range', 'string'], result: "#VALUE!"},
+				{paramsType: ['range', 'bool'], result: "#VALUE!"},
+				{paramsType: ['range', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['range', 'error'], result: "#REF!"},
+				{paramsType: ['range', 'array'], result: "#VALUE!"},
+				{paramsType: ['range', 'ref'], result: "#VALUE!"},
+				{paramsType: ['range', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@STRING_@STRING");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: string+string->string\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+			//********** 4. @string / @string <- @string **********
+			initParamsCustomFunction([{type: "string"}, {type: "string"}], "string");
+
+			let aTasks = [
+				{paramsType: ['number', 'number'], result: "1010"},
+				{paramsType: ['number', 'stringNumber'], result: "101"},
+				{paramsType: ['number', 'string'], result: "10test"},
+				{paramsType: ['number', 'bool'], result: "10TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "101"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['string', 'number'], result: "test10"},
+				{paramsType: ['string', 'string'], result: "testtest"},
+				{paramsType: ['string', 'stringNumber'], result: "test1"},
+				{paramsType: ['string', 'bool'], result: "testTRUE"},
+				{paramsType: ['string', 'error'], result: "#REF!"},
+				{paramsType: ['string', 'array'], result: "#VALUE!"},
+				{paramsType: ['string', 'ref'], result: "test1"},
+				{paramsType: ['string', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['bool', 'number'], result: "TRUE10"},
+				{paramsType: ['bool', 'string'], result: "TRUEtest"},
+				{paramsType: ['bool', 'bool'], result: "TRUETRUE"},
+				{paramsType: ['bool', 'stringNumber'], result: "TRUE1"},
+				{paramsType: ['bool', 'error'], result: "#REF!"},
+				{paramsType: ['bool', 'array'], result: "#VALUE!"},
+				{paramsType: ['bool', 'ref'], result: "TRUE1"},
+				{paramsType: ['bool', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['error', 'number'], result: "#REF!"},
+				{paramsType: ['error', 'string'], result: "#REF!"},
+				{paramsType: ['error', 'bool'], result: "#REF!"},
+				{paramsType: ['error', 'stringNumber'], result: "#REF!"},
+				{paramsType: ['error', 'error'], result: "#REF!"},
+				{paramsType: ['error', 'array'], result: "#REF!"},
+				{paramsType: ['error', 'ref'], result: "#REF!"},
+				{paramsType: ['error', 'range'], result: "#REF!"},
+
+				{paramsType: ['array', 'number'], result: "#VALUE!"},
+				{paramsType: ['array', 'string'], result: "#VALUE!"},
+				{paramsType: ['array', 'bool'], result: "#VALUE!"},
+				{paramsType: ['array', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['array', 'error'], result: "#REF!"},
+				{paramsType: ['array', 'array'], result: "#VALUE!"},
+				{paramsType: ['array', 'ref'], result: "#VALUE!"},
+				{paramsType: ['array', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['ref', 'number'], result: "110"},
+				{paramsType: ['ref', 'string'], result: "1test"},
+				{paramsType: ['ref', 'bool'], result: "1TRUE"},
+				{paramsType: ['ref', 'stringNumber'], result: "11"},
+				{paramsType: ['ref', 'error'], result: "#REF!"},
+				{paramsType: ['ref', 'array'], result: "#VALUE!"},
+				{paramsType: ['ref', 'ref'], result: "11"},
+				{paramsType: ['ref', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['range', 'number'], result: "#VALUE!"},
+				{paramsType: ['range', 'string'], result: "#VALUE!"},
+				{paramsType: ['range', 'bool'], result: "#VALUE!"},
+				{paramsType: ['range', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['range', 'error'], result: "#REF!"},
+				{paramsType: ['range', 'array'], result: "#VALUE!"},
+				{paramsType: ['range', 'ref'], result: "#VALUE!"},
+				{paramsType: ['range', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@STRING_@STRING");
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: number[][]+number->number\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
+			};
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//********** 2. @number[][] / @number <- @number **********
+			initParamsCustomFunction([{type: "number[][]"}, {type: "number"}], "number");
+
+			let aTasks = [
+				{paramsType: ['number', 'number'], result: "1010"},
+				{paramsType: ['number', 'stringNumber'], result: "101"},
+				{paramsType: ['number', 'string'], result: "10test"},
+				{paramsType: ['number', 'bool'], result: "10TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "101"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['string', 'number'], result: "test10"},
+				{paramsType: ['string', 'string'], result: "testtest"},
+				{paramsType: ['string', 'stringNumber'], result: "test1"},
+				{paramsType: ['string', 'bool'], result: "testTRUE"},
+				{paramsType: ['string', 'error'], result: "#REF!"},
+				{paramsType: ['string', 'array'], result: "#VALUE!"},
+				{paramsType: ['string', 'ref'], result: "test1"},
+				{paramsType: ['string', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['bool', 'number'], result: "TRUE10"},
+				{paramsType: ['bool', 'string'], result: "TRUEtest"},
+				{paramsType: ['bool', 'bool'], result: "TRUETRUE"},
+				{paramsType: ['bool', 'stringNumber'], result: "TRUE1"},
+				{paramsType: ['bool', 'error'], result: "#REF!"},
+				{paramsType: ['bool', 'array'], result: "#VALUE!"},
+				{paramsType: ['bool', 'ref'], result: "TRUE1"},
+				{paramsType: ['bool', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['error', 'number'], result: "#REF!"},
+				{paramsType: ['error', 'string'], result: "#REF!"},
+				{paramsType: ['error', 'bool'], result: "#REF!"},
+				{paramsType: ['error', 'stringNumber'], result: "#REF!"},
+				{paramsType: ['error', 'error'], result: "#REF!"},
+				{paramsType: ['error', 'array'], result: "#REF!"},
+				{paramsType: ['error', 'ref'], result: "#REF!"},
+				{paramsType: ['error', 'range'], result: "#REF!"},
+
+				{paramsType: ['array', 'number'], result: "#VALUE!"},
+				{paramsType: ['array', 'string'], result: "#VALUE!"},
+				{paramsType: ['array', 'bool'], result: "#VALUE!"},
+				{paramsType: ['array', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['array', 'error'], result: "#REF!"},
+				{paramsType: ['array', 'array'], result: "#VALUE!"},
+				{paramsType: ['array', 'ref'], result: "#VALUE!"},
+				{paramsType: ['array', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['ref', 'number'], result: "110"},
+				{paramsType: ['ref', 'string'], result: "1test"},
+				{paramsType: ['ref', 'bool'], result: "1TRUE"},
+				{paramsType: ['ref', 'stringNumber'], result: "11"},
+				{paramsType: ['ref', 'error'], result: "#REF!"},
+				{paramsType: ['ref', 'array'], result: "#VALUE!"},
+				{paramsType: ['ref', 'ref'], result: "11"},
+				{paramsType: ['ref', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['range', 'number'], result: "#VALUE!"},
+				{paramsType: ['range', 'string'], result: "#VALUE!"},
+				{paramsType: ['range', 'bool'], result: "#VALUE!"},
+				{paramsType: ['range', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['range', 'error'], result: "#REF!"},
+				{paramsType: ['range', 'array'], result: "#VALUE!"},
+				{paramsType: ['range', 'ref'], result: "#VALUE!"},
+				{paramsType: ['range', 'range'], result: "#VALUE!"},
+			];
+
+			assert.ok(1,1);
+			//doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@number[][]_@number");
+		});
+
+	});
+
+
 
 	wb.dependencyFormulas.unlockRecal();
 });

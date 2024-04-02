@@ -390,8 +390,8 @@
 			var _drawing_document = isRealObject(drawingDocument) ? drawingDocument : paragraph.DrawingDocument;
 			var _new_parent = isRealObject(newParent) ? newParent : null;
 
-			var new_paragraph = new Paragraph(_drawing_document, _new_parent, true);
-			if (!(paragraph instanceof Paragraph))
+			var new_paragraph = new AscWord.Paragraph(_new_parent, true);
+			if (!(paragraph instanceof AscWord.Paragraph))
 				return new_paragraph;
 			var oCopyPr = paragraph.Pr.Copy();
 
@@ -434,7 +434,7 @@
 			var i, j, oElement;
 			for (i = 0; i < aElements.length; ++i) {
 				oElement = aElements[i];
-				if (oElement instanceof AscCommonWord.Paragraph) {
+				if (oElement instanceof AscWord.Paragraph) {
 					aResult.push(ConvertParagraphToPPTX(oElement));
 				} else if (oElement instanceof AscCommonWord.CTable) {
 					var paragraphs = [];
@@ -1074,7 +1074,7 @@
 				let aNewParagraphs = [];
 				for (let nIdx = 0; nIdx < aContent.length; ++nIdx) {
 					let oCurElement = aContent[nIdx];
-					if (oCurElement instanceof AscCommonWord.Paragraph) {
+					if (oCurElement instanceof AscWord.Paragraph) {
 						let oParagraph = ConvertParagraphToPPTX(oCurElement, drawingDocument, new_content, bIsAddMath);
 						aNewParagraphs.push(oParagraph);
 					}
@@ -2776,6 +2776,7 @@
 
 		CShape.prototype.recalculateTextStyles = function (level) {
 			return AscFormat.ExecuteNoHistory(function () {
+				const logicDocument = this.getLogicDocument();
 				var parent_objects = this.getParentObjects();
 				var default_style = new CStyle("defaultStyle", null, null, null, true);
 				default_style.ParaPr.Spacing.LineRule = Asc.linerule_Auto;
@@ -2784,6 +2785,12 @@
 				default_style.ParaPr.Spacing.After = 0;
 				default_style.ParaPr.DefaultTab = 25.4;
 				default_style.ParaPr.Align = AscCommon.align_Center;
+				if (logicDocument && logicDocument.IsDocumentEditor()) {
+					const documentStyles = logicDocument.Get_Styles();
+					if (documentStyles) {
+						default_style.TextPr.Lang.Merge(documentStyles.Default.TextPr.Lang);
+					}
+				}
 				if (parent_objects.theme) {
 					default_style.TextPr.RFonts.SetFontStyle(AscFormat.fntStyleInd_minor);
 				}
@@ -5046,7 +5053,7 @@
 			var _transform_text2 = options.transformText2 || this.transformText2;
 			var geometry = this.getGeometry();
 
-			if (graphics.IsSlideBoundsCheckerType === true) {
+			if (graphics.isBoundsChecker()) {
 
 				this.drawShdw && this.drawShdw(graphics);
 				graphics.transform3(_transform);
@@ -5089,7 +5096,7 @@
 				graphics.StartDrawShape(undefined, this.isForm && this.isForm() ? true : false);
 			}
 			var oClipRect;
-			if (!graphics.IsSlideBoundsCheckerType && this.getClipRect) {
+			if (!graphics.isBoundsChecker() && this.getClipRect) {
 				oClipRect = this.getClipRect();
 			}
 			if (oClipRect) {
@@ -5119,9 +5126,9 @@
 				shape_drawer.draw(geometry);
 			}
 
-			if (!graphics.isSmartArtPreviewDrawer && !graphics.RENDERER_PDF_FLAG && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter) {
+			if (!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter) {
 				var drawingObjects = this.getDrawingObjectsController();
-				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && graphics.IsTrack === undefined && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
+				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
 					var angle = _transform.GetRotation();
 					if (AscFormat.fApproxEqual(angle, 0.0, 0.0) ||
 						AscFormat.fApproxEqual(angle, 90.0, 0.0) ||
@@ -5219,7 +5226,7 @@
 						graphics.RestoreGrState();
 					}
 
-					if (this.textBoxContent && !graphics.IsNoSupportTextDraw && this.transformText) {
+					if (this.textBoxContent && graphics.isSupportTextDraw() && this.transformText) {
 						var old_start_page = this.textBoxContent.Get_StartPage_Relative();
 						this.textBoxContent.Set_StartPage(pageIndex);
 
@@ -5250,7 +5257,7 @@
 					var oTheme = this.getParentObjects().theme;
 					var oColorMap = this.Get_ColorMap();
 					if (!this.bWordShape && (!this.txBody.content || this.txBody.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.txBody.content2 != null && !this.txBody.checkCurrentPlaceholder() && (this.isEmptyPlaceholder ? this.isEmptyPlaceholder() : false)) {
-						if (graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && !graphics.RENDERER_PDF_FLAG) {
+						if (graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && !graphics.isPdf()) {
 							if (editor && editor.ShowParaMarks) {
 								this.txWarpStructParamarks2.draw(graphics, this.transformTextWordArt2, oTheme, oColorMap);
 							} else {

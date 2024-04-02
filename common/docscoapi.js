@@ -587,7 +587,7 @@
     this._id = null;
     this._sessionTimeConnect = null;
 	this._allChangesSaved = null;
-	this._lastForceSaveButtonTime = null;
+	this._lastForceSaveButtonTime = -2;//-2 to allow first save without changes
 	this._lastForceSaveTimeoutTime = null;
     this._indexUser = -1;
     // Если пользователей больше 1, то совместно редактируем
@@ -1657,7 +1657,7 @@
 	this.permissions = docInfo.get_Permissions();
 	this.lang = docInfo.get_Lang();
 	this.jwtOpen = docInfo.get_Token();
-    this.encrypted = docInfo.get_Encrypted();
+    this.encrypted = docInfo.get_Encrypted() || docInfo.get_IsWebOpening();
     this.IsAnonymousUser = docInfo.get_IsAnonymousUser();
     this.coEditingMode = docInfo.asc_getCoEditingMode();
     this.shardKey = shardKey;
