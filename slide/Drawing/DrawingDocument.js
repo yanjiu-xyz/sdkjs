@@ -4866,8 +4866,9 @@ function CThumbnailsManager()
 			context.strokeStyle = "#DEDEDE";
 			let y = (0.5 * this.const_offset_y) >> 0;
 			let nPosition = this.MouseDownTrack.GetPosition();
-			if (nPosition !== 0)
-				y = (this.m_arrPages[nPosition - 1].bottom + 1.5 * this.const_border_w) >> 0;
+			let oPage = this.m_arrPages[nPosition - 1];
+			if (oPage)
+				y = (oPage.bottom + 1.5 * this.const_border_w) >> 0;
 
 			var _left_pos = 0;
 			var _right_pos = _width;
