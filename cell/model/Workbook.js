@@ -13217,6 +13217,9 @@
 		this.isDirty = false;
 		this.isCalc = false;
 
+		this.cm = null;
+		this.vm = null;
+
 		this._hasChanged = false;
 	}
 	Cell.prototype.clear = function(keepIndex) {
@@ -15159,9 +15162,9 @@
 		var end = stream.XlsbReadRecordLength() + stream.GetCurPos();
 
 		this.setRowCol(row, stream.GetULongLE() & 0x3FFF);
-		var nStyleRef = stream.GetULongLE();
-		if (0 !== (nStyleRef & 0xFFFFFF)) {
-			var xf = aCellXfs[nStyleRef & 0xFFFFF];
+		var nFlags2 = stream.GetULongLE();
+		if (0 !== (nFlags2 & 0xFFFFFF)) {
+			var xf = aCellXfs[nFlags2 & 0xFFFFF];
 			if (xf) {
 				this.setStyle(xf);
 			}
@@ -15240,6 +15243,14 @@
 				}, '');
 				this.setValueTextInternal(text);
 			}
+		}
+		if (0 !== (nFlags2 & 0x2000000))
+		{
+			this.setCm(stream.GetULong());
+		}
+		if (0 !== (nFlags2 & 0x4000000))
+		{
+			this.setVm(stream.GetULong());
 		}
 
 		stream.Seek2(end);
@@ -15374,11 +15385,18 @@
 
 		stream.XlsbStartRecord(type, len);
 		stream.WriteULong(this.nCol & 0x3FFF);
-		var nStyle = 0;
+		var nFlags2 = 0;
 		if (null !== nXfsId) {
-			nStyle = nXfsId;
+			nFlags2 = nXfsId;
 		}
-		stream.WriteULong(nStyle);
+		if (this.cm != null) {
+			nFlags2 |= 0x2000000;
+		}
+		if (this.vm != null) {
+			nFlags2 |= 0x4000000;
+		}
+		stream.WriteULong(nFlags2);
+
 		//todo RkNumber
 		switch (type) {
 			case AscCommonExcel.XLSB.rt_CELL_REAL:
@@ -15443,6 +15461,13 @@
 
 		if (formulaToWrite) {
 			flags = this.toXLSBFormulaExt(stream, formulaToWrite);
+		}
+
+		if (this.cm != null) {
+			stream.WriteULong(this.cm);
+		}
+		if (this.vm != null) {
+			stream.WriteULong(this.vm);
 		}
 
 		stream.XlsbEndRecord();
@@ -15554,6 +15579,12 @@
 		// presumably the metadata it refers to contains the estimated size of the array
 		// the size of the array is unique and has its own number in the order of initialization on the page
 		// for example array 3x1 initialized before than array 2x1 will have the number 1 in vm prop 
+	};
+	Cell.prototype.setCm = function(val) {
+		this.cm = val;
+	};
+	Cell.prototype.setVm = function(val) {
+		this.vm = val;
 	};
 //-------------------------------------------------------------------------------------------------
 
