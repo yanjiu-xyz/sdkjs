@@ -206,6 +206,48 @@
 			return oResult;
 		}
 
+		function fGetMaxInscribedRectangle(width, height, angle) {
+			const isShortWidth = width < height;
+			let shortSide = height;
+			let longSide = width;
+			if (isShortWidth) {
+				longSide = height;
+				shortSide = width;
+			}
+			const sinA = Math.abs(Math.sin(angle));
+			const cosA = Math.abs(Math.cos(angle));
+			const tanA = sinA / cosA;
+			let inscribedWidth;
+			let inscribedHeight;
+
+			if (angle % Math.PI === 0) {
+				inscribedWidth = width;
+				inscribedHeight = height;
+			} else if (angle % (Math.PI / 2) === 0) {
+				inscribedWidth = height;
+				inscribedHeight = width;
+			} else if ((shortSide * (tanA + 1 / tanA) / 2 <= longSide) || (angle % (Math.PI / 4) === 0)) {
+				if (isShortWidth) {
+					inscribedWidth = shortSide / (2 * cosA);
+					inscribedHeight = shortSide / (2 * sinA);
+				} else {
+					inscribedWidth = shortSide / (2 * sinA);
+					inscribedHeight = shortSide / (2 * cosA);
+				}
+			} else {
+				const divider = sinA * sinA - cosA * cosA;
+				inscribedWidth = (height * sinA - cosA * width) / divider;
+				inscribedHeight = (width * sinA - cosA * height) / divider;
+			}
+
+			return {
+				width: inscribedWidth,
+				height: inscribedHeight,
+				x: (width - inscribedWidth) / 2,
+				y: (height - inscribedHeight) / 2
+			};
+		}
+
 		function checkParagraphDefFonts(map, par) {
 			par && par.Pr && par.Pr.DefaultRunPr && checkRFonts(map, par.Pr.DefaultRunPr.RFonts);
 		}
@@ -11187,6 +11229,7 @@
 		window['AscFormat'].CalcLiterByLength = CalcLiterByLength;
 		window['AscFormat'].fillImage = fillImage;
 		window['AscFormat'].fSolveQuadraticEquation = fSolveQuadraticEquation;
+		window['AscFormat'].fGetMaxInscribedRectangle = fGetMaxInscribedRectangle;
 		window['AscFormat'].fApproxEqual = fApproxEqual;
 		window['AscFormat'].fCheckBoxIntersectionSegment = fCheckBoxIntersectionSegment;
 		window['AscFormat'].CMathPainter = CMathPainter;

@@ -6294,28 +6294,13 @@ PresNode.prototype.addChild = function (ch, pos) {
 			width = width || 0;
 			height = height || 0;
 		}
-		if (layoutShape.rot === 45 || layoutShape.rot === 225) {
-			const side = width / Math.sqrt(2);
-			const center = (width - side) / 2;
-			x += center;
-			y += center;
-			width = side;
-			height = side;
-		}
+		const newSizes = AscFormat.fGetMaxInscribedRectangle(width, height, shape.rot);
+		x += (width - newSizes.width) / 2;
+		y += (height - newSizes.height) / 2;
+		width = newSizes.width;
+		height = newSizes.height;
 		let scaleWidth = width * widthCoef;
 		let scaleHeight = height * heightCoef;
-		if (this.isSwitchWidthHeight()) {
-			x += (width - height) / 2;
-			y += (height - width) / 2;
-			let temp = width;
-			width = height;
-			height = temp;
-			temp = scaleWidth;
-			scaleWidth = scaleHeight;
-			scaleHeight = temp;
-		}
-
-
 		shape.x = x;
 		shape.y = y;
 
