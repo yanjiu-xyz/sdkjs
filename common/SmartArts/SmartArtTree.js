@@ -6497,7 +6497,7 @@ function CConnectionDistanceResolver() {
 	function getShapePoint(bounds) {
 		return new CCoordPoint(bounds.l + (bounds.r - bounds.l) / 2, bounds.t + (bounds.b - bounds.t) / 2);
 	}
-	function getMinShapeEdgePoint() {
+	function getMinShapeEdgePoint(bounds, guideVector) {
 		if (bounds.isEllipse) {
 			return getMinCircleEdgePoint(bounds, guideVector);
 		} else {
