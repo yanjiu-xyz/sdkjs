@@ -6276,7 +6276,6 @@ PresNode.prototype.addChild = function (ch, pos) {
 		const isChildInSpaceAlgorithm = this.parent && this.parent.algorithm instanceof SpaceAlgorithm;
 		const constrNode = isChildInSpaceAlgorithm ? this.parent : this;
 
-		const constrObject = constrNode.getConstraints(!isCalculateCoefficients);
 		const shape = this.getShape(isCalculateCoefficients);
 		shape.rot = AscFormat.normalizeRotate(degToRad * layoutShape.rot);
 
@@ -6295,12 +6294,13 @@ PresNode.prototype.addChild = function (ch, pos) {
 			height = height || 0;
 		}
 		const newSizes = AscFormat.fGetMaxInscribedRectangle(width, height, shape.rot);
+		const newScaledSizes = AscFormat.fGetMaxInscribedRectangle(width * widthCoef, height * heightCoef, shape.rot);
 		x += (width - newSizes.width) / 2;
 		y += (height - newSizes.height) / 2;
 		width = newSizes.width;
 		height = newSizes.height;
-		let scaleWidth = width * widthCoef;
-		let scaleHeight = height * heightCoef;
+		const scaleWidth = newScaledSizes.width;
+		const scaleHeight = newScaledSizes.height;
 		shape.x = x;
 		shape.y = y;
 

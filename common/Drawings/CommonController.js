@@ -242,9 +242,7 @@
 
 			return {
 				width: inscribedWidth,
-				height: inscribedHeight,
-				x: (width - inscribedWidth) / 2,
-				y: (height - inscribedHeight) / 2
+				height: inscribedHeight
 			};
 		}
 
