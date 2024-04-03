@@ -704,6 +704,26 @@ function (window, undefined) {
 		}
 	};
 
+	CCommentData.prototype.ConvertToSimpleObject = function()
+	{
+		var obj = {};
+
+		obj["Text"]      = this.m_sText;
+		obj["Time"]      = this.m_sTime;
+		obj["UserName"]  = this.m_sUserName;
+		obj["QuoteText"] = this.m_sQuoteText;
+		obj["Solved"]    = this.m_bSolved;
+		obj["UserData"]  = this.m_sUserData;
+		obj["Replies"]   = [];
+
+		for (var nIndex = 0, nCount = this.m_aReplies.length; nIndex < nCount; ++nIndex)
+		{
+			obj["Replies"].push(this.m_aReplies[nIndex].ConvertToSimpleObject());
+		}
+
+		return obj;
+	};
+
 	CCommentData.prototype.ReadFromSimpleObject = function (oData) {
 		if (!oData) return;
 
@@ -868,7 +888,7 @@ function (window, undefined) {
 
 		this.Lock = new AscCommon.CLock(); // Зажат ли комментарий другим пользователем
 		if (false === AscCommon.g_oIdCounter.m_bLoad) {
-			this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+			this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 			AscCommon.CollaborativeEditing.Add_Unlock2(this);
 		}
 
@@ -977,11 +997,11 @@ function (window, undefined) {
 		graphics.DrawPresentationComment(Flags, this.x, this.y, w, h);
 
 		var oLock = this.Lock;
-		if (oLock && AscCommon.locktype_None !== oLock.Get_Type()) {
+		if (oLock && AscCommon.c_oAscLockTypes.kLockTypeNone !== oLock.Get_Type()) {
 			var bCoMarksDraw = true;
 			var oApi = editor || Asc['editor'];
 			if (oApi) {
-				bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.locktype_Mine !== oLock.Get_Type());
+				bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
 			}
 			if (bCoMarksDraw) {
 				graphics.DrawLockObjectRect(oLock.Get_Type(), this.x, this.y, w, h);

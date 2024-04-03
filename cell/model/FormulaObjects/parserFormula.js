@@ -70,7 +70,7 @@ function (window, undefined) {
 
 	var TOK_SUBTYPE_UNION = 15;
 
-	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1};
+	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1, "LOOKUP": 1};
 
 	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
 
@@ -635,7 +635,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 
-	cBaseType.prototype.toArray = function (putValue, checkOnError) {
+	cBaseType.prototype.toArray = function (putValue, checkOnError, fPrepareElem) {
 		let arr = [];
 		if (this.getMatrix) {
 			arr = this.getMatrix();
@@ -648,6 +648,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							if (checkOnError) {
 								if (arr[i][j].type === cElementType.error) {
 									return arr[i][j];
+								}
+							}
+							if (fPrepareElem) {
+								arr[i][j] = fPrepareElem(arr[i][j]);
+								if (checkOnError) {
+									if (arr[i][j].type === cElementType.error) {
+										return arr[i][j];
+									}
 								}
 							}
 							if (putValue) {
@@ -663,11 +671,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					return this;
 				}
 			}
-
+			let _res = fPrepareElem ? fPrepareElem(this) : this;
+			if (fPrepareElem && checkOnError) {
+				if (this.type === cElementType.error) {
+					return this;
+				}
+			}
 			if (!arr[0]) {
 				arr[0] = [];
 			}
-			arr[0][0] = putValue ? this.getValue() : this;
+			arr[0][0] = putValue ? _res.getValue() : _res;
 		}
 		return arr;
 	};

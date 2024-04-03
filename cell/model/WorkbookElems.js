@@ -540,12 +540,6 @@ g_oColorManager = new ColorManager();
 	Fragment.prototype.initText = function () {
 		this.setFragmentText(this.charCodes ? AscCommon.convertUnicodeToUTF16(this.charCodes) : "", true);
 	};
-	Fragment.prototype.getCharCode = function (index) {
-		if (!this.isInitCharCodes()) {
-			this.initCharCodes();
-		}
-		return this.charCodes && this.charCodes[index];
-	};
 	Fragment.prototype.isInitCharCodes = function () {
 		return this.charCodes !== null;
 	};
@@ -1155,6 +1149,7 @@ var g_oFontProperties = {
 		}
 		this.fn = stream.GetString();
 	};
+	window["AscCommonExcel"].Font = Font;
 
 	var c_oAscPatternType = {
 		DarkDown :  0,
@@ -17006,6 +17001,481 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 
+	function CCustomFunctionEngine(wb) {
+		this.wb = wb;
+
+		this.prefixName = "CUSTOMFUNCTION_";
+	}
+	CCustomFunctionEngine.prototype.add = function (func, options) {
+		//options ->
+		/*{"params":
+		[
+			{
+				"defaultValue": ""
+				"description": "First number. *"
+				"name": "first"
+				"isOptional": false
+				"parentName": ""
+				"type": "number"
+			},
+			{
+				"defaultValue": ""
+				"description": "Second number. *"
+				"name": "second"
+				"isOptional": true
+				"parentName": ""
+				"type": "string"
+			}
+		]
+		*/
+
+		this._add(func, options);
+	};
+
+	CCustomFunctionEngine.prototype._add = function (func, options) {
+		let oThis = this;
+		let funcName = func.name.toUpperCase();
+		if (funcName.length === 0) {
+			console.log("REGISTRAION_ERROR_INVALID_FUNCTION_NAME");
+			return;
+		}
+
+
+		//TODO while add prefix "CUSTOMFUNCTION_", later need change prefix name
+		//prefix add for separate main function from custom function
+		//!!!_xldudf
+		funcName = this.prefixName + funcName;
+
+		let params = options && options["params"];
+		let argsInfo = this._getParamsInfo(func, params);
+
+		let argumentsType = [];
+		let argumentsMin = 0;
+		let argumentsMax = argsInfo ? argsInfo.length : 0;
+		if (argsInfo) {
+			let optionalCount = 0;
+			for (let i = 0; i < argsInfo.length; i++) {
+				argumentsType.push(this.getTypeByString(argsInfo[i].type));
+				if (argsInfo[i].isOptional) {
+					optionalCount++;
+				} else {
+					optionalCount = 0;
+				}
+			}
+			argumentsMin = argsInfo.length - optionalCount;
+		}
+
+
+		let argsFuncLength = func.length;
+		if (argsFuncLength > argumentsMax) {
+			console.log("REGISTRAION_ERROR_INVALID_FUNCTION_ARGUMENTS_COUNT");
+			return;
+		}
+
+		/**
+		 * @constructor
+		 * @extends {AscCommonExcel.cBaseFunction}
+		 */
+		function newFunc() {
+		}
+
+		//***array-formula***
+		newFunc.prototype = Object.create(AscCommonExcel.cBaseFunction.prototype);
+		newFunc.prototype.constructor = newFunc;
+		newFunc.prototype.name = funcName;
+		//newFunc.prototype.argumentsMin = argumentsMin;
+		//newFunc.prototype.argumentsMax = argumentsMax;
+		//argumentsType - other arguments type, need convert
+		newFunc.prototype.argumentsType = argumentsType;
+		newFunc.prototype.Calculate = function (arg) {
+			try {
+
+				if (arg.length < argumentsMin || arg.length > argumentsMax) {
+					return new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				}
+
+				for (let i in arg) {
+					if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error) {
+						return arg[i];
+					}
+				}
+
+				//prepare arguments
+				let args = [];
+				for (let i = 0; i < argsInfo.length; i++) {
+					let type = argsInfo[i].type;
+					let defaultValue = argsInfo[i].defaultValue;
+
+					if (!arg[i] && !defaultValue) {
+						continue;
+					}
+
+					if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && type === AscCommonExcel.cElementType.error) {
+						args.push(arg[i].toString());
+					} else {
+						if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error) {
+							return arg[i];
+						}
+
+						let elem = oThis.prepareInputArg(arg[i], type, defaultValue);
+						if (elem && elem.type === AscCommonExcel.cElementType.error) {
+							return elem;
+						}
+
+						args.push(elem);
+					}
+				}
+
+				let res = func.apply(this, args);
+
+				//prepare result
+				let returnInfo = options["returnInfo"];
+				return oThis.prepareResult(res, returnInfo.type);
+			} catch (e) {
+				console.log("ERROR CUSTOM FUNCTION CALCULATE")
+			}
+		};
+
+		this.addToFunctionsList(newFunc);
+	};
+
+	CCustomFunctionEngine.prototype._getParamsInfo = function (func, params) {
+		let aArgs = this._getArgsByFunc(func);
+		let argsInfo = [];
+		if (!aArgs) {
+			return argsInfo;
+		}
+		
+		let paramsMap = {};
+		if (params) {
+			for (let i in params) {
+				paramsMap[params[i].name] = params[i];
+			}
+		}
+		for (let i = 0; i < aArgs.length; i++) {
+			let type = "any";
+			let curParams = paramsMap && paramsMap[aArgs[i]];
+			let _isOptional = false;
+			let _defaultValue = null;
+			if (curParams) {
+				if (curParams["type"]) {
+					type = curParams["type"];
+				}
+				_isOptional = curParams["isOptional"];
+				_defaultValue = curParams["defaultValue"];
+			}
+			argsInfo.push({type: type, isOptional: _isOptional, defaultValue: _defaultValue});
+		}
+		return argsInfo;
+	};
+
+	CCustomFunctionEngine.prototype._getArgsByFunc = function (func) {
+		const funcCommentsRegExp = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+		const funcArgsNamesRegExp = /([^\s,]+)/g;
+		let sFunc = func.toString().replace(funcCommentsRegExp, '');
+		return sFunc.slice(sFunc.indexOf('(') + 1, sFunc.indexOf(')')).match(funcArgsNamesRegExp);
+	};
+
+	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc) {
+		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
+
+		let funcName = newFunc.prototype.name;
+
+		let isDuplicateName = false;
+		let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
+			AscCommonExcel.cFormulaFunction;
+		if (oFormulaList[funcName]) {
+			isDuplicateName = true;
+		}
+
+		if (isDuplicateName) {
+			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
+			for (let i in customFunctionList) {
+				if (customFunctionList[i] && customFunctionList[i].prototype.name === funcName) {
+					customFunctionList.splice(i - 0, 0);
+					break;
+				}
+			}
+		}
+
+		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
+		window['AscCommonExcel'].getFormulasInfo();
+		this.wb.initFormulasList && this.wb.initFormulasList();
+	};
+
+	CCustomFunctionEngine.prototype.getTypeByString = function (_type) {
+		let res =  AscCommonExcel.cElementType.number;
+		switch (_type) {
+			case "number":
+				res = AscCommonExcel.cElementType.number;
+				break;
+			case "string":
+				res = AscCommonExcel.cElementType.string;
+				break;
+			case "boolean":
+				res = AscCommonExcel.cElementType.bool;
+				break;
+			default:
+				res = AscCommonExcel.cElementType.any;
+				break;
+		}
+		return res;
+	};
+
+	CCustomFunctionEngine.prototype.prepareInputArg = function (_elem, _type, _defaultValue) {
+		if (!_elem) {
+			return _defaultValue;
+		}
+
+		let res = null;
+		switch (_type) {
+			case "number":
+				if (_elem.type === AscCommonExcel.cElementType.error) {
+					return _elem;
+				}
+				if (_elem.type === AscCommonExcel.cElementType.array || _elem.type === AscCommonExcel.cElementType.cellsRange || _elem.type === AscCommonExcel.cElementType.cellsRange3D) {
+					//TODO ms -> calc error
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = _elem.tocNumber();
+					if (res.type !== AscCommonExcel.cElementType.error) {
+						res = res.toNumber();
+					} else {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					}
+				}
+				break;
+			case "string":
+				if (_elem.type === AscCommonExcel.cElementType.array || _elem.type === AscCommonExcel.cElementType.cellsRange || _elem.type === AscCommonExcel.cElementType.cellsRange3D) {
+					//TODO ms -> calc error
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = _elem.tocString();
+					if (res.type !== AscCommonExcel.cElementType.error) {
+						res = res.toString();
+					} else {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					}
+				}
+				break;
+			case "boolean":
+				if (_elem.type === AscCommonExcel.cElementType.array || _elem.type === AscCommonExcel.cElementType.cellsRange || _elem.type === AscCommonExcel.cElementType.cellsRange3D) {
+					//TODO ms -> calc error
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = _elem.tocBool();
+					if (res.type !== AscCommonExcel.cElementType.error && res.toBool) {
+						res = res.toBool();
+					} else {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					}
+				}
+				break;
+			case "any":
+				if (_elem.type === AscCommonExcel.cElementType.array || _elem.type === AscCommonExcel.cElementType.cellsRange || _elem.type === AscCommonExcel.cElementType.cellsRange3D) {
+					//TODO ms -> calc error
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					if (_elem.type === AscCommonExcel.cElementType.cell || _elem.type === AscCommonExcel.cElementType.cell3D) {
+						_elem = _elem.getValue();
+					}
+					res = _elem.getValue();
+				}
+				break;
+			case "number[][]":
+				res = _elem.toArray(true, true, function (elem) {
+					return elem.tocNumber();
+				});
+				break;
+			case "string[][]":
+				res = _elem.toArray(true, true, function (elem) {
+					return elem.tocString();
+				});
+				break;
+			case "boolean[][]":
+				res = _elem.toArray(true, true, function (arrayElem) {
+					let _res = arrayElem.tocBool();
+					if (_res.type !== AscCommonExcel.cElementType.error && _res.toBool) {
+						return _res;
+					} else {
+						return new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					}
+				});
+				break;
+			case "any[][]":
+				res = _elem.toArray(true, true);
+				break;
+		}
+		return res;
+	};
+
+	CCustomFunctionEngine.prototype.prepareResult = function (val, _type) {
+		let res = null;
+		switch (_type) {
+			case "number":
+				if (typeof val === "object") {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._toNumber(val);
+				}
+				break;
+			case "string":
+				if (typeof val === "object") {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._toString(val);
+				}
+				break;
+			case "boolean":
+				if (typeof val === "object") {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._toBool(val);
+				}
+				break;
+			case "any":
+				if (typeof val === "object") {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._toAny(val);
+				}
+				break;
+			case "number[][]":
+				if (Asc.typeOf(val) !== "array" || !val[0]) {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._tocArray(val, AscCommonExcel.cElementType.number, true);
+				}
+				break;
+			case "string[][]":
+				if (Asc.typeOf(val) !== "array" || !val[0]) {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._tocArray(val, AscCommonExcel.cElementType.string, true);
+				}
+				break;
+			case "boolean[][]":
+				if (Asc.typeOf(val) !== "array" || !val[0]) {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._tocArray(val, AscCommonExcel.cElementType.bool, true);
+				}
+				break;
+			case "any[][]":
+				if (Asc.typeOf(val) !== "array" || !val[0]) {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._tocArray(val, null, true);
+				}
+				break;
+		}
+		return res;
+	};
+
+	CCustomFunctionEngine.prototype._toNumber = function (val) {
+		let res;
+		if (val === true || val === false) {
+			res = new AscCommonExcel.cBool(val);
+		} else {
+			res = typeof val === "string" ? new AscCommonExcel.cString(val) : new AscCommonExcel.cNumber(val);
+		}
+		return res;
+	};
+
+	CCustomFunctionEngine.prototype._toString = function (val) {
+		return new AscCommonExcel.cString(val + "");
+	};
+
+	CCustomFunctionEngine.prototype._toBool = function (val) {
+		if (this._checkBool(val)) {
+			return new AscCommonExcel.cBool(val);
+		} else {
+			if (Number.isFinite(val)) {
+				return new AscCommonExcel.cNumber(val);
+			} else {
+				return new AscCommonExcel.cString(val);
+			}
+		}
+	};
+
+	CCustomFunctionEngine.prototype._toAny = function (val) {
+		if (this._checkBool(val)) {
+			return new AscCommonExcel.cBool(val);
+		} else {
+			if (Number.isFinite(val)) {
+				return new AscCommonExcel.cNumber(val);
+			} else {
+				return new AscCommonExcel.cString(val);
+			}
+		}
+	};
+
+	CCustomFunctionEngine.prototype._tocArray = function (array, resType, checkOnError) {
+		var oArray = [], _res = new AscCommonExcel.cArray();
+
+		for (var i = 0; i < array.length; i++) {
+			for (var j = 0; j < array[i].length; j++) {
+				if (typeof array[i][j] === "object") {
+					return new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				}
+
+				let isError = checkOnError && this._checkOnErrorByString(array[i][j]);
+				if (isError) {
+					return isError;
+				}
+				if (!oArray[i]) {
+					oArray[i] = [];
+				}
+
+				switch (resType) {
+					case AscCommonExcel.cElementType.number:
+						oArray[i][j] = this._toNumber((array[i][j]));
+						break;
+					case AscCommonExcel.cElementType.string:
+						oArray[i][j] = this._toString((array[i][j]));
+						break;
+					case AscCommonExcel.cElementType.bool:
+						oArray[i][j] = this._toBool((array[i][j]));
+						break;
+					case null://any
+						oArray[i][j] = this._toAny((array[i][j]));
+						break;
+				}
+			}
+		}
+
+		_res.fillFromArray(oArray);
+
+		return _res;
+	};
+
+	CCustomFunctionEngine.prototype._checkBool = function (val) {
+		if (val === true || val === false) {
+			return true;
+		} else {
+			val = val.toLowerCase && val.toLowerCase();
+			if (val === "true" || val === "false") {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	CCustomFunctionEngine.prototype._checkOnErrorByString = function (_str) {
+		for (let i in window["AscCommon"].cErrorOrigin) {
+			if (window["AscCommon"].cErrorOrigin[i] === _str) {
+				return new AscCommonExcel.cError(_str);
+			}
+		}
+		for (let i in window["AscCommon"].cErrorLocal) {
+			if (window["AscCommon"].cErrorLocal[i] === _str) {
+				return new AscCommonExcel.cError(_str);
+			}
+		}
+		return false;
+	};
+
+
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
@@ -17519,6 +17989,8 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CTimelineStyle = CTimelineStyle;
 	window["AscCommonExcel"].CTimelineStyleElement = CTimelineStyleElement;
 	window["AscCommonExcel"].CTimelinePivotFilter = CTimelinePivotFilter;
+
+	window["AscCommonExcel"].CCustomFunctionEngine = CCustomFunctionEngine;
 
 
 

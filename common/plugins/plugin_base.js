@@ -438,6 +438,10 @@
 		settings.url = url + this.id;
 		window.Asc.plugin.executeMethod("ShowWindow", [this.id, settings]);
 	};
+	CPluginWindow.prototype.activate = function()
+	{
+		window.Asc.plugin.executeMethod("ActivateWindow", [this.id]);
+	};
 	CPluginWindow.prototype.close = function()
 	{
 		window.Asc.plugin.executeMethod("CloseWindow", [this.id]);

@@ -329,6 +329,8 @@
 	//for version history - changed ranges
 	this.oHistoryChangedRanges = null;
 
+	this.customFunctionEngine = null;
+
 	return this;
   }
 
@@ -5020,7 +5022,7 @@
 			let sheetsProps = this.printOptionsJson["spreadsheetLayout"] && this.printOptionsJson["spreadsheetLayout"]["sheetsProps"];
 			var ws = this.model.getWorksheet(index);
 			res = new Asc.CHeaderFooter(ws);
-			if (sheetsProps[index] && sheetsProps[index]["pageSetup"] && sheetsProps[index]["pageSetup"]["headerFooter"]) {
+			if (sheetsProps && sheetsProps[index] && sheetsProps[index]["pageSetup"] && sheetsProps[index]["pageSetup"]["headerFooter"]) {
 				res.initFromJson(sheetsProps[index]["pageSetup"]["headerFooter"]);
 			}
 		}
@@ -5740,6 +5742,13 @@
 			}
 		}
 		changedRanges.push({range: range, color: userColor});
+	};
+
+	WorkbookView.prototype.addCustomFunction = function(func, options) {
+		if (!this.customFunctionEngine) {
+			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
+		}
+		this.customFunctionEngine.add(func, options);
 	};
 
 
