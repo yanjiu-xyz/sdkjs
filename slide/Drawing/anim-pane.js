@@ -955,7 +955,8 @@
 		function closePanel(event, x, y) {
 			if (!this.hit(x, y)) { return }
 			if (this.isDisabled()) { return }
-			Asc.editor.asc_ShowAnimPane(false)
+			Asc.editor.asc_ShowAnimPane(false);
+			Asc.editor.sendEvent('asc_onCloseAnimPane');
 		}
 
 		// --- end of event handlers for buttons of CAnimPaneHeader
@@ -1096,7 +1097,7 @@
 			const animPaneHeight = animPaneAbsPosition.B - animPaneAbsPosition.T;
 			const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
 				this.getLeft(),
-				animPaneHeight - this.getTop()
+				animPaneHeight - TIMELINE_HEIGHT + this.getTop()
 			);
 
 			const data = new AscCommonSlide.CContextMenuData()
