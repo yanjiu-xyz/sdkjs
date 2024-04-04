@@ -3878,6 +3878,10 @@ function HierarchyAlgorithm() {
 			radiusCoefficient = Math.max(coefficient, scaleFactor);
 		}
 		this.calcValues.radius = maxRadius * radiusCoefficient;
+		const constrRadius = this.getConstrRadius(true);
+		if (constrRadius !== undefined && this.calcValues.radius > constrRadius) {
+			this.calcValues.radius = constrRadius;
+		}
 		const presNames = {};
 		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
 			const child = this.parentNode.childs[i];
@@ -3887,10 +3891,14 @@ function HierarchyAlgorithm() {
 			child.setHeightScale(coefficient, presNames);
 		}
 	};
-	CycleAlgorithm.prototype.getOffsetScaleFactor = function (radiusBounds, cycleBounds) {
-		if (this.parentNode.constr[AscFormat.Constr_type_sp] !== undefined) {
-			return 1;
+	CycleAlgorithm.prototype.getConstrRadius = function (isCalculateScaleCoefficients) {
+		const constrObject = this.parentNode.getConstraints(!isCalculateScaleCoefficients);
+		const diameter = constrObject[AscFormat.Constr_type_diam];
+		if (diameter !== undefined) {
+			return diameter / 2;
 		}
+	};
+	CycleAlgorithm.prototype.getOffsetScaleFactor = function (radiusBounds, cycleBounds) {
 		const parentNodeWidth = this.getParentNodeWidth();
 		const parentNodeHeight = this.getParentNodeHeight();
 
