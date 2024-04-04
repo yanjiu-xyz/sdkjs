@@ -1216,25 +1216,37 @@
 		const shapeBounds = this.getBounds();
 		checkBounds(bounds, shapeBounds);
 	};
-	Position.prototype.getBounds = function (isClean) {
-		const matrix = this.getMatrix();
-		const pos = isClean ? this.cleanParams : this;
-		const x1 = matrix.TransformPointX(pos.x, pos.y);
-		const x2 = matrix.TransformPointX(pos.x + pos.width, pos.y);
-		const x3 = matrix.TransformPointX(pos.x, pos.y + pos.height);
-		const x4 = matrix.TransformPointX(pos.x + pos.width, pos.y + pos.height);
-		const y1 = matrix.TransformPointY(pos.x, pos.y);
-		const y2 = matrix.TransformPointY(pos.x + pos.width, pos.y);
-		const y3 = matrix.TransformPointY(pos.x, pos.y + pos.height);
-		const y4 = matrix.TransformPointY(pos.x + pos.width, pos.y + pos.height);
-
+	Position.prototype.getBounds = function (isClean, skipRotate) {
 		const res = {
 			isEllipse: this.node.layoutInfo.shape.type === AscFormat.LayoutShapeType_shapeType_ellipse
 		};
-		const minX = Math.min(x1, x2, x3, x4);
-		const maxX = Math.max(x1, x2, x3, x4);
-		const minY = Math.min(y1, y2, y3, y4);
-		const maxY = Math.max(y1, y2, y3, y4);
+		const pos = isClean ? this.cleanParams : this;
+		let minX;
+		let maxX;
+		let minY;
+		let maxY;
+		if (skipRotate) {
+			minX = pos.x;
+			maxX = pos.x + pos.width;
+			minY = pos.y;
+			maxY = pos.y + pos.height;
+		} else {
+			const matrix = this.getMatrix();
+			const x1 = matrix.TransformPointX(pos.x, pos.y);
+			const x2 = matrix.TransformPointX(pos.x + pos.width, pos.y);
+			const x3 = matrix.TransformPointX(pos.x, pos.y + pos.height);
+			const x4 = matrix.TransformPointX(pos.x + pos.width, pos.y + pos.height);
+			const y1 = matrix.TransformPointY(pos.x, pos.y);
+			const y2 = matrix.TransformPointY(pos.x + pos.width, pos.y);
+			const y3 = matrix.TransformPointY(pos.x, pos.y + pos.height);
+			const y4 = matrix.TransformPointY(pos.x + pos.width, pos.y + pos.height);
+
+
+			minX = Math.min(x1, x2, x3, x4);
+			maxX = Math.max(x1, x2, x3, x4);
+			minY = Math.min(y1, y2, y3, y4);
+			maxY = Math.max(y1, y2, y3, y4);
+		}
 		if (pos.width < 0) {
 			res.l = maxX;
 			res.r = minX;
@@ -1550,29 +1562,35 @@
 		this._isHideLastChild = null;
 		this.constraintSizes = null;
 	}
-	BaseAlgorithm.prototype.getCompositeBounds = function (isCalculateCoefficients) {
-		let shapeBounds;
+
+	BaseAlgorithm.prototype.getChildAlgorithmAlignBounds = function (isCalculateCoefficients, skipRotate) {
+		const childShape = this.parentNode.getShape(isCalculateCoefficients);
+		return childShape.getBounds(false, skipRotate);
+	};
+	BaseAlgorithm.prototype.getAlgorithmAlignBounds = function (isCalculateCoefficients) {
 		const childs = this.parentNode.childs;
+		let bounds;
 		for (let i = 0; i < childs.length; i += 1) {
 			const node = childs[i];
 			const childShape = node.getShape(isCalculateCoefficients);
-			if (childShape.width <= 0 && childShape.height <= 0 || (node.algorithm instanceof ConnectorAlgorithm) || ((node.algorithm instanceof TextAlgorithm) && !node.isMainElement()) || node.isTxXfrm()) {
+			if (childShape.width <= 0 && childShape.height <= 0 || (node.algorithm instanceof ConnectorAlgorithm) || ((node.algorithm instanceof TextAlgorithm) && !node.isMainElement()) || node.isTxXfrm() || !node.algorithm) {
 				continue;
 			}
-			if (shapeBounds) {
-				checkBounds(shapeBounds, childShape.getBounds());
+			const childBounds = node.algorithm.getChildAlgorithmAlignBounds(isCalculateCoefficients, this instanceof CycleAlgorithm);
+			if (bounds) {
+				checkBounds(bounds, childBounds);
 			} else {
-				shapeBounds = childShape.getBounds();
+				bounds = childBounds;
 			}
 		}
-		return shapeBounds;
+		return bounds;
 	};
 	BaseAlgorithm.prototype.getHorizontalAlgorithmOffset = function (isCalculateCoefficients) {
 		if (this.params[AscFormat.Param_type_horzAlign] === AscFormat.ParameterVal_horizontalAlignment_none) {
 			return 0;
 		}
 
-		const constrBounds = this.getCompositeBounds(isCalculateCoefficients);
+		const constrBounds = this.getAlgorithmAlignBounds(isCalculateCoefficients);
 		if (!constrBounds) {
 			return 0;
 		}
@@ -1600,7 +1618,7 @@
 			return 0;
 		}
 
-		const constrBounds = this.getCompositeBounds(isCalculateCoefficients);
+		const constrBounds = this.getAlgorithmAlignBounds(isCalculateCoefficients);
 		if (!constrBounds) {
 			return 0;
 		}
@@ -3591,6 +3609,19 @@ function HierarchyAlgorithm() {
 		};
 	}
 	AscFormat.InitClassWithoutType(CycleAlgorithm, PositionAlgorithm);
+	CycleAlgorithm.prototype.getChildAlgorithmAlignBounds = function (isCalculateCoefficients, skipRotate) {
+		const x = this.parentNode.getConstr(AscFormat.Constr_type_l, !isCalculateCoefficients);
+		const y = this.parentNode.getConstr(AscFormat.Constr_type_t, !isCalculateCoefficients);
+		const width = this.parentNode.getConstr(AscFormat.Constr_type_w, !isCalculateCoefficients);
+		const height = this.parentNode.getConstr(AscFormat.Constr_type_h, !isCalculateCoefficients);
+		return {
+			l: x,
+			t: y,
+			r: x + width,
+			b: y + height
+		};
+	};
+
 	CycleAlgorithm.prototype.isCanSetConnection = function () {
 		return true;
 	};
@@ -3637,9 +3668,13 @@ function HierarchyAlgorithm() {
 		if (this.params[AscFormat.Param_type_spanAng] === undefined) {
 			this.params[AscFormat.Param_type_spanAng] = 360;
 		}
-		if (this.params[AscFormat.Param_type_off] === undefined) {
-			this.params[AscFormat.Param_type_off] = AscFormat.ParameterVal_offset_ctr;
+		if (this.params[AscFormat.Param_type_vertAlign] === undefined) {
+			this.params[AscFormat.Param_type_vertAlign] = AscFormat.ParameterVal_verticalAlignment_mid;
 		}
+		if (this.params[AscFormat.Param_type_horzAlign] === undefined) {
+			this.params[AscFormat.Param_type_horzAlign] = AscFormat.ParameterVal_horizontalAlignment_ctr;
+		}
+
 		if (this.params[AscFormat.Param_type_ctrShpMap] === undefined) {
 			this.params[AscFormat.Param_type_ctrShpMap] = AscFormat.ParameterVal_centerShapeMapping_none;
 		}
@@ -3879,7 +3914,7 @@ function HierarchyAlgorithm() {
 			this.calcScaleCoefficients();
 		} else {
 			this._calculateShapePositions();
-			this.applyParamOffsets();
+			this.applyAlgorithmAligns();
 			this.applyPostAlgorithmSettings();
 			this.setConnections();
 			this.createShadowShape(isCalculateScaleCoefficients);
