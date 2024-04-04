@@ -4411,11 +4411,11 @@ Because of this, the display is sometimes not correct.
 				  const step = this.getStep(i);
 					let count = this.getCount(i) || tempNodes.length;
 				  for (let k = this.getStart(i, tempNodes.length); k < tempNodes.length; k += step) {
+					  if (!count) {
+						  break;
+					  }
 					  newCurrentNodes.push(tempNodes[k]);
 						count -= 1;
-						if (!count) {
-							break;
-						}
 				  }
 			  }
 			  currentNodes = newCurrentNodes;
@@ -4444,7 +4444,7 @@ Because of this, the display is sometimes not correct.
 	  IteratorAttributes.prototype.getStart = function (index, nodesLength) {
 		  if (AscFormat.isRealNumber(this.st[index])) {
 				const start = this.st[index];
-				if (start < 0) {
+				if (start <= 0) {
 					return Math.max(nodesLength + start, 0);
 				}
 			  return start - 1;
