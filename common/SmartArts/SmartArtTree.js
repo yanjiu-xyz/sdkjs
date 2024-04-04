@@ -5214,16 +5214,21 @@ function PresNode(presPoint, contentNode) {
 	}
 	this.equalRelations = [];
 	this.adaptEqualRelations = [];
-	this.parentScale = {
-		width: 1,
-		height: 1
-	}
+	this.parentScale = {};
 	this.moveWith = null;
 	this._isTxXfrm = null;
 }
 	PresNode.prototype.initPresShape = function () {
 		if (!this.layoutInfo.shape) {
 			this.layoutInfo.shape = new AscFormat.SShape();
+		}
+	}
+	PresNode.prototype.getParentScale = function (type) {
+		return this.parentScale[type] === undefined ? 1 : this.parentScale[type];
+	}
+	PresNode.prototype.setParentScale = function (type, value) {
+		if (this.parentScale[type] === undefined || this.parentScale[type] > value) {
+			this.parentScale[type] = value;
 		}
 	}
 PresNode.prototype.getDefaultConnectionNode = function() {
@@ -5250,14 +5255,15 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 	PresNode.prototype.setWidthScale = function (pr, mapPresName, isLinear) {
 		const relationConstr = this.relations.widthConstr;
 		if (relationConstr) {
-			if (mapPresName[this.relations.widthRef.getPresName()]) {
+			const isUserConstraintRelation = isUserConstr(relationConstr.refType);
+			if (mapPresName[this.relations.widthRef.getPresName()] && !isUserConstraintRelation) {
 				if (isLinear && (this.algorithm instanceof TextAlgorithm ||
 					this.algorithm instanceof SpaceAlgorithm && this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none)) {
 					if (relationConstr.refType === AscFormat.Constr_type_h) {
 						const summaryWidth = this.getSummaryWidthScale();
 						if (summaryWidth > pr) {
 							const newCoef = pr / summaryWidth;
-							this.parentScale.width = newCoef;
+							this.setParentScale(AscFormat.Constr_type_w, newCoef);
 						}
 					}
 				}
@@ -5265,18 +5271,18 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 			}
 			if (relationConstr.for === AscFormat.Constr_for_self && relationConstr.for === relationConstr.refFor &&
 				relationConstr.refType === AscFormat.Constr_type_h || this.isSwitchWidthHeight()) {
-				if (pr < this.parentScale.height) {
-					this.parentScale.height = pr;
+				if (pr < this.getParentScale(AscFormat.Constr_type_h)) {
+					this.setParentScale(AscFormat.Constr_type_h, pr);
 				}
-			} else if (pr < this.parentScale.width) {
-						this.parentScale.width = pr;
+			} else if (pr < this.getParentScale(AscFormat.Constr_type_w)) {
+				this.setParentScale(AscFormat.Constr_type_w, pr);
 					}
 			}
 	}
 	PresNode.prototype.getSummaryScale = function (refNode, relationConstr, startCoefficient, mapRelations) {
 		while (relationConstr && refNode) {
 			if (relationConstr.refType === AscFormat.Constr_type_h) {
-				startCoefficient *= refNode.parentScale.height;
+				startCoefficient *= refNode.getParentScale(AscFormat.Constr_type_h);
 				if (refNode.relations.heightRef) {
 					const refPresName = refNode.relations.heightRef.getPresName();
 					if (mapRelations[AscFormat.Constr_type_h][refPresName]) {
@@ -5289,7 +5295,7 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 					break;
 				}
 			} else if (relationConstr.refType === AscFormat.Constr_type_w) {
-				startCoefficient *= refNode.parentScale.width;
+				startCoefficient *= refNode.getParentScale(AscFormat.Constr_type_w);
 				if (refNode.relations.widthRef) {
 					const refPresName = refNode.relations.widthRef.getPresName();
 					if (mapRelations[AscFormat.Constr_type_w][refPresName]) {
@@ -5307,7 +5313,7 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 	}
 
 	PresNode.prototype.getSummaryHeightScale = function () {
-		const coefficient = this.parentScale.height;
+		const coefficient = this.getParentScale(AscFormat.Constr_type_h);
 		const relationConstr = this.relations.heightConstr;
 		const refNode = this.relations.heightRef;
 		const mapRelations = {};
@@ -5320,7 +5326,7 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 	};
 
 	PresNode.prototype.getSummaryWidthScale = function () {
-		const coefficient = this.parentScale.width;
+		const coefficient = this.getParentScale(AscFormat.Constr_type_w);
 		const relationConstr = this.relations.widthConstr;
 		const refNode = this.relations.widthRef;
 		const mapRelations = {};
@@ -5334,32 +5340,33 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 	PresNode.prototype.setHeightScale = function (pr, mapPresName, isLinear) {
 		const relationConstr = this.relations.heightConstr;
 		if (relationConstr) {
-			if (mapPresName[this.relations.heightRef.getPresName()]) {
+			const isUserConstraintRelation = isUserConstr(relationConstr.refType);
+			if (mapPresName[this.relations.heightRef.getPresName()] && !isUserConstraintRelation) {
 				if (isLinear && (this.algorithm instanceof TextAlgorithm ||
 					this.algorithm instanceof SpaceAlgorithm && this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none)) {
 					if (relationConstr.refType === AscFormat.Constr_type_w) {
 						const summaryScale = this.getSummaryHeightScale();
 						if (summaryScale > pr) {
 							const newCoef = pr / summaryScale;
-							this.parentScale.height = newCoef;
+							this.setParentScale(AscFormat.Constr_type_h, newCoef);
 						}
 					}
 				}
 				return;
 			}
-			if (relationConstr.for === AscFormat.Constr_for_self && relationConstr.for === relationConstr.refFor &&
+			if (isUserConstraintRelation) {
+				this.setParentScale(relationConstr.refType, pr);
+			} else if (relationConstr.for === AscFormat.Constr_for_self && relationConstr.for === relationConstr.refFor &&
 			relationConstr.refType === AscFormat.Constr_type_w
 			|| this.isSwitchWidthHeight()) {
-				if (pr < this.parentScale.width) {
-					this.parentScale.width = pr;
-				}
-			} else if (pr < this.parentScale.height) {
-				this.parentScale.height = pr;
+					this.setParentScale(AscFormat.Constr_type_w, pr);
+			} else {
+				this.setParentScale(AscFormat.Constr_type_h, pr);
 			}
 		}
 	}
 PresNode.prototype.getNamedNode = function (name) {
-		if (name === undefined) {
+		if (name === undefined || name === this.getPresName()) {
 			return this;
 		}
 	if (this.namedNodes === null) {
@@ -5843,39 +5850,55 @@ PresNode.prototype.addChild = function (ch, pos) {
 				return false;
 		}
 	}
+	function isMainConstr(type) {
+		switch (type) {
+			case AscFormat.Constr_type_w:
+			case AscFormat.Constr_type_h:
+				return true;
+			default:
+				return false;
+		}
+	}
 
 	PresNode.prototype.setConstraint = function (constr, value, isAdapt) {
 		if (!this.isCanAdapt(constr, isAdapt)) {
 			return false;
 		}
-		let parentScaleHeight = this.parentScale.height;
-		let parentScaleWidth = this.parentScale.width;
-		if (isAdapt && this.algorithm instanceof CompositeAlgorithm && this.algorithm.params[AscFormat.Param_type_ar]) {
-			const commonCoefficient = Math.min(parentScaleHeight, parentScaleWidth);
-			parentScaleHeight = commonCoefficient;
-			parentScaleWidth = commonCoefficient;
-		}
-		switch (constr.type) {
-			case AscFormat.Constr_type_h: {
-				let mainScale = parentScaleHeight;
-				let acctScale = parentScaleWidth;
-				if (this.isSwitchWidthHeight()) {
-					value *= acctScale;
-				} else {
-					value *= mainScale;
-				}
-				break;
+		if (isMainConstr(constr.type)) {
+			let parentScaleHeight = this.getParentScale(AscFormat.Constr_type_h);
+			let parentScaleWidth = this.getParentScale(AscFormat.Constr_type_w);
+			if (isAdapt && this.algorithm instanceof CompositeAlgorithm && this.algorithm.params[AscFormat.Param_type_ar]) {
+				const commonCoefficient = Math.min(parentScaleHeight, parentScaleWidth);
+				parentScaleHeight = commonCoefficient;
+				parentScaleWidth = commonCoefficient;
 			}
-			case AscFormat.Constr_type_w: {
-				let mainScale = parentScaleWidth;
-				let acctScale = parentScaleHeight;
-				if (this.isSwitchWidthHeight()) {
-					value *= acctScale;
-				} else {
-					value *= mainScale;
+			switch (constr.type) {
+				case AscFormat.Constr_type_h: {
+					let mainScale = parentScaleHeight;
+					let acctScale = parentScaleWidth;
+					if (this.isSwitchWidthHeight()) {
+						value *= acctScale;
+					} else {
+						value *= mainScale;
+					}
+					break;
 				}
-				break;
+				case AscFormat.Constr_type_w: {
+					let mainScale = parentScaleWidth;
+					let acctScale = parentScaleHeight;
+					if (this.isSwitchWidthHeight()) {
+						value *= acctScale;
+					} else {
+						value *= mainScale;
+					}
+					break;
+				}
+				default:
+					break;
 			}
+		} else {
+			const parentScale = this.getParentScale(constr.type);
+			value *= parentScale;
 		}
 		let factor = this.getFactRule(constr.type);
 		if (factor === undefined) {
