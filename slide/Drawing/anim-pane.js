@@ -2352,6 +2352,8 @@
 
 		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
 		animPane.SetCursorType(cursorType, mouseMoveData);
+
+		animPane.sentMouseMoveData = mouseMoveData;
 	}
 
 	CAnimItem.prototype.getInfoForTooltip = function (x, y) {

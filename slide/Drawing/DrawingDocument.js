@@ -6945,9 +6945,19 @@ function CAnimationPaneDrawer(page, htmlElement)
 	};
 	oThis.onMouseMove = function (e)
 	{
+		oThis.sentMouseMoveData = null; // can be overwritten in onMouseMove's below
+
 		oThis.header.onMouseMove(e);
 		oThis.list.onMouseMove(e);
 		oThis.timeline.onMouseMove(e);
+
+		if (oThis.sentMouseMoveData === null) {
+			const data = new AscCommon.CMouseMoveData();
+
+			Asc.editor.sync_MouseMoveStartCallback();
+			Asc.editor.sync_MouseMoveCallback(data);
+			Asc.editor.sync_MouseMoveEndCallback();
+		}
 	};
 	oThis.onMouseUp = function (e)
 	{
@@ -7002,7 +7012,9 @@ function CAnimationPaneDrawer(page, htmlElement)
 		if ("undefined" === typeof (Data) || null === Data)
 			Data = new AscCommon.CMouseMoveData();
 
+		Asc.editor.sync_MouseMoveStartCallback();
 		Asc.editor.sync_MouseMoveCallback(Data);
+		Asc.editor.sync_MouseMoveEndCallback();
 	};
 }
 
