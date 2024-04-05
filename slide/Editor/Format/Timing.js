@@ -1888,6 +1888,16 @@
         }
         return oTmRoot.getAllAnimEffects();
     };
+
+	CTiming.prototype.getAnimEffectById = function(sId) {
+		const allEffects = this.getAllAnimEffects();
+		for (let nEffect = 0; nEffect < allEffects.length; ++nEffect) {
+			if (sId === allEffects[nEffect].Id) {
+				return allEffects[nEffect];
+			}
+		}
+		return null;
+	};
 	CTiming.prototype.hasEffects = function() {
 		if (!this.tnLst) {
 			return false;
