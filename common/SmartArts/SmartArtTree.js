@@ -1859,6 +1859,9 @@
 
 	function SnakeAlgorithm() {
 		PositionAlgorithm.call(this);
+		this.calcValues = {
+			spacing: null
+		};
 	}
 
 	AscFormat.InitClassWithoutType(SnakeAlgorithm, PositionAlgorithm);
@@ -1873,8 +1876,11 @@
 		if (this.params[AscFormat.Param_type_bkpt] === undefined) {
 			this.params[AscFormat.Param_type_bkpt] = AscFormat.ParameterVal_breakpoint_endCnv;
 		}
-		if (this.params[AscFormat.Param_type_off] === undefined) {
-			this.params[AscFormat.Param_type_off] = AscFormat.ParameterVal_offset_ctr;
+		if (this.params[AscFormat.Param_type_vertAlign] === undefined) {
+			this.params[AscFormat.Param_type_vertAlign] = AscFormat.ParameterVal_verticalAlignment_mid;
+		}
+		if (this.params[AscFormat.Param_type_horzAlign] === undefined) {
+			this.params[AscFormat.Param_type_horzAlign] = AscFormat.ParameterVal_horizontalAlignment_ctr;
 		}
 	};
 	SnakeAlgorithm.prototype.getStartValues = function (node) {
@@ -1895,6 +1901,110 @@
 	};
 
 
+	SnakeAlgorithm.prototype.calculateFixedRowScaleCoefficient = function () {
+		const parentNode = this.parentNode;
+		const childs = parentNode.childs;
+
+		const parentWidth = parentNode.getConstr(AscFormat.Constr_type_w);
+		const parentHeight = parentNode.getConstr(AscFormat.Constr_type_h);
+		const spaceConstr = parentNode.getConstr(AscFormat.Constr_type_sp);
+
+		const countInRow = this.getBreakpointFixedValue();
+		let maxWidth = 0;
+		let height = -spaceConstr;
+		let rowWidth = 0;
+		let maxRowHeight = 0;
+		let rowShapeCounter = 0;
+		for (let i = 0; i < childs.length; i += 1) {
+			const node = childs[i];
+			const shape = node.getShape(true);
+			if (node.isMainElement()) {
+				if (rowShapeCounter === countInRow) {
+					rowShapeCounter = 0;
+					if (maxWidth < rowWidth) {
+						maxWidth = rowWidth;
+					}
+					height += maxRowHeight + spaceConstr;
+					maxRowHeight = shape.height;
+					rowWidth = shape.width;
+				} else {
+					rowWidth += shape.width;
+					if (shape.height > maxRowHeight) {
+						maxRowHeight = shape.height;
+					}
+				}
+				rowShapeCounter += 1;
+			} else if (rowShapeCounter !== 0 && rowShapeCounter !== countInRow) {
+				rowWidth += shape.width;
+			}
+		}
+		if (rowShapeCounter !== 0) {
+			if (maxWidth < rowWidth) {
+				maxWidth = rowWidth;
+			}
+			height += maxRowHeight + spaceConstr;
+		}
+		const coefficient = Math.min(1, parentWidth / maxWidth, parentHeight / height);
+		this.setScaleCoefficient(coefficient);
+	};
+	SnakeAlgorithm.prototype.calculateFixedColumnScaleCoefficient = function () {
+		const parentNode = this.parentNode;
+		const childs = parentNode.childs;
+
+		const parentWidth = parentNode.getConstr(AscFormat.Constr_type_w);
+		const parentHeight = parentNode.getConstr(AscFormat.Constr_type_h);
+		const spaceConstr = parentNode.getConstr(AscFormat.Constr_type_sp);
+
+		const countInColumn = this.getBreakpointFixedValue();
+
+		let maxHeight = 0;
+		let width = -spaceConstr;
+		let columnHeight = 0;
+		let maxColumnWidth = 0;
+		let columnShapeCounter = 0;
+		for (let i = 0; i < childs.length; i += 1) {
+			const node = childs[i];
+			const shape = node.getShape(true);
+			if (node.isMainElement()) {
+				if (columnShapeCounter === countInColumn) {
+					columnShapeCounter = 0;
+					if (maxHeight < columnHeight) {
+						maxHeight = columnHeight;
+					}
+					width += maxColumnWidth + spaceConstr;
+					maxColumnWidth = shape.width;
+					columnHeight = shape.height;
+				} else {
+					columnHeight += shape.height;
+					if (shape.width > maxColumnWidth) {
+						maxColumnWidth = shape.width;
+					}
+				}
+				columnShapeCounter += 1;
+			} else if (columnShapeCounter !== 0 && columnShapeCounter !== countInColumn) {
+				columnHeight += shape.height;
+			}
+		}
+		if (columnShapeCounter !== 0) {
+			if (maxHeight < columnHeight) {
+				maxHeight = columnHeight;
+			}
+			width += maxColumnWidth + spaceConstr;
+		}
+		const coefficient = Math.min(1, parentWidth / width, parentHeight / maxHeight);
+		this.setScaleCoefficient(coefficient);
+	};
+	SnakeAlgorithm.prototype.setScaleCoefficient = function (coefficient) {
+		const mapPresNames = {};
+		this.parentNode.forEachDes(function (node) {
+			const presName = node.getPresName();
+			mapPresNames[presName] = true;
+			node.setWidthScale(coefficient, mapPresNames);
+			node.setHeightScale(coefficient, mapPresNames);
+		});
+		const space = this.parentNode.getConstr(AscFormat.Constr_type_sp);
+		this.calcValues.spacing = coefficient * space;
+	}
 	SnakeAlgorithm.prototype.calculateCanvasRowScaleCoefficient = function () {
 		const parentNode = this.parentNode;
 		const childs = parentNode.childs;
@@ -1981,13 +2091,7 @@
 			nNeedRecalc = i;
 			i = 1;
 		}
-		const mapPresNames = {};
-		this.parentNode.forEachDes(function (node) {
-			const presName = node.getPresName();
-			mapPresNames[presName] = true;
-			node.setWidthScale(coefficient, mapPresNames);
-			node.setHeightScale(coefficient, mapPresNames);
-		});
+		this.setScaleCoefficient(coefficient);
 	};
 	SnakeAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createShadowShape(false, true, isCalculateScaleCoefficients);
@@ -1998,6 +2102,7 @@
 		} else {
 			this._calculateShapePositions();
 			this.applyParamOffsets();
+			this.applyAlgorithmAligns(isCalculateScaleCoefficients);
 			this.applyPostAlgorithmSettings();
 		}
 		this.createShadowShape(isCalculateScaleCoefficients);
@@ -2019,7 +2124,7 @@
 		const mainElements = [];
 		for (let i = 0; i < childs.length; i += 1) {
 			const node = childs[i];
-			if (node.isContentNode()) {
+			if (node.isMainElement()) {
 				mainElements.push(node);
 			}
 		}
@@ -2052,7 +2157,7 @@
 	SnakeAlgorithm.prototype.calculateRowSnakeShapePositions = function () {
 		const childs = this.parentNode.childs;
 		const parentWidth = this.parentNode.getConstr(AscFormat.Constr_type_w, true);
-		const constrSpace = this.parentNode.getConstr(AscFormat.Constr_type_sp, true);
+		const constrSpace = this.calcValues.spacing;
 		const rows = this.getShapeContainer();
 		rows.setGap(constrSpace);
 		let row = new ShapeGridContainer();
@@ -2067,7 +2172,7 @@
 				rows.push(row);
 				row = new ShapeGridContainer();
 				sibSpacingShapes.length = 0;
-				if (child.isContentNode()) {
+				if (child.isMainElement()) {
 					rowWidth = shape.width;
 					row.push(shape);
 					shape.moveTo(-shape.x, 0);
@@ -2077,7 +2182,7 @@
 			} else {
 				shape.moveTo(rowWidth - shape.x, 0);
 				rowWidth = newRowWidth;
-				if (child.isContentNode()) {
+				if (child.isMainElement()) {
 					for (let j = 0; j < sibSpacingShapes.length; j += 1) {
 						row.push(sibSpacingShapes[j]);
 					}
@@ -2094,15 +2199,63 @@
 		}
 		rows.applyVerticalPositions();
 	};
+	SnakeAlgorithm.prototype.calculateColumnSnakeShapePositions = function () {
+		const childs = this.parentNode.childs;
+		const parentHeight = this.parentNode.getConstr(AscFormat.Constr_type_h, true);
+		const constrSpace = this.calcValues.spacing;
+		const columns = this.getShapeContainer();
+		columns.setGap(constrSpace);
+		let column = new ShapeGridContainer();
+
+		let columnHeight = 0;
+		const sibSpacingShapes = [];
+		for (let i = 0; i < childs.length; i += 1) {
+			const child = childs[i];
+			const shape = child.getShape(false);
+			const newColumnHeight = shape.height + columnHeight;
+			if (newColumnHeight > parentHeight && !fAlgDeltaEqual(newColumnHeight, parentHeight)) {
+				columns.push(column);
+				column = new ShapeGridContainer();
+				sibSpacingShapes.length = 0;
+				if (child.isMainElement()) {
+					columnHeight = shape.height;
+					column.push(shape);
+					shape.moveTo(0, -shape.y);
+				} else {
+					columnHeight = 0;
+				}
+			} else {
+				shape.moveTo(0, columnHeight - shape.y);
+				columnHeight = newColumnHeight;
+				if (child.isMainElement()) {
+					for (let j = 0; j < sibSpacingShapes.length; j += 1) {
+						column.push(sibSpacingShapes[j]);
+					}
+					sibSpacingShapes.length = 0;
+					column.push(shape);
+				} else {
+					sibSpacingShapes.push(shape);
+				}
+
+			}
+		}
+		if (column !== columns.columns[columns.columns.length - 1]) {
+			columns.push(column);
+		}
+		columns.applyHorizontalPositions();
+	};
+	SnakeAlgorithm.prototype.isColumn = function () {
+		return this.params[AscFormat.Param_type_flowDir] === AscFormat.ParameterVal_flowDirection_col;
+	}
 	SnakeAlgorithm.prototype.getShapeContainer = function (isCalculateScaleCoefficient) {
 		if (isCalculateScaleCoefficient) {
 			if (this.coefficientShapeContainer === null) {
-				this.coefficientShapeContainer = new ShapeRows();
+				this.coefficientShapeContainer = this.isColumn() ? new ShapeColumns() : new ShapeRows();
 			}
 			return this.coefficientShapeContainer;
 		}
 		if (this.shapeContainer === null) {
-			this.shapeContainer = new ShapeRows();
+			this.shapeContainer = this.isColumn() ? new ShapeColumns() : new ShapeRows();
 		}
 		return this.shapeContainer;
 	};
@@ -2272,19 +2425,16 @@
 		const width = bounds.r - bounds.l;
 		const height = bounds.b - bounds.t;
 
-		const offRowsX = parentWidth / 2 - (bounds.l + width / 2);
-		const offRowsY = parentHeight / 2 - (bounds.t + height / 2);
-
 		for (let i = 0; i < this.rows.length; i++) {
 			const row = this.rows[i];
 			const cleanHeight = row.getCleanHeight();
 			const rowBounds = row.getBounds();
 			const rowWidth = rowBounds.r - rowBounds.l;
-			const offRowX = width / 2 - ((bounds.l - rowBounds.l) + rowWidth / 2);
+			const offRowX = bounds.l + width / 2 - (rowBounds.l + rowWidth / 2);
 			for (let j = 0; j < row.shapes.length; j++) {
 				const shape = row.shapes[j];
 				//todo
-				shape.moveTo(offRowsX + offRowX, offRowsY);
+				shape.moveTo(offRowX, 0);
 			}
 		}
 	};
@@ -2298,11 +2448,15 @@
 		ContainerBase.call(this);
 		this.bounds = null;
 		this.columns = [];
+		this.gap = 0;
 	}
 	AscFormat.InitClassWithoutType(ShapeColumns, ContainerBase);
 
 	ShapeColumns.prototype.push = function (elem) {
 		this.columns.push(elem);
+	}
+	ShapeColumns.prototype.setGap = function (value) {
+		this.gap = value;
 	}
 	ShapeColumns.prototype.getBounds = function () {
 			if (this.columns.length) {
@@ -2319,6 +2473,20 @@
 		return this.bounds;
 	};
 
+	ShapeColumns.prototype.applyHorizontalPositions = function () {
+		for (let i = 1; i < this.columns.length; i += 1) {
+			const currentColumn = this.columns[i];
+			const currentColumnBounds = currentColumn.getBounds();
+			const previousColumnBounds = this.columns[i - 1].getBounds();
+
+			const offX = previousColumnBounds.r + this.gap - currentColumnBounds.l;
+			for (let j = 0; j < currentColumn.shapes.length; j += 1) {
+				const shape = currentColumn.shapes[j];
+				shape.moveTo(offX, 0);
+			}
+		}
+	};
+
 	ShapeColumns.prototype.applyCenterAlign = function (parentHeight, parentWidth, isCalculateScaleCoefficient, algorithm) {
 		const bounds = this.getBounds();
 		const width = bounds.r - bounds.l;
@@ -2332,13 +2500,11 @@
 			const columnBounds = column.getBounds();
 			const columnWidth = columnBounds.r - columnBounds.l;
 			const columnHeight = columnBounds.b - columnBounds.t;
-			const offColumnY = height / 2 - ((bounds.t - columnBounds.t) + columnHeight / 2)
+			const offColumnY = height / 2 - (columnBounds.t + columnHeight / 2)
 			for (let j = 0; j < column.shapes.length; j++) {
 				const shape = column.shapes[j];
 				const shapeBounds = shape.getBounds();
-				//todo
-				const offColumnX = columnWidth / 2 - ((shapeBounds.l - columnBounds.l) + (shapeBounds.r - shapeBounds.l) / 2);
-				shape.moveTo(offColumnsX + offColumnX, offColumnsY + offColumnY);
+				shape.moveTo(0, offColumnY);
 			}
 		}
 	};
