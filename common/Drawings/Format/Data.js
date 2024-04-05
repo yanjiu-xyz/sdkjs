@@ -4018,6 +4018,17 @@ Because of this, the display is sometimes not correct.
 						default:
 							return this.val;
 					}
+				case Param_type_bkpt:
+					switch (this.val) {
+						case 'fixed':
+							return ParameterVal_breakpoint_fixed;
+						case 'endCnv':
+							return ParameterVal_breakpoint_endCnv;
+						case 'bal':
+							return ParameterVal_breakpoint_bal;
+						default:
+							return this.val;
+					}
 				case Param_type_vertAlign:
 					switch (this.val) {
 						case 'mid':
@@ -4092,6 +4103,7 @@ Because of this, the display is sometimes not correct.
 				case Param_type_ar:
 				case Param_type_spanAng:
 				case Param_type_stAng:
+				case Param_type_bkPtFixedVal:
 					return parseFloat(this.val);
 				default:
 					return this.val;
