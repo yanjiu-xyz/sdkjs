@@ -2258,8 +2258,10 @@
 		// Callback functions for effect bar events
 		this.onMouseDownCallback = function (event, x, y) {
 			if (!this.hit(x, y)) { return }
-			
-			this.updateSelectState(event);
+
+			if (!this.contextMenuButton.hit(x, y)) {
+				this.updateSelectState(event);
+			}
 
 			const hitRes = this.hitInEffectBar(x, y);
 			if (hitRes) {

@@ -6644,27 +6644,19 @@ background-repeat: no-repeat;\
 		this.WordControl.ChangeTimelineScale(false);
 	}
 
-	asc_docs_api.prototype.asc_DeleteAnimEffect = function(sEffectId) {
-		const currentTiming = this.WordControl.m_oLogicDocument.GetCurTiming();
-		if (!currentTiming) { return }
-
-		const effect = currentTiming.getAnimEffectById(sEffectId);
-		if (effect) {
-			currentTiming.removeEffects([effect]);
-			this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+	asc_docs_api.prototype.asc_RemoveSelectedAnimEffects = function() {
+		this.asc_AddAnimation(null, AscFormat.ANIM_PRESET_NONE);
+	};
+	asc_docs_api.prototype.asc_SetSelectedAnimEffectsStartType = function(nStartType) {
+		const selectedElements = this.getSelectedElements();
+		for (let nElement = 0; nElement < selectedElements.length; nElement++) {
+			if (selectedElements[nElement].Value instanceof AscFormat.CPar) {
+				const par = selectedElements[nElement].Value.createDuplicate();
+				par.asc_putStartType(nStartType);
+				this.asc_SetAnimationProperties(par);
+			}
 		}
-	}
-	asc_docs_api.prototype.asc_ChangeAnimEffectStartType = function(sEffectId, nStartType) {
-		const currentTiming = this.WordControl.m_oLogicDocument.GetCurTiming();
-		if (!currentTiming) { return }
-
-		const effect = currentTiming.getAnimEffectById(sEffectId);
-		if (effect) {
-			effect.asc_putStartType(nStartType);
-			this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-		}
-	}
-
+	};
 	asc_docs_api.prototype.asc_DeleteVerticalScroll = function()
 	{
 		this.WordControl.DeleteVerticalScroll();
@@ -9486,8 +9478,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_ShowAnimPane']                    = asc_docs_api.prototype.asc_ShowAnimPane;
 	asc_docs_api.prototype['asc_ZoomOutTimeline']                 = asc_docs_api.prototype.asc_ZoomOutTimeline;
 	asc_docs_api.prototype['asc_ZoomInTimeline']                  = asc_docs_api.prototype.asc_ZoomInTimeline;
-	asc_docs_api.prototype['asc_ChangeAnimEffectStartType']       = asc_docs_api.prototype.asc_ChangeAnimEffectStartType;
-	asc_docs_api.prototype['asc_DeleteAnimEffect']                = asc_docs_api.prototype.asc_DeleteAnimEffect;
+	asc_docs_api.prototype['asc_SetSelectedAnimEffectsStartType'] = asc_docs_api.prototype.asc_SetSelectedAnimEffectsStartType;
+	asc_docs_api.prototype['asc_RemoveSelectedAnimEffects']       = asc_docs_api.prototype.asc_RemoveSelectedAnimEffects;
 	asc_docs_api.prototype['asc_DeleteVerticalScroll']            = asc_docs_api.prototype.asc_DeleteVerticalScroll;
 	asc_docs_api.prototype['syncOnThumbnailsShow']                = asc_docs_api.prototype.syncOnThumbnailsShow;
 	asc_docs_api.prototype['can_AddHyperlink']                    = asc_docs_api.prototype.can_AddHyperlink;
