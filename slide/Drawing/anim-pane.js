@@ -2238,14 +2238,14 @@
 
 			const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
 				this.bounds.l,
-				HEADER_HEIGHT + this.bounds.t - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
+				HEADER_HEIGHT + this.bounds.b - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
 			);
 
 			const data = new AscCommonSlide.CContextMenuData()
 			data.Type = Asc.c_oAscContextMenuTypes.AnimEffect;
 			data.X_abs = coords.X;
 			data.Y_abs = coords.Y;
-			data.Effect = this.effect;
+			data.EffectStartType = this.parentControl.effect.getNodeType();
 
 			editor.sync_ContextMenuCallback(data);
 		}

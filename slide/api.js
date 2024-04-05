@@ -8117,8 +8117,8 @@ background-repeat: no-repeat;\
 	{
 		return this.Guide;
 	};
-	CContextMenuData.prototype.get_Effect = function() {
-		return this.Effect;
+	CContextMenuData.prototype.get_EffectStartType = function() {
+		return this.EffectStartType;
 	};
 
 	asc_docs_api.prototype.sync_ContextMenuCallback = function(Data)
@@ -9698,7 +9698,7 @@ background-repeat: no-repeat;\
 	CContextMenuData.prototype['get_IsSlideSelect']   = CContextMenuData.prototype.get_IsSlideSelect;
 	CContextMenuData.prototype['get_IsSlideHidden']   = CContextMenuData.prototype.get_IsSlideHidden;
 	CContextMenuData.prototype['get_Guide']           = CContextMenuData.prototype.get_Guide;
-	CContextMenuData.prototype['get_Effect']          = CContextMenuData.prototype.get_Effect;
+	CContextMenuData.prototype['get_EffectStartType'] = CContextMenuData.prototype.get_EffectStartType;
 
 	window['Asc']['CAscSlideProps']                   = CAscSlideProps;
 	CAscSlideProps.prototype['get_background']        = CAscSlideProps.prototype.get_background;
