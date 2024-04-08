@@ -52,7 +52,7 @@
 
 	const degToRad = Math.PI / 180;
 	const radToDeg = 1 / degToRad;
-	const algDelta = 1e-13;
+	const algDelta = 1e-10;
 	const bulletFontSizeCoefficient = 51 / 65;
 
 	function checkPositionBounds(position, bounds) {
@@ -1571,8 +1571,7 @@
 		let bounds;
 		for (let i = 0; i < childs.length; i += 1) {
 			const node = childs[i];
-			const childShape = node.getShape(isCalculateCoefficients);
-			if (childShape.width <= 0 && childShape.height <= 0 || (node.algorithm instanceof ConnectorAlgorithm) || ((node.algorithm instanceof TextAlgorithm) && !node.isMainElement()) || node.isTxXfrm() || !node.algorithm) {
+			if (node.isSkipShape(isCalculateCoefficients)) {
 				continue;
 			}
 			const childBounds = node.algorithm.getChildAlgorithmAlignBounds(isCalculateCoefficients, this instanceof CycleAlgorithm);
@@ -1713,7 +1712,7 @@
 		let previousIndex = 0;
 		for (let i = 0; i < nodes.length; i++) {
 			const node = nodes[i];
-			if (node.isMainElement()) {
+			if (node.isRealShapeType()) {
 				previousIndex = i;
 				break;
 			}
@@ -1724,13 +1723,13 @@
 			if (shape.type === AscFormat.LayoutShapeType_outputShapeType_conn) {
 				const algorithm = node.algorithm;
 				let nextIndex = i + 1;
-				while (nextIndex < nodes.length && !nodes[nextIndex].isMainElement()) {
+				while (nextIndex < nodes.length && !nodes[nextIndex].isRealShapeType()) {
 					nextIndex += 1;
 				}
 				const lastNode = nodes[nodes.length - 1].node;
 				if (nextIndex === nodes.length && !lastNode.isHideLastTrans) {
 					nextIndex = 0;
-					while (nextIndex < previousIndex && !nodes[nextIndex].isMainElement()) {
+					while (nextIndex < previousIndex && !nodes[nextIndex].isRealShapeType()) {
 						nextIndex += 1;
 					}
 				}
@@ -5654,16 +5653,19 @@ PresNode.prototype.getNamedNode = function (name) {
 	}
 	return this.namedNodes[name];
 };
-	PresNode.prototype.isMainElement = function () {
+	PresNode.prototype.isRealShapeType = function () {
 		return this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_conn &&
-			this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none || (this.algorithm && this.algorithm.isCanSetConnection());
+			this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none;
 	}
 	PresNode.prototype.isSkipShape = function (isCalculateScaleCoefficient) {
 		const shape = this.getShape(isCalculateScaleCoefficient);
 		return shape.width <= 0 && shape.height <= 0 ||
 			(this.algorithm instanceof ConnectorAlgorithm) ||
-			(this.algorithm instanceof SpaceAlgorithm && (this.layoutInfo.shape.hideGeom || !this.isMainElement()))
-			|| this.isTxXfrm() || !this.algorithm;
+			this.isTxXfrm() ||
+			!this.algorithm ||
+			(this.algorithm instanceof SpaceAlgorithm &&
+				!(this.parent && this.parent.algorithm instanceof CompositeAlgorithm) &&
+				(this.layoutInfo.shape.hideGeom || !this.isRealShapeType()));
 	};
 	PresNode.prototype.isSibNode = function () {
 		return this.node.isSibNode();
@@ -5746,7 +5748,7 @@ PresNode.prototype.getNamedNode = function (name) {
 		for (let i = index + 1; i < parent.childs.length; i += 1) {
 			const child = parent.childs[i];
 			const shape = child.shape;
-			if (child.isMainElement()) {
+			if (child.isRealShapeType()) {
 				return child;
 			}
 		}
@@ -5754,7 +5756,7 @@ PresNode.prototype.getNamedNode = function (name) {
 		for (let i = index - 1; i >= 0; i -= 1) {
 			const child = parent.childs[i];
 			const shape = child.shape;
-			if (child.isMainElement()) {
+			if (child.isRealShapeType()) {
 				return child;
 			}
 		}
@@ -6543,7 +6545,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			const node = this.childs[i];
 			const childShape = node.getShape(isCalculateCoefficients);
 			// todo: check this
-			if (childShape.width <= 0 && childShape.height <= 0 || (node.algorithm instanceof ConnectorAlgorithm) || ((node.algorithm instanceof TextAlgorithm) && !node.isMainElement()) || node.isTxXfrm()) {
+			if (childShape.width <= 0 && childShape.height <= 0 || (node.algorithm instanceof ConnectorAlgorithm) || ((node.algorithm instanceof TextAlgorithm) && !node.isRealShapeType()) || node.isTxXfrm()) {
 				continue;
 			}
 			if (shapeBounds) {
@@ -6764,7 +6766,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 	};
 
 	PresNode.prototype.getHeightScale = function (force) {
-		if (!force && !this.isMainElement()) {
+		if (!force && !this.isRealShapeType()) {
 			return this.moveScaleCoefficients.height;
 		}
 		const prSet = this.getPrSet();
@@ -6775,7 +6777,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 	}
 
 	PresNode.prototype.getWidthScale = function (force) {
-		if (!force && !this.isMainElement()) {
+		if (!force && !this.isRealShapeType()) {
 			return this.moveScaleCoefficients.width;
 		}
 		const prSet = this.getPrSet();
