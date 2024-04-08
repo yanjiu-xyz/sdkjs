@@ -6274,7 +6274,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 	}
 	PresNode.prototype.getRefConstr = function (constr, isAdapt) {
 		let aspectRatio;
-		if (!(constr.for === AscFormat.Constr_for_self && constr.refFor === AscFormat.Constr_for_self)) {
+		if (!(constr.for === AscFormat.Constr_for_self && constr.refFor === AscFormat.Constr_for_self && !isUserConstr(constr.type))) {
 			aspectRatio = this.getAspectRatio();
 		}
 		const constrObject = isAdapt ? this.adaptConstr : this.constr;
