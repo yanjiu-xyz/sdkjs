@@ -3930,6 +3930,16 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_contDir: {
+					switch (this.val) {
+						case 'sameDir':
+							return ParameterVal_continueDirection_sameDir;
+						case 'revDir':
+							return ParameterVal_continueDirection_revDir;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_secLinDir:
 				case Param_type_linDir: {
 					switch (this.val) {
