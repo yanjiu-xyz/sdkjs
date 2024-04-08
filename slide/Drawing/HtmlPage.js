@@ -243,11 +243,16 @@ function CEditorPage(api)
 	this.Splitter2PosMin = 0;
 	this.Splitter2PosMax = 0;
 
+	this.Splitter3Pos = 0;
+	this.Splitter3PosMin = 0;
+	this.Splitter3PosMax = 0;
+
 	this.SplitterDiv  = null;
 	this.SplitterType = 0;
 
 	this.OldSplitter1Pos = 0;
 	this.OldSplitter2Pos = 0;
+	this.OldSplitter3Pos = 0;
 
 	this.IsUseNullThumbnailsSplitter = false;
 
@@ -344,21 +349,21 @@ function CEditorPage(api)
 		this.m_oBody = CreateControlContainer(this.Name);
 		this.m_oBody.HtmlElement.style.touchAction = "none";
 
-		this.Splitter1Pos    = 67.5;
-		this.Splitter1PosSetUp = this.Splitter1Pos;
-		this.Splitter2Pos    = (this.IsSupportNotes === true && this.m_oApi.isEmbedVersion !== true) ? 11 : 0;
-		this.Splitter3Pos    = (this.IsSupportAnimPane === true) ? 100 : 0;
-
-		this.OldSplitter1Pos = this.Splitter1Pos;
-		this.OldSplitter2Pos = this.Splitter2Pos;
-		this.OldSplitter3Pos = this.Splitter3Pos;
-
 		this.Splitter1PosMin = 20;
 		this.Splitter1PosMax = 80;
 		this.Splitter2PosMin = 10;
 		this.Splitter2PosMax = 100;
-		this.Splitter3PosMin = 10;
-		this.Splitter3PosMax = 100;
+		this.Splitter3PosMin = 40;
+		this.Splitter3PosMax = 100 - HIDDEN_PANE_HEIGHT;
+
+		this.Splitter1Pos    = 67.5;
+		this.Splitter1PosSetUp = this.Splitter1Pos;
+		this.Splitter2Pos = (this.IsSupportNotes && !this.m_oApi.isEmbedVersion) ? this.Splitter2PosMin : 0;
+		this.Splitter3Pos = 0;
+
+		this.OldSplitter1Pos = this.Splitter1Pos;
+		this.OldSplitter2Pos = this.Splitter2Pos;
+		this.OldSplitter3Pos = this.Splitter3Pos;
 
 		if (this.m_oApi.isReporterMode)
 		{
@@ -1270,11 +1275,19 @@ function CEditorPage(api)
 		this.m_oThumbnailsContainer.Bounds.AbsW = this.Splitter1Pos;
 		this.m_oThumbnailsSplit.Bounds.L 		= this.Splitter1Pos;
 
-		if (!this.IsSupportNotes)
-			this.Splitter2Pos = 0;
-		else if (this.Splitter2Pos < 1)
-			this.Splitter2Pos = 1;
+		if (this.IsSupportAnimPane) {
+			if (this.Splitter3Pos < HIDDEN_PANE_HEIGHT) {
+				this.Splitter3Pos = 0;
+				Asc.editor.sendEvent('asc_onCloseAnimPane');
+			}
+			if (this.Splitter3Pos > this.Splitter3PosMax) this.Splitter3Pos = this.Splitter3PosMax;
+		} else {
+			this.Splitter3Pos = 0;
+		}
 
+		this.Splitter2Pos = (this.IsSupportNotes)
+			? Math.min(Math.max(this.Splitter2Pos, this.Splitter3Pos + this.Splitter2PosMin), this.Splitter2PosMax)
+			: 0;
 
 		if (this.IsUseNullThumbnailsSplitter || (0 != this.Splitter1Pos))
 		{
@@ -1399,7 +1412,7 @@ function CEditorPage(api)
 	{
 		var dDiff = this.Splitter2Pos - this.Splitter3Pos;
 		this.Splitter3Pos = dPos;
-		this.Splitter2Pos = this.Splitter3Pos + dDiff;
+		this.Splitter2Pos = Math.max(this.Splitter2Pos, this.Splitter3Pos + dDiff);
 	};
 	this.SetSplitter2Pos = function(dPos)
 	{
@@ -4727,7 +4740,7 @@ function CEditorPage(api)
 		{
 			this.Splitter3Pos = this.OldSplitter3Pos;
 			if (this.Splitter3Pos <= 1)
-				this.Splitter3Pos = 11;
+				this.Splitter3Pos = this.Splitter3PosMin;
 			this.OnResizeSplitter();
 		}
 		else
