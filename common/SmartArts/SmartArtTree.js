@@ -1885,6 +1885,10 @@
 			this.params[AscFormat.Param_type_contDir] = AscFormat.ParameterVal_continueDirection_sameDir;
 		}
 	};
+	SnakeAlgorithm.prototype.applyParamOffsets = function (isCalculateScaleCoefficients) {
+		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficients);
+		shapeContainer.applyCenterAlign(this.params[AscFormat.Param_type_off] === AscFormat.ParameterVal_offset_ctr);
+	};
 	SnakeAlgorithm.prototype.getStartValues = function (node) {
 		const oRes = {coefficient: 1, width: 0, height: 0, prSpace: 0};
 		if (node) {
@@ -2104,7 +2108,7 @@
 		} else {
 			this._calculateShapePositions();
 			this.applyParamOffsets();
-			this.applyAlgorithmAligns(isCalculateScaleCoefficients);
+			this.applyAlgorithmAligns();
 			this.applyPostAlgorithmSettings();
 			this.setConnections();
 		}
@@ -2517,17 +2521,19 @@
 		return this.bounds;
 	};
 
-	ShapeRows.prototype.applyCenterAlign = function () {
+	ShapeRows.prototype.applyCenterAlign = function (isCenteringRows) {
 		const bounds = this.getBounds();
 		const width = bounds.r - bounds.l;
-		const height = bounds.b - bounds.t;
 
 		for (let i = 0; i < this.rows.length; i++) {
 			const row = this.rows[i];
 			const rowBounds = row.getBounds();
-			const rowWidth = rowBounds.r - rowBounds.l;
 			const rowHeight = rowBounds.b - rowBounds.t;
-			const offRowX = bounds.l + width / 2 - (rowBounds.l + rowWidth / 2);
+			let offRowX = 0;
+			if (isCenteringRows) {
+				const rowWidth = rowBounds.r - rowBounds.l;
+				offRowX = bounds.l + width / 2 - (rowBounds.l + rowWidth / 2);
+			}
 			for (let j = 0; j < row.shapes.length; j++) {
 				const shape = row.shapes[j];
 				const offRowY = rowBounds.t + rowHeight / 2 - (shape.y + shape.height / 2);
@@ -2590,16 +2596,20 @@
 		}
 	};
 
-	ShapeColumns.prototype.applyCenterAlign = function () {
+	ShapeColumns.prototype.applyCenterAlign = function (isCenteringColumns) {
 		const bounds = this.getBounds();
 		const height = bounds.b - bounds.t;
 
 		for (let i = 0; i < this.columns.length; i++) {
 			const column = this.columns[i];
 			const columnBounds = column.getBounds();
-			const columnHeight = columnBounds.b - columnBounds.t;
 			const columnWidth = columnBounds.r - columnBounds.l;
-			const offColumnY = height / 2 - (columnBounds.t + columnHeight / 2)
+
+			let offColumnY = 0;
+			if (isCenteringColumns) {
+				const columnHeight = columnBounds.b - columnBounds.t;
+				offColumnY = height / 2 - (columnBounds.t + columnHeight / 2);
+			}
 			for (let j = 0; j < column.shapes.length; j++) {
 				const shape = column.shapes[j];
 				const offColumnX = columnBounds.l + columnWidth / 2 - (shape.x + shape.width / 2);
