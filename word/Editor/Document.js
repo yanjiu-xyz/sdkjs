@@ -11461,6 +11461,22 @@ CDocument.prototype.Document_Format_Copy = function()
 {
 	this.Api.checkFormatPainterData();
 };
+CDocument.prototype.isHeaderEditing = function()
+{
+	if (docpostype_HdrFtr !== this.GetDocPosType())
+		return false;
+	
+	let hdrFtr = this.HdrFtr.Get_CurHdrFtr();
+	return hdrFtr && AscCommon.hdrftr_Header === hdrFtr.Type;
+};
+CDocument.prototype.isFooterEditing = function()
+{
+	if (docpostype_HdrFtr !== this.GetDocPosType())
+		return false;
+	
+	let hdrFtr = this.HdrFtr.Get_CurHdrFtr();
+	return hdrFtr && AscCommon.hdrftr_Footer === hdrFtr.Type;
+};
 CDocument.prototype.EndHdrFtrEditing = function(bCanStayOnPage)
 {
 	if (docpostype_HdrFtr === this.GetDocPosType())
