@@ -1269,6 +1269,8 @@
 		this.type = AscFormat.LayoutShapeType_outputShapeType_none;
 		this.ln = null;
 		this.fill = null;
+		this.tailLnArrow = null;
+		this.headLnArrow = null;
 		this.isSpacing = true;
 		this.shape = null;
 		this.calcInfo = null;
@@ -1324,13 +1326,14 @@
 		const shapeTrack = new AscFormat.NewShapeTrack("", this.x, this.y, AscFormat.GetDefaultTheme(), parentObjects.theme, parentObjects.master, parentObjects.layout, parentObjects.slide, initObjects.page);
 		shapeTrack.track({}, this.x + this.width, this.y + this.height);
 		const shape = shapeTrack.getShape(false, initObjects.drawingDocument, null);
-		shape.spPr.xfrm.setExtX(this.width);
-		shape.spPr.xfrm.setExtY(this.height);
+		const spPr = shape.spPr;
+		spPr.xfrm.setExtX(this.width);
+		spPr.xfrm.setExtY(this.height);
 		shape.setBDeleted(false);
 		shape.setParent(initObjects.parent);
 		shape.setWorksheet(initObjects.worksheet);
 
-		const geometry = shape.spPr && shape.spPr.geometry;
+		const geometry = spPr.geometry;
 		for (let i = 0; i < this.customGeom.length; i += 1) {
 			const custCommand = this.customGeom[i];
 			for (let j = 1; j < custCommand.length; j++) {
@@ -5325,6 +5328,16 @@ function HierarchyAlgorithm() {
 		connectorShape.cleanParams.x = shape.cleanParams.x;
 		connectorShape.cleanParams.y = shape.cleanParams.y;
 		connectorShape.node = this.parentNode;
+		if (this.params[AscFormat.Param_type_endSty] === AscFormat.ParameterVal_arrowheadStyle_arr) {
+			const endArrow = new AscFormat.EndArrow();
+			endArrow.type = AscFormat.LineEndType.Arrow;
+			connectorShape.tailLnArrow = endArrow;
+		}
+		if (this.params[AscFormat.Param_type_begSty] === AscFormat.ParameterVal_arrowheadStyle_arr) {
+			const endArrow = new AscFormat.EndArrow();
+			endArrow.type = AscFormat.LineEndType.Arrow;
+			connectorShape.headLnArrow = endArrow;
+		}
 		return connectorShape;
 	}
 

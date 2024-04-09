@@ -7708,12 +7708,12 @@ Because of this, the display is sometimes not correct.
 		  }
 	  };
 
-	  ColorDefStyleLbl.prototype.getLineWidth = function () {
+	  ColorDefStyleLbl.prototype.getLineWidth = function (shadowShape) {
 		  switch (this.name) {
 			  case "trAlignAcc1":
 				  return 6350;
 			  default:
-				  return 12700;
+					return shadowShape.tailLnArrow || shadowShape.headLnArrow ? 6350 : 12700;
 		  }
 	  }
 	  ColorDefStyleLbl.prototype.getShapeLn = function (index, shadowShape, isConnector) {
@@ -7730,9 +7730,11 @@ Because of this, the display is sometimes not correct.
 					}
 
 					const ln = new AscFormat.CLn();
-					ln.setW(this.getLineWidth());
+					ln.setW(this.getLineWidth(shadowShape));
 					const fill = AscFormat.CreateUniFillByUniColorCopy(uniColor);
 					ln.setFill(fill);
+					ln.tailEnd = shadowShape.tailLnArrow;
+					ln.headEnd = shadowShape.headLnArrow;
 					return ln;
 				}
 			}
