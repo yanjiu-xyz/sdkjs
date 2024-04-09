@@ -4551,8 +4551,8 @@ function HierarchyAlgorithm() {
 		this.endNode = null;
 		this.connectorShape = null;
 		this.connectionDistances = {
-			begin: 0.22,
-			end: 0.25
+			begin: null,
+			end: null
 		};
 		this.parentAlgorithm = null;
 		this.calcValues = {
@@ -4580,6 +4580,31 @@ function HierarchyAlgorithm() {
 			if (this.params[AscFormat.Param_type_bendPt] === undefined) {
 				this.params[AscFormat.Param_type_bendPt] = AscFormat.ParameterVal_bendPoint_end;
 			}
+		}
+	}
+
+	ConnectorAlgorithm.prototype.getConnectionDistCoefficient = function (isBegin) {
+		switch (this.params[AscFormat.Param_type_connRout]) {
+			case AscFormat.ParameterVal_connectorRouting_bend:
+				if (!this.connectionDistances.begin && !this.connectionDistances.end) {
+					return isBegin ? 0 : 1;
+				} else {
+					if (isBegin) {
+						return this.connectionDistances.begin || 0;
+					} else {
+						return this.connectionDistances.end || 1;
+					}
+				}
+			case AscFormat.ParameterVal_connectorRouting_stra:
+				if (!this.connectionDistances.begin && !this.connectionDistances.end) {
+					if (this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_2D) {
+						return isBegin ? 0.22 : 0.25;
+					}
+					return 0;
+				}
+				return isBegin ? this.connectionDistances.begin : this.connectionDistances.end;
+			default:
+				break;
 		}
 	}
 	ConnectorAlgorithm.prototype.getEdgePoints = function () {
@@ -4622,6 +4647,52 @@ function HierarchyAlgorithm() {
 		}
 		return null;
 	};
+	ConnectorAlgorithm.prototype.getBendConnectionPoints = function () {
+		const edgePoints = this.getEdgePoints();
+		if (edgePoints) {
+			const startPoint = edgePoints.start;
+			const endPoint = edgePoints.end;
+			const vector = startPoint.getVector(endPoint);
+			const startConnectionPoint = this.getBendConnectionPoint(startPoint, startPoint, vector, true);
+			const endConnectionPoint = this.getBendConnectionPoint(endPoint, startPoint, vector, false);
+			return {start: startConnectionPoint, end: endConnectionPoint};
+		}
+	};
+
+	ConnectorAlgorithm.prototype.getBendConnectionPoint = function (point, startPoint, vector, isStart) {
+		const position = this.getPointPosition(isStart);
+		const coefficient = this.getConnectionDistCoefficient(isStart);
+		switch (position) {
+			case AscFormat.ParameterVal_connectorPoint_bCtr:
+			case AscFormat.ParameterVal_connectorPoint_tCtr:
+				return new CCoordPoint(point.x, vector.y * coefficient + startPoint.y);
+			case AscFormat.ParameterVal_connectorPoint_midR:
+			case AscFormat.ParameterVal_connectorPoint_midL:
+			case AscFormat.ParameterVal_connectorPoint_tL:
+			case AscFormat.ParameterVal_connectorPoint_bR:
+			case AscFormat.ParameterVal_connectorPoint_tR:
+			case AscFormat.ParameterVal_connectorPoint_bL:
+				return new CCoordPoint(vector.x * coefficient + startPoint.x, point.y);
+			case AscFormat.ParameterVal_connectorPoint_radial:
+			case AscFormat.ParameterVal_connectorPoint_auto:
+			default:
+				return null;
+		}
+	};
+	ConnectorAlgorithm.prototype.getStraightConnectionPoints = function (startPoint, endPoint) {
+		const startCoefficient = this.getConnectionDistCoefficient(true);
+		const endCoefficient = 1 - this.getConnectionDistCoefficient(false);
+		const endConnectionPoint = new CCoordPoint((endPoint.x - startPoint.x) * endCoefficient + startPoint.x, (endPoint.y - startPoint.y) * endCoefficient + startPoint.y);
+		const startConnectionPoint = new CCoordPoint((endPoint.x - startPoint.x) * startCoefficient + startPoint.x, (endPoint.y - startPoint.y) * startCoefficient + startPoint.y);
+
+		return {start: startConnectionPoint, end: endConnectionPoint};
+	};
+	ConnectorAlgorithm.prototype.getCurveConnectionPoints = function () {
+		return {};
+	};
+	ConnectorAlgorithm.prototype.getLongCurveConnectionPoints = function () {
+		return {};
+	};
 	ConnectorAlgorithm.prototype.getConnectionPoints = function () {
 		if (!this.calcValues.connectionPoints) {
 			this.calcValues.connectionPoints = {
@@ -4632,18 +4703,28 @@ function HierarchyAlgorithm() {
 			if (edgePoints) {
 				const startPoint = edgePoints.start;
 				const endPoint = edgePoints.end;
+				let connectionPoints;
+				switch (this.params[AscFormat.Param_type_connRout]) {
+					case AscFormat.ParameterVal_connectorRouting_bend:
+						connectionPoints = this.getBendConnectionPoints(startPoint, endPoint);
+						break;
+					case AscFormat.ParameterVal_connectorRouting_stra:
+						connectionPoints = this.getStraightConnectionPoints(startPoint, endPoint);
+						break;
+					case AscFormat.ParameterVal_connectorRouting_curve:
+						connectionPoints = this.getCurveConnectionPoints(startPoint, endPoint);
+						break;
+					case AscFormat.ParameterVal_connectorRouting_longCurve:
+						connectionPoints = this.getLongCurveConnectionPoints(startPoint, endPoint);
+						break;
+					default:
+						break;
+				}
 
-
-				const startLambda = this.connectionDistances.begin / (1 - this.connectionDistances.begin);
-				const sumStartX = startPoint.x + startLambda * endPoint.x;
-				const sumStartY = startPoint.y + startLambda * endPoint.y;
-				const endLambda = this.connectionDistances.end / (1 - this.connectionDistances.end);
-				const sumEndX = endPoint.x + endLambda * startPoint.x;
-				const sumEndY = endPoint.y + endLambda * startPoint.y;
-				const startConnectionPoint = new CCoordPoint(sumStartX / (1 + startLambda), sumStartY / (1 + startLambda));
-				const endConnectionPoint = new CCoordPoint(sumEndX / (1 + endLambda), sumEndY / (1 + endLambda));
-				this.calcValues.connectionPoints.start = startConnectionPoint;
-				this.calcValues.connectionPoints.end = endConnectionPoint;
+				if (connectionPoints) {
+					this.calcValues.connectionPoints.start = connectionPoints.start;
+					this.calcValues.connectionPoints.end = connectionPoints.end;
+				}
 			}
 		}
 		return this.calcValues.connectionPoints;
