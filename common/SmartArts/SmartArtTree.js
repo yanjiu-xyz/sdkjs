@@ -1694,9 +1694,6 @@
 	BaseAlgorithm.prototype.isRootHierarchy = function () {
 		return false;
 	};
-	BaseAlgorithm.prototype.isCanSetConnection = function () {
-		return false;
-	};
 	BaseAlgorithm.prototype.setConstraintSizes = function (shape) {
 		this.constraintSizes = {
 			x     : shape.x,
@@ -3898,10 +3895,6 @@ function HierarchyAlgorithm() {
 			r: x + width,
 			b: y + height
 		};
-	};
-
-	CycleAlgorithm.prototype.isCanSetConnection = function () {
-		return true;
 	};
 	CycleAlgorithm.prototype.getCenterNode = function () {
 		if (this.calcValues.centerNodeIndex !== null) {
