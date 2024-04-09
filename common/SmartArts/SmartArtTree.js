@@ -2214,7 +2214,7 @@
 		}
 	};
 	SnakeAlgorithm.prototype.addShapeToColumn = function (column, shape, isPush, offY) {
-		row.push(shape);
+		column.push(shape);
 		if (isPush) {
 			shape.moveTo(-shape.x, offY - shape.y);
 			return shape.y + shape.height;
