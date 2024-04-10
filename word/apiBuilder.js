@@ -6946,11 +6946,11 @@
 	 */
 	ApiDocument.prototype.AddFootnote = function()
 	{
-		let oResult = this.Document.AddFootnote();
-		if (!oResult)
+		let footnote = this.Document._addFootnote();
+		if (!footnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(footnote);
 	};
 
 	/**
@@ -6961,11 +6961,11 @@
 	 */
 	ApiDocument.prototype.AddEndnote = function()
 	{
-		let oResult = this.Document.AddEndnote();
-		if (!oResult)
+		let endnote = this.Document._addEndnote();
+		if (!endnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(endnote);
 	};
 
 	/**
