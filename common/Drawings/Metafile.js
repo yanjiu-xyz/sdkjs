@@ -114,11 +114,13 @@
 		this.Size   = 12;
 		this.Bold   = false;
 		this.Italic = false;
+		this.Dpi    = 72;
 
 		this.SetUpName  = "";
 		this.SetUpIndex = -1;
 		this.SetUpSize  = 12;
 		this.SetUpStyle = -1;
+		this.SetUpDpi   = 72;
 
 		this.SetUpMatrix = new CMatrix();
 	}
