@@ -5443,6 +5443,7 @@ CCellStyles.prototype._prepareCellStyle = function (name) {
 		return style.XfId;
 
 	if (defaultStyle) {
+		//todo add to history. it allows save XfId in history
 		this.CustomStyles[i] = defaultStyle.clone();
 		this.CustomStyles[i].XfId = ++maxXfId;
 		return this.CustomStyles[i].XfId;
@@ -6381,6 +6382,7 @@ StyleManager.prototype =
 		this.xfs = g_StyleCache.addXf(xfs);
 	};
 	Col.prototype.setCellStyle = function (val) {
+		var oStyle;
 		var newVal = this.ws.workbook.CellStyles._prepareCellStyle(val);
 		var oRes = this.ws.workbook.oStyleManager.setCellStyle(this, newVal);
 		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
@@ -6389,7 +6391,7 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oldStyleName, val));
 
 			// Выставляем стиль
-			var oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
+			oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
 			if (oStyle.ApplyFont) {
 				this.setFont(oStyle.getFont());
 			}
@@ -6403,6 +6405,7 @@ StyleManager.prototype =
 				this.setNumFormat(oStyle.getNumFormatStr());
 			}
 		}
+		return oStyle;
 	};
 	Col.prototype.setNumFormat = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setNum(this, new Num({f: val}));
@@ -6789,6 +6792,7 @@ StyleManager.prototype =
 		this._hasChanged = true;
 	};
 	Row.prototype.setCellStyle = function (val) {
+		var oStyle;
 		var newVal = this.ws.workbook.CellStyles._prepareCellStyle(val);
 		var oRes = this.ws.workbook.oStyleManager.setCellStyle(this, newVal);
 		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
@@ -6797,7 +6801,7 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oldStyleName, val));
 
 			// Выставляем стиль
-			var oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
+			oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
 			if (oStyle.ApplyFont) {
 				this.setFont(oStyle.getFont());
 			}
@@ -6811,6 +6815,7 @@ StyleManager.prototype =
 				this.setNumFormat(oStyle.getNumFormatStr());
 			}
 		}
+		return oStyle;
 	};
 	Row.prototype.setNumFormat = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setNum(this, new Num({f: val}));

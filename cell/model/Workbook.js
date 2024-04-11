@@ -13768,6 +13768,7 @@
 		return this.type;
 	};
 	Cell.prototype.setCellStyle=function(val){
+		var oStyle;
 		var newVal = this.ws.workbook.CellStyles._prepareCellStyle(val);
 		var oRes = this.ws.workbook.oStyleManager.setCellStyle(this, newVal);
 		if(History.Is_On()) {
@@ -13775,7 +13776,7 @@
 			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_Style, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oldStyleName, val));
 
 			// Выставляем стиль
-			var oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
+			oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
 			if (oStyle.ApplyFont)
 				this.setFont(oStyle.getFont());
 			if (oStyle.ApplyFill)
@@ -13785,6 +13786,7 @@
 			if (oStyle.ApplyNumberFormat)
 				this.setNumFormat(oStyle.getNumFormatStr());
 		}
+		return oStyle;
 	};
 	Cell.prototype.setNumFormat=function(val){
 		this.setNum(new AscCommonExcel.Num({f:val}));
@@ -16052,23 +16054,26 @@
 		History.Create_NewPoint();
 		this.createCellOnRowColCross();
 		var fSetProperty = this._setProperty;
+		var oStyle;
 		var nRangeType = this._getRangeType();
 		if(c_oRangeType.All == nRangeType)
 		{
-			this.worksheet.getAllCol().setCellStyle(val);
+			oStyle = this.worksheet.getAllCol().setCellStyle(val);
 			fSetProperty = this._setPropertyNoEmpty;
 		}
 		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setCellStyle(val);
-						  },
-						  function(col){
-							  col.setCellStyle(val);
-						  },
-						  function(cell){
-							  cell.setCellStyle(val);
-						  });
+							if(c_oRangeType.All == nRangeType && null == row.xfs)
+								return;
+							oStyle = row.setCellStyle(val);
+						},
+						function(col){
+							oStyle = col.setCellStyle(val);
+						},
+						function(cell){
+							oStyle = cell.setCellStyle(val);
+						});
+		if (oStyle && oStyle.ApplyNumberFormat)
+			this.setNumFormatPivot(oStyle.getNumFormatStr());
 	};
 	Range.prototype.setStyle=function(val){
 		if (val === null) {
@@ -16103,8 +16108,15 @@
 			this.worksheet.sheetMergedStyles.setTablePivotStyle(this.bbox, xf, stripe);
 		}
 	};
+	Range.prototype.setNumFormatPivot=function(val){
+		const pivotTables = this.worksheet.getPivotTablesIntersectingRange(this.bbox);
+		pivotTables.forEach(function (pivotTable) {
+			pivotTable.formatsManager.setNum(this.bbox, val);
+		}, this);
+	}
 	Range.prototype.setNumFormat=function(val){
 		this.setNum(new AscCommonExcel.Num({f:val}));
+		this.setNumFormatPivot(val);
 	};
 	Range.prototype.setNum = function(val) {
 		History.Create_NewPoint();
