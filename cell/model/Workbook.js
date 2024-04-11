@@ -13794,8 +13794,8 @@
 		if(History.Is_On() && oRes.oldVal != oRes.newVal)
 			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_Num, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
 	};
-	Cell.prototype.shiftNumFormat=function(nShift, dDigitsCount){
-		var bRes = false;
+	Cell.prototype.getShiftedNumFormat=function(nShift, dDigitsCount){
+		let newNumFormat;
 		var sNumFormat;
 		if(null != this.xfs && null != this.xfs.num)
 			sNumFormat = this.xfs.num.getFormat();
@@ -13803,24 +13803,22 @@
 			sNumFormat = g_oDefaultFormat.Num.getFormat();
 		var type = this.getType();
 		var oCurNumFormat = oNumFormatCache.get(sNumFormat);
-		if (null != oCurNumFormat && false == oCurNumFormat.isGeneralFormat()) {
-			var output = {};
-			bRes = oCurNumFormat.shiftFormat(output, nShift);
-			if (true == bRes) {
-				this.setNumFormat(output.format);
+		if (null != oCurNumFormat && !oCurNumFormat.isGeneralFormat()) {
+			let output = {};
+			if (oCurNumFormat.shiftFormat(output, nShift)) {
+				newNumFormat = output.format;
 			}
 		} else if (CellValueType.Number == type) {
 			var sGeneral = AscCommon.DecodeGeneralFormat(this.number, type, dDigitsCount);
 			var oGeneral = oNumFormatCache.get(sGeneral);
-			if (null != oGeneral && false == oGeneral.isGeneralFormat()) {
-				var output = {};
-				bRes = oGeneral.shiftFormat(output, nShift);
-				if (true == bRes) {
-					this.setNumFormat(output.format);
+			if (null != oGeneral && !oGeneral.isGeneralFormat()) {
+				let output = {};
+				if (oGeneral.shiftFormat(output, nShift)) {
+					newNumFormat = output.format;
 				}
 			}
 		}
-		return bRes;
+		return newNumFormat;
 	};
 	Cell.prototype.setFont=function(val, bModifyValue){
 		if(false != bModifyValue)
@@ -16129,13 +16127,13 @@
 							  cell.setNum(val);
 						  });
 	};
-	Range.prototype.shiftNumFormat=function(nShift, aDigitsCount){
+	Range.prototype.getShiftedNumFormat=function(nShift, dDigitsCount){
 		History.Create_NewPoint();
-		var bRes = false;
+		let newNumFormat;
 		this._setPropertyNoEmpty(null, null, function(cell, nRow0, nCol0, nRowStart, nColStart){
-			bRes |= cell.shiftNumFormat(nShift, aDigitsCount[nCol0 - nColStart]);
+			newNumFormat = cell.getShiftedNumFormat(nShift, dDigitsCount);
 		});
-		return bRes;
+		return newNumFormat;
 	};
 	Range.prototype.setFont=function(val){
 		History.Create_NewPoint();
