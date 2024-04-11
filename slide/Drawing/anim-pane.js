@@ -489,14 +489,15 @@
 	};
 	CControl.prototype.getFillColor = function () {
 		const oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) { return AscCommon.GlobalSkin['anim-pane-control-active-fill']; }
-		if (this.isHovered()) { return AscCommon.GlobalSkin['anim-pane-control-hovered-fill']; }
-		return AscCommon.GlobalSkin['anim-pane-control-fill']; 
+		if (this.isActive()) { return oSkin.AnimPaneControlFillActive; }
+		if (this.isHovered()) { return oSkin.AnimPaneControlFillHovered; }
+		return oSkin.AnimPaneControlFill;
 	};
 	CControl.prototype.getOutlineColor = function () {
-		if (this.isActive()) { return AscCommon.GlobalSkin['anim-pane-control-active-outline']; }
-		if (this.isHovered()) { return AscCommon.GlobalSkin['anim-pane-control-hovered-outline']; }
-		return AscCommon.GlobalSkin['anim-pane-control-outline']; 
+		const oSkin = AscCommon.GlobalSkin;
+		if (this.isActive()) { return oSkin.AnimPaneControlOutlineActive; }
+		if (this.isHovered()) { return oSkin.AnimPaneControlOutlineHovered; }
+		return oSkin.AnimPaneControlOutline;
 	};
 	CControl.prototype.drawShdw = function () {
 
@@ -872,17 +873,13 @@
 	}
 	CButton.prototype.getFillColor = function () {
 		const oSkin = AscCommon.GlobalSkin;
-		if (this.isDisabled()) { return oSkin['anim-pane-button-disabled-fill']; }
-		// if (this.isActive()) { return oSkin['anim-pane-button-active-fill']; }
-		if (this.isHovered()) { return oSkin['anim-pane-button-hovered-fill']; }
-		if (this.sName === 'playButton') { return oSkin['anim-pane-play-button-fill']; }
-		return oSkin['anim-pane-button-fill'];
+		if (this.isDisabled()) { return oSkin.AnimPaneButtonFillDisabled; }
+		if (this.isHovered()) { return oSkin.AnimPaneButtonFillHovered; }
+		if (this.sName === 'playButton') { return oSkin.AnimPanePlayButtonFill; }
+		return oSkin.AnimPaneButtonFill;
 	};
 	CButton.prototype.getOutlineColor = function () {
-		if (this.sName === 'playButton') {
-			return AscCommon.GlobalSkin['anim-pane-play-button-outline'];
-		}
-
+		if (this.sName === 'playButton') { return AscCommon.GlobalSkin.AnimPanePlayButtonOutline; }
 		return null;
 	};
 	CButton.prototype.isPressed = function () {
@@ -1458,7 +1455,7 @@
 		// graphics.rect(dPaneLeft, 0, dPaneWidth, this.getHeight());
 		// graphics.ds();
 		// graphics.RestoreGrState();
-		const sColor = AscCommon.GlobalSkin['anim-pane-timeline-ruler-outline'];
+		const sColor = AscCommon.GlobalSkin.AnimPaneTimelineRulerOutline;
 		var oColor = AscCommon.RgbaHexToRGBA(sColor);
 		var dPaneLeft = this.getRulerStart();
 		var dPaneWidth = this.getRulerEnd() - dPaneLeft;
@@ -1527,22 +1524,21 @@
 		let extY = this.getHeight();
 
 		const oSkin = AscCommon.GlobalSkin;
-		let sFillColor;
-		let oColor;
+		let sFillColor, oFillColor;
 
 		// TODO: Определиться с цветом и прозрачностью скроллера (оставить как есть?)
 		if (this.isStickedToPointer) {
-			sFillColor = '#000'// oSkin.ScrollerActiveColor;
-			oColor = AscCommon.RgbaHexToRGBA(sFillColor);
-			graphics.b_color1(oColor.R, oColor.G, oColor.B, 0x80);
+			sFillColor = oSkin.AnimPaneTimelineScrollerFillActive;
+			oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
+			graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 0x80);
 		} else if (this.isScrollerHovered) {
-			sFillColor = '#000' // oSkin.ScrollerHoverColor;
-			let oColor = AscCommon.RgbaHexToRGBA(sFillColor);
-			graphics.b_color1(oColor.R, oColor.G, oColor.B, 0x40);
+			sFillColor = oSkin.AnimPaneTimelineScrollerFillHovered;
+			oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
+			graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 0x40);
 		} else {
-			sFillColor = '#000';
-			let oColor = AscCommon.RgbaHexToRGBA(sFillColor);
-			graphics.b_color1(oColor.R, oColor.G, oColor.B, 0x0);
+			sFillColor = oSkin.AnimPaneTimelineScrollerFill;
+			oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
+			graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 0x0);
 		}
 
 		graphics.rect(x, y, extX, extY);
@@ -2624,23 +2620,23 @@
 
 		switch (this.effect.cTn.presetClass) {
 			case AscFormat.PRESET_CLASS_ENTR:
-				sFillColor = oSkin['animation-effect-entr-fill'];
-				sOutlineColor = oSkin['animation-effect-entr-outline'];
+				sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
+				sOutlineColor = oSkin.AnimPaneEffectBarOutlineEntrance;
 				break;
 
 			case AscFormat.PRESET_CLASS_EMPH:
-				sFillColor = oSkin['animation-effect-emph-fill'];
-				sOutlineColor = oSkin['animation-effect-emph-outline'];
+				sFillColor = oSkin.AnimPaneEffectBarFillEmphasis;
+				sOutlineColor = oSkin.AnimPaneEffectBarOutlineEmphasis;
 				break;
 
 			case AscFormat.PRESET_CLASS_EXIT:
-				sFillColor = oSkin['animation-effect-exit-fill'];
-				sOutlineColor = oSkin['animation-effect-exit-outline'];
+				sFillColor = oSkin.AnimPaneEffectBarFillExit;
+				sOutlineColor = oSkin.AnimPaneEffectBarOutlineExit;
 				break;
 
 			case AscFormat.PRESET_CLASS_PATH:
-				sFillColor = oSkin['animation-effect-path-fill'];
-				sOutlineColor = oSkin['animation-effect-path-outline'];
+				sFillColor = oSkin.AnimPaneEffectBarFillPath;
+				sOutlineColor = oSkin.AnimPaneEffectBarOutlinePath;
 				break;
 		}
 		oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
@@ -2833,12 +2829,10 @@
 		return true;
 	};
 	CAnimItem.prototype.getFillColor = function() {
-		let sColor;
-		if (this.effect.isSelected()) sColor = AscCommon.GlobalSkin['anim-pane-item-selected'];
-		else if (this.isHovered()) sColor = AscCommon.GlobalSkin['anim-pane-item-hovered'];
-		else sColor = AscCommon.GlobalSkin['anim-pane-background'];
-
-		return sColor;
+		const oSkin = AscCommon.GlobalSkin;
+		if (this.effect.isSelected()) { return oSkin.AnimPaneItemFillSelected; }
+		if (this.isHovered()) { return oSkin.AnimPaneItemFillHovered; }
+		return oSkin.AnimPaneBackground;
 	};
 	CAnimItem.prototype.getOutlineColor = function () {
 		return null;
@@ -2978,41 +2972,5 @@
 	window['AscCommon'].CTimelineContainer = CTimelineContainer;
 
 	window['AscCommon'].getIconsForLoad = getIconsForLoad;
-
-	AscCommon.GlobalSkin['anim-pane-background'] = '#f0f0f0';
-
-	AscCommon.GlobalSkin['anim-pane-control-outline'] = AscCommon.GlobalSkin.ScrollOutlineColor;
-	AscCommon.GlobalSkin['anim-pane-control-active-outline'] = AscCommon.GlobalSkin.ScrollOutlineActiveColor;
-	AscCommon.GlobalSkin['anim-pane-control-hovered-outline'] = AscCommon.GlobalSkin.ThumbnailsPageOutlineHover;
-
-	AscCommon.GlobalSkin['anim-pane-control-fill'] = AscCommon.GlobalSkin.ThumbnailsPageOutlineActive;
-	AscCommon.GlobalSkin['anim-pane-control-active-fill'] = AscCommon.GlobalSkin.ScrollerHoverColor;
-	AscCommon.GlobalSkin['anim-pane-control-hovered-fill'] = AscCommon.GlobalSkin.BackgroundColorThumbnails;
-
-	AscCommon.GlobalSkin['anim-pane-item-selected'] = AscCommon.GlobalSkin.ScrollerActiveColor;
-	AscCommon.GlobalSkin['anim-pane-item-hovered'] = AscCommon.GlobalSkin.ScrollerHoverColor;
-
-	AscCommon.GlobalSkin['anim-pane-timeline-ruler-outline'] = AscCommon.GlobalSkin.ScrollOutlineColor;
-
-	AscCommon.GlobalSkin['anim-pane-button-fill'] = null;
-	AscCommon.GlobalSkin['anim-pane-button-active-fill'] = '#ccc';
-	AscCommon.GlobalSkin['anim-pane-button-hovered-fill'] = '#ddd';
-	AscCommon.GlobalSkin['anim-pane-button-disabled-fill'] = null;
-
-	AscCommon.GlobalSkin['anim-pane-play-button-fill'] = '#ffffff';
-	AscCommon.GlobalSkin['anim-pane-play-button-outline'] = '#cbcbcb';
-
-	AscCommon.GlobalSkin['animation-effect-entr-fill'] = '#77B583';
-	AscCommon.GlobalSkin['animation-effect-entr-outline'] = '#0E8A26';
-	AscCommon.GlobalSkin['animation-effect-emph-fill'] = '#FBC37C';
-	AscCommon.GlobalSkin['animation-effect-emph-outline'] = '#FF8E00';
-	AscCommon.GlobalSkin['animation-effect-exit-fill'] = '#F59A9A';
-	AscCommon.GlobalSkin['animation-effect-exit-outline'] = '#F23D3D';
-	AscCommon.GlobalSkin['animation-effect-path-fill'] = '#A1CEE3';
-	AscCommon.GlobalSkin['animation-effect-path-outline'] = '#254662';
-	// AscCommon.GlobalSkin['animation-effect-mediacall-fill'] =
-	// AscCommon.GlobalSkin['animation-effect-mediacall-outline'] =
-	// AscCommon.GlobalSkin['animation-effect-verb-fill'] =
-	// AscCommon.GlobalSkin['animation-effect-verb-outline'] =
 })(window);
 
