@@ -343,10 +343,10 @@ window.startPluginApi = function() {
 	 * @typedef {Object} ContextMenuOptions
 	 * The comment data.
 	 * @property {ContextMenuType} Type - The context menu type.
-	 * @property {boolean} header - If you are inside the header.
-	 * @property {boolean} footer - If you are inside the footer.
-	 * @property {boolean} headerArea - If you are click over the header.
-	 * @property {boolean} footerArea - If you are click over the footer.
+	 * @property {boolean} [header] - If you are inside the header.
+	 * @property {boolean} [footer] - If you are inside the footer.
+	 * @property {boolean} [headerArea] - If you are click over the header.
+	 * @property {boolean} [footerArea] - If you are click over the footer.
 	 */
 
 	/**
