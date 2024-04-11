@@ -2371,18 +2371,18 @@
 	CAnimItem.prototype.getInfoForTooltip = function (x, y) {
 		if (this.hitInEffectBar(x, y)) {
 			if (!this.hitResult) {
-				let str = AscCommon.translateManager.getValue('Start')
-				str += ': ' + (this.getDelay() / 1000).toFixed(1) + 's, '
-				str += AscCommon.translateManager.getValue('End')
-				str += ': ' + ((this.getDelay() + this.getDuration()) / 1000).toFixed(1) + 's'
-				return str
+				let str = AscCommon.translateManager.getValue('Start');
+				str += ': ' + (this.getDelay() / 1000).toFixed(1) + 's, ';
+				str += AscCommon.translateManager.getValue('End');
+				str += ': ' + ((this.getDelay() + this.getDuration()) / 1000).toFixed(1) + 's';
+				return str;
 			}
 
 			switch (this.hitResult.type) {
-				case 'left': return AscCommon.translateManager.getValue('Start') + ': ' + (this.getDelay()).toFixed(1);
-				case 'right': return AscCommon.translateManager.getValue('End') + ': ' + (this.getDelay() + this.getDuration()).toFixed(1);
-				case 'center': return AscCommon.translateManager.getValue('Start') + ': ' + (this.getDelay()).toFixed(1);
-				case 'partition': return AscCommon.translateManager.getValue('Loop') + ': ' + (this.getDuration()).toFixed(1);
+				case 'left': return AscCommon.translateManager.getValue('Start') + ': ' + (this.getDelay() / 1000).toFixed(1) + 's';
+				case 'right': return AscCommon.translateManager.getValue('End') + ': ' + ((this.getDelay() + this.getDuration() / 1000)).toFixed(1) + 's';
+				case 'center': return AscCommon.translateManager.getValue('Start') + ': ' + (this.getDelay() / 1000).toFixed(1) + 's';
+				case 'partition': return AscCommon.translateManager.getValue('Loop') + ': ' + (this.getDuration() / 1000).toFixed(1) + 's';
 			}
 
 		} else {
@@ -2403,12 +2403,11 @@
 			let presetClass = this.effect.cTn.presetClass;
 			let presetId = this.effect.cTn.presetID;
 
-			const groupData = Common.define.effectData.getEffectGroupData()
-			const effectData = Common.define.effectData.getEffectData()
-
-			groupData.forEach(function(groupItem) {
+			const groupData = Common.define.effectData.getEffectGroupData();
+			const effectData = Common.define.effectData.getEffectData();
+			groupData.forEach(function (groupItem) {
 				if (groupItem.value === presetClass) {
-					effectData.forEach(function(effectItem) {
+					effectData.forEach(function (effectItem) {
 						if (effectItem.value === presetId) {
 							effectName = AscCommon.translateManager.getValue(effectItem.displayValue);
 						}
@@ -2417,7 +2416,6 @@
 			})
 
 			let shapeName = this.effect.getObjectName();
-
 			return eventType + '\n' + effectType + '\n' + effectName + ' : ' + shapeName;
 		}
 	}
