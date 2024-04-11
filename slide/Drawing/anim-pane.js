@@ -2233,9 +2233,7 @@
 		this.contextMenuButton = this.addControl(new CButton(this, null, null, showContextMenu));
 		this.contextMenuButton.icon = this.contextMenuButton.addControl(new CImageControl(this.contextMenuButton, menuButton, 20 * AscCommon.g_dKoef_pix_to_mm, 20 * AscCommon.g_dKoef_pix_to_mm));
 
-		function showContextMenu(e, x, y) {
-			if (!this.hit(x, y)) { return }
-
+		this.contextMenuButton.sendContextMenuEvent = function () {
 			const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
 				this.bounds.l,
 				HEADER_HEIGHT + this.bounds.b - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
@@ -2248,6 +2246,12 @@
 			data.EffectStartType = this.parentControl.effect.getNodeType();
 
 			editor.sync_ContextMenuCallback(data);
+		}
+
+		function showContextMenu(e, x, y) {
+			if (this.hit(x, y) && !this.isHidden()) {
+				this.sendContextMenuEvent();
+			}
 		}
 
 		// Temp fields for effect bar movement
@@ -2289,6 +2293,12 @@
 			this.onUpdate();
 		}
 		this.onMouseUpCallback = function (event, x, y) {
+			if (this.hit(x, y)) {
+				if (event.Button === AscCommon.g_mouse_button_right) {
+					this.contextMenuButton.sendContextMenuEvent();
+				}
+			}
+
 			if (!this.hitResult) { return }
 			this.setNewEffectParams(this.tmpDelay, this.tmpDuration, this.tmpRepeatCount);
 			this.hitResult = this.tmpDelay = this.tmpDuration = this.tmpRepeatCount = null;
