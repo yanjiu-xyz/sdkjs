@@ -6608,19 +6608,32 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.setLayoutRules = function (lst) {
 		this.layoutInfo.ruleLst = lst;
 	};
+	PresNode.prototype.isSpaceNodeWithContent = function () {
+		let node = this;
+		while (node.algorithm instanceof SpaceAlgorithm && !node.contentNodes.length && node.childs.length) {
+			node = node.childs[0];
+		}
+		return !!(node.algorithm instanceof SpaceAlgorithm && node.contentNodes.length);
+	};
 	PresNode.prototype.isTxXfrm = function () {
 		if (this._isTxXfrm === null) {
 			this._isTxXfrm = false;
 			const textShape = this.getShape(true);
 			const textBounds = textShape.getBounds(true);
+			const textWidth = textBounds.r - textBounds.l;
+			const textHeight = textBounds.b - textBounds.t;
 			if (this.algorithm instanceof TextAlgorithm && this.parent && (this.parent.algorithm instanceof CompositeAlgorithm) && this.layoutInfo.shape.hideGeom) {
 				const childs = this.parent.childs;
 				for (let i = 0; i < childs.length; i++) {
 					const child = childs[i];
 					const spaceShape = child.getShape(true);
 					const spaceBounds = spaceShape.getBounds(true);
-					const isCorrectTxXfrmSizes = (textBounds.r - textBounds.l) <= (spaceBounds.r - spaceBounds.l) && (textBounds.b - textBounds.t) <= (spaceBounds.b - spaceBounds.t);
-					if (isCorrectTxXfrmSizes && (child.algorithm instanceof SpaceAlgorithm) && child.contentNodes.length) {
+					const spaceWidth = spaceBounds.r - spaceBounds.l;
+					const spaceHeight = spaceBounds.b - spaceBounds.t;
+					const isCorrectTxXfrmSizes = (spaceBounds.l <= textBounds.l || fAlgDeltaEqual(spaceBounds.l, textBounds.l)) &&
+						(spaceBounds.t <= textBounds.t || fAlgDeltaEqual(spaceBounds.t, textBounds.t)) &&
+						(spaceWidth >= textWidth || fAlgDeltaEqual(spaceWidth, textWidth)) && (spaceHeight >= textHeight || fAlgDeltaEqual(spaceHeight, textHeight));
+					if (isCorrectTxXfrmSizes && child.isSpaceNodeWithContent()) {
 						this._isTxXfrm = true;
 						break;
 					}
