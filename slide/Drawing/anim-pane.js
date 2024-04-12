@@ -2239,8 +2239,8 @@
 			data.Type = Asc.c_oAscContextMenuTypes.AnimEffect;
 			data.X_abs = coords.X;
 			data.Y_abs = coords.Y;
-			data.ButtonWidth = this.bounds.r - this.bounds.l;
-			data.ButtonHeight = this.bounds.b - this.bounds.t;
+			data.ButtonWidth = (this.bounds.r - this.bounds.l) * g_dKoef_mm_to_pix;
+			data.ButtonHeight = (this.bounds.b - this.bounds.t) * g_dKoef_mm_to_pix;
 			data.EffectStartType = this.parentControl.effect.getNodeType();
 
 			editor.sync_ContextMenuCallback(data);
