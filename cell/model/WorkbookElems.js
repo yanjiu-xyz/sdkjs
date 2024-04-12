@@ -14396,6 +14396,7 @@ function RangeDataManagerElem(bbox, data)
 		return this.name;
 	};
 
+
 	function CPrintPreviewState(wb) {
 		this.ctx = null;
 		this.pages = null;
@@ -17010,7 +17011,10 @@ function RangeDataManagerElem(bbox, data)
 		this.wb = wb;
 		this.funcsMapInfo = {};
 
+		this.localiztionMap = {};//{en: {"SUM": "SUMMA"}{"SUMMA": "SUM"}}
+
 		this.prefixName = "";
+		this.activeLocale = null;
 	}
 	CCustomFunctionEngine.prototype.add = function (func, options) {
 		//options ->
@@ -17142,12 +17146,16 @@ function RangeDataManagerElem(bbox, data)
 				let returnInfo = options.returnInfo;
 				return oThis.prepareResult(res, returnInfo.type);
 			} catch (e) {
-				console.log("ERROR CUSTOM FUNCTION CALCULATE")
+				console.log("ERROR CUSTOM FUNCTION CALCULATE");
 				return  new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 			}
 		};
 
-		this.addToFunctionsList(newFunc);
+		this.addToFunctionsList(newFunc, options);
+	};
+
+	CCustomFunctionEngine.prototype.setActiveLocale = function (sLocale) {
+		this.activeLocale = sLocale;
 	};
 
 	CCustomFunctionEngine.prototype._getParamsInfo = function (func, params) {
@@ -17187,17 +17195,21 @@ function RangeDataManagerElem(bbox, data)
 		return sFunc.slice(sFunc.indexOf('(') + 1, sFunc.indexOf(')')).match(funcArgsNamesRegExp);
 	};
 
-	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, translations) {
-		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
+	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, params) {
+		AscCommonExcel.cFormulaFunctionGroup['Custom'] = AscCommonExcel.cFormulaFunctionGroup['Custom'] || [];
+
+		let translations = params.nameLocale;
+		let description = params.description;
 
 		let funcName = newFunc.prototype.name;
 
 		//already added function
+		let isNewFunc = false;
 		if (this.funcsMapInfo[funcName]) {
 			//reload translations
-			this.funcsMapInfo[funcName].translations = translations;
+			this.pushTranslations(funcName, translations);
 
-			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
+			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["Custom"];
 			for (let i in customFunctionList) {
 				if (customFunctionList[i] && customFunctionList[i].prototype.name === funcName) {
 					customFunctionList.splice(i - 0, 1);
@@ -17205,25 +17217,55 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		} else {
-			this.funcsMapInfo[funcName] = {};
-			this.funcsMapInfo[funcName].translations = translations;
+			this.funcsMapInfo[funcName] = new CCustomFunctionInfo(funcName);
+			this.pushTranslations(funcName, translations);
+			this.funcsMapInfo[funcName].description = description;
+			isNewFunc = true;
 		}
 
 		//add or reload
 		if (AscCommonExcel.cFormulaFunctionToLocale && ((!this.funcsMapInfo[funcName].addLocalization
 			&& !AscCommonExcel.cFormulaFunctionToLocale[funcName]) || this.funcsMapInfo[funcName].addLocalization)) {
-			//TODO translation
+
 			//need get from interface short formula lang("en", ...)
-			let localName = this.getTranslationName(funcName);
+			let localName = this.getTranslationName(funcName, this.activeLocale);
 			AscCommonExcel.cFormulaFunctionLocalized[localName] = newFunc;
 			AscCommonExcel.cFormulaFunctionToLocale[funcName] = localName;
 
 			this.funcsMapInfo[funcName].addLocalization = true;
+			this.funcsMapInfo[funcName].description = description;
 		}
 
-		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
+		AscCommonExcel.cFormulaFunctionGroup["Custom"].push(newFunc);
 		AscCommonExcel.addNewFunction(newFunc);
 		this.wb.initFormulasList && this.wb.initFormulasList();
+		if (this.wb && this.wb.Api) {
+			this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+		}
+		if (isNewFunc) {
+			this.wb.handlers && this.wb.handlers.trigger("asc_onAddCustomFunction");
+		}
+	};
+
+	CCustomFunctionEngine.prototype.pushTranslations = function (funcName, translations) {
+		for (let i in translations) {
+			if (!translations[i]) {
+				continue;
+			}
+			if (!this.localiztionMap[i]) {
+				this.localiztionMap[i] = {};
+			}
+			if (!this.localiztionMap[i].fullNameToLocalName) {
+				this.localiztionMap[i].fullNameToLocalName = {};
+			}
+			if (!this.localiztionMap[i].localNameToFullName) {
+				this.localiztionMap[i].localNameToFullName = {};
+			}
+
+
+			this.localiztionMap[i].fullNameToLocalName[funcName] = (translations[i] + "").toUpperCase();
+			this.localiztionMap[i].localNameToFullName[translations[i]] = funcName;
+		}
 	};
 
 	CCustomFunctionEngine.prototype.getTypeByString = function (_type) {
@@ -17332,16 +17374,42 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
-	CCustomFunctionEngine.prototype.getFunc = function (name) {
+	CCustomFunctionEngine.prototype.getFunc = function (name, bLocale) {
+		if (bLocale) {
+			let activeLocale = this.activeLocale;
+			if (this.localiztionMap[activeLocale]) {
+				if (this.localiztionMap[activeLocale].localNameToFullName[name]) {
+					name = this.localiztionMap[activeLocale].localNameToFullName[name];
+				}
+			}
+		}
+
 		return this.funcsMapInfo[name];
+	};
+	
+	CCustomFunctionEngine.prototype.getDescription = function (name, ignoreLocale) {
+		let res = null;
+
+		let activeLocale = this.activeLocale;
+		if (!ignoreLocale && this.localiztionMap[activeLocale]) {
+			if (this.localiztionMap[activeLocale].localNameToFullName[name]) {
+				name = this.localiztionMap[activeLocale].localNameToFullName[name];
+			}
+		}
+
+		if (this.funcsMapInfo[name]) {
+			res = this.funcsMapInfo[name].description;
+		}
+
+		return res;
 	};
 
 	CCustomFunctionEngine.prototype.getTranslationName = function (name, lang) {
 		let res = name;
-		if (this.funcsMapInfo[name]) {
-			name = this.funcsMapInfo[name].translations && this.funcsMapInfo[name].translations[lang];
-			if (name) {
-				res = name;
+		if (this.localiztionMap[lang]) {
+			let localName = this.localiztionMap[lang].fullNameToLocalName[name];
+			if (localName) {
+				res = this.localiztionMap[lang].fullNameToLocalName[name];
 			}
 		}
 		return res;
@@ -17513,6 +17581,16 @@ function RangeDataManagerElem(bbox, data)
 		return false;
 	};
 
+
+	function CCustomFunctionInfo(name) {
+		this.name = name;
+		this.description = null;
+
+		this.addLocalization = null;
+	}
+	CCustomFunctionInfo.prototype.asc_getDescription = function () {
+		return this.description;
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -18030,6 +18108,9 @@ function RangeDataManagerElem(bbox, data)
 
 	window["AscCommonExcel"].CCustomFunctionEngine = CCustomFunctionEngine;
 
+	window["AscCommonExcel"].CCustomFunctionInfo = CCustomFunctionInfo;
+	prot = CCustomFunctionInfo.prototype;
+	prot["asc_getDescription"] = prot.asc_getDescription;
 
 
 })(window);
