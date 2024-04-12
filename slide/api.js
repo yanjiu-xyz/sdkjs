@@ -8120,6 +8120,12 @@ background-repeat: no-repeat;\
 	CContextMenuData.prototype.get_EffectStartType = function() {
 		return this.EffectStartType;
 	};
+	CContextMenuData.prototype.get_ButtonWidth = function() {
+		return this.ButtonWidth;
+	}
+	CContextMenuData.prototype.get_ButtonHeight = function() {
+		return this.ButtonHeight;
+	}
 
 	asc_docs_api.prototype.sync_ContextMenuCallback = function(Data)
 	{
@@ -9699,6 +9705,8 @@ background-repeat: no-repeat;\
 	CContextMenuData.prototype['get_IsSlideHidden']   = CContextMenuData.prototype.get_IsSlideHidden;
 	CContextMenuData.prototype['get_Guide']           = CContextMenuData.prototype.get_Guide;
 	CContextMenuData.prototype['get_EffectStartType'] = CContextMenuData.prototype.get_EffectStartType;
+	CContextMenuData.prototype['get_ButtonWidth']     = CContextMenuData.prototype.get_ButtonWidth;
+	CContextMenuData.prototype['get_ButtonHeight']    = CContextMenuData.prototype.get_ButtonHeight;
 
 	window['Asc']['CAscSlideProps']                   = CAscSlideProps;
 	CAscSlideProps.prototype['get_background']        = CAscSlideProps.prototype.get_background;
