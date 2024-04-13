@@ -2189,7 +2189,7 @@
 			//todo move cmd from header to body and uncomment
 			// jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
 			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
-			oAdditionalData["jsonparams"] = JSON.stringify(jsonparams);
+			oAdditionalData["jsonparams"] = jsonparams;
 		}
 		if (options.textParams && undefined !== options.textParams.asc_getAssociation()) {
 			oAdditionalData["textParams"] = {"association": options.textParams.asc_getAssociation()};
