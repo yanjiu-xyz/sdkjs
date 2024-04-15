@@ -3055,16 +3055,10 @@
 	};
 
 
-	baseEditorsApi.prototype.onMediaPlayerEvent = function(evt, mediaData)
+	baseEditorsApi.prototype.asc_onMediaPlayerEvent = function(evt, mediaData)
 	{
 
 	};
-
-	baseEditorsApi.prototype.updateMediaControlData = function(oMediaData)
-	{
-		console.log(JSON.stringify(oMediaData));
-	};
-
 	baseEditorsApi.prototype.getMediaData = function()
 	{
 		if(this.mediaData && !this.mediaData.isValid())
@@ -5113,6 +5107,7 @@
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
 	prot['asc_openDocumentFromBytes'] = prot.asc_openDocumentFromBytes;
+	prot['asc_onMediaPlayerEvent'] = prot.asc_onMediaPlayerEvent;
 
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
