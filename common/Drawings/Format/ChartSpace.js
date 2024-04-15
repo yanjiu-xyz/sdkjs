@@ -1361,10 +1361,13 @@ function(window, undefined) {
 
 	AscFormat.InitClass(CChartSpace, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ChartSpace);
 	CChartSpace.prototype.getPlotArea = function () {
+		if(!this.chart) return null;
 		return this.chart.plotArea;
 	};
 	CChartSpace.prototype.isChartEx = function () {
-		return this.getPlotArea().isChartEx();
+		let oPlotArea = this.getPlotArea();
+		if(!oPlotArea) return false;
+		return oPlotArea.isChartEx();
 	};
 	CChartSpace.prototype.fromOther = function(oChartSpace) {
 		if(oChartSpace.nvGraphicFramePr) {
