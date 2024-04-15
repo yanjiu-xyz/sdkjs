@@ -290,7 +290,9 @@ var c_oserct_chartspaceTHEMEOVERRIDE = 15;
 var c_oserct_chartspaceXLSX = 16;
 var c_oserct_chartspaceSTYLES = 17;
 var c_oserct_chartspaceCOLORS = 18;
-var c_oserct_chartspaceCHARTDATA = 19;
+var c_oserct_chartspaceXLSXEXTERNAL = 19;
+var c_oserct_chartspaceXLSXZIP = 20;
+
 
 
 var c_oserct_usershapes_COUNT = 0;
@@ -1468,11 +1470,6 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal) {
     if(null != oVal.chartColors) {
         this.bs.WriteItem(c_oserct_chartspaceCOLORS, function() {
            oThis.WriteCT_ChartColors(oVal.chartColors);
-        });
-    }
-    if(null != oVal.chartData) {
-        this.bs.WriteItem(c_oserct_chartspaceCHARTDATA, function() {
-           oThis.WriteCT_ChartData(oVal.chartData);
         });
     }
 };
@@ -7397,13 +7394,6 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
         if(oNewVal) {
             val.setChartColors(oNewVal);
         }
-    }
-    else if(c_oserct_chartspaceCHARTDATA === type) {
-        oNewVal = new AscFormat.CChartData();
-        res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_ChartData(t, l, oNewVal);
-        });
-        val.setChartData(oNewVal);
     }
     else {
         res = c_oSerConstants.ReadUnknown;
