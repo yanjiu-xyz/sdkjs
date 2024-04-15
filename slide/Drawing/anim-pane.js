@@ -491,7 +491,7 @@
 		const oSkin = AscCommon.GlobalSkin;
 		if (this.isActive()) { return oSkin.AnimPaneControlFillActive; }
 		if (this.isHovered()) { return oSkin.AnimPaneControlFillHovered; }
-		return oSkin.AnimPaneControlFill;
+		return null;
 	};
 	CControl.prototype.getOutlineColor = function () {
 		const oSkin = AscCommon.GlobalSkin;

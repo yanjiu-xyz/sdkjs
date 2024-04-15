@@ -116,7 +116,7 @@ var EditorSkins = {
 		SplitterWidthMM                 : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
 
-		AnimPaneBackground                  : "#F0F0F0",
+		AnimPaneBackground                  : "#F7F7F7",
 		AnimPaneControlFill                 : "#848484",
 		AnimPaneControlFillActive           : "#999999",
 		AnimPaneControlFillHovered          : "#404040",
@@ -267,7 +267,7 @@ var EditorSkins = {
 		SplitterWidthMM                       : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
 
-		AnimPaneBackground                  : "#F0F0F0",
+		AnimPaneBackground                  : "#F7F7F7",
 		AnimPaneControlFill                 : "#848484",
 		AnimPaneControlFillActive           : "#999999",
 		AnimPaneControlFillHovered          : "#404040",
@@ -290,10 +290,10 @@ var EditorSkins = {
 		AnimPaneEffectBarOutlineExit        : "#F23D3D",
 		AnimPaneEffectBarFillPath           : "#A1CEE3",
 		AnimPaneEffectBarOutlinePath        : "#254662",
-		AnimPaneTimelineRulerOutline        : "#2A2A2A",
+		AnimPaneTimelineRulerOutline        : "#CBCBCB",
 		AnimPaneTimelineRulerTick           : "#DFDFDF",
 		AnimPaneTimelineScrollerFill        : "#000000",
-		AnimPaneTimelineScrollerOutline      : "#444444",
+		AnimPaneTimelineScrollerOutline     : "#444444",
 		AnimPaneTimelineScrollerFillActive  : "#000000",
 		AnimPaneTimelineScrollerFillHovered : "#000000",
 

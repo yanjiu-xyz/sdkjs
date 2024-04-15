@@ -6503,6 +6503,8 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 		{
 			ctx.clearRect(0, 0, element.width, element.height);
 		}
+		ctx.fillStyle = AscCommon.GlobalSkin.AnimPaneBackground;
+		ctx.fillRect(0, 0, element.width, element.height);
 		if(oClipRect)
 		{
 			ctx.save();
@@ -6519,7 +6521,8 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 		}
 		oControl.draw(g);
 		g.RestoreGrState();
-		if(oClipRect) {
+		if(oClipRect)
+		{
 			ctx.restore();
 			ctx.restore();
 		}
