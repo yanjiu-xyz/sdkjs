@@ -2348,16 +2348,25 @@
 		Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState()
 	}
 	CAnimItem.prototype.updateCursorType = function (x, y) {
-		const hitRes = this.hitResult || this.hitInEffectBar(x, y);
-		
+		const cursorType = this.getNewCursorType(x, y);
+		const mouseMoveData = this.getMouseMoveData(x, y);
+
+		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
+		animPane.SetCursorType(cursorType, mouseMoveData);
+		animPane.sentMouseMoveData = mouseMoveData;
+	}
+	CAnimItem.prototype.getNewCursorType = function (x, y) {
 		const cursorTypes = {
 			'left': 'col-resize',
 			'right': 'col-resize',
 			'partition': 'col-resize',
 			'center': 'ew-resize'
 		};
+		const hitRes = this.hitResult || this.hitInEffectBar(x, y);
 		const cursorType = hitRes ? cursorTypes[hitRes.type] : 'default';
-
+		return cursorType;
+	};
+	CAnimItem.prototype.getMouseMoveData = function (x, y) {
 		const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
 			x, y + HEADER_HEIGHT - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
 		);
@@ -2368,38 +2377,40 @@
 		mouseMoveData.Effect = this.effect;
 		mouseMoveData.X_abs = coords.X;
 		mouseMoveData.Y_abs = coords.Y;
-
-		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
-		animPane.SetCursorType(cursorType, mouseMoveData);
-
-		animPane.sentMouseMoveData = mouseMoveData;
-	}
-
+		return mouseMoveData;
+	};
 	CAnimItem.prototype.getInfoForTooltip = function (x, y) {
-		if (this.hitInEffectBar(x, y)) {
-			if (!this.hitResult) {
-				let str = AscCommon.translateManager.getValue('Start');
-				str += ': ' + (this.getDelay() / 1000).toFixed(1) + 's, ';
-				str += AscCommon.translateManager.getValue('End');
-				str += ': ' + ((this.getDelay() + this.getDuration()) / 1000).toFixed(1) + 's';
-				return str;
-			}
+		// If there is a pressed animItem - we take the information from it,
+		// otherwise - from this one (literally 'this' xd)
+		let currentAnimItem = this;
+		const seqList = editor.WordControl.m_oAnimPaneApi.list.Control.seqList
+		seqList.forEachAnimItem(function (animItem) {
+			if (animItem.hitResult) { currentAnimItem = animItem; }
+		})
 
-			switch (this.hitResult.type) {
-				case 'left': return AscCommon.translateManager.getValue('Start') + ': ' + (this.getDelay() / 1000).toFixed(1) + 's';
-				case 'right': return AscCommon.translateManager.getValue('End') + ': ' + ((this.getDelay() + this.getDuration() / 1000)).toFixed(1) + 's';
-				case 'center': return AscCommon.translateManager.getValue('Start') + ': ' + (this.getDelay() / 1000).toFixed(1) + 's';
-				case 'partition': return AscCommon.translateManager.getValue('Loop') + ': ' + (this.getDuration() / 1000).toFixed(1) + 's';
+		if (currentAnimItem.hitResult) {
+			switch (currentAnimItem.hitResult.type) {
+				case 'left': return AscCommon.translateManager.getValue('Start') + ': ' + (currentAnimItem.getDelay() / 1000).toFixed(1) + 's';
+				case 'right': return AscCommon.translateManager.getValue('End') + ': ' + ((currentAnimItem.getDelay() + currentAnimItem.getDuration() / 1000)).toFixed(1) + 's';
+				case 'center': return AscCommon.translateManager.getValue('Start') + ': ' + (currentAnimItem.getDelay() / 1000).toFixed(1) + 's';
+				case 'partition': return AscCommon.translateManager.getValue('Loop') + ': ' + (currentAnimItem.getDuration() / 1000).toFixed(1) + 's';
 			}
+		}
 
+		if (currentAnimItem.hitInEffectBar(x, y)) {
+			let str = AscCommon.translateManager.getValue('Start');
+			str += ': ' + (currentAnimItem.getDelay() / 1000).toFixed(1) + 's, ';
+			str += AscCommon.translateManager.getValue('End');
+			str += ': ' + ((currentAnimItem.getDelay() + currentAnimItem.getDuration()) / 1000).toFixed(1) + 's';
+			return str;
 		} else {
 			let eventType = '';
-			if (this.effect.isClickEffect()) { eventType = AscCommon.translateManager.getValue('On Click'); }
-			if (this.effect.isAfterEffect()) { eventType = AscCommon.translateManager.getValue('After Previous'); }
-			if (this.effect.isWithEffect()) { eventType = AscCommon.translateManager.getValue('With Previous'); }
+			if (currentAnimItem.effect.isClickEffect()) { eventType = AscCommon.translateManager.getValue('On Click'); }
+			if (currentAnimItem.effect.isAfterEffect()) { eventType = AscCommon.translateManager.getValue('After Previous'); }
+			if (currentAnimItem.effect.isWithEffect()) { eventType = AscCommon.translateManager.getValue('With Previous'); }
 
 			let effectType = '';
-			switch (this.effect.cTn.presetClass) {
+			switch (currentAnimItem.effect.cTn.presetClass) {
 				case AscFormat.PRESET_CLASS_ENTR: effectType = AscCommon.translateManager.getValue('Entrance'); break;
 				case AscFormat.PRESET_CLASS_EMPH: effectType = AscCommon.translateManager.getValue('Emphasis'); break;
 				case AscFormat.PRESET_CLASS_EXIT: effectType = AscCommon.translateManager.getValue('Exit'); break;
@@ -2407,8 +2418,8 @@
 			}
 
 			let effectName = '';
-			let presetClass = this.effect.cTn.presetClass;
-			let presetId = this.effect.cTn.presetID;
+			let presetClass = currentAnimItem.effect.cTn.presetClass;
+			let presetId = currentAnimItem.effect.cTn.presetID;
 
 			const groupData = Common.define.effectData.getEffectGroupData();
 			const effectData = Common.define.effectData.getEffectData();
@@ -2422,7 +2433,7 @@
 				}
 			})
 
-			let shapeName = this.effect.getObjectName();
+			let shapeName = currentAnimItem.effect.getObjectName();
 			return eventType + '\n' + effectType + '\n' + effectName + ' : ' + shapeName;
 		}
 	}
