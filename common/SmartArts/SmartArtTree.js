@@ -6338,6 +6338,10 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 		value *= factor;
 		const constrObject = this.getConstraints(isAdapt);
+		if (constrObject[constr.type] !== undefined && constr.for === AscFormat.Constr_for_self && constr.refFor === AscFormat.Constr_for_self && constr.refType === AscFormat.Constr_type_none) {
+			return false;
+		}
+
 		switch (constr.op) {
 			case AscFormat.Constr_op_gte: {
 				const oldValue = constrObject[constr.type];
