@@ -4922,7 +4922,7 @@
 	{
 		this["native_" + name] = function() 
 		{
-			for (let i = 0, len = arguments.lenght; i < len; i++) 
+			for (let i = 0, len = arguments.length; i < len; i++) 
 			{
 				if (types && types[i] && types[i].prototype && types[i].prototype.fromCValue)
 					arguments[i] = types[i].prototype.fromCValue(arguments[i]);
@@ -4938,10 +4938,10 @@
 	{
 		this.asc_registerCallback(name, function()
 		{
-			for (let i = 0, len = arguments.lenght; i < len; i++) 
+			for (let i = 0, len = arguments.length; i < len; i++) 
 			{
-				if ((types && types[i] && types[i].prototype && types[i].prototype.toCValue)
-					arguments[i] = types[i].prototype.toCValue(arguments[i]);
+				if (arguments[i] && arguments[i].toCValue)
+					arguments[i] = arguments[i].toCValue(arguments[i]);
 			}
 			window["native"]["onJsEvent"](name, agruments);
 		});
