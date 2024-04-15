@@ -11947,7 +11947,7 @@ CPresentation.prototype.isSlideAnimated = function (nSlideIdx) {
 	}
 	return oSlide.isAnimated();
 };
-CPresentation.prototype.SetAnimationProperties = function (oPr) {
+CPresentation.prototype.SetAnimationProperties = function (oPr, bStartDemo) {
 
 	var oController = this.GetCurrentController();
 	if (!oController) {
@@ -11956,17 +11956,21 @@ CPresentation.prototype.SetAnimationProperties = function (oPr) {
 	var oSlide = this.GetCurrentSlide();
 	if (oSlide) {
 
-		var bStartDemo = false;
-		var oCurPr = oController.getDrawingProps().animProps;
-		if (oPr && oCurPr && (oPr.asc_getSubtype() !== oCurPr.asc_getSubtype() || oCurPr.isEqualProperties(oPr))) {
-			bStartDemo = true;
+
+		var bStartDemo_ = bStartDemo;
+		if(bStartDemo_ !== true && bStartDemo_ !== false) {
+			bStartDemo_ = false;
+			var oCurPr = oController.getDrawingProps().animProps;
+			if (oPr && oCurPr && (oPr.asc_getSubtype() !== oCurPr.asc_getSubtype() || oCurPr.isEqualProperties(oPr))) {
+				bStartDemo_ = true;
+			}
 		}
 		if (this.IsSelectionLocked(AscCommon.changestype_Timing) === false) {
 			this.StartAction(0);
 			oSlide.setAnimationProperties(oPr);
 			this.FinalizeAction();
 			this.Document_UpdateInterfaceState();
-			if (bStartDemo) {
+			if (bStartDemo_) {
 				this.StartAnimationPreview();
 			}
 		}

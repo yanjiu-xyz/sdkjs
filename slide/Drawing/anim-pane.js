@@ -1487,6 +1487,8 @@
 		graphics.SaveGrState();
 		var nInterval;
 		graphics.AddClipRect(x, y, extX, extY);
+		oColor = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.AnimPaneTimelineRulerOutline);
+		graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
 		for (nInterval = nStartIntervalIdx; nInterval <= nEndIntervalIdx; ++nInterval) {
 			var dTime = nInterval * dTimeOfSmallInterval;
 			var dPos = this.timeToPos(dTime);
@@ -1545,7 +1547,11 @@
 		graphics.df();
 
 		let nPenW = this.getPenWidth(graphics);
-		graphics.p_color(0, 0, 0, 0xFF);
+
+
+		let sColor = oSkin.AnimPaneTimelineScrollerOutline;
+		let oColor = AscCommon.RgbaHexToRGBA(sColor);
+		graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
 		graphics.drawHorLine(0, y, x, x + extX, nPenW);
 		graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
 		graphics.drawVerLine(2, x, y, y + extY, nPenW);
@@ -1938,6 +1944,9 @@
 			graphics.SaveGrState();
 			graphics.RemoveClipRect();
 
+			let sColor = AscCommon.GlobalSkin.AnimPaneTimelineScrollerOutline;
+			let oColor = AscCommon.RgbaHexToRGBA(sColor);
+			graphics.p_color(oColor.R, oColor.G, oColor.B, 255);
 			const xCord = timeline.getLeft() + timeline.getZeroShift() + timeline.tmpScrollOffset;
 			const height = this.parentControl.drawer.GetHeight();
 			graphics.drawVerLine(1, xCord, this.getTop(), this.getTop() + height, this.getPenWidth(graphics));
@@ -2601,7 +2610,6 @@
 		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
 		if (!timelineContainer) { return }
 
-		// TODO: Работает, но я не уверен, что оно должно находиться тут
 		this.effect.isSelected() ? this.contextMenuButton.show() : this.contextMenuButton.hide();
 
 		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false }
@@ -2645,7 +2653,7 @@
 		oOutlineColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
 
 		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 255);
-		graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, 255)
+		graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, 255);
 
 		const bounds = this.getEffectBarBounds();
 		if (this.effect.isInstantEffect()) {
@@ -2805,7 +2813,7 @@
 		}
 
 		if (this.effect.isEqualProperties(effectCopy)) { return }
-		Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(effectCopy);
+		Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(effectCopy, false);
 	};
 
 
@@ -2834,7 +2842,7 @@
 		const oSkin = AscCommon.GlobalSkin;
 		if (this.effect.isSelected()) { return oSkin.AnimPaneItemFillSelected; }
 		if (this.isHovered()) { return oSkin.AnimPaneItemFillHovered; }
-		return oSkin.AnimPaneBackground;
+		return null;
 	};
 	CAnimItem.prototype.getOutlineColor = function () {
 		return null;
