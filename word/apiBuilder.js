@@ -12117,6 +12117,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiStyle} - The used style.
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetStyle = function()
 	{
@@ -12150,6 +12151,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetBold = function()
 	{
@@ -12175,6 +12177,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetItalic = function()
 	{
@@ -12200,6 +12203,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetStrikeout = function()
 	{
@@ -12226,6 +12230,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetUnderline = function()
 	{
@@ -12251,6 +12256,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFontFamily = function()
 	{
@@ -12276,6 +12282,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?hps}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFontSize = function()
 	{
@@ -12308,6 +12315,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetColor = function()
 	{
@@ -12347,6 +12355,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetVertAlign = function()
 	{
@@ -12400,6 +12409,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetHighlight = function()
 	{
@@ -12431,6 +12441,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?twips}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetSpacing = function()
 	{
@@ -12461,6 +12472,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetDoubleStrikeout = function()
 	{
@@ -12486,6 +12498,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetCaps = function()
 	{
@@ -12512,6 +12525,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetSmallCaps = function()
 	{
@@ -12539,6 +12553,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?hps}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetPosition = function()
 	{
@@ -12576,6 +12591,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetLanguage = function()
 	{
@@ -12611,6 +12627,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetShd = function()
 	{
@@ -12641,6 +12658,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFill = function()
 	{
@@ -12671,6 +12689,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetTextFill = function()
 	{
@@ -12701,6 +12720,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiStroke}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetOutLine = function()
 	{
@@ -18822,10 +18842,11 @@
 	//------------------------------------------------------------------------------------------------------------------
 	
 	/**
-	 * Gets date format of current form.
+	 * Gets the date format of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.GetFormat = function() {
 		let oDatePr = this.Sdt.GetDatePickerPr();
@@ -18833,11 +18854,12 @@
 	};
 
 	/**
-	 * Sets date format to current form.
+	 * Sets the date format to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {string} sFormat
+	 * @param {string} sFormat - The date format. For example, mm.dd.yyyy
 	 * @returns {boolean}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.SetFormat = function(sFormat)
 	{
@@ -18854,10 +18876,11 @@
 	};
 
 	/**
-	 * Gets used date language of current form.
+	 * Gets the used date language of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.GetLanguage = function() {
 		let oDatePr = this.Sdt.GetDatePickerPr();
@@ -18870,12 +18893,13 @@
 	};
 
 	/**
-	 * Sets date language to current form.
+	 * Sets the date language to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
+	 * @param {string} sLangId - The date language. The possible value for this parameter is a language identifier as defined in
 	 * RFC 4646/BCP 47. Example: "en-CA".
 	 * @returns {boolean}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.SetLanguage = function(sLangId)
 	{
@@ -18893,10 +18917,11 @@
 	};
 
 	/**
-	 * Returns the timestamp setted in form.
+	 * Returns the timestamp of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @returns {Number}
+	 * @returns {number}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.GetTime = function()
 	{
@@ -18910,8 +18935,9 @@
 	 * Sets the timestamp to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {Number} nTimeStamp
+	 * @param {number} nTimeStamp The timestamp that will be set to the current date form.
 	 * @returns {boolean}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.SetTime = function(nTimeStamp)
 	{
