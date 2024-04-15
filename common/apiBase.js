@@ -4917,6 +4917,36 @@
 		this.onEndLoadFile(file);
 	};
 
+	// for native editors
+	baseEditorsApi.prototype.wrapFunction = function(name, types) 
+	{
+		this["native_" + name] = function() 
+		{
+			for (let i = 0, len = arguments.length; i < len; i++) 
+			{
+				if (types && types[i] && types[i].prototype && types[i].prototype.fromCValue)
+					arguments[i] = types[i].prototype.fromCValue(arguments[i]);
+			}
+			let result = this[name].apply(this, arguments);
+			if (result && result.toCValue)
+				result = result.toCValue();
+			return result;
+		}
+	};
+
+	baseEditorsApi.prototype.wrapEvent = function(name, types) 
+	{
+		this.asc_registerCallback(name, function()
+		{
+			for (let i = 0, len = arguments.length; i < len; i++) 
+			{
+				if (arguments[i] && arguments[i].toCValue)
+					arguments[i] = arguments[i].toCValue();
+			}
+			window["native"]["onJsEvent"](name, arguments);
+		});
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
