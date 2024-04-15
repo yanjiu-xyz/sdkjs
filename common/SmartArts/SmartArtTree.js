@@ -1401,6 +1401,8 @@
 					default:
 						return val * 100000;
 				}
+			case AscFormat.LayoutShapeType_shapeType_chord:
+				return AscFormat.normalizeRotate(val * degToRad) * radToDeg * 60000;
 			default:
 				return val * 100000;
 		}
