@@ -1157,8 +1157,8 @@
 		let langName = 'en-us';
 		if (AscCommon.g_oDefaultCultureInfo.Name) {
 			langName = AscCommon.g_oDefaultCultureInfo.Name.replace('_', '-').toLowerCase();
-		} else if (oLogicDocument.GetDefaultLanguage && window['Common']) {
-			langCode = oLogicDocument.GetDefaultLanguage();
+		} else if (this.defaultLanguage && window['Common']) {
+			langCode = this.defaultLanguage;
 			langName = window['Common']['util']['LanguageInfo']['getLocalLanguageName'](langCode)[0].toLowerCase();
 
 		}
