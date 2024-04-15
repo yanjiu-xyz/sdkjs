@@ -869,6 +869,10 @@
 				}
 				break;
 			}
+			case AscFormat.AxisType_value_follow: {
+				this.getNodesByFollow(nodes, ptType);
+				break;
+			}
 			case AscFormat.AxisType_value_followSib: {
 				this.getNodesByFollowSib(nodes, ptType);
 				break;
@@ -927,6 +931,51 @@
 			}
 		}
 	};
+
+	SmartArtDataNodeBase.prototype.forEachDes = function (callback) {
+		const elements = [this];
+		while (elements.length) {
+			const element = elements.pop();
+			for (let i = 0; i < element.childs.length; i++) {
+				elements.push(element.childs[i]);
+				callback(element.childs[i]);
+			}
+		}
+	};
+
+	SmartArtDataNodeBase.prototype.forEachDesOrSelf = function (callback) {
+		callback(this);
+		this.forEachDes(callback);
+	};
+	SmartArtDataNodeBase.prototype.getNodesByFollow = function (nodes, ptType) {
+		const parent = this.getParent();
+		if (parent) {
+			let bAdd = false;
+			for (let i = 0; i < parent.childs.length; i++) {
+				const child = parent.childs[i];
+				if (bAdd) {
+					child.forEachDesOrSelf(function (node) {
+						const needNode = node.getNodeByPtType(ptType);
+						if (needNode) {
+							nodes.push(needNode);
+						}
+					});
+				} else if (child === this) {
+					bAdd = true;
+					if (ptType === AscFormat.ElementType_value_sibTrans) {
+						child.forEachDesOrSelf(function (node) {
+							const needNode = node.getNodeByPtType(ptType);
+							if (needNode) {
+								nodes.push(needNode);
+							}
+						});
+					}
+				} else if (child.sibNode === this) {
+					bAdd = true;
+				}
+			}
+		}
+	}
 	SmartArtDataNodeBase.prototype.getNodesByFollowSib = function (nodes, ptType) {
 		const parent = this.getParent();
 		if (parent) {
