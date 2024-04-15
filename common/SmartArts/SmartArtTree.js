@@ -277,12 +277,9 @@
 	};
 	If.prototype.funcRevPos = function (nodes, currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
-		for (let i = 0; i < nodes.length; i++) {
-			if (nodes[i] === currentNode) {
-				return this.check(conditionValue, nodes.length - i);
-			}
-		}
-		return false;
+		const position = currentNode.getPositionByParent();
+		const parentLength = currentNode.getParentChildLength();
+		return this.check(conditionValue, parentLength - position);
 	};
 	If.prototype.funcDepth = function (currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
@@ -1127,6 +1124,10 @@
 	AscFormat.InitClassWithoutType(SmartArtDataNode, SmartArtDataNodeBase);
 	SmartArtDataNode.prototype.getPointType = function () {
 		return this.point.getType();
+	}
+	SmartArtDataNode.prototype.getParentChildLength = function () {
+		const parent = this.getParent();
+		return parent.childs.length;
 	}
 	SmartArtDataNode.prototype.getPositionByParent = function () {
 		const parent = this.getParent();
