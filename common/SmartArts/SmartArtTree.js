@@ -4550,7 +4550,6 @@ function HierarchyAlgorithm() {
 			row.push(shape);
 			if (fromLeft) {
 				shape.moveTo(offX - bounds.l, 0);
-				const newBounds = shape.getBounds();
 				offX += bounds.r - bounds.l;
 			} else {
 				shape.moveTo(offX - bounds.r, 0);
@@ -6338,7 +6337,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 		value *= factor;
 		const constrObject = this.getConstraints(isAdapt);
-		if (constrObject[constr.type] !== undefined && constr.for === AscFormat.Constr_for_self && constr.refFor === AscFormat.Constr_for_self && constr.refType === AscFormat.Constr_type_none) {
+		if (constrObject[constr.type] !== undefined && constr.refFor === AscFormat.Constr_for_self && constr.refType === AscFormat.Constr_type_none) {
 			return false;
 		}
 
