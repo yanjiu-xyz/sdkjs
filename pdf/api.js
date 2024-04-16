@@ -626,7 +626,7 @@
 			this.ShapeApply(AscShapeProp);
 		}
 		else {
-			let srcLocal = g_oDocumentUrls.getImageLocal(src);
+			let srcLocal = AscCommon.g_oDocumentUrls.getImageLocal(src);
 			if (srcLocal) {
 				src = srcLocal;
 			}
@@ -779,7 +779,7 @@
 		}
 		if (!AscCommon.isNullOrEmptyString(ImagePr.ImageUrl)) {
 			let sImageUrl = null, sToken = undefined;
-			if (!g_oDocumentUrls.getImageLocal(ImagePr.ImageUrl)) {
+			if (!AscCommon.g_oDocumentUrls.getImageLocal(ImagePr.ImageUrl)) {
 				sImageUrl = ImagePr.ImageUrl;
 				sToken = obj.Token;
 			}
@@ -787,7 +787,7 @@
 			let oApi           = this;
 			let fApplyCallback = function() {
 				let _img     = oApi.ImageLoader.LoadImage(ImagePr.ImageUrl, 1);
-				let srcLocal = g_oDocumentUrls.getImageLocal(ImagePr.ImageUrl);
+				let srcLocal = AscCommon.g_oDocumentUrls.getImageLocal(ImagePr.ImageUrl);
 
 				if (srcLocal) {
 					ImagePr.ImageUrl = srcLocal;
@@ -808,12 +808,12 @@
 			}
 			else {
 				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
-                    this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
+                    this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
                     let _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
-                    _url     = g_oDocumentUrls.getImageUrl(_url);
+                    _url     = AscCommon.g_oDocumentUrls.getImageUrl(_url);
                     ImagePr.ImageUrl = _url;
                     fApplyCallback();
-                    this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
+                    this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
                     return;
                 }
 

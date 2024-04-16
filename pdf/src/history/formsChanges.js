@@ -70,6 +70,7 @@ CChangesPDFFormAddKid.prototype.Type = AscDFH.historyitem_Pdf_Form_Add_Kid;
 CChangesPDFFormAddKid.prototype.Undo = function()
 {
 	let oForm	= this.Class;
+	let oDocument = Asc.editor.getPDFDoc();
 	let oDrDoc	= oDocument.GetDrawingDocument();
 	
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
@@ -86,6 +87,7 @@ CChangesPDFFormAddKid.prototype.Undo = function()
 CChangesPDFFormAddKid.prototype.Redo = function()
 {
 	let oForm	= this.Class;
+	let oDocument = Asc.editor.getPDFDoc();
 	let oDrDoc	= oDocument.GetDrawingDocument();
 	
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
@@ -115,6 +117,7 @@ CChangesPDFFormRemoveKid.prototype.Type = AscDFH.historyitem_Pdf_Form_Remove_Kid
 CChangesPDFFormRemoveKid.prototype.Undo = function()
 {
 	let oForm	= this.Class;
+	let oDocument = Asc.editor.getPDFDoc();
 	let oDrDoc	= oDocument.GetDrawingDocument();
 	
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
@@ -131,6 +134,7 @@ CChangesPDFFormRemoveKid.prototype.Undo = function()
 CChangesPDFFormRemoveKid.prototype.Redo = function()
 {
 	let oForm	= this.Class;
+	let oDocument = Asc.editor.getPDFDoc();
 	let oDrDoc	= oDocument.GetDrawingDocument();
 	
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)

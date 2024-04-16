@@ -202,9 +202,9 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 				oDocument.RemoveForm(oItem);
 			}
 			else {
-				let nIdx = oDocument.widgetsParents.indexOf(oForm);
+				let nIdx = oDocument.widgetsParents.indexOf(oItem);
 				if (nIdx != -1) {
-					oDocument.widgetsParents.splice(nIdx, oForm);
+					oDocument.widgetsParents.splice(nIdx, oItem);
 				}
 			}
 		}

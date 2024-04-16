@@ -2172,7 +2172,7 @@ var CPresentation = CPresentation || function(){};
 
             // проверяем родителя этого родителя
             if (oParent) {
-                oParent.RemoveKid(oField);
+                oParent.RemoveKid(oForm);
                 this.CheckParentForm(oParent);
             }
         }
@@ -3359,7 +3359,7 @@ var CPresentation = CPresentation || function(){};
         });
 
         this.CreateNewHistoryPoint({objects: aObjects});
-        oController.changeTextCase(nCaseType);
+        oController.changeTextCase(nType);
 
         aObjects.forEach(function(drawing) {
             drawing.SetNeedRecalc(true);
