@@ -4414,29 +4414,66 @@
             ctx.setFillStyle(backgroundColor)
               .fillRect(x, y, w, h);
         }
-        // draw border
-        ctx.setStrokeStyle(borderColor)
-          .setLineWidth(1)
-          .beginPath();
-        if (style !== kHeaderDefault && !isColHeader && !window["IS_NATIVE_EDITOR"]) {
-            // Select row (top border)
-            ctx.lineHorPrevPx(x, y, x2);
-        }
 
-        // Right border
-		if (isColHeader || !window["IS_NATIVE_EDITOR"]) {
-			ctx.lineVerPrevPx(x2, y, y2);
-		}
-        // Bottom border
-		if (!isColHeader || !window["IS_NATIVE_EDITOR"]) {
-			ctx.lineHorPrevPx(x, y2, x2);
-		}
+        let t = this;
+		let _toRetina = function (val) {
+			return t.getRetinaPixelRatio() >= 2 ? AscCommon.AscBrowser.convertToRetinaValue(val, true) : val;
+		};
 
-        if (style !== kHeaderDefault && isColHeader) {
-            // Select col (left border)
-            ctx.lineVerPrevPx(x, y, y2);
-        }
-        ctx.stroke();
+		let drawTopBorder = function (_selected) {
+			if (style !== kHeaderDefault && !isColHeader && !window["IS_NATIVE_EDITOR"]) {
+				// Select row (top border)
+				ctx.lineHorPrevPx(x, y, x2);
+			}
+		};
+		let drawLeftBorder = function (_selected) {
+			if (style !== kHeaderDefault && isColHeader) {
+				// Select col (left border)
+				ctx.lineVerPrevPx(x, y, y2);
+			}
+		};
+		let drawRightBorder = function (_selected) {
+			if (isColHeader || !window["IS_NATIVE_EDITOR"]) {
+				ctx.lineVerPrevPx(x2, y - (_selected ? (_toRetina(1) + 1) : 0), y2 + (_selected ? _toRetina(1) : 0));
+			}
+		};
+		let drawBottomBorder = function (_selected) {
+			if (!isColHeader || !window["IS_NATIVE_EDITOR"]) {
+				ctx.lineHorPrevPx(x - (_selected ? (_toRetina(1) + 1) : 0), y2, x2 + (_selected ? _toRetina(1) : 0));
+			}
+		};
+
+
+		let needSelectTopBorder = false;
+		let needSelectRightBorder = style  === kHeaderActive && !isColHeader;
+		let needSelectBottomBorder = style  === kHeaderActive && isColHeader;
+		let needSelectLeftBorder = false;
+
+		let drawBorders = function (_selected) {
+			needSelectTopBorder === _selected && drawTopBorder(_selected);
+			needSelectRightBorder === _selected && drawRightBorder(_selected);
+			needSelectBottomBorder === _selected && drawBottomBorder(_selected);
+			needSelectLeftBorder === _selected && drawLeftBorder(_selected);
+		};
+
+		// draw borders
+		ctx.setStrokeStyle(borderColor)
+			.setLineWidth(1)
+			.beginPath();
+
+		drawBorders(false);
+
+		ctx.stroke();
+
+		// draw borders (selected bottom/right)
+		ctx.setStrokeStyle(this.settings.activeCellBorderColor)
+			.setLineWidth(_toRetina(2))
+			.beginPath();
+
+		drawBorders(true);
+
+		ctx.stroke();
+
 
         // Для невидимых кроме border-а ничего не рисуем
         if (isZeroHeader || -1 === index) {
@@ -4715,13 +4752,24 @@
         if (colEnd === undefined) {
             colEnd = colStart;
         }
+
+		let t = this;
+		let _toRetina = function (val) {
+			return t.getRetinaPixelRatio() >= 2 ? AscCommon.AscBrowser.convertToRetinaValue(val, true) : val;
+		};
+		//by clean down thin border
+		let correctX = -1*(_toRetina(1) + 1);
+		let correctY = 0;
+		let correctW = _toRetina(2) + 1;
+		let correctH = (t.getRetinaPixelRatio() >= 2 ? _toRetina(1) : 0);
+
         var colStartTmp = Math.max(this.visibleRange.c1, colStart);
         var colEndTmp = Math.min(this.visibleRange.c2, colEnd);
 		l = this._getColLeft(colStartTmp) - offsetX;
         for (i = colStartTmp; i <= colEndTmp; ++i) {
         	w = this._getColumnWidth(i);
         	if (0 !== w) {
-				this.drawingCtx.clearRectByX(l, this.headersTop, w, this.headersHeight);
+				this.drawingCtx.clearRectByX(l + correctX, this.headersTop + correctY, w + correctW, this.headersHeight + correctH);
 				l += w;
 			}
         }
@@ -4734,7 +4782,7 @@
             for (i = colStart; i <= colEnd; ++i) {
 				w = this._getColumnWidth(i);
 				if (0 !== w) {
-					this.drawingCtx.clearRectByX(l, this.headersTop, w, this.headersHeight);
+					this.drawingCtx.clearRectByX(l + correctX, this.headersTop + correctY, w + correctW, this.headersHeight + correctH);
 					l += w;
 				}
             }
@@ -4752,13 +4800,24 @@
         if (rowEnd === undefined) {
             rowEnd = rowStart;
         }
+
+		let oThis = this;
+		let _toRetina = function (val) {
+			return oThis.getRetinaPixelRatio() >= 2 ? AscCommon.AscBrowser.convertToRetinaValue(val, true) : val;
+		};
+		//by clean down thin border
+		let correctX = 0;
+		let correctY = -1*(_toRetina(1) + 1);
+		let correctW = (this.getRetinaPixelRatio() >= 2 ? _toRetina(1) : 0);
+		let correctH = _toRetina(2) + 1;
+
         var rowStartTmp = Math.max(this.visibleRange.r1, rowStart);
         var rowEndTmp = Math.min(this.visibleRange.r2, rowEnd);
 		t = this._getRowTop(rowStartTmp) - offsetY;
         for (i = rowStartTmp; i <= rowEndTmp; ++i) {
 			h = this._getRowHeight(i);
             if (0 !== h) {
-				this.drawingCtx.clearRectByY(this.headersLeft, t, this.headersWidth, h);
+				this.drawingCtx.clearRectByY(this.headersLeft + correctX, t + correctY, this.headersWidth + correctW, h + correctH);
 				t += h;
             }
         }
@@ -4771,7 +4830,7 @@
             for (i = rowStart; i <= rowEnd; ++i) {
 				h = this._getRowHeight(i);
                 if (0 !== h) {
-					this.drawingCtx.clearRectByY(this.headersLeft, t, this.headersWidth, h);
+					this.drawingCtx.clearRectByY(this.headersLeft + correctX, t + correctY, this.headersWidth + correctW, h + correctH);
 					t += h;
                 }
             }
