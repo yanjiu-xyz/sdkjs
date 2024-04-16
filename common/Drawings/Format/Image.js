@@ -927,8 +927,8 @@
 		CMediaData.prototype.getPlayerData = function(oFrameRect, oControlRect) {
 			if(!this.isValid())
 				return null;
-			let oData = {};
 			let oDrawing = this.getDrawing();
+			let oData = CreateMediaData();
 			oData["DrawingId"] = oDrawing.Id;
 			oData["FullScreen"] = this.isFullScreen();
 			oData["Mute"] = this.isMute();
@@ -939,10 +939,27 @@
 			oData["FrameRect"] = oFrameRect.toObject();
 			oData["ControlRect"] = oControlRect.toObject();
 			oData["DrawingTransform"] = oDrawing.transform.exportToObject();
+			oData["MediaFile"] = this.getName();
 			return oData;
 		};
 
+		function CreateMediaData() {
+			let oData = {};
+			oData["DrawingId"] = null;
+			oData["FullScreen"] = null;
+			oData["Mute"] = null;
+			oData["IsVideo"] = null;
+			oData["Volume"] = null;
+			oData["StartTime"] = null;
+			oData["EndTime"] = null;
+			oData["FrameRect"] = null;
+			oData["ControlRect"] = null;
+			oData["DrawingTransform"] = null;
+			oData["MediaFile"] = null;
+			return oData;
+		}
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CImageShape = CImageShape;
+		window['AscFormat'].CreateMediaData = CreateMediaData;
 	})(window);

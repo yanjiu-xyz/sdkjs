@@ -17853,6 +17853,29 @@
 		}
 
 		const OBJECT_MORPH_MARKER = "!!";
+
+		function IsEqualObjects(obj1, obj2) {
+			let iO = AscCommon.isRealObject;
+			let iN = AscFormat.isRealNumber;
+			let iEN = AscFormat.fApproxEqual;
+			if(!iO(obj1) && iO(obj2) || iO(obj1) && !iO(obj2)) return false;
+			for(let sKey in obj1) {
+				if(obj1.hasOwnProperty(sKey)) {
+					let pr1 = obj1[sKey];
+					let pr2 = obj2[sKey];
+					if(iO(pr1)) {
+						if(!IsEqualObjects(pr1, pr2)) return false;
+					}
+					else if(iN(pr1)) {
+						if(!iEN(pr1, pr2)) return false;
+					}
+					else {
+						if(pr1 !== pr2) return false;
+					}
+				}
+			}
+			return true;
+		}
 //----------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CreateFontRef = CreateFontRef;
@@ -18173,6 +18196,7 @@
 		window['AscFormat'].CVariantVStream = CVariantVStream;
 		window['AscFormat'].fRGBAToHexString = fRGBAToHexString;
 		window['AscFormat'].RefreshContentAllFields = RefreshContentAllFields;
+		window['AscFormat'].IsEqualObjects = IsEqualObjects;
 		window['AscFormat'].szPh_full = szPh_full;
 		window['AscFormat'].szPh_half = szPh_half;
 		window['AscFormat'].szPh_quarter = szPh_quarter;

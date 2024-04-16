@@ -4795,10 +4795,9 @@ function CEditorPage(api)
 	};
 
 
-	this.GetMediaPlayerData = function()
+	this.GetMediaPlayerData = function(mediaData)
 	{
-		let mediaData = this.m_oApi.getMediaData();
-		if(!mediaData) return null;
+		if(!mediaData || !mediaData.isValid()) return null;
 
 		let oMediaFrameRect = this.GetMediaFrameRect();
 		if(!oMediaFrameRect) return null;

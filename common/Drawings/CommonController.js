@@ -2334,14 +2334,14 @@
 						Asc.editor.callMediaPlayerCommand("showMediaControl", oMediaData);
 					}
 					else {
-						Asc.editor.callMediaPlayerCommand("hideMediaControl");
+						Asc.editor.hideMediaControl();
 					}
 				},
 				checkShowMediaControlOnHover: function (oDrawing) {
 					let oCurMediaSp = null;
 					let oCurMediaData = Asc.editor.mediaData;
 					if(oCurMediaData) {
-						oCurMediaSp = AscCommon.g_oTableId.Get_ById(oCurMediaData["id"]);
+						oCurMediaSp = oCurMediaData.getDrawing();
 					}
 					let oDrawingMediaData;
 
@@ -2352,7 +2352,7 @@
 					if(!oDrawingMediaData) {
 						if(oCurMediaSp) {
 							if(!oCurMediaSp.selected) {
-								Asc.editor.callMediaPlayerCommand("hideMediaControl");
+								Asc.editor.hideMediaControl();
 							}
 						}
 					}
