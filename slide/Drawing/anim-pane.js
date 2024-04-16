@@ -2421,6 +2421,7 @@
 			let presetClass = currentAnimItem.effect.cTn.presetClass;
 			let presetId = currentAnimItem.effect.cTn.presetID;
 
+			/*
 			const groupData = Common.define.effectData.getEffectGroupData();
 			const effectData = Common.define.effectData.getEffectData();
 			groupData.forEach(function (groupItem) {
@@ -2432,6 +2433,7 @@
 					})
 				}
 			})
+			*/
 
 			let shapeName = currentAnimItem.effect.getObjectName();
 			return eventType + '\n' + effectType + '\n' + effectName + ' : ' + shapeName;
