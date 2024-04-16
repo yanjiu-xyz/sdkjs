@@ -2159,7 +2159,7 @@
 						}
 					} else if (oGrp) {
 						if (oGrp.selectStartPage === pageIndex) {
-							!Asc.editor.isPdfEditor() && drawingDocument.DrawTrack(
+							!oGrp.IsAnnot && drawingDocument.DrawTrack(
 								AscFormat.TYPE_TRACK.GROUP_PASSIVE,
 								oGrp.getTransformMatrix(),
 								0,
@@ -2174,7 +2174,7 @@
 							const oGrpTx = oGrp.selection.textSelection;
 							const oGrpChart = oGrp.selection.chartSelection;
 							const aGrpSelected = oGrp.selectedObjects;
-							if (oGrpTx) {
+							if (oGrpTx && !oGrp.IsAnnot) {
 								drawingDocument.DrawTrack(
 									AscFormat.TYPE_TRACK.TEXT,
 									oGrpTx.transform,
@@ -2192,7 +2192,9 @@
 							} else {
 								for (i = 0; i < aGrpSelected.length; ++i) {
 									let oDrawing = aGrpSelected[i];
-
+									if (Asc.editor.isPdfEditor() && oDrawing instanceof AscFormat.CConnectionShape) {
+										continue;
+									}
 									drawingDocument.DrawTrack(
 										AscFormat.TYPE_TRACK.SHAPE,
 										oDrawing.transform,
@@ -2201,7 +2203,7 @@
 										oDrawing.extX,
 										oDrawing.extY,
 										AscFormat.CheckObjectLine(oDrawing),
-										oDrawing.canRotate(),
+										oDrawing.canRotate() && !Asc.editor.isPdfEditor(),
 										undefined,
 										isDrawHandles && oGrp.canEdit());
 								}
@@ -4060,7 +4062,7 @@
 						var oAscTextArtProperties = props.textArtProperties;
 						var oParaTextPr;
 						var nStyle = oAscTextArtProperties.asc_getStyle();
-						var bWord = (typeof CGraphicObjects !== "undefined" && (this instanceof CGraphicObjects));
+						var bWord = (typeof CGraphicObjects !== "undefined" && (this instanceof CGraphicObjects) && false == Asc.editor.isPdfEditor());
 						if (this.selection.groupSelection && this.selection.groupSelection.isSmartArtObject()) {
 							bWord = false;
 						}
@@ -7073,7 +7075,7 @@
 						}
 						if (!drawing.group) {
 							locked = drawing.lockType !== c_oAscLockTypes.kLockTypeNone && drawing.lockType !== c_oAscLockTypes.kLockTypeMine;
-							if (typeof editor !== "undefined" && isRealObject(editor) && editor.isPresentationEditor) {
+							if (typeof editor !== "undefined" && isRealObject(editor) && (editor.isPresentationEditor || Asc.editor.isPdfEditor())) {
 								if (drawing.Lock) {
 									locked = drawing.Lock.Is_Locked();
 								}
@@ -7082,7 +7084,7 @@
 							var oParentGroup = drawing.group.getMainGroup();
 							if (oParentGroup) {
 								locked = oParentGroup.lockType !== c_oAscLockTypes.kLockTypeNone && oParentGroup.lockType !== c_oAscLockTypes.kLockTypeMine;
-								if (typeof editor !== "undefined" && isRealObject(editor) && editor.isPresentationEditor) {
+								if (typeof editor !== "undefined" && isRealObject(editor) && (editor.isPresentationEditor || Asc.editor.isPdfEditor())) {
 									if (oParentGroup.Lock) {
 										locked = oParentGroup.Lock.Is_Locked();
 									}
@@ -8114,7 +8116,7 @@
 						MainLogicDocument.SetLocalTrackRevisions(false);
 					}
 
-					var oShape = new AscFormat.CShape();
+					var oShape = Asc.editor.isPdfEditor() ? new AscPDF.CPdfShape() : new AscFormat.CShape();
 					oShape.setWordShape(bWord === true);
 					oShape.setBDeleted(false);
 					if (wsModel)
@@ -8153,7 +8155,7 @@
 							oSelectedContent.ReplaceContent(oContent);
 							oShape.bSelectedText = true;
 						} else {
-							sText = this.getDefaultText();
+							sText = bUseStartString ? sStartString : this.getDefaultText();
 							AscFormat.AddToContentFromString(oContent, sText);
 							oShape.bSelectedText = false;
 						}
@@ -11073,6 +11075,7 @@
 		window['AscFormat'].CreateBlipFillRasterImageId = CreateBlipFillRasterImageId;
 		window['AscFormat'].fResetConnectorsIds = fResetConnectorsIds;
 		window['AscFormat'].getAbsoluteRectBoundsArr = getAbsoluteRectBoundsArr;
+		window['AscFormat'].getAbsoluteRectBoundsObject = getAbsoluteRectBoundsObject;
 		window['AscFormat'].fCheckObjectHyperlink = fCheckObjectHyperlink;
 		window['AscFormat'].getNumberingType = getNumberingType;
 		window['AscFormat'].fGetDefaultShapeExtents = fGetDefaultShapeExtents;

@@ -3076,6 +3076,7 @@ function (window, undefined) {
 		this.paddings = null;
 		this.canFill = true;
 		this.canChangeArrows = false;
+		this.canEditText = false; // used in pdf editor
 		this.bFromChart = false;
 		this.bFromGroup = false;
 		this.bFromImage = false;
@@ -3345,6 +3346,70 @@ function (window, undefined) {
 	};
 	asc_CShapeProperty.prototype.asc_getIsMotionPath = function () {
 		return this.isMotionPath;
+	};
+	asc_CShapeProperty.prototype.asc_getCanEditText = function () {
+		return this.canEditText;
+	};
+	asc_CShapeProperty.prototype.asc_setCanEditText = function (v) {
+		this.canEditText = v;
+	};
+
+	/** @constructor */
+	function asc_CAnnotProperty() {
+		this.type				= null; // custom
+		this.fill				= null;
+		this.stroke				= null;
+		this.canFill			= true;
+		this.canChangeArrows	= true;
+		this.Locked				= false;
+		this.subject			= undefined;
+		this.canEditText		= false;
+
+		this.Position = undefined;
+	}
+
+	asc_CAnnotProperty.prototype.constructor = asc_CAnnotProperty;
+	asc_CAnnotProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CAnnotProperty.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CAnnotProperty.prototype.asc_getFill = function () {
+		return this.fill;
+	};
+	asc_CAnnotProperty.prototype.asc_putFill = function (v) {
+		this.fill = v;
+	};
+	asc_CAnnotProperty.prototype.asc_getStroke = function () {
+		return this.stroke;
+	};
+	asc_CAnnotProperty.prototype.asc_putStroke = function (v) {
+		this.stroke = v;
+	};
+	asc_CAnnotProperty.prototype.asc_getCanFill = function () {
+		return this.canFill;
+	};
+	asc_CAnnotProperty.prototype.asc_putCanFill = function (v) {
+		this.canFill = v;
+	};
+	asc_CAnnotProperty.prototype.asc_getCanChangeArrows = function () {
+		return this.canChangeArrows;
+	};
+	asc_CAnnotProperty.prototype.asc_setCanChangeArrows = function (v) {
+		this.canChangeArrows = v;
+	};
+	asc_CAnnotProperty.prototype.asc_getSubject = function () {
+		return this.subject;
+	};
+	asc_CAnnotProperty.prototype.asc_setSubject = function (v) {
+		this.subject = v;
+	};
+	asc_CAnnotProperty.prototype.asc_getCanEditText = function () {
+		return this.canEditText;
+	};
+	asc_CAnnotProperty.prototype.asc_setCanEditText = function (v) {
+		this.canEditText = v;
 	};
 
 	/** @constructor */
@@ -6369,6 +6434,25 @@ function (window, undefined) {
 	prot["get_Position"] = prot["asc_getPosition"] = prot.asc_getPosition;
 	prot["put_Position"] = prot["asc_putPosition"] = prot.asc_putPosition;
 	prot["get_IsMotionPath"] = prot["asc_getIsMotionPath"] = prot.asc_getIsMotionPath;
+	prot["asc_getCanEditText"]		= prot.asc_getCanEditText;
+	prot["asc_setCanEditText"]		= prot.asc_setCanEditText;
+
+	window["Asc"]["asc_CAnnotProperty"] = window["Asc"].asc_CAnnotProperty = asc_CAnnotProperty;
+	prot = asc_CAnnotProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_putType"]				= prot.asc_putType;
+	prot["asc_getFill"]				= prot.asc_getFill;
+	prot["asc_putFill"]				= prot.asc_putFill;
+	prot["asc_getStroke"]			= prot.asc_getStroke;
+	prot["asc_putStroke"]			= prot.asc_putStroke;
+	prot["asc_getCanFill"]			= prot.asc_getCanFill;
+	prot["asc_putCanFill"]			= prot.asc_putCanFill;
+	prot["asc_getCanChangeArrows"]	= prot.asc_getCanChangeArrows;
+	prot["asc_setCanChangeArrows"]	= prot.asc_setCanChangeArrows;
+	prot["asc_getSubject"]			= prot.asc_getSubject;
+	prot["asc_setSubject"]			= prot.asc_setSubject;
+	prot["asc_getCanEditText"]		= prot.asc_getCanEditText;
+	prot["asc_setCanEditText"]		= prot.asc_setCanEditText;
 
 
 	window["Asc"]["asc_TextArtProperties"] = window["Asc"].asc_TextArtProperties = asc_TextArtProperties;
