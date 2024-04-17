@@ -36,6 +36,7 @@
 	var InitClass = AscFormat.InitClass;
 	var CAnimTexture = AscFormat.CAnimTexture;
 
+
 	const STATE_FLAG_SELECTED = 1;
 	const STATE_FLAG_HOVERED = 2;
 	const STATE_FLAG_PRESSED = 4;
@@ -488,16 +489,12 @@
 		return -1;
 	};
 	CControl.prototype.getFillColor = function () {
-		const oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) { return oSkin.AnimPaneControlFillActive; }
-		if (this.isHovered()) { return oSkin.AnimPaneControlFillHovered; }
+		console.error('Method "getFillColor" must be implemented in ' + this.constructor.name);
 		return null;
 	};
 	CControl.prototype.getOutlineColor = function () {
-		const oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) { return oSkin.AnimPaneControlOutlineActive; }
-		if (this.isHovered()) { return oSkin.AnimPaneControlOutlineHovered; }
-		return oSkin.AnimPaneControlOutline;
+		console.error('Method "getOutlineColor" must be implemented in ' + this.constructor.name);
+		return null;
 	};
 	CControl.prototype.drawShdw = function () {
 
@@ -688,6 +685,12 @@
 		this.handleUpdateExtents();
 		this.recalculate();
 	};
+	CControlContainer.prototype.getFillColor = function () {
+		return null;
+	};
+	CControlContainer.prototype.getOutlineColor = function () {
+		return null;
+	};
 
 
 	function CTopControl(oDrawer) {
@@ -820,6 +823,12 @@
 		graphics.SetIntegerGrid(false);
 		graphics.drawImage(this.src, left, top, this.imgWidth, this.imgHeight);
 		graphics.RestoreGrState();
+	};
+	CImageControl.prototype.getFillColor = function () {
+		return null;
+	};
+	CImageControl.prototype.getOutlineColor = function () {
+		return null;
 	};
 
 
@@ -1069,12 +1078,6 @@
 		);
 		this.closeButton.recalculate();
 	};
-	CAnimPaneHeader.prototype.getFillColor = function () {
-		return null;
-	};
-	CAnimPaneHeader.prototype.getOutlineColor = function () {
-		return null;
-	};
 
 
 	function CTimelineContainer(oDrawer) {
@@ -1138,12 +1141,6 @@
 			timelineWidth,
 			TIMELINE_SCROLL_HEIGHT
 		);
-	};
-	CTimelineContainer.prototype.getFillColor = function () {
-		return null;
-	};
-	CTimelineContainer.prototype.getOutlineColor = function () {
-		return null;
 	};
 	CTimelineContainer.prototype.draw = function (graphics) {
 		if (!CTopControl.prototype.draw.call(this, graphics)) {
@@ -1487,7 +1484,7 @@
 		graphics.SaveGrState();
 		var nInterval;
 		graphics.AddClipRect(x, y, extX, extY);
-		oColor = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.AnimPaneTimelineRulerOutline);
+		oColor = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.AnimPaneTimelineRulerTick);
 		graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
 		for (nInterval = nStartIntervalIdx; nInterval <= nEndIntervalIdx; ++nInterval) {
 			var dTime = nInterval * dTimeOfSmallInterval;
@@ -1526,23 +1523,18 @@
 		let extY = this.getHeight();
 
 		const oSkin = AscCommon.GlobalSkin;
-		let sFillColor, oFillColor;
+		const oFillColor = AscCommon.RgbaHexToRGBA(oSkin.AnimPaneTimelineScrollerFill);
 
-		// TODO: Определиться с цветом и прозрачностью скроллера (оставить как есть?)
+		let nOpacity;
 		if (this.isStickedToPointer) {
-			sFillColor = oSkin.AnimPaneTimelineScrollerFillActive;
-			oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
-			graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 0x80);
+			nOpacity = oSkin.AnimPaneTimelineScrollerOpacityActive;
 		} else if (this.isScrollerHovered) {
-			sFillColor = oSkin.AnimPaneTimelineScrollerFillHovered;
-			oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
-			graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 0x40);
+			nOpacity = oSkin.AnimPaneTimelineScrollerOpacityHovered;
 		} else {
-			sFillColor = oSkin.AnimPaneTimelineScrollerFill;
-			oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
-			graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 0x0);
+			nOpacity = oSkin.AnimPaneTimelineScrollerOpacity;
 		}
 
+		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, nOpacity);
 		graphics.rect(x, y, extX, extY);
 		graphics.df();
 
@@ -1687,7 +1679,6 @@
 		var oCoefs = this.getLinearCoeffs();
 		return (fPos - oCoefs.b) / oCoefs.a;
 	};
-
 	CTimeline.prototype.changeTimelineScale = function (bZoomOut) {
 		this.timeScaleIndex = bZoomOut ?
 			Math.min(this.timeScaleIndex + 1, TIME_SCALES.length - 1) :
@@ -1698,13 +1689,6 @@
 		// also updating seqList to redraw effect bars
 		editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdateSeqList();
 	}
-
-	CTimeline.prototype.getFillColor = function () {
-		return null;
-	};
-	CTimeline.prototype.getOutlineColor = function () {
-		return null;
-	};
 	CTimeline.prototype.canHandleEvents = function () {
 		return true;
 	};
@@ -1780,13 +1764,6 @@
 			return true;
 		}
 		return CTopControl.prototype.onMouseDown.call(this, e, x, y);
-	};
-	
-	CSeqListContainer.prototype.getFillColor = function () {
-		return null;
-	};
-	CSeqListContainer.prototype.getOutlineColor = function () {
-		return null;
 	};
 
 
@@ -1893,7 +1870,6 @@
 		}
 		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
 	};
-
 	CSeqList.prototype.draw = function (graphics) {
 		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false; }
 
@@ -1956,13 +1932,6 @@
 
 		return true;
 	}
-
-	CSeqList.prototype.getFillColor = function () {
-		return null;
-	};
-	CSeqList.prototype.getOutlineColor = function () {
-		return null;
-	};
 	CSeqList.prototype.onMouseDown = function (e, x, y) {
 		if (this.onMouseDownCallback) this.onMouseDownCallback(e, x, y);
 		return CControlContainer.prototype.onMouseDown.call(this, e, x, y);
@@ -2039,7 +2008,6 @@
 	CAnimSequence.prototype.getSeq = function () {
 		return this.seq;
 	};
-
 	CAnimSequence.prototype.recalculateChildren = function () {
 		this.clear();
 
@@ -2082,13 +2050,6 @@
 		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dCurY);
 	};
 
-	CAnimSequence.prototype.getFillColor = function () {
-		return null;
-	};
-	CAnimSequence.prototype.getOutlineColor = function () {
-		return null;
-	};
-
 
 	function CAnimGroup(oParentControl, aAllGroupEffects) {
 		CControlContainer.call(this, oParentControl);
@@ -2100,7 +2061,6 @@
 	CAnimGroup.prototype.getSeq = function () {
 		return this.parentControl.getSeq();
 	};
-
 	CAnimGroup.prototype.recalculateChildren = function () {
 		this.clear();
 
@@ -2120,14 +2080,6 @@
 		}
 		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
 	};
-
-	CAnimGroup.prototype.getFillColor = function () {
-		return null;
-	};
-	CAnimGroup.prototype.getOutlineColor = function () {
-		return null;
-	};
-
 	CAnimGroup.prototype.draw = function(graphics) {
 		if (this.isHidden()) { return false; }
 		if (!this.checkUpdateRect(graphics.updatedRect)) { return false; }
@@ -2858,9 +2810,6 @@
 		const oSkin = AscCommon.GlobalSkin;
 		if (this.effect.isSelected()) { return oSkin.AnimPaneItemFillSelected; }
 		if (this.isHovered()) { return oSkin.AnimPaneItemFillHovered; }
-		return null;
-	};
-	CAnimItem.prototype.getOutlineColor = function () {
 		return null;
 	};
 
