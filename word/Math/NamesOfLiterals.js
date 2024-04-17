@@ -1576,29 +1576,11 @@
 					break;
 				case oNamesOfLiterals.skewedFractionLiteral[num]:
 				case oNamesOfLiterals.fractionLiteral[num]:
-				case oNamesOfLiterals.binomLiteral[num]:
-					let oFraction;
-					if (oTokens.type === oNamesOfLiterals.binomLiteral[num]) {
-						oFraction = oContext.Add_Fraction(
-							{ctrPrp: new CTextPr(), type: NO_BAR_FRACTION},
-							null,
-							null
-						);
-					}
-					else if (oTokens.type === oNamesOfLiterals.fractionLiteral[num]) {
-						oFraction = oContext.Add_Fraction(
-							{ctrPrp: new CTextPr(), type: oTokens.fracType},
-							null,
-							null
-						);
-					}
-					else if (oTokens.type === oNamesOfLiterals.skewedFractionLiteral[num]) {
-						oFraction = oContext.Add_Fraction(
-							{ctrPrp: new CTextPr(), type: SKEWED_FRACTION},
-							null,
-							null
-						);
-					}
+					let oFraction = oContext.Add_Fraction(
+						{ctrPrp: new CTextPr(), type: oTokens.fracType},
+						null,
+						null
+					);
 					UnicodeArgument(
 						oTokens.up,
 						oNamesOfLiterals.bracketBlockLiteral[num],
@@ -3386,6 +3368,24 @@
 		return isGetLaTeX;
 	}
 
+	function GetFractionType(strToken)
+	{
+		switch (strToken)
+		{
+			case "/"		:	return BAR_FRACTION
+			case "⁄"		:	return SKEWED_FRACTION
+			case "⊘"		:	return BAR_FRACTION
+			case "∕"		:	return LINEAR_FRACTION
+			case "¦"		:	return NO_BAR_FRACTION
+			case "⒞"		:	return NO_BAR_FRACTION
+
+			case "\\binom"	:	return NO_BAR_FRACTION
+			case "\\sfrac"	:	return SKEWED_FRACTION
+			case "\\frac"	:	return BAR_FRACTION
+			case "\\cfrac"	:	return BAR_FRACTION
+		}
+	}
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window["AscMath"] = window["AscMath"] || {};
 	window["AscMath"].oNamesOfLiterals 				= oNamesOfLiterals;
@@ -3411,5 +3411,6 @@
 	window["AscMath"].SetIsLaTeXGetParaRun 			= SetIsLaTeXGetParaRun;
 	window["AscMath"].GetIsLaTeXGetParaRun 			= GetIsLaTeXGetParaRun;
 	window["AscMath"].GetHBracket 					= GetHBracket;
+	window["AscMath"].GetFractionType 				= GetFractionType;
 
 })(window);
