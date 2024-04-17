@@ -1321,7 +1321,6 @@
 		this.fill = null;
 		this.tailLnArrow = null;
 		this.headLnArrow = null;
-		this.isSpacing = true;
 		this.shape = null;
 		this.calcInfo = null;
 		this.connectorShape = null;
@@ -1354,7 +1353,6 @@
 		this.shape = shape;
 		if (!(shape.hideGeom && (this.node.algorithm instanceof SpaceAlgorithm))) {
 			this.type = shape.type;
-			this.isSpacing = this.type === AscFormat.LayoutShapeType_outputShapeType_none;
 		}
 
 	}
@@ -6768,7 +6766,6 @@ PresNode.prototype.addChild = function (ch, pos) {
 		shape.initFromShape(this.layoutInfo.shape);
 		this.createShadowShapeFromConstraints(this.layoutInfo.shape, isCalculateCoefficients);
 		if (isComposite) {
-			shape.isSpacing = !(isComposite || isCombine);
 			this.forEachChild(function (node) {
 				node.moveTo(shape.x, shape.y, isCalculateCoefficients, true);
 			});
