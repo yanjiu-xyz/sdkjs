@@ -3471,7 +3471,7 @@ var CPresentation = CPresentation || function(){};
         this.CreateNewHistoryPoint({textConvert: {page: nPage}});
         let oDrDoc = this.GetDrawingDocument();
 
-        let aSpsXmls        = this.Viewer.file.nativeFile.scanPage(nPage, 1);
+        let aSpsXmls        = this.Viewer.file.nativeFile["scanPage"](nPage, 1);
         let oParserContext  = new AscCommon.XmlParserContext();
         let oTableStyles    = this.GetTableStyles();
         Object.keys(this.TableStylesIdMap).forEach(function(styleId) {
