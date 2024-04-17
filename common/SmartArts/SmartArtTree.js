@@ -4510,13 +4510,13 @@ function HierarchyAlgorithm() {
 				//todo check the case when the height depends on the width
 				const cleanBounds  = shapeContainer.getBounds(true, true);
 				const cleanHeightCoefficient = parentHeight / (cleanBounds.b - cleanBounds.t);
-				if (cleanHeightCoefficient >= 1) {
+				if (cleanHeightCoefficient >= 1 || fAlgDeltaEqual(cleanHeightCoefficient, 1)) {
 					heightCoefficient = 1;
 				}
 			} else {
 				const cleanBounds  = shapeContainer.getBounds(true, true);
 				const cleanWidthCoefficient = parentWidth / (cleanBounds.r - cleanBounds.l);
-				if (cleanWidthCoefficient >= 1) {
+				if (cleanWidthCoefficient >= 1 || fAlgDeltaEqual(cleanWidthCoefficient, 1)) {
 					widthCoefficient = 1;
 				}
 			}
@@ -5686,11 +5686,6 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 		return this.layoutInfo.shape.rot === 90 || this.layoutInfo.shape.rot === 270  || this.layoutInfo.shape.rot === -90;
 	};
 	PresNode.prototype.setWidthScale = function (pr, mapPresName, isLinear) {
-		const shape = this.getShape(true);
-		const newWidth = shape.width * pr;
-		shape.moveTo((shape.width - newWidth) / 2, 0);
-		shape.width = newWidth;
-
 		const relationConstr = this.relations.widthConstr;
 		if (relationConstr) {
 			const isUserConstraintRelation = isUserConstr(relationConstr.refType);
@@ -5776,10 +5771,6 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 		return this.getSummaryScale(refNode, relationConstr, coefficient, mapRelations);
 	};
 	PresNode.prototype.setHeightScale = function (pr, mapPresName, isLinear) {
-		const shape = this.getShape(true);
-		const newHeight = shape.height * pr;
-		shape.moveTo(0, (shape.height - newHeight) / 2);
-		shape.height = newHeight;
 		const relationConstr = this.relations.heightConstr;
 		if (relationConstr) {
 			const isUserConstraintRelation = isUserConstr(relationConstr.refType);
