@@ -8328,7 +8328,7 @@
                 oAdditionalData.fullScreen = !!oPr.fullScrn;
                 oAdditionalData.mute = !!oPr.mute;
                 oAdditionalData.vol = oPr.vol !== null ? oPr.vol : null;
-                oAdditionalData.video = oPr.isVideo();
+                oAdditionalData.video = oMediaNode.isVideo();
                 oData.setAdditionalData(oAdditionalData);
 
             }
