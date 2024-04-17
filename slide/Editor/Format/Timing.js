@@ -8371,10 +8371,9 @@
     CAdditionalMediaData.prototype.getVol = function () {
         return this.vol;
     };
-    CAdditionalMediaData.prototype.getVol = function () {
-        return this.vol;
+    CAdditionalMediaData.prototype.isVideo = function () {
+        return this.isVideo !== false;
     };
-
 
     changesFactory[AscDFH.historyitem_TimeNodeContainerCTn] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_TimeNodeContainerCTn] = function (oClass, value) {
