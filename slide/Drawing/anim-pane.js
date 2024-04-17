@@ -2641,6 +2641,8 @@
 		let sFillColor, sOutlineColor;
 		let oFillColor, oOutlineColor;
 
+		sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
+		sOutlineColor = oSkin.AnimPaneEffectBarOutlineEntrance;
 		switch (this.effect.cTn.presetClass) {
 			case AscFormat.PRESET_CLASS_ENTR:
 				sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
@@ -2662,6 +2664,7 @@
 				sOutlineColor = oSkin.AnimPaneEffectBarOutlinePath;
 				break;
 		}
+
 		oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
 		oOutlineColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
 

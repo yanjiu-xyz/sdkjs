@@ -2289,7 +2289,7 @@ function CEditorPage(api)
 		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi && oWordControl.IsNotesShown())
 			oWordControl.m_oNotesApi.CheckPaint();
 
-		if (oWordControl.m_oAnimPaneApi)
+		if (oWordControl.m_oAnimPaneApi && oWordControl.IsAnimPaneShown())
 			oWordControl.m_oAnimPaneApi.CheckPaint();
 
 		if (null != oWordControl.m_oLogicDocument)
