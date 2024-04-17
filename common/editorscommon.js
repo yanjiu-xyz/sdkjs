@@ -954,7 +954,12 @@
 		rdata["userconnectionid"] = editor.CoAuthoringApi.getUserConnectionId();
 		let url = sDownloadServiceLocalUrl + '/' + rdata["id"];
 		url += '?cmd=' + encodeURIComponent(JSON.stringify(rdata));
-		url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(editor.documentShardKey);
+		if (editor.documentShardKey) {
+			url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(editor.documentShardKey);
+		}
+		if (editor.documentWopiSrc) {
+			url += '&' + Asc.c_sWopiSrcName + '=' + encodeURIComponent(editor.documentWopiSrc);
+		}
 		asc_ajax({
 			type:        'POST',
 			url:         url,
@@ -977,12 +982,17 @@
 		});
 	}
 
-	function sendSaveFile(docId, userId, title, jwt, shardKey, data, fError, fsuccess)
+	function sendSaveFile(docId, userId, title, jwt, shardKey, wopiSrc, data, fError, fsuccess)
 	{
 		let cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
 		let url =sSaveFileLocalUrl + '/' + docId;
 		url += '?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-		url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
+		if (shardKey) {
+			url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
+		}
+		if (wopiSrc) {
+			url += '&' + Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc);
+		}
 		asc_ajax({
 			type:        'POST',
 			url:         url,
@@ -2188,16 +2198,24 @@
 			return false;
 		}
 	}
-	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, callback, callbackOld)
+	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, wopiSrc, callback, callbackOld)
 	{
 		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
 			//todo remove this compatibility
 			var frameWindow = GetUploadIFrame();
 			let url = sUploadServiceLocalUrlOld + '/' + documentId;
-			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
-			if (jwt)
-			{
-				url += '?token=' + encodeURIComponent(jwt);
+			let queryParams = [];
+			if (shardKey) {
+				queryParams.push(Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey));
+			}
+			if (wopiSrc) {
+				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
+			}
+			if (jwt) {
+				queryParams.push('token=' + encodeURIComponent(jwt));
+			}
+			if (queryParams.length > 0) {
+				url += '?' + queryParams.join('&');
 			}
 			var content = '<html><head></head><body><form action="' + url + '" method="POST" enctype="multipart/form-data"><input id="apiiuFile" name="apiiuFile" type="file" accept="image/*" size="1"><input id="apiiuSubmit" name="apiiuSubmit" type="submit" style="display:none;"></form></body></html>';
 			frameWindow.document.open();
@@ -2406,12 +2424,21 @@
 		callback(nError, [file], obj);
 	}
 
-	function UploadImageFiles(files, documentId, documentUserId, jwt, shardKey, callback)
+	function UploadImageFiles(files, documentId, documentUserId, jwt, shardKey, wopiSrc, callback)
 	{
 		if (files.length > 0)
 		{
 			let url = sUploadServiceLocalUrl + '/' + documentId;
-			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
+			let queryParams = [];
+			if (shardKey) {
+				queryParams.push(Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey));
+			}
+			if (wopiSrc) {
+				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
+			}
+			if (queryParams.length > 0) {
+				url += '?' + queryParams.join('&');
+			}
 			var aFiles = [];
 			for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -2470,12 +2497,21 @@
 		}
 	}
 
-    function UploadImageUrls(files, documentId, documentUserId, jwt, shardKey, callback)
+    function UploadImageUrls(files, documentId, documentUserId, jwt, shardKey, wopiSrc, callback)
     {
         if (files.length > 0)
         {
             let url = sUploadServiceLocalUrl + '/' + documentId;
-			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
+			let queryParams = [];
+			if (shardKey) {
+				queryParams.push(Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey));
+			}
+			if (wopiSrc) {
+				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
+			}
+			if (queryParams.length > 0) {
+				url += '?' + queryParams.join('&');
+			}
             var aFiles = [];
             for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -11344,7 +11380,7 @@
 						obj.options.callback(Asc.c_oAscError.ID.No, data);
 					else
 					{
-						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), obj.options.api.documentShardKey, function(urls)
+						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), obj.options.api.documentShardKey, obj.options.api.documentWopiSrc, function(urls)
                         {
                             obj.options.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
@@ -14230,7 +14266,7 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					ext = ".docxf";
 			}
 
-			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, fileData, function(err) {
+			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, _editor.documentWopiSrc, fileData, function(err) {
 
                 _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
                 _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationSaveError, Asc.c_oAscError.Level.Critical);
