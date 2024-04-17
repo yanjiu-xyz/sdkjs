@@ -940,6 +940,7 @@
 			oData["ControlRect"] = oControlRect.toObject();
 			oData["DrawingTransform"] = oDrawing.transform.exportToObject();
 			oData["MediaFile"] = this.getName();
+			oData["From"] = 0;
 			return oData;
 		};
 
@@ -956,6 +957,7 @@
 			oData["ControlRect"] = null;
 			oData["DrawingTransform"] = null;
 			oData["MediaFile"] = null;
+			oData["From"] = null;
 			return oData;
 		}
 		//--------------------------------------------------------export----------------------------------------------------

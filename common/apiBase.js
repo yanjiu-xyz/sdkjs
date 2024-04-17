@@ -3080,14 +3080,24 @@
 			case c_oEditorId.Presentation:
 			{
 				oPlayerData = this.WordControl.GetMediaPlayerData(this.mediaData);
-				if(oPlayerData)
-					oPlayerData["Cmd"] = sCmd;
+
 				break;
 			}
 			case c_oEditorId.Spreadsheet:
 			{
 				break;
 			}
+		}
+
+		if(oPlayerData)
+		{
+			let sCmd_ = sCmd;
+			if(sCmd.startsWith("playFrom") === 0)
+			{
+				sCmd_ = "play";
+				oPlayerData["Cmd"] = "play";
+			}
+			oPlayerData["Cmd"] = sCmd_;
 		}
 		return oPlayerData;
 	};
