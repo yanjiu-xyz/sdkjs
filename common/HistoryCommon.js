@@ -4522,6 +4522,7 @@
 	window['AscDFH'].historydescription_Presentation_ApplyBackgroundToAll           = 0x01ad;
 	window['AscDFH'].historydescription_Presentation_ShowMasterShapes               = 0x01ae;
 	window['AscDFH'].historydescription_BuilderScript                               = 0x01af;
+	window['AscDFH'].historydescription_Document_AddRemoveBeforeAfterParagraph      = 0x01b0;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
