@@ -330,6 +330,10 @@ StartAddNewShape.prototype =
 					{
 						oThis.drawingObjects.drawingObjects.sendGraphicObjectProps();
 					}
+                    if(oThis.preset && oThis.preset.startsWith("actionButton"))
+                    {
+                        oAPI.sendEvent("asc_onDialogAddHyperlink", true);
+                    }
                 }
 	            oThis.drawingObjects.updateOverlay();
             };
