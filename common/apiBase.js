@@ -4512,15 +4512,15 @@
 	};
 
 
-	baseEditorsApi.prototype.getPluginContextMenuInfo = function()
+	baseEditorsApi.prototype.getPluginContextMenuInfo = function(e)
 	{
 		return new AscCommon.CPluginCtxMenuInfo();
 	};
 
 	// context menu items
-	baseEditorsApi.prototype["onPluginContextMenuShow"] = function()
+	baseEditorsApi.prototype["onPluginContextMenuShow"] = function(e)
 	{
-		let contextMenuInfo = this.getPluginContextMenuInfo();
+		let contextMenuInfo = this.getPluginContextMenuInfo(e);
 		let plugins = window.g_asc_plugins.onPluginEvent("onContextMenuShow", contextMenuInfo);
 		if (0 === plugins.length)
 		{

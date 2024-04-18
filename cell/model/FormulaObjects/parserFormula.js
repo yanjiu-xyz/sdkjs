@@ -71,7 +71,7 @@ function (window, undefined) {
 
 	var TOK_SUBTYPE_UNION = 15;
 
-	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1, "AGGREGATE": 1};
+	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1, "LOOKUP": 1, "AGGREGATE": 1};
 
 	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
 
@@ -4698,6 +4698,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			list.push(b);
 		}
 		return list;
+	}
+	function addNewFunction(func) {
+		if (!func) {
+			return;
+		}
+		let a = new func();
+		let f = new AscCommon.asc_CFormula(a);
+		cFormulaFunction[f.asc_getName()] = func;
+		cAllFormulaFunction[a.name] = func;
 	}
 	function getRangeByRef(ref, ws, onlyRanges, checkMultiSelection, checkFormula) {
 		var activeCell = ws.getSelection().activeCell;
@@ -9596,6 +9605,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].getFormulasInfo = getFormulasInfo;
 	window['AscCommonExcel'].getRangeByRef = getRangeByRef;
+	window['AscCommonExcel'].addNewFunction = addNewFunction;
 
 	window['AscCommonExcel']._func = _func;
 
