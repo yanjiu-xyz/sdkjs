@@ -21081,6 +21081,25 @@ $(function () {
 		assert.ok(oParser.parse(), 'VLOOKUP(A116,A101:A116,1)');
 		assert.strictEqual(oParser.calculate().getValue(), "Ke", 'Result of VLOOKUP(A116,A101:A116,1)');
 
+		// for bug 67099
+		ws.getRange2("M101:M134").setValue("W");
+		ws.getRange2("M127").setValue("1");
+		ws.getRange2("M128").setValue("2");
+		ws.getRange2("M129").setValue("3");
+		ws.getRange2("M130").setValue("4");
+		ws.getRange2("M131").setValue("5");
+		ws.getRange2("M132").setValue("6");
+		ws.getRange2("M133").setValue("7");
+		ws.getRange2("M134").setValue("8");
+		ws.getRange2("N129").setValue("Looked result(3)");
+
+		oParser = new parserFormula('VLOOKUP(3,M101:N134,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(3,M101:N134,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "Looked result(3)", 'Result of VLOOKUP(3,M101:N134,2)');
+
+		oParser = new parserFormula('VLOOKUP(M129,M101:N134,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(M129,M101:N134,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "Looked result(3)", 'Result of VLOOKUP(M129,M101:N134,2)');
 
 	});
 
