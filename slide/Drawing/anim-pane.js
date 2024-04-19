@@ -1100,7 +1100,7 @@
 				animPaneHeight - TIMELINE_HEIGHT + this.getTop()
 			);
 
-			const data = new AscCommonSlide.CContextMenuData()
+			const data = new AscCommonSlide.CContextMenuData();
 			data.Type = Asc.c_oAscContextMenuTypes.TimelineZoom;
 			data.X_abs = coords.X;
 			data.Y_abs = coords.Y;
@@ -2190,18 +2190,22 @@
 		this.contextMenuButton = this.addControl(new CButton(this, null, null, showContextMenu));
 		this.contextMenuButton.icon = this.contextMenuButton.addControl(new CImageControl(this.contextMenuButton, menuButton, 20 * AscCommon.g_dKoef_pix_to_mm, 20 * AscCommon.g_dKoef_pix_to_mm));
 
-		this.contextMenuButton.sendContextMenuEvent = function () {
+		this.contextMenuButton.sendContextMenuEvent = function (customX, customY) {
 			const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
-				this.bounds.l,
-				HEADER_HEIGHT + this.bounds.t - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
+				AscFormat.isRealNumber(customX) ? customX : this.bounds.l,
+				(AscFormat.isRealNumber(customY) ? customY : this.bounds.t) + HEADER_HEIGHT - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
 			);
 
 			const data = new AscCommonSlide.CContextMenuData()
 			data.Type = Asc.c_oAscContextMenuTypes.AnimEffect;
 			data.X_abs = coords.X;
 			data.Y_abs = coords.Y;
-			data.ButtonWidth = (this.bounds.r - this.bounds.l) * g_dKoef_mm_to_pix;
-			data.ButtonHeight = (this.bounds.b - this.bounds.t) * g_dKoef_mm_to_pix;
+			if (!AscFormat.isRealNumber(customX)) {
+				data.ButtonWidth = (this.bounds.r - this.bounds.l) * g_dKoef_mm_to_pix;
+			}
+			if (!AscFormat.isRealNumber(customY)) {
+				data.ButtonHeight = (this.bounds.b - this.bounds.t) * g_dKoef_mm_to_pix;
+			}
 			data.EffectStartType = this.parentControl.effect.getNodeType();
 
 			editor.sync_ContextMenuCallback(data);
@@ -2254,7 +2258,7 @@
 		this.onMouseUpCallback = function (event, x, y) {
 			if (this.hit(x, y)) {
 				if (event.Button === AscCommon.g_mouse_button_right) {
-					this.contextMenuButton.sendContextMenuEvent();
+					this.contextMenuButton.sendContextMenuEvent(x, y);
 				}
 			}
 
@@ -2325,10 +2329,16 @@
 
 		const mouseMoveData = new CMouseMoveData();
 		mouseMoveData.Type = Asc.c_oAscMouseMoveDataTypes.EffectInfo;
-		mouseMoveData.Info = this.getInfoForTooltip(x, y);
-		mouseMoveData.Effect = this.effect;
 		mouseMoveData.X_abs = coords.X;
 		mouseMoveData.Y_abs = coords.Y;
+
+		const tooltipInfo = this.getInfoForTooltip(x, y);
+		if (typeof tooltipInfo === 'string') {
+			mouseMoveData.EffectText = tooltipInfo;
+		} else {
+			mouseMoveData.EffectDescription = tooltipInfo;
+		}
+
 		return mouseMoveData;
 	};
 	CAnimItem.prototype.getInfoForTooltip = function (x, y) {
@@ -2340,55 +2350,48 @@
 			if (animItem.hitResult) { currentAnimItem = animItem; }
 		})
 
+		const templateStrings = {
+			startTime: AscCommon.translateManager.getValue('Start: ${time}s'),
+			endTime: AscCommon.translateManager.getValue('End: ${time}s'),
+			loopTime: AscCommon.translateManager.getValue('Loop: ${time}s'),
+		};
+
+		// When dragging (when animItem's bar is pressed)
 		if (currentAnimItem.hitResult) {
+			let time;
 			switch (currentAnimItem.hitResult.type) {
-				case 'left': return AscCommon.translateManager.getValue('Start') + ': ' + (currentAnimItem.getDelay() / 1000).toFixed(1) + 's';
-				case 'right': return AscCommon.translateManager.getValue('End') + ': ' + ((currentAnimItem.getDelay() + currentAnimItem.getDuration() / 1000)).toFixed(1) + 's';
-				case 'center': return AscCommon.translateManager.getValue('Start') + ': ' + (currentAnimItem.getDelay() / 1000).toFixed(1) + 's';
-				case 'partition': return AscCommon.translateManager.getValue('Loop') + ': ' + (currentAnimItem.getDuration() / 1000).toFixed(1) + 's';
+				case 'center':
+					time = currentAnimItem.getDelay() / 1000;
+					return templateStrings.startTime.replace('${time}', time.toFixed(1));
+				case 'left':
+					time = currentAnimItem.getDelay() / 1000;
+					return templateStrings.startTime.replace('${time}', time.toFixed(1));
+				case 'right':
+					time = currentAnimItem.getDelay() / 1000 + currentAnimItem.getDuration() / 1000;
+					return templateStrings.endTime.replace('${time}', time.toFixed(1));
+				case 'partition':
+					time = (currentAnimItem.getDuration() / 1000);
+					return templateStrings.loopTime.replace('${time}', time.toFixed(1));
 			}
 		}
 
 		if (currentAnimItem.hitInEffectBar(x, y)) {
-			let str = AscCommon.translateManager.getValue('Start');
-			str += ': ' + (currentAnimItem.getDelay() / 1000).toFixed(1) + 's, ';
-			str += AscCommon.translateManager.getValue('End');
-			str += ': ' + ((currentAnimItem.getDelay() + currentAnimItem.getDuration()) / 1000).toFixed(1) + 's';
-			return str;
+			const startTime = (currentAnimItem.getDelay() / 1000).toFixed(1);
+			const endTime = ((currentAnimItem.getDelay() + currentAnimItem.getDuration()) / 1000).toFixed(1);
+			const result = [
+				templateStrings.startTime.replace('${time}', startTime),
+				templateStrings.endTime.replace('${time}', endTime),
+			];
+			return result.join(', ');
 		} else {
-			let eventType = '';
-			if (currentAnimItem.effect.isClickEffect()) { eventType = AscCommon.translateManager.getValue('On Click'); }
-			if (currentAnimItem.effect.isAfterEffect()) { eventType = AscCommon.translateManager.getValue('After Previous'); }
-			if (currentAnimItem.effect.isWithEffect()) { eventType = AscCommon.translateManager.getValue('With Previous'); }
-
-			let effectType = '';
-			switch (currentAnimItem.effect.cTn.presetClass) {
-				case AscFormat.PRESET_CLASS_ENTR: effectType = AscCommon.translateManager.getValue('Entrance'); break;
-				case AscFormat.PRESET_CLASS_EMPH: effectType = AscCommon.translateManager.getValue('Emphasis'); break;
-				case AscFormat.PRESET_CLASS_EXIT: effectType = AscCommon.translateManager.getValue('Exit'); break;
-				case AscFormat.PRESET_CLASS_PATH: effectType = AscCommon.translateManager.getValue('Motion Path'); break;
-			}
-
-			let effectName = '';
-			let presetClass = currentAnimItem.effect.cTn.presetClass;
-			let presetId = currentAnimItem.effect.cTn.presetID;
-
-			/*
-			const groupData = Common.define.effectData.getEffectGroupData();
-			const effectData = Common.define.effectData.getEffectData();
-			groupData.forEach(function (groupItem) {
-				if (groupItem.value === presetClass) {
-					effectData.forEach(function (effectItem) {
-						if (effectItem.value === presetId) {
-							effectName = AscCommon.translateManager.getValue(effectItem.displayValue);
-						}
-					})
-				}
-			})
-			*/
-
-			let shapeName = currentAnimItem.effect.getObjectName();
-			return eventType + '\n' + effectType + '\n' + effectName + ' : ' + shapeName;
+			// Belongs to [AscFormat.NODE_TYPE_AFTEREFFECT, AscFormat.NODE_TYPE_CLICKEFFECT, AscFormat.NODE_TYPE_WITHEFFECT]
+			const eventType = currentAnimItem.effect.getNodeType();
+			// Belongs to [AscFormat.PRESET_CLASS_ENTR, AscFormat.PRESET_CLASS_EMPH, AscFormat.PRESET_CLASS_EXIT, AscFormat.PRESET_CLASS_PATH]
+			const presetClass = currentAnimItem.effect.cTn.presetClass;
+			// Belongs to presets of animation - [AscFormat.ENTRANCE_APPEAR, ..., AscFormat.EMPHASIS_FILL_COLOR, ...]
+			const presetId = currentAnimItem.effect.cTn.presetID;
+			const shapeName = currentAnimItem.effect.getObjectName();
+			return [eventType, presetClass, presetId, shapeName];
 		}
 	}
 
