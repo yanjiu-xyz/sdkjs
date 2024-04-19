@@ -2192,16 +2192,20 @@
 
 		this.contextMenuButton.sendContextMenuEvent = function (customX, customY) {
 			const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
-				(customX !== undefined) ? customX : this.bounds.l,
-				((customY !== undefined) ? customY : this.bounds.t) + HEADER_HEIGHT - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
+				AscFormat.isRealNumber(customX) ? customX : this.bounds.l,
+				(AscFormat.isRealNumber(customY) ? customY : this.bounds.t) + HEADER_HEIGHT - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
 			);
 
 			const data = new AscCommonSlide.CContextMenuData()
 			data.Type = Asc.c_oAscContextMenuTypes.AnimEffect;
 			data.X_abs = coords.X;
 			data.Y_abs = coords.Y;
-			data.ButtonWidth = (this.bounds.r - this.bounds.l) * g_dKoef_mm_to_pix;
-			data.ButtonHeight = (this.bounds.b - this.bounds.t) * g_dKoef_mm_to_pix;
+			if (!AscFormat.isRealNumber(customX)) {
+				data.ButtonWidth = (this.bounds.r - this.bounds.l) * g_dKoef_mm_to_pix;
+			}
+			if (!AscFormat.isRealNumber(customY)) {
+				data.ButtonHeight = (this.bounds.b - this.bounds.t) * g_dKoef_mm_to_pix;
+			}
 			data.EffectStartType = this.parentControl.effect.getNodeType();
 
 			editor.sync_ContextMenuCallback(data);
@@ -2332,7 +2336,7 @@
 		if (typeof tooltipInfo === 'string') {
 			mouseMoveData.EffectText = tooltipInfo;
 		} else {
-			mouseMoveData.EffectDecription = tooltipInfo;
+			mouseMoveData.EffectDescription = tooltipInfo;
 		}
 
 		return mouseMoveData;
