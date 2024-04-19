@@ -14143,6 +14143,7 @@
             var res;
             var mc, r, cell;
             var expansionTableRange;
+			let changeDigNumFormat;
 
             function makeBorder(b) {
                 var border = new AscCommonExcel.BorderProp();
@@ -14444,11 +14445,13 @@
 
 					case "changeDigNum": {
 						//change format by active cell
-						let colWidth = t.getColumnWidthInSymbols(activeCell.col)
-						let cell = t.model.getRange3(activeCell.row, activeCell.col, activeCell.row, activeCell.col);
-						let newNumFormat = cell.getShiftedNumFormat(val, colWidth);
-						if (newNumFormat) {
-							range.setNumFormat(newNumFormat);
+						if (!changeDigNumFormat && 0 === i) {
+							let colWidth = t.getColumnWidthInSymbols(activeCell.col)
+							let cell = t.model.getRange3(activeCell.row, activeCell.col, activeCell.row, activeCell.col);
+							changeDigNumFormat = cell.getShiftedNumFormat(val, colWidth);
+						}
+						if (changeDigNumFormat) {
+							range.setNumFormat(changeDigNumFormat);
 							canChangeColWidth = c_oAscCanChangeColWidth.numbers;
 						}
 						break;
