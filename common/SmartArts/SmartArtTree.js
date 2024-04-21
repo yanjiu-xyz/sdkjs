@@ -4484,6 +4484,7 @@ function HierarchyAlgorithm() {
 		const childs = this.parentNode.childs;
 		const length = this.isHideLastChild() ? childs.length - 1 : childs.length;
 		if (length > 0) {
+			const isRow = this.isRow();
 			const shapeContainer = this.getShapeContainer(true);
 			const bounds = shapeContainer.getBounds();
 			const width = bounds.r - bounds.l;
