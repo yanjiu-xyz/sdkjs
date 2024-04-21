@@ -5766,8 +5766,9 @@ PresNode.prototype.getNamedNode = function (name) {
 	return this.namedNodes[name];
 };
 	PresNode.prototype.isRealShapeType = function () {
-		return this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_conn &&
-			this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none;
+		return !(this.algorithm instanceof ConnectorAlgorithm || (this.algorithm instanceof SpaceAlgorithm &&
+			(this.layoutInfo.shape.type === AscFormat.LayoutShapeType_outputShapeType_conn ||
+			this.layoutInfo.shape.type === AscFormat.LayoutShapeType_outputShapeType_none)));
 	}
 	PresNode.prototype.isSkipShape = function (isCalculateScaleCoefficient) {
 		const shape = this.getShape(isCalculateScaleCoefficient);
