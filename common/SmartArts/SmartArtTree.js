@@ -4348,10 +4348,12 @@ function HierarchyAlgorithm() {
 			if (this.params[AscFormat.Param_type_nodeVertAlign] === undefined) {
 				this.params[AscFormat.Param_type_nodeVertAlign] = AscFormat.ParameterVal_nodeVerticalAlignment_mid;
 			}
+			this.params[AscFormat.Param_type_nodeHorzAlign] = undefined;
 		} else {
 			if (this.params[AscFormat.Param_type_nodeHorzAlign] === undefined) {
 				this.params[AscFormat.Param_type_nodeHorzAlign] = AscFormat.ParameterVal_nodeHorizontalAlignment_ctr;
 			}
+			this.params[AscFormat.Param_type_nodeVertAlign] = undefined;
 		}
 	}
 	LinearAlgorithm.prototype.applyLeftNodeAlign = function (isCalculateScaleCoefficients) {
