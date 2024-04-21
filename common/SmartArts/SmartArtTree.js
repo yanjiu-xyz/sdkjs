@@ -1784,16 +1784,16 @@
 					}
 				}
 				const nextNode = nodes[nextIndex];
-				if (node.isSibNode()) {
-					const previousNode = nodes[previousIndex];
-					if (algorithm && previousNode && nextNode) {
-						this.setSibConnection(previousNode, nextNode, algorithm);
-					}
-				} else {
+				if (node.isParNode()) {
 					// todo
 					const childNode = node.node.parent && node.node.parent.presNode;
 					if (childNode) {
 						this.setParentConnection(algorithm, childNode);
+					}
+				} else {
+					const previousNode = nodes[previousIndex];
+					if (algorithm && previousNode && nextNode) {
+						this.setSibConnection(previousNode, nextNode, algorithm);
 					}
 				}
 				previousIndex = nextIndex;
