@@ -4674,10 +4674,13 @@ function CThumbnailsManager()
 			page.Draw(context, page.left, page.top, page.right - page.left, page.bottom - page.top);
 
 			var text_color = null;
+			let sTextColor = AscCommon.GlobalSkin.ThumbnailsPageNumberText;
 			if (!page.IsLocked)
-				text_color = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.ThumbnailsPageNumberText);
+				sTextColor = AscCommon.GlobalSkin.ThumbnailsPageNumberText;
 			else
-				text_color = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.ThumbnailsLockColor);
+				sTextColor = AscCommon.GlobalSkin.ThumbnailsLockColor;
+
+			text_color = AscCommon.RgbaHexToRGBA(sTextColor);
 			g.b_color1(text_color.R, text_color.G, text_color.B, 255);
 
 			let dX = (_digit_distance - num_slide_text_width) / 2;
@@ -4685,13 +4688,17 @@ function CThumbnailsManager()
 			let _bounds = g.t("" + nSlideNumber, dX, dY, true);
 			if (_logicDocument.Slides[i] && !_logicDocument.Slides[i].isVisible())
 			{
-				context.lineWidth = 1;
-				context.strokeStyle = "#000000";
+				context.lineWidth =  AscCommon.AscBrowser.convertToRetinaValue(1, true);
+				context.strokeStyle = sTextColor;
 				context.beginPath();
 				context.moveTo(_bounds.x - 3, _bounds.y);
 				context.lineTo(_bounds.r + 3, _bounds.b);
 				context.stroke();
 				context.beginPath();
+				context.fillStyle = AscCommon.GlobalSkin.BackgroundColorThumbnails;
+				context.globalAlpha = 0.5;
+				context.fillRect(page.left, page.top, page.right - page.left, page.bottom - page.top);
+				context.globalAlpha = 1;
 			}
 			page.animateLabelRect = null;
 			if (_logicDocument.isSlideAnimated(i))
