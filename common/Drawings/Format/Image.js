@@ -938,7 +938,10 @@
 			oData["EndTime"] = this.getEndTime();
 			oData["FrameRect"] = oFrameRect.toObject();
 			oData["ControlRect"] = oControlRect.toObject();
-			oData["DrawingTransform"] = oDrawing.transform.exportToObject();
+			oData["Rotation"] = oDrawing.getFullRotate();
+			oData["FlipH"] = oDrawing.getFullFlipH();
+			oData["FlipV"] = oDrawing.getFullFlipV();
+			oData["IsSelected"] = oDrawing.selected;
 			oData["MediaFile"] = this.getName();
 			oData["From"] = 0;
 			return oData;
