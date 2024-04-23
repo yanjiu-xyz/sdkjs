@@ -4491,13 +4491,11 @@ function HierarchyAlgorithm() {
 			const height = bounds.b - bounds.t;
 			let widthCoefficient = Math.min(parentWidth / width, 1);
 			let heightCoefficient = Math.min(parentHeight / height, 1);
-			const heightSizeScale = isRow ? 1 : heightCoefficient;
-			const widthSizeScale = isRow ? widthCoefficient : 1;
 			if (this.is2DFallback()) {
 				const commonCoefficient = Math.min(widthCoefficient, heightCoefficient);
 				widthCoefficient = commonCoefficient;
 				heightCoefficient = commonCoefficient;
-			} else if (this.isRow()) {
+			} else if (isRow) {
 				//todo check the case when the height depends on the width
 				const cleanBounds  = shapeContainer.getBounds(true, true);
 				const cleanHeightCoefficient = parentHeight / (cleanBounds.b - cleanBounds.t);
@@ -4512,6 +4510,8 @@ function HierarchyAlgorithm() {
 				}
 			}
 
+			const heightSizeScale = isRow ? 1 : heightCoefficient;
+			const widthSizeScale = isRow ? widthCoefficient : 1;
 			const nodes = [this.parentNode];
 			while (nodes.length) {
 				const node = nodes.pop();
