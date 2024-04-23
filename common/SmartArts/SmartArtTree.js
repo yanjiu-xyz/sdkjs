@@ -5687,11 +5687,19 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 			}
 		}
 	}
-	PresNode.prototype.getSummaryScale = function (refNode, relationConstr) {
+	PresNode.prototype.getSummaryScale = function (refNode, relationConstr, isHeight) {
 		let startCoefficient = 1;
 		const mapRelations = {};
 		mapRelations[AscFormat.Constr_type_w] = {};
 		mapRelations[AscFormat.Constr_type_h] = {};
+		if (refNode && refNode.getPresName() === this.getPresName() && relationConstr.type !== relationConstr.refType) {
+			if (isHeight) {
+				mapRelations[AscFormat.Constr_type_h][this.getPresName()] = true;
+			} else {
+				mapRelations[AscFormat.Constr_type_w][this.getPresName()] = true;
+			}
+		}
+
 		while (relationConstr && refNode) {
 			if (relationConstr.refType === AscFormat.Constr_type_h) {
 				const refPresName = refNode.getPresName();
@@ -5729,7 +5737,7 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 	PresNode.prototype.getSummaryHeightScale = function () {
 		const relationConstr = this.relations.heightConstr;
 		const refNode = this.relations.heightRef;
-		return this.getSummaryScale(refNode, relationConstr);
+		return this.getSummaryScale(refNode, relationConstr, true);
 	};
 
 	PresNode.prototype.getSummaryWidthScale = function () {
