@@ -707,7 +707,14 @@ function MoveAnnotationTrack(originalObject)
         {
             oDrawer.SetCurrentPage(this.objectToDraw.GetPage());
         }
-        
+
+        let oOverlay = oDrawer.m_oOverlay || oDrawer;
+        if(oOverlay)
+        {
+            oOverlay.ClearAll = true;
+            oOverlay.CheckRect(0, 0, 5, 5);
+        }
+
         let xCenter = this.viewer.width >> 1;
 		let yPos = this.viewer.scrollY >> 0;
 		if (this.viewer.documentWidth > this.viewer.width)
@@ -744,7 +751,7 @@ function MoveAnnotationTrack(originalObject)
 				oGraphicsWord.init(tmpCanvasCtx, this.tmpCanvas.width * nScale, this.tmpCanvas.height * nScale,
                     this.tmpCanvas.width * AscCommon.g_dKoef_pix_to_mm, this.tmpCanvas.height * AscCommon.g_dKoef_pix_to_mm);
 				oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
-				oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
+				oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
 				oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
                 break;
             }
@@ -782,11 +789,11 @@ function MoveAnnotationTrack(originalObject)
             Y = nPageHeight - this.originalObject._pagePos.h;
         }
 
-        let oDoc = this.viewer.getPDFDoc();
-        oDoc.CreateNewHistoryPoint();
+        if (this.originalObject.IsFreeText())
+            this.originalObject.onAfterMove();
+        
         this.originalObject.SetPosition(X, Y);
         this.originalObject.SetPage(this.pageIndex);
-        oDoc.TurnOffHistory();
     };
 
     this.getBounds = function()
@@ -873,9 +880,21 @@ function MoveChartObjectTrack(oObject, oChartSpace)
             oObjectToSet.layout.setW(fLayoutW);
             oObjectToSet.layout.setH(fLayoutH);
         }
-        var pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
-        var fLayoutX = this.chartSpace.calculateLayoutByPos(pos.x, oObjectToSet.layout.xMode, this.x, this.chartSpace.extX);
-        var fLayoutY = this.chartSpace.calculateLayoutByPos(pos.y, oObjectToSet.layout.yMode, this.y, this.chartSpace.extY);
+
+
+        let fLayoutX;
+        let fLayoutY;
+        let pos;
+        if(this.originalObject.parent && this.originalObject.parent.getObjectType() === AscDFH.historyitem_type_TrendLine) {
+            pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject.parent);
+            fLayoutX = this.chartSpace.calculateLayoutByPos(pos.coordinate.catVal, oObjectToSet.layout.xMode, this.x, this.chartSpace.extX);
+            fLayoutY = this.chartSpace.calculateLayoutByPos(pos.coordinate.valVal, oObjectToSet.layout.yMode, this.y, this.chartSpace.extY);
+        }
+        else {
+            pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
+            fLayoutX = this.chartSpace.calculateLayoutByPos(pos.x, oObjectToSet.layout.xMode, this.x, this.chartSpace.extX);
+            fLayoutY = this.chartSpace.calculateLayoutByPos(pos.y, oObjectToSet.layout.yMode, this.y, this.chartSpace.extY);
+        }
 
         oObjectToSet.layout.setX(fLayoutX);
         oObjectToSet.layout.setY(fLayoutY);

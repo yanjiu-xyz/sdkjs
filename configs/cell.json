@@ -68,6 +68,7 @@
 			"common/hash/hash.js",
 			"common/keychainstorage.js",
 
+			"common/Drawings/GraphicsBase.js",
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
@@ -176,6 +177,7 @@
 			"cell/view/WorkbookView.js",
 			"cell/view/WorksheetView.js",
 			"cell/view/DrawingObjectsController.js",
+			"word/Drawing/Graphics.js",
 			"cell/model/DrawingObjects/Graphics.js",
 			"word/Drawing/buttons.js",
 			"word/Drawing/ShapeDrawer.js",
@@ -224,6 +226,7 @@
 			"word/Editor/Paragraph/RunContent/ParagraphMark.js",
 			"word/Editor/ParagraphContent.js",
 			"word/Editor/Paragraph/bidi-flow.js",
+			"word/Editor/Paragraph/complex-field-stack.js",
 			"word/Editor/Paragraph/draw-selection.js",
 			"word/Editor/Paragraph/position-calculator.js",
 			"word/Editor/Paragraph/search-position-by-coords.js",

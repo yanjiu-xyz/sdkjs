@@ -1082,7 +1082,7 @@ CPage.prototype.Draw = function (context, xDst, yDst, wDst, hDst, api)
 		else
 		{
 			var backColor = api.getPageBackgroundColor();
-			context.fillStyle = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
+			context.fillStyle = "#" + backColor.R.toString(16) + backColor.G.toString(16) + backColor.B.toString(16);
 		}
 
 		strokeColor = GlobalSkin.PageOutline;
@@ -1985,6 +1985,7 @@ function CDrawingDocument()
 	// viewer
 	this.m_lCurrentRendererPage = -1;
 	this.m_oDocRenderer = null;
+	this.isHideTargetBeforeFirstClick = true;
 
 	// rulers
 	this.HorVerAnchors = [];
@@ -2094,6 +2095,15 @@ function CDrawingDocument()
 	// target
 	this.showTarget = function (isShow)
 	{
+		if (this.isHideTargetBeforeFirstClick)
+		{
+			if (!this.isHideTarget())
+				this.isHideTargetBeforeFirstClick = false;
+
+			if (this.isHideTargetBeforeFirstClick)
+				isShow = false;
+		}
+
 		if (this.TargetHtmlElementBlock)
 			this.TargetHtmlElement.style.display = isShow ? "display" : "none";
 		else
@@ -2328,7 +2338,7 @@ function CDrawingDocument()
 		}
 		// pdf
 		else
-			pos = this.ConvertCoordsToCursor5(x, y, this.m_lCurrentPage);
+			pos = this.ConvertCoordsToCursor5(this.TextMatrix.TransformPointX(x, y), this.TextMatrix.TransformPointY(x, y), this.m_lCurrentPage);
 
 		if (true == pos.Error && (false == bIsPageChanged))
 			return;
@@ -2497,11 +2507,29 @@ function CDrawingDocument()
 		oThis.TargetHtmlElement.style.top = oThis.TargetHtmlElementTop + "px";
 	};
 
+	this.isHideTarget = function()
+	{
+		let api = this.m_oWordControl.m_oApi;
+		if (api.isViewMode || (api.isRestrictionView() && !api.isRestrictionForms()))
+			return this.isHideTargetBeforeFirstClick;
+		return false;
+	};
+
 	this.DrawTarget = function()
 	{
 		if (oThis.NeedTarget)
 		{
-			if (oThis.m_oWordControl.IsFocus && !oThis.m_oWordControl.m_oApi.isBlurEditor)
+			let isActive = true;
+			let api = oThis.m_oWordControl.m_oApi;
+
+			if (!oThis.m_oWordControl.IsFocus)
+				isActive = false;
+			else if (oThis.m_oWordControl.m_oApi.isBlurEditor)
+				isActive = false;
+			else if (api.isViewMode || (api.isRestrictionView() && !api.isRestrictionForms()))
+				isActive = false;
+
+			if (isActive)
 				oThis.showTarget(!oThis.isShowTarget());
 			else
 				oThis.showTarget(true);
@@ -2589,7 +2617,11 @@ function CDrawingDocument()
 				this.GuiControlColorsMap[i] = arr_colors[i];
 			}
 
-			this.SendControlColors();
+			if (false == Asc.editor.isPdfEditor())
+			{
+				this.SendControlColors();
+			}
+			
 		}
 	};
 
@@ -2882,7 +2914,7 @@ function CDrawingDocument()
 		var _oldTurn = editor.isViewMode;
 		editor.isViewMode = true;
 
-		var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
+		var par = new AscWord.Paragraph(this.m_oWordControl.m_oLogicDocument);
 
 		par.MoveCursorToStartPos();
 
@@ -3193,7 +3225,7 @@ function CDrawingDocument()
 			{
 				var sStyleName = AscCommon.translateManager.getValue(arrLevels[nLvl].Styles[nStyle]);
 
-				var oParagraph = new Paragraph(this, oDocumentContent, false);
+				var oParagraph = new AscWord.Paragraph(oDocumentContent, false);
 				oDocumentContent.AddToContent(oParaIndex++, oParagraph);
 				oParagraph.SetParagraphStyleById(sStyleId);
 
@@ -3400,7 +3432,7 @@ function CDrawingDocument()
 				{
 					var sStyleName = AscCommon.translateManager.getValue(arrLevels[nCurrentLevel - 1].Styles[nStyle]);
 
-					var oParagraph = new Paragraph(this, oDocumentContent, false);
+					var oParagraph = new AscWord.Paragraph(oDocumentContent, false);
 					oDocumentContent.AddToContent(nCurrentLevel - 1, oParagraph);
 					oParagraph.SetParagraphStyleById(sStyleId);
 
@@ -3599,7 +3631,7 @@ function CDrawingDocument()
 		var bIncludeLabel = props.get_IncludeLabelAndNumber();
 		for (var nIndex = 0; nIndex < nCount; ++nIndex)
 		{
-			var oParagraph = new Paragraph(this, oDocumentContent, false);
+			var oParagraph = new AscWord.Paragraph(oDocumentContent, false);
 			oDocumentContent.AddToContent(oParaIndex++, oParagraph);
 			oParagraph.SetParagraphStyleById(sStyleId);
 
@@ -4368,7 +4400,7 @@ function CDrawingDocument()
 		g.transform(1, 0, 0, 1, 0, 0);
 
 		if (this.m_oWordControl.m_oApi.isDarkMode)
-			g.darkModeOverride3();
+			g.setDarkMode();
 
 		if (null == this.m_oDocumentRenderer)
 			this.m_oLogicDocument.DrawPage(pageIndex, g);
@@ -4769,29 +4801,7 @@ function CDrawingDocument()
 		this.IsTextMatrixUse = ((null != this.TextMatrix) && !global_MatrixTransformer.IsIdentity(this.TextMatrix));
 		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 		var page = this.m_arrPages[pageIndex];
-		var drawPage;
-		if (!this.m_oDocumentRenderer)
-		{
-			drawPage = page.drawingPage;
-		}
-		else
-		{
-			let oViewer = this.m_oDocumentRenderer;
-			let oPdfDoc = oViewer.getPDFDoc();
-			let nPage	= oPdfDoc.activeForm.GetPage();
-
-			page = {
-				width_mm: this.m_oDocumentRenderer.drawingPages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm,
-				height_mm: this.m_oDocumentRenderer.drawingPages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm
-			}
-			drawPage = {
-				left:	0,
-				right:	this.m_oDocumentRenderer.drawingPages[nPage].W,
-				top:	0,
-				bottom:	this.m_oDocumentRenderer.drawingPages[nPage].H
-			}
-			this.Overlay = this.m_oDocumentRenderer.overlay;
-		}
+		var drawPage = page.drawingPage;
 
 		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
 		var dKoefY = (drawPage.bottom - drawPage.top) / page.height_mm;

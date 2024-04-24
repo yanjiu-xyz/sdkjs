@@ -77,7 +77,7 @@ function FractionRuleThikness()
         else
             return this.value + this.deltaValue[nFontSize - this.startSize];
     }
-    
+
     this.getSize = function(nFontSize)
     {
         let num = this._getSize(nFontSize);
@@ -92,7 +92,7 @@ function AxisHeight()
     this.endSize = 109;
     this.deltaFormat = 1;
     this.deltaValue = [1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, -1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1];
-    
+
     this._getSize = function(nFontSize)
     {
         if (nFontSize < this.startSize || nFontSize > this.endSize)
@@ -100,7 +100,7 @@ function AxisHeight()
         else
             return this.value + this.deltaValue[nFontSize - this.startSize];
     }
-    
+
     this.getSize = function(nFontSize)
     {
         let num = this._getSize(nFontSize);
@@ -114,7 +114,7 @@ function NumeratorGap()
     this.endSize = 38;
     this.deltaFormat = 1;
     this.deltaValue = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
-    
+
     this._getSize = function(nFontSize)
     {
         if (nFontSize < this.startSize || nFontSize > this.endSize)
@@ -122,7 +122,7 @@ function NumeratorGap()
         else
             return this.value + this.deltaValue[nFontSize - this.startSize];
     }
-    
+
     this.getSize = function(nFontSize)
     {
         let num = this._getSize(nFontSize);
@@ -136,7 +136,7 @@ function DenominatorGap()
     this.endSize = 38;
     this.deltaFormat = 1;
     this.deltaValue = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
-    
+
     this._getSize = function(nFontSize)
     {
         if (nFontSize < this.startSize || nFontSize > this.endSize)
@@ -144,7 +144,7 @@ function DenominatorGap()
         else
             return this.value + this.deltaValue[nFontSize - this.startSize];
     }
-    
+
     this.getSize = function(nFontSize)
     {
         let num = this._getSize(nFontSize);
@@ -718,34 +718,33 @@ CFraction.prototype.GetTextOfElement = function(isLaTeX)
 	let strDenominator = this.getDenominator().GetMultipleContentForGetText(isLaTeX, !this.getDenominator().haveMixedContent());
 
 	if (true === isLaTeX)
-    {
-        if (strNumerator[0] !== "{")
-            strNumerator = "{" + strNumerator + "}";
-        if (strDenominator[0] !== "{")
-            strDenominator = "{" + strDenominator + "}";
+	{
+		if (strNumerator[0] !== "{")
+			strNumerator = "{" + strNumerator + "}";
+		if (strDenominator[0] !== "{")
+			strDenominator = "{" + strDenominator + "}";
 
 		switch (this.Pr.type)
-        {
-			case 0:	strTemp += '\\frac'; break;
-			case 1:	strTemp += '\\sfrac'; break;
-			case 2:	strTemp += '\\cfrac'; break;
-            case 3: strTemp += '\\binom'; break;
-			default: strTemp += '\\frac';  break;
+		{
+			case BAR_FRACTION:		strTemp += '\\frac'; break;
+			case SKEWED_FRACTION:	strTemp += '\\sfrac'; break;
+			case LINEAR_FRACTION:	strTemp += '\\cfrac'; break;
+			case NO_BAR_FRACTION:	strTemp += '\\binom'; break;
+			default:				strTemp += '\\frac';  break;
 		}
 
 		strTemp += strNumerator + strDenominator;
 	}
-    else
-    {
+	else
+	{
 		strTemp += strNumerator;
 		switch (this.Pr.type)
-        {
-			case BAR_FRACTION:	strTemp += '/';	break;
+		{
+			case BAR_FRACTION:		strTemp += '/';	break;
 			case SKEWED_FRACTION:	strTemp += '⁄';	break;
 			case LINEAR_FRACTION:	strTemp += '∕';	break;
 			case NO_BAR_FRACTION:	strTemp += '¦'; break;
-
-			default:strTemp += String.fromCharCode(47); break;
+			default:				strTemp += '/'; break;
 		}
 
 		strTemp += strDenominator + " ";
@@ -937,8 +936,8 @@ CDenominator.prototype.recalculateSize = function()
     this.gap = -this.Parent.elements[0][0].size.height;
     this.gap += 1550 * mgCtrPrp.FontSize / 2048 * 0.35277777777777775;
 
-    this.gap += 1370 * mgCtrPrp.FontSize / 2048 * 0.35277777777777775; 
-   
+    this.gap += 1370 * mgCtrPrp.FontSize / 2048 * 0.35277777777777775;
+
     var width = arg.width;
     var height = arg.height + this.gap;
     var ascent = arg.ascent + this.gap;

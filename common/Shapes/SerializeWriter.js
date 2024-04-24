@@ -3531,11 +3531,19 @@ function CBinaryFileWriter()
                 });
                 break;
             }
+            case AscDFH.historyitem_type_TimelineSlicerView:
+            {
+                oThis.WriteRecord2(9, grObj, function () {
+                    grObj.toStream(oThis)
+                });
+                break;
+            }
             case AscDFH.historyitem_type_SmartArt:
             {
                 oThis.WriteRecord2(8, grObj, function() {
                     grObj.toPPTY(oThis);
-                })
+                });
+                break;
             }
         }
         grObj.writeMacro(oThis);
@@ -5207,6 +5215,7 @@ function CBinaryFileWriter()
                 }
                 case AscDFH.historyitem_type_ChartSpace:
                 case AscDFH.historyitem_type_SlicerView:
+                case AscDFH.historyitem_type_TimelineSlicerView:
                 case AscDFH.historyitem_type_SmartArt:
                 {
                     this.BinaryFileWriter.WriteGrFrame(grObject);

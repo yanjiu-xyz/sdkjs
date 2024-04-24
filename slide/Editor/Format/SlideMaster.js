@@ -537,7 +537,6 @@ MasterSlide.prototype.scale = function (kw, kh) {
 function CMasterThumbnailDrawer()
 {
     this.CanvasImage    = null;
-    this.IsRetina       = false;
     this.WidthMM        = 0;
     this.HeightMM       = 0;
 
@@ -715,7 +714,7 @@ function CMasterThumbnailDrawer()
             }
             else
             {
-                if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+                if (_layout.showMasterSp)
                 {
                     if(_master.needRecalc && _master.needRecalc())
                     {
@@ -886,7 +885,7 @@ function CMasterThumbnailDrawer()
             }
             else
             {
-                if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+                if (_layout.showMasterSp)
                 {
                     if(_master.needRecalc && _master.needRecalc())
                     {

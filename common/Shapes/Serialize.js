@@ -155,6 +155,7 @@ function BinaryPPTYLoader()
     this.TempGroupObject = null;
     this.TempMainObject = null;
 
+    this.IsFillingSmartArt = false;
     this.IsThemeLoader = false;
     this.Api = null;
 
@@ -5780,7 +5781,7 @@ function BinaryPPTYLoader()
                             if (AscCommonWord.c_oSer_OMathContentType.OMath === type2)
                             {
                                 var oReadResult = new AscCommonWord.DocReadResult(null);
-                                var oMathPara = this.ReadMathObject(s, oReadResult, new AscCommonWord.Paragraph(this.DrawingDocument, null, true));
+                                var oMathPara = this.ReadMathObject(s, oReadResult, new AscWord.Paragraph(null, true));
                                 ole.setMathObject(oMathPara);
                             }
                             else
@@ -6350,7 +6351,7 @@ function BinaryPPTYLoader()
     {
         var s = this.stream;
 
-        var shape = new AscFormat.CShape(this.TempMainObject);
+        var shape = Asc.editor.isPdfEditor() ? new AscPDF.CPdfShape(this.TempMainObject) : new AscFormat.CShape(this.TempMainObject);
 
         var _rec_start = s.cur;
         var _end_rec = _rec_start + s.GetULong() + 4;
@@ -7040,6 +7041,7 @@ function BinaryPPTYLoader()
         var _table = null;
         var _chart = null;
         var _slicer = null;
+        var _timeslicer = null;
         var _smartArt = null;
 
         while (s.cur < _end_rec)
@@ -7108,6 +7110,19 @@ function BinaryPPTYLoader()
                     _smartArt = this.ReadSmartArt();
                     break;
                 }
+                case 9:
+                {
+                    if (typeof AscFormat.CTimeslicer !== "undefined")
+                    {
+                        _timeslicer = new AscFormat.CTimeslicer();
+                        _timeslicer.fromStream(s);
+                    }
+                    else
+                    {
+                        s.SkipRecord();
+                    }
+                    break;
+                }
                 case 0xA1:
                 {
                     _graphic_frame.readMacro(s);
@@ -7124,7 +7139,7 @@ function BinaryPPTYLoader()
         s.Seek2(_end_rec);
 
         this.TempGroupObject = null;
-        if (_table == null && _chart == null && _slicer == null && _smartArt == null)
+        if (_table == null && _chart == null && _slicer == null && _smartArt == null && _timeslicer == null)
             return null;
 
         if (_table != null)
@@ -7168,6 +7183,20 @@ function BinaryPPTYLoader()
                 }
             }
             return _slicer;
+        }
+        else if(_timeslicer != null)
+        {
+            _timeslicer.setBDeleted(false);
+            _timeslicer.checkEmptySpPrAndXfrm(_xfrm);
+            if(AscCommon.isRealObject(_nvGraphicFramePr) )
+            {
+                _timeslicer.setNvSpPr(_nvGraphicFramePr);
+                if(AscFormat.isRealNumber(_nvGraphicFramePr.locks))
+                {
+                    _timeslicer.setLocks(_nvGraphicFramePr.locks);
+                }
+            }
+            return _timeslicer;
         }
         else if(_smartArt != null)
         {
@@ -8522,7 +8551,7 @@ function BinaryPPTYLoader()
                 case 10:
                 {
                     var lang = s.GetString2();
-                    if(!this.IsThemeLoader)
+                    if(!(this.IsThemeLoader || this.IsFillingSmartArt))
                     {
                         var nLcid = Asc.g_oLcidNameToIdMap[lang];
                         if(nLcid)
@@ -9852,7 +9881,7 @@ function BinaryPPTYLoader()
 
     this.ReadParagraph = function(DocumentContent)
     {
-        var par = new Paragraph(DocumentContent.DrawingDocument, DocumentContent, true);
+        var par = new AscWord.Paragraph(DocumentContent, true);
 
         var EndPos = 0;
 

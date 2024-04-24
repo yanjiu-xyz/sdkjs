@@ -729,7 +729,7 @@
      */
     Api.prototype.CreateParagraph = function()
     {
-        return this.private_CreateApiParagraph(new Paragraph(private_GetDrawingDocument(), null, true));
+        return this.private_CreateApiParagraph(new AscWord.Paragraph(null, true));
     };
 
     /**
@@ -1360,7 +1360,24 @@
         }
     };
 
-    //------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns all comments from the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiComment[]}
+	 */
+	ApiPresentation.prototype.GetAllComments = function()
+	{
+		let aCommentsData = this.Presentation.GetAllComments();
+		let aApiComments = [];
+		for(let nComment = 0; nComment < aCommentsData.length; ++nComment) {
+			aApiComments.push(private_GetApi().private_CreateApiComment(aCommentsData[nComment].comment));
+		}
+		return aApiComments;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiMaster
     //
@@ -4882,6 +4899,7 @@
     ApiPresentation.prototype["SetLanguage"]              = ApiPresentation.prototype.SetLanguage;
     ApiPresentation.prototype["GetWidth"]                 = ApiPresentation.prototype.GetWidth;
     ApiPresentation.prototype["GetHeight"]                = ApiPresentation.prototype.GetHeight;
+    ApiPresentation.prototype["GetAllComments"]           = ApiPresentation.prototype.GetAllComments;
 
     ApiPresentation.prototype["SlidesToJSON"]             = ApiPresentation.prototype.SlidesToJSON;
     ApiPresentation.prototype["ToJSON"]                   = ApiPresentation.prototype.ToJSON;

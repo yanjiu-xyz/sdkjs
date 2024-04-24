@@ -716,7 +716,7 @@ Paragraph.prototype.private_RecalculatePageInternal = function(PRS, CurPage, bFi
     {
         PRS.Line = CurLine;
         PRS.RecalcResult = recalcresult_NextLine;
-        PRS.ComplexFields.PushState();
+        let complexFieldState = PRS.ComplexFields.getState();
 
         this.private_RecalculateLine(CurLine, CurPage, PRS, ParaPr);
 
@@ -745,7 +745,7 @@ Paragraph.prototype.private_RecalculatePageInternal = function(PRS, CurPage, bFi
             // были заполнены при последнем неудачном рассчете.
 
             PRS.Restore_RunRecalcInfo();
-			PRS.ComplexFields.PopState();
+			PRS.ComplexFields.setState(complexFieldState);
         }
         else if (RecalcResult & recalcresult_NextElement || RecalcResult & recalcresult_NextPage)
         {
@@ -1003,6 +1003,7 @@ Paragraph.prototype.private_RecalculateLine            = function(CurLine, CurPa
     //-------------------------------------------------------------------------------------------------------------
     this.Lines.length   = CurLine + 1;
     this.Lines[CurLine] = new CParaLine();
+	this.Lines[CurLine].CF = PRS.ComplexFields.getState();
 
     //-------------------------------------------------------------------------------------------------------------
     // 2. Проверяем, является ли данная строка висячей
@@ -2711,6 +2712,7 @@ function CParaLine()
                        // 2 бит : пустая ли строка (без учета PageBreak)
                        // 3 бит : последняя ли это строка (т.е. строка с ParaEnd)
                        // 4 бит : строка переносится по Y по обтекаемому объекту
+	this.CF      = [];
 }
 
 CParaLine.prototype =
@@ -3224,7 +3226,7 @@ function CParagraphRecalculateStateWrap()
 	this.BreakLine          = false; // Строка закончилась принудительным разрывом
 	this.LongWord           = false;
 
-	this.ComplexFields = new CParagraphComplexFieldsInfo();
+	this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
 
 	this.WordLen         = 0;
     this.SpaceLen        = 0;
@@ -3362,9 +3364,9 @@ CParagraphRecalculateStateWrap.prototype.Reset_Page = function(Paragraph, CurPag
 	this.RunRecalcInfoLast  = (0 === CurPage ? null : Paragraph.Pages[CurPage - 1].EndInfo.RunRecalcInfo);
 	this.RunRecalcInfoBreak = this.RunRecalcInfoLast;
 	
-	this.ComplexFields.ResetPage(Paragraph, CurPage);
-	this.alignState.ComplexFields.ResetPage(Paragraph, CurPage);
-	this.counterState.ComplexFields.ResetPage(Paragraph, CurPage);
+	this.ComplexFields.resetPage(Paragraph, CurPage);
+	this.alignState.ComplexFields.resetPage(Paragraph, CurPage);
+	this.counterState.ComplexFields.resetPage(Paragraph, CurPage);
 };
 CParagraphRecalculateStateWrap.prototype.Reset_Line = function()
 {
@@ -4226,7 +4228,7 @@ function CParagraphRecalculateStateCounter(wrapState)
     this.SpacesSkip  = 0;
     this.LettersSkip = 0;
 
-    this.ComplexFields = new CParagraphComplexFieldsInfo();
+    this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
 }
 CParagraphRecalculateStateCounter.prototype.Reset = function(Paragraph, Range)
 {
@@ -4272,11 +4274,15 @@ function CParagraphRecalculateStateAlign(wrapState)
     this.RecalcFast    = false; // Если пересчет быстрый, тогда все "плавающие" объекты мы не трогаем
     this.RecalcFast2   = false; // Второй вариант быстрого пересчета
 
-	this.ComplexFields = new CParagraphComplexFieldsInfo();
+	this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
 }
 CParagraphRecalculateStateAlign.prototype.IsFastRangeRecalc = function()
 {
 	return this.RecalcFast;
+};
+CParagraphRecalculateStateAlign.prototype.getLogicDocument = function()
+{
+	return this.wrapState.Paragraph.GetLogicDocument();
 };
 
 function CParagraphRecalculateStateInfo()
@@ -4341,7 +4347,7 @@ CParagraphRecalculateStateInfo.prototype.RemoveComment = function(Id)
 		}
 	}
 };
-CParagraphRecalculateStateInfo.prototype.ProcessFieldChar = function(oFieldChar)
+CParagraphRecalculateStateInfo.prototype.processFieldChar = function(oFieldChar)
 {
 	if (!oFieldChar || !oFieldChar.IsUse())
 		return;
@@ -4375,13 +4381,13 @@ CParagraphRecalculateStateInfo.prototype.ProcessFieldChar = function(oFieldChar)
 		}
 	}
 };
-CParagraphRecalculateStateInfo.prototype.IsComplexField = function()
+CParagraphRecalculateStateInfo.prototype.isComplexField = function()
 {
 	return (this.ComplexFields.length > 0 ? true : false);
 };
-CParagraphRecalculateStateInfo.prototype.IsComplexFieldCode = function()
+CParagraphRecalculateStateInfo.prototype.isComplexFieldCode = function()
 {
-	if (!this.IsComplexField())
+	if (!this.isComplexField())
 		return false;
 
 	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
@@ -4392,7 +4398,7 @@ CParagraphRecalculateStateInfo.prototype.IsComplexFieldCode = function()
 
 	return false;
 };
-CParagraphRecalculateStateInfo.prototype.ProcessFieldCharAndCollectComplexField = function(oChar)
+CParagraphRecalculateStateInfo.prototype.processFieldCharAndCollectComplexField = function(oChar)
 {
 	if (oChar.IsBegin())
 	{
@@ -4440,7 +4446,7 @@ CParagraphRecalculateStateInfo.prototype.ProcessFieldCharAndCollectComplexField 
 		}
 	}
 };
-CParagraphRecalculateStateInfo.prototype.ProcessInstruction = function(oInstruction)
+CParagraphRecalculateStateInfo.prototype.processInstruction = function(oInstruction)
 {
 	if (this.ComplexFields.length <= 0)
 		return;

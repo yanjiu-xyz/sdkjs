@@ -1193,7 +1193,7 @@
 
 	CGraphicObjectBase.prototype.drawShdw = function (graphics) {
 		var outerShdw = this.getOuterShdw && this.getOuterShdw();
-		if (this.shdwSp && outerShdw && !graphics.IsSlideBoundsCheckerType) {
+		if (this.shdwSp && outerShdw && !graphics.isBoundsChecker()) {
 			var oTransform = new AscCommon.CMatrix();
 			var dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
 			var dir = outerShdw.dir ? outerShdw.dir : 0;
@@ -2236,22 +2236,22 @@
 			} else if (this.Lock) {
 				oLock = this.Lock;
 			}
-			if (oLock && AscCommon.locktype_None !== oLock.Get_Type()) {
+			if (oLock && AscCommon.c_oAscLockTypes.kLockTypeNone !== oLock.Get_Type()) {
 				var bCoMarksDraw = true;
 				var oApi = editor || Asc['editor'];
 				if (oApi) {
 
 					switch (oApi.getEditorId()) {
 						case AscCommon.c_oEditorId.Word: {
-							bCoMarksDraw = (true === oApi.isCoMarksDraw || AscCommon.locktype_Mine !== oLock.Get_Type());
+							bCoMarksDraw = (true === oApi.isCoMarksDraw || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
 							break;
 						}
 						case AscCommon.c_oEditorId.Presentation: {
-							bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.locktype_Mine !== oLock.Get_Type());
+							bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
 							break;
 						}
 						case AscCommon.c_oEditorId.Spreadsheet: {
-							bCoMarksDraw = (!oApi.collaborativeEditing.getFast() || AscCommon.locktype_Mine !== oLock.Get_Type());
+							bCoMarksDraw = (!oApi.collaborativeEditing.getFast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
 							break;
 						}
 					}
@@ -2839,6 +2839,9 @@
 	CGraphicObjectBase.prototype.onSlicerDelete = function (sName) {
 		return false;
 	};
+	CGraphicObjectBase.prototype.onTimeSlicerDelete = function (sName) {
+		return false;
+	};
 	CGraphicObjectBase.prototype.onSlicerChangeName = function (sName, sNewName) {
 		return false;
 	};
@@ -2879,6 +2882,9 @@
 		return oPr.hasSameNameAndId(oOtherPr);
 	};
 	CGraphicObjectBase.prototype.select = function (drawingObjectsController, pageIndex) {
+		if (!AscFormat.canSelectDrawing(this)) {
+			return;
+		}
 		this.selected = true;
 		this.selectStartPage = pageIndex;
 		var content = this.getDocContent && this.getDocContent();
@@ -3555,6 +3561,47 @@
 			sResult += (" " + sDescription)
 		}
 		return sResult;
+	};
+
+
+	CGraphicObjectBase.prototype.applyDrawingSize = function(props) {
+		let oSpParent = this.parent;
+		let oXfrm = this.spPr.xfrm;
+		AscFormat.CheckSpPrXfrm3(this);
+		if (!props.SizeRelH && AscFormat.isRealNumber(props.Width)) {
+			oXfrm.setExtX(props.Width);
+			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
+				oSpParent.SetSizeRelH({
+					RelativeFrom: AscCommon.c_oAscSizeRelFromH.sizerelfromhPage,
+					Percent: 0
+				});
+			}
+		}
+		if (!props.SizeRelV && AscFormat.isRealNumber(props.Height)) {
+			oXfrm.setExtY(props.Height);
+			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
+				oSpParent.SetSizeRelV({
+					RelativeFrom: AscCommon.c_oAscSizeRelFromV.sizerelfromvPage,
+					Percent: 0
+				});
+			}
+		}
+		if (oSpParent instanceof AscCommonWord.ParaDrawing) {
+			if (oSpParent.SizeRelH && !oSpParent.SizeRelV) {
+				oSpParent.SetSizeRelV({
+					RelativeFrom: AscCommon.c_oAscSizeRelFromV.sizerelfromvPage,
+					Percent: 0
+				});
+			}
+			if (oSpParent.SizeRelV && !oSpParent.SizeRelH) {
+				oSpParent.SetSizeRelH({
+					RelativeFrom: AscCommon.c_oAscSizeRelFromH.sizerelfromhPage,
+					Percent: 0
+				});
+			}
+		}
+		this.ResetParametersWithResize(true);
+		this.checkDrawingBaseCoords();
 	};
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;

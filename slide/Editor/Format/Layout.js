@@ -108,6 +108,7 @@ function SlideLayout()
     this.matchingName = "";
     this.preserve = false;
     this.showMasterPhAnim = false;
+		this.showMasterSp = true;
     this.type = null;
 
     this.userDrawn = true;
@@ -808,7 +809,6 @@ function DrawNativeDashRect(g, transform, extX, extY) {
 function CLayoutThumbnailDrawer()
 {
     this.CanvasImage    = null;
-    this.IsRetina       = false;
     this.WidthMM        = 0;
     this.HeightMM       = 0;
 
@@ -872,7 +872,7 @@ function CLayoutThumbnailDrawer()
 
         if (use_master_shapes !== false)
         {
-            if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+            if (_layout.showMasterSp)
             {
                 if(_master.needRecalc && _master.needRecalc())
                 {

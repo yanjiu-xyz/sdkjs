@@ -75,6 +75,8 @@
 			find     : false,
 			usePos   : false
 		};
+		
+		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
 	ParagraphPositionCalculator.prototype.reset = function(page, line, range)
 	{
@@ -97,6 +99,8 @@
 			this.x += p.Numbering.WidthVisible;
 		
 		this.bidi.begin();
+		
+		this.complexFields.resetRange(this.paragraph, this.line, this.range);
 	};
 	ParagraphPositionCalculator.prototype.setNextCurrent = function(run, lastCombItem)
 	{
@@ -124,6 +128,9 @@
 	};
 	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef, inRunPos)
 	{
+		if (!this.complexFields.checkRunElement(element))
+			return;
+		
 		if (para_Drawing === element.Type && !element.IsInline())
 		{
 			if (isCurrent)
@@ -270,12 +277,12 @@
 	};
 	ParagraphPositionCalculator.prototype.getXY = function()
 	{
-		this.bidi.end();
+		this.finalize();
 		return {x : this.posInfo.x, y : this.posInfo.y};
 	};
 	ParagraphPositionCalculator.prototype.getTargetXY = function()
 	{
-		this.bidi.end();
+		this.finalize();
 		let run = this.posInfo.run;
 		if (!run)
 			return {x : this.posInfo.x, y : this.posInfo.y, h : 0, ascent : 0};
@@ -362,6 +369,17 @@
 	ParagraphPositionCalculator.prototype.finalize = function()
 	{
 		this.bidi.end();
+		
+		if (this.isNextCurrent)
+		{
+			this.posInfo.x   = this.x;
+			this.posInfo.y   = this.y;
+			this.posInfo.run = this.nextRun;
+			
+			this.isNextCurrent = false;
+			this.nextRun       = null;
+		}
+		
 		return !!this.posInfo.run;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
