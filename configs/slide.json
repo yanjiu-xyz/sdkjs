@@ -45,7 +45,7 @@
 			"common/api/firstLetterExceptions.js",
 			"common/api/restrictionSettings.js",
 			
-			"common/collaboration/deletedTextRecovery.js",
+			"common/collaboration/deleted-text-recovery.js",
 			
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
