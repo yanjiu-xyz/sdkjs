@@ -7742,7 +7742,7 @@ CStyle.prototype.wholeToTablePr = function() {
 };
 /**
  * Получаем список параграфов, использующих данный стиль, либо стиль, основанный на данном
- * @returns {AscWord.CParagraph[]}
+ * @returns {AscWord.Paragraph[]}
  */
 CStyle.prototype.GetRelatedParagraphs = function()
 {
@@ -16749,6 +16749,12 @@ function CParaPr()
 	this.SuppressLineNumbers = undefined;
 }
 
+CParaPr.fromObject = function(obj)
+{
+	let paraPr = new CParaPr();
+	paraPr.Set_FromObject(obj);
+	return paraPr;
+};
 CParaPr.prototype.Copy = function(bCopyPrChange, oPr)
 {
 	var ParaPr = new CParaPr();

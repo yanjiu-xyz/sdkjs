@@ -85,6 +85,7 @@
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
 	 * @property {Array} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
+	 * @property {ApiProtectedRange[]} AllProtectedRanges - Returns all protected ranges from the current worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -378,6 +379,109 @@
 		format = null == format ? '' : format;
 		return AscCommonExcel.cTEXT.prototype.Calculate([checkFormat(expression), new AscCommonExcel.cString(format)])
 			.getValue();
+	};
+
+
+	/**
+	 * Creates a new custom function.
+	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
+	 * Parameters and results can be specified as the <em>number / string / bool / any / number[][] / string[][] / bool[][] / any[][]</em> types.
+	 * Parameters can be required or optional. A user can also set a default value.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {Function} fCustom - A new function for calculating.
+	 */
+	// Example with description:
+	// Calculates the sum of the specified numbers.
+	// @customfunction
+	// @param {number} first Required first number.
+	// @param {number} [second] Optional second number to add.
+	// @returns {number} The sum of the numbers.
+	// Api.AddCustomFunction(function add(first, second) {
+	//     if (second === null) {
+	//         second = 0;
+	//     }
+	//     return first + second;
+	// })
+	Api.prototype.AddCustomFunction = function (fCustom) {
+		// get parsedJSDoc from a macros (we receive it from the Api class)
+		// take the first element and validate it
+		const parsedJSDoc = this.parsedJSDoc.shift();
+		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
+		//const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
+		if (!isValidJsDoc/* && !isValidOptions*/) {
+			throwException(new Error('Invalid parameters type in JSDOC or options.'));
+		}
+		// remove it from this class and use it from the variable (only if it was the last)
+		// we don't remove it immediately, because we can have there data for another function
+		if (!this.parsedJSDoc.length) {
+			delete this.parsedJSDoc;
+		}
+
+
+		// now we have to decide what we're going to use (make the priority order) - parsedJSDoc or options
+
+
+		//1. jsdoc params:
+		//
+		//  * Calculates the sum of the specified numbers
+		//  * @customfunction
+		//  * @param {number} first First number.
+		//  * @param {number} second Second number.
+		//  * @param {number} [third] Third number to add. If omitted, third = 0.
+		//  * @returns {number} The sum of the numbers.
+		//
+		/*Api.AddCustomFunction(function add(first, second, third) {
+			if (third === null) {
+				third = 0;
+			}
+			return first + second + third;
+		})*/
+
+		//2. object params - removed it at the moment
+		/*
+
+		(function()
+		{
+    		function add(first, second, third) {
+				if (third === null) {
+					third = 0;
+				}
+				return first + second + third;
+			}
+			Api.AddCustomFunction(add,
+				{
+					"params":[
+						{
+							 "defaultValue": "",
+							 "description": "First number. *",
+							 "name": "first",
+							 "optional": false,
+							 "parentName": "",
+							 "type": "number" // "string", "bool"
+						 },
+						 {
+							 "defaultValue": "",
+							 "description": "Second number. *",
+							 "name": "second",
+							 "optional": false,
+							 "parentName": "",
+							 "type": "number"
+						 },
+						 {
+							 "defaultValue": "",
+							 "description": "Second number. *",
+							 "name": "second",
+							 "optional": true,
+							 "parentName": "",
+							 "type": "number"
+						 }
+					 ]
+				}
+			);
+		})();*/
+
+		this.addCustomFunction(fCustom, parsedJSDoc/*isValidJsDoc ? parsedJSDoc : options*/);
 	};
 
 	/**
@@ -2017,6 +2121,103 @@
 		}
 	});
 
+	/**
+	 * Creates a protected range of the specified type from the selected data range of the current sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sTitle - The title which will be displayed for the current protected range.
+	 * @param {string} sDataRange - The selected cell range which will be used to get the data for the protected range.
+	 * @returns {ApiProtectedRange | null}
+	 * @since 8.1.0
+	 */
+	ApiWorksheet.prototype.AddProtectedRange = function (sTitle, sDataRange) {
+		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
+		let isValidRef = typeof (sDataRange) === 'string' && sDataRange.trim() !== '';
+		let result = null;
+		if (isValidTitle && isValidRef) {
+			let settings = new Asc.CUserProtectedRange(this.worksheet);
+			settings.asc_setName(sTitle);
+			settings.asc_setRef(sDataRange);
+
+			let docInfo = this.worksheet.workbook.oApi && this.worksheet.workbook.oApi.DocInfo;
+			if (docInfo) {
+				let userInfo = docInfo.UserInfo;
+				if (userInfo) {
+					let users = [];
+					let user = new Asc.CUserProtectedRangeUserInfo();
+
+					user.asc_setId(userInfo.asc_getId());
+					user.asc_setName(userInfo.get_FullName());
+
+					users.push(user);
+					settings.asc_setUsers(users);
+				}
+			}
+			if (this.worksheet.editUserProtectedRanges(null, settings, true)) {
+				result = new ApiProtectedRange(settings);
+			} else {
+				logError(new Error('Protected range cannot be added.'));
+			}
+		} else {
+			logError(new Error('The title or dataRange is invalid'));
+		}
+
+		return result;
+	};
+
+
+	/**
+	 * Returns a protected range object by its title.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sTitle - The title of the protected range that will be returned.
+	 * @returns {ApiProtectedRange | null}
+	 * @since 8.1.0
+	 */
+	ApiWorksheet.prototype.GetProtectedRange = function (sTitle) {
+		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
+		let result = null;
+		if (isValidTitle) {
+			let protectedRange = this.worksheet.getUserProtectedRangeByName(sTitle);
+			result = protectedRange && protectedRange.obj ? new ApiProtectedRange(protectedRange.obj.clone(protectedRange.obj._ws, true)) : null;
+			if (result === null) {
+				logError(new Error('The range not found'));
+			}
+		} else {
+			logError(new Error('The title is invalid'));
+		}
+
+		return result;
+	};
+
+	/**
+	 * Returns all protected ranges from the current worksheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiProtectedRange[] | null}
+	 * @since 8.1.0
+	 */
+	ApiWorksheet.prototype.GetAllProtectedRanges = function () {
+		let protectedRanges = this.worksheet && this.worksheet.workbook && this.worksheet.workbook.oApi.asc_getUserProtectedRanges(this.worksheet.sName);
+		let result = null;
+		if (protectedRanges) {
+			result = [];
+			for (let i  = 0; i < protectedRanges.length; i++) {
+				result.push(new ApiProtectedRange(protectedRanges[i].clone(protectedRanges[i]._ws, true)));
+			}
+		} else {
+			logError(new Error('Ranges not found'));
+		}
+
+		return result;
+	};
+	Object.defineProperty(ApiWorksheet.prototype, "AllProtectedRanges", {
+		get: function () {
+			return this.GetAllProtectedRanges();
+		}
+	});
+
+
 
 	/**
 	 * Specifies the cell border position.
@@ -3464,10 +3665,11 @@
 	 */
 	ApiRange.prototype.Copy = function (destination) {
 		if (destination && destination instanceof ApiRange) {
-			var cols = this.GetCols().Count - 1;
-			var rows = this.GetRows().Count - 1;
-			var bbox = destination.range.bbox;
-			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+			let bboxFrom = this.range.bbox;
+			let cols = bboxFrom.c2 - bboxFrom.c1;
+			let rows = bboxFrom.r2 - bboxFrom.r1;
+			let bbox = destination.range.bbox;
+			let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 			this.range.move(range.bbox, true, destination.range.worksheet);
 		} else {
 			logError(new Error('Invalid destination'));
@@ -3482,10 +3684,11 @@
 	 */
 	ApiRange.prototype.Paste = function (rangeFrom) {
 		if (rangeFrom && rangeFrom instanceof ApiRange) {
-			var cols = rangeFrom.GetCols().Count - 1;
-			var rows = rangeFrom.GetRows().Count - 1;
-			var bbox = this.range.bbox;
-			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+			let bboxFrom = rangeFrom.range.bbox;
+			let cols = bboxFrom.c2 - bboxFrom.c1;
+			let rows = bboxFrom.r2 - bboxFrom.r1;
+			let bbox = this.range.bbox;
+			let range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
 			logError(new Error('Invalid range'));
@@ -3588,7 +3791,7 @@
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
-			options.asc_setSpecificRange(this.Address);
+			options.asc_setSpecificRange(this["Address"]);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn((LookIn === 'xlValues' ? 2 : 1));
 			options.asc_setNotSearchEmptyCells(!(What === "" && !options.isWholeCell));
@@ -3744,7 +3947,7 @@
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
-			options.asc_setSpecificRange(this.Address);
+			options.asc_setSpecificRange(this["Address"]);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
 			if (typeof ReplaceAll !== 'boolean')
@@ -5702,6 +5905,7 @@
 
 	/**
 	 * Sets the bold property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isBold - Specifies that the text characters are displayed bold.
@@ -5782,6 +5986,7 @@
 
 	/**
 	 * Sets the italic property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isItalic - Specifies that the text characters are displayed italic.
@@ -5862,6 +6067,7 @@
 
 	/**
 	 * Sets the font size property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Size - Font size.
@@ -5942,6 +6148,7 @@
 
 	/**
 	 * Sets the strikethrough property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isStrikethrough - Specifies that the text characters are displayed strikethrough.
@@ -6053,6 +6260,7 @@
 
 	/**
 	 * Sets an underline of the type specified in the request to the current font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {XlUnderlineStyle} Underline - Underline type.
@@ -6158,6 +6366,7 @@
 
 	/**
 	 * Sets the subscript property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSubscript - Specifies that the text characters are displayed subscript.
@@ -6238,6 +6447,7 @@
 
 	/**
 	 * Sets the superscript property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSuperscript - Specifies that the text characters are displayed superscript.
@@ -6318,6 +6528,7 @@
 
 	/**
 	 * Sets the font name property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {string} FontName - Font name.
@@ -6399,6 +6610,7 @@
 
 	/**
 	 * Sets the font color property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} Color - Font color.
@@ -6545,14 +6757,268 @@
 	};
 
 	/**
-	 * Removes all frozen panes in the current worksheet.
-	 * @memberof ApiFreezePanes
-	 * @typeofeditors ["CSE"]
-	 * @since 8.0.0
+	 * Class representing a user-protected range.
+	 * @constructor
 	 */
-	ApiFreezePanes.prototype.Unfreeze = function () {
-		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
-			this.ws.workbook.oApi.asc_freezePane(undefined);
+	function ApiProtectedRange(protectedRange) {
+		this.protectedRange = protectedRange;
+	}
+
+	/**
+	 * Sets a title to the current protected range.
+	 * @memberof ApiProtectedRange
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sTitle - The title which will be displayed for the current protected range.
+	 * @return {boolean} - Returns false if a user doesn't have permission to modify the protected range.
+	 * @since 8.1.0
+	 */
+	ApiProtectedRange.prototype.SetTitle = function (sTitle) {
+		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
+		let result = false;
+		if (isValidTitle && sTitle !== this.protectedRange.asc_getName()) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
+				newProtectedRange.asc_setName(sTitle);
+				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+					result = true;
+				}
+			}
+		}
+		return result;
+	};
+
+	/**
+	 * Sets a range to the current protected range.
+	 * @memberof ApiProtectedRange
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sRange - The cell range which will be set for the current protected range.
+	 * @return {boolean} - Returns false if a user doesn't have permission to modify the protected range.
+	 * @since 8.1.0
+	 */
+	ApiProtectedRange.prototype.SetRange = function (sRange) {
+		let isValidRange = typeof (sRange) === 'string' && sRange.trim() !== '';
+		let result = false;
+		if (isValidRange /*asc_getRef !==*/) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
+				newProtectedRange.asc_setRef(sRange);
+				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+					result = true;
+				}
+			}
+		}
+		return result;
+	};
+
+	/**
+	 * Specifies the user type of the protected range.
+	 * @typedef {("CanEdit" | "CanView" | "NotView")} ProtectedRangeUserType
+	 */
+
+
+	/**
+	 * Sets a user to the current protected range.
+	 * @memberof ApiProtectedRange
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sId - The user ID.
+	 * @param {string} sName - The user name.
+	 * @param {ProtectedRangeUserType} protectedRangeUserType - The user type of the protected range.
+	 * @returns {ApiProtectedRangeUserInfo | null} - Returns null if a user doesn't have permission to modify the protected range.
+	 * @since 8.1.0
+	 */
+	ApiProtectedRange.prototype.AddUser = function (sId, sName, protectedRangeUserType) {
+		let isValidIdTitle = typeof (sId) === 'string' && sId.trim() !== '';
+		let isValidTitle = typeof (sName) === 'string' && sName.trim() !== '';
+		let result = null;
+		if (isValidTitle && isValidIdTitle) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
+
+				let newUser = new Asc.CUserProtectedRangeUserInfo();
+				newUser.asc_setId(sId);
+				newUser.asc_setName(sName);
+				let nType = Asc.c_oSerUserProtectedRangeType.edit;
+				if (protectedRangeUserType === "CanView") {
+					nType = Asc.c_oSerUserProtectedRangeType.view;
+				} else if (protectedRangeUserType === "NotView") {
+					nType = Asc.c_oSerUserProtectedRangeType.notView;
+				}
+				newUser.asc_setType(nType);
+
+				let users = this.protectedRange.asc_getUsers();
+				users.push(newUser);
+				newProtectedRange.asc_setUsers(users);
+				worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				result = new ApiProtectedRangeUserInfo(result, this.protectedRange);
+			}
+		}
+		return result;
+	};
+
+	/**
+	 * Removes a user from the current protected range.
+	 * @memberof ApiProtectedRange
+	 * @param {string} sId - The user ID.
+	 * @returns {bool}
+	 * @since 8.1.0
+	 */
+	ApiProtectedRange.prototype.DeleteUser = function (sId) {
+		let isValidId = typeof (sId) === 'string' && sId.trim() !== '';
+		let result = false;
+		if (isValidId) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let userInfo = this.protectedRange.getUserById(sId);
+				if (userInfo) {
+					let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
+					let users = this.protectedRange.asc_getUsers();
+					if (users) {
+						let newUsers = [];
+						for (let i = 0; i < users.length; i++) {
+							if (i !== userInfo.index) {
+								newUsers.push(users[i].clone());
+							}
+						}
+						newProtectedRange.asc_setUsers(newUsers);
+
+						if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+							result = true;
+						}
+					}
+				}
+			}
+		}
+		return result;
+	};
+
+	/**
+	 * Returns all users from the current protected range.
+	 * @memberof ApiProtectedRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiProtectedRangeUserInfo[] | null}
+	 * @since 8.1.0
+	 */
+	ApiProtectedRange.prototype.GetAllUsers = function () {
+		let worksheet = this.protectedRange._ws;
+		let result = null;
+		if (worksheet) {
+			let users = this.protectedRange.asc_getUsers();
+			if (users) {
+				let newUsers = [];
+				for (let i = 0; i < users.length; i++) {
+					newUsers.push(new ApiProtectedRangeUserInfo(users[i], this.protectedRange));
+				}
+				result = newUsers;
+			}
+		}
+
+		return result;
+	};
+
+	/**
+	 * Sets the type of the "Anyone" user to the current protected range.
+	 * @memberof ApiProtectedRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ProtectedRangeUserType} protectedRangeUserType - The user type of the protected range.
+	 * @returns {bool}
+	 * @since 8.1.0
+	 */
+	ApiProtectedRange.prototype.SetAnyoneType = function (protectedRangeUserType) {
+		let nType = Asc.c_oSerUserProtectedRangeType.edit;
+		if (protectedRangeUserType === "CanView") {
+			nType = Asc.c_oSerUserProtectedRangeType.view;
+		} else if (protectedRangeUserType === "NotView") {
+			nType = Asc.c_oSerUserProtectedRangeType.notView;
+		}
+		let result = false;
+		if (this.protectedRange.asc_getType() !== nType) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
+				newProtectedRange.asc_setType(nType);
+				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+					result = true;
+				}
+			}
+		}
+		return result;
+	};
+
+	/**
+	 * Returns an object that represents a user from the current protected range.
+	 * @memberof ApiProtectedRange
+	 * @param {string} sId - The user ID.
+	 * @returns {ApiProtectedRangeUserInfo | null}
+	 * @since 8.1.0
+	 */
+	ApiProtectedRange.prototype.GetUser = function (sId) {
+		let isValidRange = typeof (sId) === 'string' && sId.trim() !== '';
+		let result = null;
+		if (isValidRange) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let userInfo = this.protectedRange.getUserById(sId);
+				if (userInfo) {
+					result = new ApiProtectedRangeUserInfo(userInfo.obj, this.protectedRange)
+				}
+			}
+		}
+		return result;
+	};
+
+	/**
+	 * Class representing a user from the current protected range.
+	 * @constructor
+	 */
+	function ApiProtectedRangeUserInfo(userInfo, protectedRange) {
+		this.userInfo = userInfo;
+		this.protectedRange = protectedRange;
+	}
+
+	/**
+	 * Returns the name property of the current user's information.
+	 * @memberof ApiProtectedRangeUserInfo
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null}
+	 * @since 8.1.0
+	 */
+	ApiProtectedRangeUserInfo.prototype.GetName = function () {
+		//the sets methods are available from the parent
+		// not adding by ApiProtectedRangeUserInfo because need change id/name together
+		return this.userInfo.asc_getName();
+	};
+
+	/**
+	 * Returns the type property of the current user's information.
+	 * @memberof ApiProtectedRangeUserInfo
+	 * @typeofeditors ["CSE"]
+	 * @returns {ProtectedRangeUserType}
+	 * @since 8.1.0
+	 */
+	ApiProtectedRangeUserInfo.prototype.GetType = function () {
+		let nType = this.userInfo.asc_getType();
+		let protectedRangeUserType = "CanEdit";//default
+		if (nType === Asc.c_oSerUserProtectedRangeType.view) {
+			protectedRangeUserType = "CanView"
+		} else if (nType === Asc.c_oSerUserProtectedRangeType.notView) {
+			protectedRangeUserType = "NotView";
+		}
+		return protectedRangeUserType;
+	};
+
+
+	/**
+	 * Returns the ID property of the current user's information.
+	 * @memberof ApiProtectedRangeUserInfo
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null}
+	 * @since 8.1.0
+	 */
+	ApiProtectedRangeUserInfo.prototype.GetId = function () {
+		return this.userInfo.asc_getId();
 	};
 
 
@@ -6585,6 +7051,8 @@
 	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
 
+	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
+	
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
 	ApiWorksheet.prototype["SetActive"] = ApiWorksheet.prototype.SetActive;		
@@ -6637,6 +7105,9 @@
 	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
 	ApiWorksheet.prototype["Move"] = ApiWorksheet.prototype.Move;
 	ApiWorksheet.prototype["GetFreezePanes"] = ApiWorksheet.prototype.GetFreezePanes;
+	ApiWorksheet.prototype["AddProtectedRange"] = ApiWorksheet.prototype.AddProtectedRange;
+	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
+	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -6857,6 +7328,18 @@
 	ApiFreezePanes.prototype["GetLocation"]      = ApiFreezePanes.prototype.GetLocation;
 	ApiFreezePanes.prototype["Unfreeze"]         = ApiFreezePanes.prototype.Unfreeze;
 
+	ApiProtectedRange.prototype["SetTitle"]      = ApiProtectedRange.prototype.SetTitle;
+	ApiProtectedRange.prototype["SetRange"]      = ApiProtectedRange.prototype.SetRange;
+	ApiProtectedRange.prototype["AddUser"]       = ApiProtectedRange.prototype.AddUser;
+	ApiProtectedRange.prototype["DeleteUser"]    = ApiProtectedRange.prototype.DeleteUser;
+	ApiProtectedRange.prototype["GetAllUsers"]   = ApiProtectedRange.prototype.GetAllUsers;
+	ApiProtectedRange.prototype["GetUser"]       = ApiProtectedRange.prototype.GetUser;
+
+	ApiProtectedRangeUserInfo.prototype["GetName"]  = ApiProtectedRangeUserInfo.prototype.GetName;
+	ApiProtectedRangeUserInfo.prototype["GetType"]  = ApiProtectedRangeUserInfo.prototype.GetType;
+	ApiProtectedRangeUserInfo.prototype["GetId"]    = ApiProtectedRangeUserInfo.prototype.GetId;
+
+
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
 		oDrawing.x = 0;
@@ -7004,6 +7487,34 @@
 
 		return nLockType;
 	}
+
+	/**
+	 * Validates the parsed JSDoc or options for custom functions.
+	 * @param {object} jsdoc - Parsed JSDoc object.
+	 * @returns {boolean} - Returns false if JSDoc isn't valid
+	 */
+	function private_ValidateParamsForCustomFunction(jsdoc) {
+		let result = true;
+		const types = [
+			'number', 'string', 'boolean', 'bool', 'any',
+			'number[]', 'string[]', 'boolean[]', 'bool[]', 'any[]',
+			'number[][]', 'string[][]', 'boolean[][]', 'bool[][]', 'any[][]'
+		];
+
+		if (jsdoc.returnInfo && !types.includes(jsdoc.returnInfo.type)) {
+			result = false;
+		}
+
+		for (let index = 0; result && index < jsdoc.params.length; index++) {
+			const param = jsdoc.params[index];
+			if (!types.includes(param.type)) {
+				result = false;
+				break;
+			}
+		}
+
+		return result;
+	};
 
 	function logError(err) {
 		if (console.error)

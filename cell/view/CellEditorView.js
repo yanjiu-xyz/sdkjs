@@ -237,22 +237,22 @@ function (window, undefined) {
 
 		// bind event handlers
 		if (t.canvasOuter && t.canvasOuter.addEventListener) {
-			var eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mousedown", function () {
+			var eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, AscCommon.getPtrEvtName("down"), function () {
 				return t._onMouseDown.apply(t, arguments);
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mouseup", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, AscCommon.getPtrEvtName("up"), function () {
 				return t._onMouseUp.apply(t, arguments);
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mousemove", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, AscCommon.getPtrEvtName("move"), function () {
 				return t._onMouseMove.apply(t, arguments);
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mouseleave", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, AscCommon.getPtrEvtName("leave"), function () {
 				return t._onMouseLeave.apply(t, arguments);
 			}, false);
 			t.eventListeners.push(eventInfo);
@@ -265,12 +265,12 @@ function (window, undefined) {
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.input, "mousedown", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, AscCommon.getPtrEvtName("down"), function () {
 				return t.isOpened ? (t.callTopLineMouseup = true) : true;
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.input, "mouseup", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, AscCommon.getPtrEvtName("up"), function () {
 				return t.isOpened ? t._topLineMouseUp.apply(t, arguments) : true;
 			}, false);
 			t.eventListeners.push(eventInfo);
@@ -327,8 +327,8 @@ function (window, undefined) {
 
 		this.isOpened = true;
 		if (window.addEventListener) {
-			window.addEventListener("mouseup", this.fKeyMouseUp, false);
-			window.addEventListener("mousemove", this.fKeyMouseMove, false);
+			window.addEventListener(AscCommon.getPtrEvtName("up"), this.fKeyMouseUp, false);
+			window.addEventListener(AscCommon.getPtrEvtName("move"), this.fKeyMouseMove, false);
 		}
 		this._setOptions(options);
 		this._cleanLastRangeInfo();
@@ -391,8 +391,8 @@ function (window, undefined) {
 
 			if (!window['IS_NATIVE_EDITOR']) {
 				if (window.removeEventListener) {
-					window.removeEventListener("mouseup", t.fKeyMouseUp, false);
-					window.removeEventListener("mousemove", t.fKeyMouseMove, false);
+					window.removeEventListener(AscCommon.getPtrEvtName("up"), t.fKeyMouseUp, false);
+					window.removeEventListener(AscCommon.getPtrEvtName("move"), t.fKeyMouseMove, false);
 				}
 				t._blur();
 				t._updateTopLineActive(false);
@@ -447,8 +447,8 @@ function (window, undefined) {
 
 		if (!window['IS_NATIVE_EDITOR']) {
 			if (window.removeEventListener) {
-				window.removeEventListener("mouseup", this.fKeyMouseUp, false);
-				window.removeEventListener("mousemove", this.fKeyMouseMove, false);
+				window.removeEventListener(AscCommon.getPtrEvtName("up"), this.fKeyMouseUp, false);
+				window.removeEventListener(AscCommon.getPtrEvtName("move"), this.fKeyMouseMove, false);
 			}
 			this._blur();
 			this._updateTopLineActive(false);
@@ -1771,25 +1771,7 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._findCursorPosition = function (coord) {
-		var t = this;
-		var lc = t.textRender.getLinesCount();
-		var i, h, w, li, chw;
-		var zoom = this.getZoom();
-		for (h = 0, i = Math.max(t.topLineIndex, 0); i < lc; ++i) {
-			li = t.textRender.getLineInfo(i);
-			h += asc_round(li.th * zoom);
-			if (coord.y <= h) {
-				for (w = li.startX, i = li.beg; i <= li.end; ++i) {
-					chw = t.textRender.getCharWidth(i);
-					if (coord.x <= w + chw) {
-						return coord.x <= w + chw / 2 ? i : i + 1 > li.end ? kEndOfLine : i + 1;
-					}
-					w += chw;
-				}
-				return i < t.textRender.getCharsCount() ? i - 1 : kEndOfText;
-			}
-		}
-		return kNextLine;
+		return this.textRender.getCharPosByXY(coord.x, coord.y, this.topLineIndex, this.getZoom());
 	};
 
 	CellEditor.prototype._updateTopLineCurPos = function () {
@@ -2009,7 +1991,7 @@ function (window, undefined) {
 		} else if (length === undefined) {
 			switch (pos) {
 				case kPrevChar:
-					b = t.textRender.getPrevChar(t.cursorPos);
+					b = t.textRender.getPrevChar(t.cursorPos, false);
 					e = t.cursorPos;
 					break;
 				case kNextChar:

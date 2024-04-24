@@ -842,6 +842,16 @@
         AscCommon.check_MouseUpEvent(e);
         if (e && e.preventDefault)
             e.preventDefault();
+
+        if (global_mouseEvent.Button == 2) {
+            this.viewer.Api.sync_ContextMenuCallback({
+                X_abs   : AscCommon.global_mouseEvent.X - this.viewer.x,
+                Y_abs   : AscCommon.global_mouseEvent.Y - this.viewer.y,
+                Type    : Asc.c_oAscPdfContextMenuTypes.Thumbnails,
+                PageNum : this.getHoverPage()
+            });
+        }
+
         return false;
     };
 
@@ -859,10 +869,18 @@
         {
             var drPage = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
             var hoverNum = drPage ? drPage.num : -1;
+            
             if (hoverNum !== this.hoverPage)
             {
                 this.hoverPage = hoverNum;
                 this._paint();
+            }
+
+            if (hoverNum != -1) {
+                this.canvas.style.cursor = 'pointer';
+            }
+            else {
+                this.canvas.style.cursor = 'default';
             }
         }
 
@@ -870,7 +888,10 @@
             e.preventDefault();
         return false;
     };
-
+    CDocument.prototype.getHoverPage = function()
+    {
+        return this.hoverPage;
+    };
     CDocument.prototype.onMouseWhell = function(e)
     {
         AscCommon.stopEvent(e);
@@ -941,7 +962,7 @@
         if (this.viewer)
         {
             var backColor = this.viewer.Api.getPageBackgroundColor();
-            PageStyle.emptyColor = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
+            PageStyle.emptyColor = "#" + backColor.R.toString(16) + backColor.G.toString(16) + backColor.B.toString(16);
         }
     }
 
@@ -973,4 +994,5 @@
     prot["resize"] = prot.resize;
     prot["setEnabled"] = prot.setEnabled;
     prot["registerEvent"] = prot.registerEvent;
+    prot["getHoverPage"] = prot.getHoverPage;
 })();

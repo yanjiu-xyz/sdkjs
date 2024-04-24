@@ -46,7 +46,6 @@
 		var CMatrix = AscCommon.CMatrix;
 		var isRealObject = AscCommon.isRealObject;
 		var global_mouseEvent = AscCommon.global_mouseEvent;
-		var History = AscCommon.History;
 		var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 		var checkNormalRotate = AscFormat.checkNormalRotate;
@@ -390,8 +389,8 @@
 			var _drawing_document = isRealObject(drawingDocument) ? drawingDocument : paragraph.DrawingDocument;
 			var _new_parent = isRealObject(newParent) ? newParent : null;
 
-			var new_paragraph = new Paragraph(_drawing_document, _new_parent, true);
-			if (!(paragraph instanceof Paragraph))
+			var new_paragraph = new AscWord.Paragraph(_new_parent, true);
+			if (!(paragraph instanceof AscWord.Paragraph))
 				return new_paragraph;
 			var oCopyPr = paragraph.Pr.Copy();
 
@@ -434,7 +433,7 @@
 			var i, j, oElement;
 			for (i = 0; i < aElements.length; ++i) {
 				oElement = aElements[i];
-				if (oElement instanceof AscCommonWord.Paragraph) {
+				if (oElement instanceof AscWord.Paragraph) {
 					aResult.push(ConvertParagraphToPPTX(oElement));
 				} else if (oElement instanceof AscCommonWord.CTable) {
 					var paragraphs = [];
@@ -661,7 +660,7 @@
 				}
 				var nIndex = oTable2.Content.length;
 				oTable2.Content[nIndex] = oNewRow;
-				History.Add(new CChangesTableAddRow(oTable2, nIndex, [oNewRow]));
+				AscCommon.History.Add(new CChangesTableAddRow(oTable2, nIndex, [oNewRow]));
 				oTable2.private_UpdateTableGrid();
 			}
 
@@ -965,7 +964,7 @@
 		}
 
 		CShape.prototype.setShapeSmartArtInfo = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetShapeSmartArtPointInfo, this.shapeSmartArtInfo, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetShapeSmartArtPointInfo, this.shapeSmartArtInfo, pr));
 			this.shapeSmartArtInfo = pr;
 			this.shapeSmartArtInfo.setParent(this);
 		}
@@ -987,7 +986,7 @@
 			}
 		};
 		CShape.prototype.setSignature = function (oSignature) {
-			History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetSignature, this.signatureLine, oSignature));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetSignature, this.signatureLine, oSignature));
 			this.signatureLine = oSignature;
 		};
 		CShape.prototype.setSignaturePr = function (oPr, sUrl) {
@@ -1074,7 +1073,55 @@
 				let aNewParagraphs = [];
 				for (let nIdx = 0; nIdx < aContent.length; ++nIdx) {
 					let oCurElement = aContent[nIdx];
-					if (oCurElement instanceof AscCommonWord.Paragraph) {
+					if (oCurElement instanceof AscWord.Paragraph) {
+						let oParagraph = ConvertParagraphToPPTX(oCurElement, drawingDocument, new_content, bIsAddMath);
+						aNewParagraphs.push(oParagraph);
+					}
+				}
+				if (aNewParagraphs.length > 0) {
+					new_content.Internal_Content_RemoveAll();
+					for (let nIdx = 0; nIdx < aNewParagraphs.length; ++nIdx) {
+						let oParagraph = aNewParagraphs[nIdx];
+						new_content.Internal_Content_Add(nIdx, oParagraph, false);
+					}
+				}
+				tx_body.setContent(new_content);
+				c.setTxBody(tx_body);
+			}
+			if (worksheet) {
+				if (this.signatureLine) {
+					c.setSignature(this.signatureLine.copy());
+				}
+			}
+			return c;
+		};
+		CShape.prototype.convertToPdf = function (drawingDocument, worksheet, bIsAddMath) {
+			let c = new AscPDF.CPdfShape();
+			c.setWordShape(false);
+			c.setBDeleted(false);
+			c.setWorksheet(worksheet);
+			if (this.nvSpPr) {
+				c.setNvSpPr(this.nvSpPr.createDuplicate());
+			}
+			if (this.spPr) {
+				c.setSpPr(this.spPr.createDuplicate());
+				c.spPr.setParent(c);
+			}
+			if (this.style) {
+				c.setStyle(this.style.createDuplicate());
+			}
+			if (this.textBoxContent) {
+				let tx_body = new AscFormat.CTextBody();
+				tx_body.setParent(c);
+				if (this.bodyPr) {
+					tx_body.setBodyPr(this.bodyPr.createDuplicate());
+				}
+				let new_content = new AscFormat.CDrawingDocContent(tx_body, drawingDocument, 0, 0, 0, 0, false, false, true);
+				let aContent = this.textBoxContent.Content;
+				let aNewParagraphs = [];
+				for (let nIdx = 0; nIdx < aContent.length; ++nIdx) {
+					let oCurElement = aContent[nIdx];
+					if (oCurElement instanceof AscWord.Paragraph) {
 						let oParagraph = ConvertParagraphToPPTX(oCurElement, drawingDocument, new_content, bIsAddMath);
 						aNewParagraphs.push(oParagraph);
 					}
@@ -1172,12 +1219,12 @@
 
 
 		CShape.prototype.setNvSpPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetNvSpPr, this.nvSpPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetNvSpPr, this.nvSpPr, pr));
 			this.nvSpPr = pr;
 		};
 
 		CShape.prototype.setTxXfrm = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTxXfrm, this.txXfrm, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTxXfrm, this.txXfrm, pr));
 			this.txXfrm = pr;
 			if (this.txXfrm) {
 				this.txXfrm.setParent(this);
@@ -1185,12 +1232,12 @@
 		};
 
 		CShape.prototype.setModelId = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetModelId, this.modelId, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetModelId, this.modelId, pr));
 			this.modelId = pr;
 		};
 
 		CShape.prototype.setSpPr = function (spPr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetSpPr, this.spPr, spPr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetSpPr, this.spPr, spPr));
 			this.spPr = spPr;
 			if (spPr) {
 				spPr.setParent(this);
@@ -1198,7 +1245,7 @@
 		};
 
 		CShape.prototype.setStyle = function (style) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetStyle, this.style, style));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetStyle, this.style, style));
 			this.style = style;
 			var content = this.getDocContent();
 
@@ -1212,7 +1259,7 @@
 		};
 
 		CShape.prototype.setTxBody = function (txBody) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTxBody, this.txBody, txBody));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTxBody, this.txBody, txBody));
 			this.txBody = txBody;
 			if (txBody && txBody.parent !== this) {
 				txBody.setParent(this);
@@ -1220,12 +1267,12 @@
 		};
 
 		CShape.prototype.setTextBoxContent = function (textBoxContent) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTextBoxContent, this.textBoxContent, textBoxContent));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTextBoxContent, this.textBoxContent, textBoxContent));
 			this.textBoxContent = textBoxContent;
 		};
 
 		CShape.prototype.setBodyPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetBodyPr, this.bodyPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetBodyPr, this.bodyPr, pr));
 			this.bodyPr = pr;
 			this.recalcInfo.recalculateContent = true;
 			this.recalcInfo.recalculateTransformText = true;
@@ -1537,12 +1584,12 @@
 		};
 
 		CShape.prototype.setParent = function (parent) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetParent, this.parent, parent));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetParent, this.parent, parent));
 			this.parent = parent;
 		};
 
 		CShape.prototype.setGroup = function (group) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetGroup, this.group, group));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetGroup, this.group, group));
 			this.group = group;
 		};
 
@@ -2648,7 +2695,7 @@
 		};
 
 		CShape.prototype.setWordShape = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_ShapeSetWordShape, this.bWordShape, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_ShapeSetWordShape, this.bWordShape, pr));
 			this.bWordShape = pr;
 		};
 
@@ -2776,6 +2823,7 @@
 
 		CShape.prototype.recalculateTextStyles = function (level) {
 			return AscFormat.ExecuteNoHistory(function () {
+				const logicDocument = this.getLogicDocument();
 				var parent_objects = this.getParentObjects();
 				var default_style = new CStyle("defaultStyle", null, null, null, true);
 				default_style.ParaPr.Spacing.LineRule = Asc.linerule_Auto;
@@ -2784,6 +2832,12 @@
 				default_style.ParaPr.Spacing.After = 0;
 				default_style.ParaPr.DefaultTab = 25.4;
 				default_style.ParaPr.Align = AscCommon.align_Center;
+				if (logicDocument && logicDocument.IsDocumentEditor()) {
+					const documentStyles = logicDocument.Get_Styles();
+					if (documentStyles) {
+						default_style.TextPr.Lang.Merge(documentStyles.Default.TextPr.Lang);
+					}
+				}
 				if (parent_objects.theme) {
 					default_style.TextPr.RFonts.SetFontStyle(AscFormat.fntStyleInd_minor);
 				}
@@ -2873,6 +2927,19 @@
 					}
 					hierarchy_styles.splice(0, 0, ownStyle);
 				}
+				else if (Asc.editor.isPdfEditor()) {
+					// let oDoc		= Asc.editor.getPDFDoc();
+					// let aListStyle	= oDoc.styles.txStyles.otherStyle;
+
+					// ownStyle = new CStyle("ownStyle", null, null, null, true);
+					// var own_ppt_style = aListStyle.levels[level];
+					// ownStyle.ParaPr = own_ppt_style.Copy();
+					// if (own_ppt_style.DefaultRunPr) {
+					// 	ownStyle.TextPr = own_ppt_style.DefaultRunPr.Copy();
+					// }
+					// hierarchy_styles.splice(0, 0, ownStyle);
+				}
+
 				var shape_text_style;
 				var compiled_style = this.getCompiledStyle && this.getCompiledStyle();
 				if (isRealObject(compiled_style) && isRealObject(compiled_style.fontRef)) {
@@ -5046,7 +5113,7 @@
 			var _transform_text2 = options.transformText2 || this.transformText2;
 			var geometry = this.getGeometry();
 
-			if (graphics.IsSlideBoundsCheckerType === true) {
+			if (graphics.isBoundsChecker()) {
 
 				this.drawShdw && this.drawShdw(graphics);
 				graphics.transform3(_transform);
@@ -5089,7 +5156,7 @@
 				graphics.StartDrawShape(undefined, this.isForm && this.isForm() ? true : false);
 			}
 			var oClipRect;
-			if (!graphics.IsSlideBoundsCheckerType && this.getClipRect) {
+			if (!graphics.isBoundsChecker() && this.getClipRect) {
 				oClipRect = this.getClipRect();
 			}
 			if (oClipRect) {
@@ -5119,9 +5186,10 @@
 				shape_drawer.draw(geometry);
 			}
 
-			if (!graphics.isSmartArtPreviewDrawer && !graphics.RENDERER_PDF_FLAG && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter) {
+			if ((!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter)
+			|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder() && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter)) {
 				var drawingObjects = this.getDrawingObjectsController();
-				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && graphics.IsTrack === undefined && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
+				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
 					var angle = _transform.GetRotation();
 					if (AscFormat.fApproxEqual(angle, 0.0, 0.0) ||
 						AscFormat.fApproxEqual(angle, 90.0, 0.0) ||
@@ -5189,6 +5257,7 @@
 					graphics.SetIntegerGrid(true);
 				}
 			}
+			
 			this.brush = _oldBrush;
 			var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
 
@@ -5219,7 +5288,7 @@
 						graphics.RestoreGrState();
 					}
 
-					if (this.textBoxContent && !graphics.IsNoSupportTextDraw && this.transformText) {
+					if (this.textBoxContent && graphics.isSupportTextDraw() && this.transformText) {
 						var old_start_page = this.textBoxContent.Get_StartPage_Relative();
 						this.textBoxContent.Set_StartPage(pageIndex);
 
@@ -5250,7 +5319,7 @@
 					var oTheme = this.getParentObjects().theme;
 					var oColorMap = this.Get_ColorMap();
 					if (!this.bWordShape && (!this.txBody.content || this.txBody.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.txBody.content2 != null && !this.txBody.checkCurrentPlaceholder() && (this.isEmptyPlaceholder ? this.isEmptyPlaceholder() : false)) {
-						if (graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && !graphics.RENDERER_PDF_FLAG) {
+						if (graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && !graphics.isPdf()) {
 							if (editor && editor.ShowParaMarks) {
 								this.txWarpStructParamarks2.draw(graphics, this.transformTextWordArt2, oTheme, oColorMap);
 							} else {
@@ -6663,25 +6732,28 @@
 			if(oDrawing) {
 				this.pasteDrawingFormatting(oFormatData.Drawing);
 			}
-			if(oFormatData.ParaPr || oFormatData.TextPr) {
-				let oContent = this.getDocContent();
-				if(oContent) {
-					let bApplyToAll = true;
-					let oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
-					if(oController) {
-						if(AscFormat.getTargetTextObject(oController) === this) {
-							bApplyToAll = false;
-						}
+			let oContent = this.getDocContent();
+			if(oContent) {
+				let bApplyToAll = true;
+				let oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
+				if(oController) {
+					if(AscFormat.getTargetTextObject(oController) === this) {
+						bApplyToAll = false;
 					}
-					if(bApplyToAll) {
-						oContent.SetApplyToAll(true);
-					}
+				}
+				if(bApplyToAll) {
+					oContent.SetApplyToAll(true);
+				}
+				let fDocContentMethod = AscCommonWord.CDocumentContent.prototype.ClearParagraphFormatting;
+				let fTableMethod = AscCommonWord.CTable.prototype.ClearParagraphFormatting;
+				this.applyTextFunction(fDocContentMethod, fTableMethod, [oFormatData]);
+				if(oFormatData.ParaPr || oFormatData.TextPr) {
 					let fDocContentMethod = AscCommonWord.CDocumentContent.prototype.PasteFormatting;
 					let fTableMethod = AscCommonWord.CTable.prototype.PasteFormatting;
 					this.applyTextFunction(fDocContentMethod, fTableMethod, [oFormatData]);
-					if(bApplyToAll) {
-						oContent.SetApplyToAll(false);
-					}
+				}
+				if(bApplyToAll) {
+					oContent.SetApplyToAll(false);
 				}
 			}
 		};

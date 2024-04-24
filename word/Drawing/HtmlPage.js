@@ -1878,6 +1878,8 @@ function CEditorPage(api)
 		}
 
 		oWordControl.EndUpdateOverlay();
+
+		oWordControl.m_oDrawingDocument.isHideTargetBeforeFirstClick = false;
 	};
 
 	this.onMouseMove  = function(e, isTouch)
@@ -2616,7 +2618,7 @@ function CEditorPage(api)
 		 return;
 		 }
 		 */
-		if (null == oWordControl.m_oLogicDocument)
+		if (Asc.editor.isPdfEditor())
 		{
 			var bIsPrev = (oWordControl.m_oDrawingDocument.m_oDocumentRenderer.OnKeyDown(global_keyboardEvent) === true) ? false : true;
 			if (false === bIsPrev)

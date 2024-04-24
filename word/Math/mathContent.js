@@ -32,10 +32,6 @@
 
 "use strict";
 
-// Import
-var History = AscCommon.History;
-
-
 /** @enum {number} */
 var c_oAscMathType = {
     //----------------------------------------------------------------------------------------------------------------------
@@ -1614,7 +1610,7 @@ CMathContent.prototype.GetParent = function()
 };
 CMathContent.prototype.SetArgSize = function(val)
 {
-	History.Add(new CChangesMathContentArgSize(this, this.ArgSize.GetValue(), val));
+	AscCommon.History.Add(new CChangesMathContentArgSize(this, this.ArgSize.GetValue(), val));
 	this.ArgSize.SetValue(val);
 };
 CMathContent.prototype.GetArgSize = function()
@@ -2182,7 +2178,7 @@ CMathContent.prototype.Internal_Content_Add = function(Pos, Item, bUpdatePositio
 	Item.Parent = this;
 	Item.Recalc_RunsCompiledPr();
 
-	History.Add(new CChangesMathContentAddItem(this, Pos, [Item]));
+	AscCommon.History.Add(new CChangesMathContentAddItem(this, Pos, [Item]));
 	this.Content.splice(Pos, 0, Item);
 
 	this.private_UpdatePosOnAdd(Pos, bUpdatePosition);
@@ -2305,7 +2301,7 @@ CMathContent.prototype.ConcatToContent = function(Pos, NewItems)
 			NewItems[i].Recalc_RunsCompiledPr();
 		}
 
-		History.Add(new CChangesMathContentAddItem(this, Pos, NewItems));
+		AscCommon.History.Add(new CChangesMathContentAddItem(this, Pos, NewItems));
 
 		var Array_start = this.Content.slice(0, Pos);
 		var Array_end   = this.Content.slice(Pos);
@@ -2319,7 +2315,7 @@ CMathContent.prototype.Remove_FromContent = function(Pos, Count)
 		return;
 	
 	var DeletedItems = this.Content.splice(Pos, Count);
-	History.Add(new CChangesMathContentRemoveItem(this, Pos, DeletedItems));
+	AscCommon.History.Add(new CChangesMathContentRemoveItem(this, Pos, DeletedItems));
 
 	// Обновим текущую позицию
 	if (this.CurPos > Pos + Count)
@@ -5419,7 +5415,7 @@ CMathContent.prototype.Apply_MenuProps = function(Props, Pos)
 			ArgSize    = this.ArgSize.GetValue();
 			NewArgSize = this.ArgSize.Increase();
 
-			History.Add(new CChangesMathContentArgSize(this, ArgSize, NewArgSize));
+			AscCommon.History.Add(new CChangesMathContentArgSize(this, ArgSize, NewArgSize));
 			this.Recalc_RunsCompiledPr();
 		}
 	}
@@ -5430,7 +5426,7 @@ CMathContent.prototype.Apply_MenuProps = function(Props, Pos)
 			ArgSize    = this.ArgSize.GetValue();
 			NewArgSize = this.ArgSize.Decrease();
 
-			History.Add(new CChangesMathContentArgSize(this, ArgSize, NewArgSize));
+			AscCommon.History.Add(new CChangesMathContentArgSize(this, ArgSize, NewArgSize));
 			this.Recalc_RunsCompiledPr();
 		}
 	}
@@ -5809,14 +5805,17 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         }
     }
 
-    if (this.IsLastElement(AscMath.MathLiterals.operators))
-    {
-        let strPreLast = this.GetPreLastTextElement();
-        if (strPreLast === "_" || strPreLast === "^")
-        {
-            return
-        }
-    }
+	if (this.IsLastElement(AscMath.MathLiterals.operators))
+	{
+		let strPreLast = this.GetPreLastTextElement();
+		if (strPreLast === "_" || strPreLast === "^")
+		{
+			if (arrNextContent)
+				this.ConcatToContent(this.Content.length, arrNextContent);
+
+			return
+		}
+	}
 
     // check is needed start autocorrection
     if (!this.IsStartAutoCorrection(nInputType, oElement.value))
@@ -6563,6 +6562,10 @@ ContentIterator.prototype.CheckRules = function ()
 		["l","i","m"],["m","i","n"],["m","a","x"],
 
 		[true, "/", true],
+		[true, "⁄", true],
+		[true, "⊘", true],
+		[true, "⒞", true],
+		[true, "∕", true],
 		[true, "^", true],
 		[true, "_", true],
 
@@ -6582,14 +6585,26 @@ ContentIterator.prototype.CheckRules = function ()
 		["¯", true],
 		["▁", true],
 		["/", true],
+		["⁄", true],
+		["⊘", true],
+		["⒞", true],
+		["∕", true],
 		["⏟", true],
 		["⏞", true],
 		[true, "/"],
+		[true, "⁄"],
+		[true, "⊘"],
+		[true, "⒞"],
+		[true, "∕"],
 		["■", true],
 
 		[true, "┬"],
 		[true, "┴"],
 		["/"],
+		["⁄"],
+		["⊘"],
+		["⒞"],
+		["∕"],
 
 		[true, "́" ],
 		[true, "̂" ],
@@ -6725,40 +6740,46 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
         now.push([this.Content[i].constructor.name, this.Content[i].Content ? this.Content[i].Content.length : 0]);
     }
 
-    if (isSpace)
-    {
-        let counter = 0;
-        let isEqual = true;
-        while (counter !== 2)
-        {
-            let tprev = prev[prev.length - 1 - counter];
-            let tnow = now[now.length - 1 - counter];
+	if (isSpace)
+	{
+		let counter = 0;
+		let isEqual = true;
+		while (counter !== 2)
+		{
+			let tprev = prev[prev.length - 1 - counter];
+			let tnow = now[now.length - 1 - counter];
 
-            let tprevType = tprev ? tprev[0] : undefined;
-            let tnowType = tprev ? tnow[0] : undefined;
-            let tprevCount = tprev ? tprev[1] : undefined;
-            let tnowCount = tprev ? tnow[1] : undefined;
+			if(tnow && !tprev && tnow[0] !== "ParaRun")
+				isEqual = false;
 
-            if (tprevType !== tnowType || tprevCount !== tnowCount)
-			{
-                if (!(counter === 0 && tprevCount === tnowCount + 1)) {
-                    isEqual = false;
-                    break;
-                }
-            }
+			if (!tprev || !tnow)
+				break;
 
-            if (tnow !== "ParaRun" && counter > 0)
-                break;
+			let tprevType = tprev[0];
+			let tnowType = tnow[0];
 
-            counter++;
-        }
-        if (isEqual)
-	        this.Add_TextOnPos(this.Content.length,' ');
-    }
-    else if (lastOperator)
-    {
-        this.Add_TextOnPos(this.Content.length, lastOperator);
-    }
+			let tprevCount = tprev[1];
+			let tnowCount= tnow[1];
+
+			if (tprevType !== tnowType || tprevCount !== tnowCount) {
+				if (!(counter === 0 && tprevCount === tnowCount + 1)) {
+					isEqual = false;
+					break;
+				}
+			}
+
+			if (tnow[0] !== "ParaRun")
+				break;
+
+			counter++;
+		}
+		if (isEqual) this.Add_TextOnPos(this.Content.length, ' ');
+	}
+	if (lastOperator)
+	{
+		this.Add_TextOnPos(this.Content.length, lastOperator);
+	}
+	return true
 };
 CMathContent.prototype.IsLastTextElementRBracket = function()
 {

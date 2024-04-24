@@ -455,7 +455,8 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_dMaxParaRunContentLength = 256;
 	var c_nMaxHyperlinkLength = 2083;
 	var c_sNativeViewerFormats = '.pdf.xps.oxps.djvu';
-	var c_sShardKeyName = 'WOPISrc';
+	var c_sShardKeyName = 'shardkey';
+	var c_sWopiSrcName = 'WOPISrc';
 
 	//files type for Saving & DownloadAs
 	var c_oAscFileType = {
@@ -518,6 +519,7 @@ window.AscCommon.g_cIsBeta = "false";
 		FODP : 0x0089,
 		OTP  : 0x008a,
 		PPTX_PACKAGE  : 0x008b,
+		PPTY : 0x1003,
 
 		//image
 		IMG  : 0x0400,
@@ -691,7 +693,8 @@ window.AscCommon.g_cIsBeta = "false";
 		MailMerge      : 10,
 		ContentControl : 11,
 		Animation      : 12,
-		Text           : 13 // viewer
+		Text           : 13, // viewer
+		Annot          : 14
 	};
 
 	var c_oAscLineDrawingRule = {
@@ -1678,7 +1681,7 @@ window.AscCommon.g_cIsBeta = "false";
 	};
 	/**
 	 * lock types
-	 * @const
+	 * @enum {number}
 	 */
 	var c_oAscLockTypes       = {
 		kLockTypeNone   : 1, // никто не залочил данный объект
@@ -1827,7 +1830,8 @@ window.AscCommon.g_cIsBeta = "false";
 		Form         : 4,
 		Review       : 5,
 		Eyedropper   : 6,
-		Placeholder  : 7
+		Placeholder  : 7,
+		EffectInfo   : 8,
 	};
 
 	// selection type
@@ -2135,12 +2139,6 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscMaxFormulaReferenceLength = 2048;
 	var c_oAscMaxTableColumnTextLength  = 256;
 
-	var locktype_None   = 1; // никто не залочил данный объект
-	var locktype_Mine   = 2; // данный объект залочен текущим пользователем
-	var locktype_Other  = 3; // данный объект залочен другим(не текущим) пользователем
-	var locktype_Other2 = 4; // данный объект залочен другим(не текущим) пользователем (обновления уже пришли)
-	var locktype_Other3 = 5; // данный объект был залочен (обновления пришли) и снова стал залочен
-
 	var changestype_None                      = 0; // Ничего не происходит с выделенным элементом (проверка идет через дополнительный параметр)
 	var changestype_Paragraph_Content         = 1; // Добавление/удаление элементов в параграф
 	var changestype_Paragraph_Properties      = 2; // Изменение свойств параграфа
@@ -2431,7 +2429,8 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var offlineMode = '_offline_';
 	var chartMode = '_chart_';
-	
+	var dataMode = '_data_';
+
 	var c_oSpecialPasteProps = {
 		paste: 0,
 		pasteOnlyFormula: 1,
@@ -4447,6 +4446,7 @@ window.AscCommon.g_cIsBeta = "false";
 	window['Asc']['c_nMaxHyperlinkLength'] = window['Asc'].c_nMaxHyperlinkLength = c_nMaxHyperlinkLength;
 	window['Asc']['c_sNativeViewerFormats'] = window['Asc'].c_sNativeViewerFormats = c_sNativeViewerFormats;
 	window['Asc']['c_sShardKeyName'] = window['Asc'].c_sShardKeyName = c_sShardKeyName;
+	window['Asc']['c_sWopiSrcName'] = window['Asc'].c_sWopiSrcName = c_sWopiSrcName;
 	window['Asc']['c_oAscFileType'] = window['Asc'].c_oAscFileType = c_oAscFileType;
 	window['Asc'].g_oLcidNameToIdMap = g_oLcidNameToIdMap;
 	window['Asc'].availableIdeographLanguages = availableIdeographLanguages;
@@ -4600,6 +4600,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ContentControl']            = prot.ContentControl;
 	prot['Animation']                 = prot.Animation;
 	prot['Text']                      = prot.Text;
+	prot['Annot']                     = prot.Annot;
 	window['Asc']['linerule_AtLeast'] = window['Asc'].linerule_AtLeast = linerule_AtLeast;
 	window['Asc']['linerule_Auto'] = window['Asc'].linerule_Auto = linerule_Auto;
 	window['Asc']['linerule_Exact'] = window['Asc'].linerule_Exact = linerule_Exact;
@@ -5176,11 +5177,6 @@ window.AscCommon.g_cIsBeta = "false";
 	prot["Email"] = prot.Email;
 	prot["Unsafe"] = prot.Unsafe;
 
-	window["AscCommon"].locktype_None   = locktype_None;
-	window["AscCommon"].locktype_Mine   = locktype_Mine;
-	window["AscCommon"].locktype_Other  = locktype_Other;
-	window["AscCommon"].locktype_Other2 = locktype_Other2;
-	window["AscCommon"].locktype_Other3 = locktype_Other3;
 
 	window["AscCommon"].changestype_None                      = changestype_None;
 	window["AscCommon"].changestype_Paragraph_Content         = changestype_Paragraph_Content;
@@ -5241,6 +5237,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	window["AscCommon"].offlineMode = offlineMode;
 	window["AscCommon"].chartMode = chartMode;
+	window["AscCommon"].dataMode = dataMode;
 
 	window['AscCommon']['align_Right'] = window['AscCommon'].align_Right = align_Right;
 	window['AscCommon']['align_Left'] = window['AscCommon'].align_Left = align_Left;

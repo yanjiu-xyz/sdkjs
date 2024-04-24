@@ -66,6 +66,8 @@
 
         let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
+        oSquare.lazyCopy = true;
+
         oSquare._pagePos = {
             x: this._pagePos.x,
             y: this._pagePos.y,
@@ -185,7 +187,6 @@
         this.recalcGeometry();
         this.AddToRedraw();
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
         let oDoc = this.GetDocument();

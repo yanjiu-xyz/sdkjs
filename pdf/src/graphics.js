@@ -47,7 +47,7 @@ function CPDFGraphics()
     this.globalAlpha    = 1;
     this.bIntegerGrid   = false;
 
-    this.m_oTransform  = new AscCommon.CMatrixL();
+    this.m_oTransform  = new AscCommon.CMatrix();
 
     this.drawedRect = {};
 }

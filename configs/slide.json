@@ -67,6 +67,7 @@
 			"common/random.js",
 			"common/keychainstorage.js",
 
+			"common/Drawings/GraphicsBase.js",
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
@@ -195,6 +196,7 @@
 			"slide/Editor/Format/ViewPr.js",
 			"slide/Editor/DrawingObjectsController.js",
 			"slide/Editor/Format/Timing.js",
+			"slide/Drawing/anim-pane.js",
 			"slide/Editor/Format/Slide.js",
 			"slide/Editor/Format/SlideMaster.js",
 			"slide/Editor/Format/Layout.js",
