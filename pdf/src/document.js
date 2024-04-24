@@ -4700,6 +4700,10 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Get_PageFields = function(nPage) {
         return this.Get_PageLimits(nPage);
     };
+
+    CPDFDoc.prototype.GetAllSignatures = function() {
+        return [];
+    };
     
 	
     function CActionQueue(oDoc) {
