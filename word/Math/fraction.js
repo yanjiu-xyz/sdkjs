@@ -61,103 +61,6 @@ CMathFractionPr.prototype.Read_FromBinary = function(Reader)
     this.type = Reader.GetLong();
 };
 
-//need parent class
-function FractionRuleThikness()
-{
-    this.value = 133;
-    this.startSize = 6;
-    this.endSize = 100;
-    this.deltaFormat = 1;
-    this.deltaValue = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
-
-    this._getSize = function(nFontSize)
-    {
-        if (nFontSize < this.startSize || nFontSize > this.endSize)
-            return this.value;
-        else
-            return this.value + this.deltaValue[nFontSize - this.startSize];
-    }
-
-    this.getSize = function(nFontSize)
-    {
-        let num = this._getSize(nFontSize);
-        return num * nFontSize/ 2048 * 0.35277777777777775;
-    }
-}
-
-function AxisHeight()
-{
-    this.value = 585;
-    this.startSize = 10;
-    this.endSize = 109;
-    this.deltaFormat = 1;
-    this.deltaValue = [1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, -1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1];
-
-    this._getSize = function(nFontSize)
-    {
-        if (nFontSize < this.startSize || nFontSize > this.endSize)
-            return this.value;
-        else
-            return this.value + this.deltaValue[nFontSize - this.startSize];
-    }
-
-    this.getSize = function(nFontSize)
-    {
-        let num = this._getSize(nFontSize);
-        return num * nFontSize/ 2048 * 0.35277777777777775;
-    }
-}
-function NumeratorGap()
-{
-    this.value = 133;
-    this.startSize = 6;
-    this.endSize = 38;
-    this.deltaFormat = 1;
-    this.deltaValue = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
-
-    this._getSize = function(nFontSize)
-    {
-        if (nFontSize < this.startSize || nFontSize > this.endSize)
-            return this.value;
-        else
-            return this.value + this.deltaValue[nFontSize - this.startSize];
-    }
-
-    this.getSize = function(nFontSize)
-    {
-        let num = this._getSize(nFontSize);
-        return num * nFontSize/ 2048 * 0.35277777777777775;
-    }
-}
-function DenominatorGap()
-{
-    this.value = 133;
-    this.startSize = 6;
-    this.endSize = 38;
-    this.deltaFormat = 1;
-    this.deltaValue = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
-
-    this._getSize = function(nFontSize)
-    {
-        if (nFontSize < this.startSize || nFontSize > this.endSize)
-            return this.value;
-        else
-            return this.value + this.deltaValue[nFontSize - this.startSize];
-    }
-
-    this.getSize = function(nFontSize)
-    {
-        let num = this._getSize(nFontSize);
-        return num * nFontSize/ 2048 * 0.35277777777777775;
-    }
-}
-
-let oFrac = new FractionRuleThikness();
-let oAxis = new AxisHeight();
-
-let nGap  = new NumeratorGap();
-let dGap  = new DenominatorGap();
-
 /**
  *
  * @param props
@@ -219,9 +122,9 @@ CFraction.prototype.drawBarFraction = function(PDSE)
 {
     var mgCtrPrp = this.Get_TxtPrControlLetter();
 
-    var penW = oFrac.getSize(mgCtrPrp.FontSize);
+    var penW = mgCtrPrp.FontSize* 25.4/96 * 0.08;
 
-    var numHeight = this.elements[0][0].size.height + penW/2;
+    var numHeight = this.elements[0][0].size.height;
 
     var PosLine = this.ParaMath.GetLinePosition(PDSE.Line, PDSE.Range);
 
@@ -531,7 +434,7 @@ CFraction.prototype.recalculateBarFraction = function(oMeasure, bNumBarFraction,
 
     var width  = NumWidth > DenWidth ? NumWidth : DenWidth;
     var height = num.height + den.height;
-    var ascent = num.height + oAxis.getSize(mgCtrPrp.FontSize);
+    var ascent = num.height + this.ParaMath.GetShiftCenter(oMeasure, mgCtrPrp);
 
     width += this.GapLeft + this.GapRight;
 
@@ -853,6 +756,8 @@ CNumerator.prototype.recalculateSize = function()
 
     var mgCtrPrp = this.Get_TxtPrControlLetter();
 
+    var Descent = arg.height - arg.ascent; // baseLine
+
     g_oTextMeasurer.SetFont(mgCtrPrp);
     var Height = g_oTextMeasurer.GetHeight();
 
@@ -873,19 +778,11 @@ CNumerator.prototype.recalculateSize = function()
     }
     else    // Fraction
     {
-	    if (mgCtrPrp.FontSize < 4)
-		    gapNum = Height/2.2;
-		else if (mgCtrPrp.FontSize < 9)
-			gapNum = Height/2.35;
-		else if (mgCtrPrp.FontSize < 16)
-			gapNum = Height/2.25;
-	    else
-            gapNum = Height/2.32;
+        gapNum = Height/3.05;
+        minGap = Height/9.77;
 
-        minGap = Height/15;
-
-        this.gap = -oAxis.getSize(mgCtrPrp.FontSize); // выставляем контент по baseline
-        this.gap += 1550 * mgCtrPrp.FontSize / 2048 * 0.35277777777777775;
+        var delta = gapNum - Descent;
+        this.gap = delta > minGap ? delta : minGap;
     }
 
 
@@ -916,6 +813,8 @@ CDenominator.prototype.recalculateSize = function()
 
     var mgCtrPrp = this.Get_TxtPrControlLetter();
 
+    var Ascent = arg.ascent -  4.939*mgCtrPrp.FontSize/36;
+
     g_oTextMeasurer.SetFont(mgCtrPrp);
     var Height = g_oTextMeasurer.GetHeight();
 
@@ -928,15 +827,13 @@ CDenominator.prototype.recalculateSize = function()
     }
     else // Fraction
     {
-        gapDen = Height/2.175;
-        minGap = Height/12;
+        gapDen = Height/2.03;
+        minGap = Height/6.1;
     }
 
-	//норрмально выставить baseline не получается, выставим относительно num
-    this.gap = -this.Parent.elements[0][0].size.height;
-    this.gap += 1550 * mgCtrPrp.FontSize / 2048 * 0.35277777777777775;
+    var delta = gapDen - Ascent;
+    this.gap = delta > minGap ? delta : minGap;
 
-    this.gap += 1370 * mgCtrPrp.FontSize / 2048 * 0.35277777777777775;
 
     var width = arg.width;
     var height = arg.height + this.gap;
