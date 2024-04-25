@@ -903,6 +903,67 @@ const arrTestObjectsInfo = [
 		revisedDocument : [
 			[createParagraphInfo('Привет ', undefined, undefined), createParagraphInfo('привет привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет приветПривет привет привет', arrAnswers: null}}]}})]
 		]
+	},
+	///////////////////////// -> 39 <- /////////////////////////////
+	{
+		originalDocument: [
+			[createParagraphInfo("在真实、充分地表达各自意愿的基础上，根据《中华人民共和国合同法》的规定，达成如下协议，并由双方共同恪守。")]
+		],
+		revisedDocument: [
+			[createParagraphInfo("在真实、充分地表达各自意愿的基础上，根据《中华人民共和国"),
+			createParagraphInfo("合同法", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+			createParagraphInfo("民法典", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+			createParagraphInfo("》的规定，达成如下协议，并由双方共同恪守。")]
+		]
+	},
+	///////////////////////// -> 40 <- /////////////////////////////
+	{
+		originalDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		],
+		revisedDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
+					start: [{
+						id   : 1,
+						start: true
+					}],
+					end: [
+						{id: 1,
+						data: {
+							text: "comment"
+						}
+						}
+					]
+				}}), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		],
+	},
+	{
+		originalDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+				[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
+						start: [{
+							id   : 1,
+							start: true
+						}],
+						end: [
+							{id: 1,
+								data: {
+									text: "comment"
+								}
+							}
+						]
+					}}), createParagraphInfo("，这是一个测试段落")],
+				[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+			],
+		revisedDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		]
 	}
 ];
 
@@ -1815,6 +1876,54 @@ const arrAnswers = [
 		finalDocument: [
 			[createParagraphInfo('Привет ', undefined, undefined), createParagraphInfo('привет привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет приветПривет привет привет', arrAnswers: null}}]}})]
 		]
+	},
+	/////////////////////////////////// -> 39 <- ////////////////////////////////////////////
+	{
+		finalDocument: [
+			[createParagraphInfo("在真实、充分地表达各自意愿的基础上，根据《中华人民共和国"),
+			createParagraphInfo("合同法", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+			createParagraphInfo("民法典", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+			createParagraphInfo("》的规定，达成如下协议，并由双方共同恪守。")]
+		]
+	},
+	{
+		finalDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
+					start: [{
+						id   : 1,
+						start: true
+					}],
+					end: [
+						{id: 1,
+							data: {
+								text: "comment"
+							}
+						}
+					]
+				}}), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		]
+	},
+	/////////////////////////////////// -> 40 <- ////////////////////////////////////////////
+	{
+		finalDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
+					start: [{
+						id   : 1,
+						start: true
+					}],
+					end: [
+						{id: 1,
+							data: {
+								text: "comment"
+							}
+						}
+					]
+				}}), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		]
 	}
 ];
 
@@ -1856,7 +1965,9 @@ const comments = [
 	'Merging bookmarks and comments',
 	'Merging bookmarks, comments and review',
 	'Merging comments and review',
-	'Merging two paragraph with different starts of comment'
+	'Merging two paragraph with different starts of comment',
+	'Merging two documents with changes in the second',
+	'Merging two documents with comment'
 ];
 
 function merge(oMainDocument, oRevisedDocument, fCallback)
