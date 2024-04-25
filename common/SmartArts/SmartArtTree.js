@@ -1839,7 +1839,7 @@
 	};
 	BaseAlgorithm.prototype.afterShape = function (smartartAlgorithm) {};
 	BaseAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(false, false, isCalculateScaleCoefficients);
+		return this.parentNode.createShadowShape(false, isCalculateScaleCoefficients);
 	};
 	BaseAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
 		this.createShadowShape(isCalculateScaleCoefficients);
@@ -2166,7 +2166,7 @@
 		this.setScaleCoefficient(coefficient);
 	};
 	SnakeAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(false, true, isCalculateScaleCoefficients);
+		return this.parentNode.createShadowShape(false, isCalculateScaleCoefficients);
 	};
 	SnakeAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
 		if (isCalculateScaleCoefficients) {
@@ -3877,7 +3877,7 @@ function HierarchyAlgorithm() {
 		}
 	};
 	PyramidAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(true);
+		return this.parentNode.createShadowShape(true, isCalculateScaleCoefficients);
 	};
 	PyramidAlgorithm.prototype.getTemplateAdjAcctLst = function (firstAdj, secondAdj) {
 		const adjLst = new AscFormat.AdjLst();
@@ -4321,7 +4321,7 @@ function HierarchyAlgorithm() {
 		this.calcValues.centerPoint = new CCoordPoint(width / 2 - (bounds.l + (bounds.r - bounds.l) / 2), height / 2 - (bounds.t + (bounds.b - bounds.t) / 2));
 	};
 	CycleAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(true);
+		return this.parentNode.createShadowShape(true, isCalculateScaleCoefficients);
 	};
 	CycleAlgorithm.prototype.getShapeContainer = function (isCalculateScaleCoefficient) {
 		if (isCalculateScaleCoefficient) {
@@ -4454,7 +4454,7 @@ function HierarchyAlgorithm() {
 		}
 	}
 	LinearAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(true, false, isCalculateScaleCoefficients);
+		return this.parentNode.createShadowShape(true, isCalculateScaleCoefficients);
 	};
 	LinearAlgorithm.prototype.isFromLeft = function () {
 		return this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromL;
@@ -5068,7 +5068,7 @@ function HierarchyAlgorithm() {
 	};
 
 	ConnectorAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(false, false, isCalculateScaleCoefficients);
+		return this.parentNode.createShadowShape(false, isCalculateScaleCoefficients);
 	};
 	ConnectorAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
 		this.createShadowShape(isCalculateScaleCoefficients);
@@ -5520,7 +5520,7 @@ function HierarchyAlgorithm() {
 		}
 	}
 	SpaceAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(false, false, isCalculateScaleCoefficients);
+		return this.parentNode.createShadowShape(false, isCalculateScaleCoefficients);
 	};
 	function TextAlgorithm() {
 		BaseAlgorithm.call(this);
@@ -5535,7 +5535,7 @@ function HierarchyAlgorithm() {
 		}
 	};
 	TextAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(false, false, isCalculateScaleCoefficients);
+		return this.parentNode.createShadowShape(false, isCalculateScaleCoefficients);
 	};
 
 	function CompositeAlgorithm() {
@@ -5576,7 +5576,7 @@ function HierarchyAlgorithm() {
 	};
 
 	CompositeAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(true, false, isCalculateScaleCoefficients);
+		return this.parentNode.createShadowShape(true, isCalculateScaleCoefficients);
 	};
 	CompositeAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateCoefficients) {
 		this.applyAlgorithmAligns(isCalculateCoefficients);
@@ -6645,7 +6645,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 		return this._isTxXfrm;
 	};
-	PresNode.prototype.updateCompositeSizes = function (isCalculateCoefficients, changePosition) {
+	PresNode.prototype.updateCompositeSizes = function (isCalculateCoefficients) {
 		const shape = this.getShape(isCalculateCoefficients);
 		if (!this.childs.length) {
 			shape.width = 0;
@@ -6676,12 +6676,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 			return;
 		}
 
-		if (!changePosition) {
+
 			shape.x = shapeBounds.l;
 			shape.y = shapeBounds.t;
 			shape.cleanParams.x = cleanShapeBounds.l;
 			shape.cleanParams.y = cleanShapeBounds.t;
-		}
+
 
 		shape.width = shapeBounds.r - shapeBounds.l;
 		shape.height = shapeBounds.b - shapeBounds.t;
@@ -6691,7 +6691,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		return shapeBounds;
 	};
 
-	PresNode.prototype.createShadowShape = function (isComposite, isCombine, isCalculateCoefficients) {
+	PresNode.prototype.createShadowShape = function (isComposite, isCalculateCoefficients) {
 
 		const shape = this.getShape(isCalculateCoefficients);
 		shape.initFromShape(this.layoutInfo.shape);
@@ -6701,7 +6701,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 				node.moveTo(shape.x, shape.y, isCalculateCoefficients, true);
 			});
 			this.algorithm.setConstraintSizes(shape);
-			return this.updateCompositeSizes(isCalculateCoefficients, isCombine);
+			return this.updateCompositeSizes(isCalculateCoefficients);
 		}
 	};
 	PresNode.prototype.createHierarchyRootShadowShape = function (isCalculateCoefficients) {
