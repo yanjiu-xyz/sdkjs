@@ -211,7 +211,7 @@
     }
 
     CDrawingDocument.prototype.constructor = CDrawingDocument;
-    CDrawingDocument.prototype = Object.create(AscCommon.CDrawingDocument.prototype);
+    //CDrawingDocument.prototype = Object.create(AscCommon.CDrawingDocument.prototype);
 
     window["AscPDF"].CDrawingDocument = CDrawingDocument;
 
