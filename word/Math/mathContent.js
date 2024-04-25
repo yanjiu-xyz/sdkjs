@@ -3854,79 +3854,7 @@ CMathContent.prototype.GetSelectContent = function(isAll)
         return {Content : this, Start : StartPos, End : EndPos};
     }
 };
-CMathContent.prototype.private_CorrectPosInCombiningMark = function (oContentPos, isForward, Depth)
-{
-	let oSearchPos;
-	let oCurrentPos  = oContentPos;
-	let oParagraph = this.GetParagraph();
-
-	if (!oParagraph)
-		return null;
-
-	function CheckIsSomeParentSearched(oElement)
-	{
-		while (oElement.Parent || oElement.isSerchedCombineInMath)
-		{
-			if (oElement.Type === para_Math_Content && oElement.isSerchedCombineInMath)
-				return true
-			else if (oElement.Type === para_Math)
-				return false;
-			else
-				oElement = oElement.Parent;
-		}
-		return false;
-	}
-
-	while (true)
-	{
-		let oNext = oParagraph.GetNextRunElement(oCurrentPos, true);
-		let oPrev = oParagraph.GetPrevRunElement(oCurrentPos, true);
-
-		if (!oPrev
-			|| !oNext
-			|| !(oNext instanceof AscWord.CMathText)
-			|| !AscWord.IsCombinedMark(oNext.GetCodePoint())
-			|| CheckIsSomeParentSearched(this))
-			break;
-
-		if (!oSearchPos)
-			oSearchPos = new CParagraphSearchPos();
-		else
-			oSearchPos.Reset();
-
-		// что бы потом не корректировать искомое значение, задаем дефелотные значения как текущую позицию
-		oSearchPos.Pos.Data = oContentPos.Data.slice();
-		oSearchPos.Pos.Depth = oContentPos.Data.length;
-
-		// задаем временное свойство, что бы не повторять поиск уже внутри этого контента
-		this.isSerchedCombineInMath = true;
-
-		if (isForward)
-			this.GetRightPos(oSearchPos, oContentPos, Depth, true, false);
-		else
-			this.GetLeftPos(oSearchPos, oContentPos, Depth, true);
-
-		if (!oSearchPos.IsFound())
-			break;
-
-		oCurrentPos.Data = oSearchPos.GetPos().Data.slice();
-		oCurrentPos.Depth = oSearchPos.GetPos().Depth;
-	}
-
-	delete this.isSerchedCombineInMath;
-	return oCurrentPos;
-};
-CMathContent.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, UseContentPos, StepEnd)
-{
-	this.GetRightPos(SearchPos, ContentPos, Depth, UseContentPos, StepEnd);
-	SearchPos.Pos = this.private_CorrectPosInCombiningMark(SearchPos.GetPos(), true, Depth);
-};
 CMathContent.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseContentPos)
-{
-	this.GetLeftPos(SearchPos, ContentPos, Depth, UseContentPos);
-	SearchPos.Pos = this.private_CorrectPosInCombiningMark(SearchPos.GetPos(), false, Depth);
-};
-CMathContent.prototype.GetLeftPos = function(SearchPos, ContentPos, Depth, UseContentPos)
 {
 	if ((this.IsPlaceholder() && UseContentPos)
 		|| true !== this.ParentElement.Is_ContentUse(this))
@@ -3948,9 +3876,9 @@ CMathContent.prototype.GetLeftPos = function(SearchPos, ContentPos, Depth, UseCo
     var bStepStart = false;
     if (CurPos > 0 || !this.Content[0].Cursor_Is_Start())
         bStepStart = true;
-
+	
+	SearchPos.Pos.Update(CurPos, Depth);
     this.Content[CurPos].Get_LeftPos(SearchPos, ContentPos, Depth + 1, UseContentPos);
-    SearchPos.Pos.Update(CurPos, Depth);
 
     if (true === SearchPos.Found)
         return true;
@@ -3960,16 +3888,16 @@ CMathContent.prototype.GetLeftPos = function(SearchPos, ContentPos, Depth, UseCo
     if (true === UseContentPos && para_Math_Composition === this.Content[CurPos + 1].Type)
     {
         // При выходе из формулы встаем в конец рана
+		SearchPos.Pos.Update(CurPos, Depth);
         this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(CurPos, Depth);
         SearchPos.Found = true;
         return true;
     }
 
     while (CurPos >= 0)
     {
+		SearchPos.Pos.Update(CurPos, Depth);
         this.Content[CurPos].Get_LeftPos(SearchPos, ContentPos, Depth + 1, false);
-        SearchPos.Pos.Update( CurPos, Depth );
 
         if (true === SearchPos.Found)
             return true;
@@ -3980,8 +3908,8 @@ CMathContent.prototype.GetLeftPos = function(SearchPos, ContentPos, Depth, UseCo
     if (true === bStepStart)
     {
         // Перед выходом из контента встаем в его начало
+		SearchPos.Pos.Update(0, Depth);
         this.Content[0].Get_StartPos(SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(0, Depth);
         SearchPos.Found = true;
 
         return true;
@@ -3989,7 +3917,7 @@ CMathContent.prototype.GetLeftPos = function(SearchPos, ContentPos, Depth, UseCo
 
     return false;
 };
-CMathContent.prototype.GetRightPos = function(SearchPos, ContentPos, Depth, UseContentPos, StepEnd)
+CMathContent.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, UseContentPos, StepEnd)
 {
 	if ((this.IsPlaceholder() && UseContentPos)
 		|| true !== this.ParentElement.Is_ContentUse(this))
@@ -4011,9 +3939,9 @@ CMathContent.prototype.GetRightPos = function(SearchPos, ContentPos, Depth, UseC
     var bStepEnd = false;
     if (CurPos < Count - 1 || !this.Content[Count - 1].Cursor_Is_End())
         bStepEnd = true;
-
+	
+	SearchPos.Pos.Update(CurPos, Depth);
     this.Content[CurPos].Get_RightPos(SearchPos, ContentPos, Depth + 1, UseContentPos, StepEnd);
-    SearchPos.Pos.Update( CurPos, Depth );
 
     if (true === SearchPos.Found)
         return true;
@@ -4023,16 +3951,16 @@ CMathContent.prototype.GetRightPos = function(SearchPos, ContentPos, Depth, UseC
     if (true === UseContentPos && para_Math_Composition === this.Content[CurPos - 1].Type)
     {
         // При выходе из формулы встаем в начало рана
+		SearchPos.Pos.Update(CurPos, Depth);
         this.Content[CurPos].Get_StartPos(SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(CurPos, Depth);
         SearchPos.Found = true;
         return true;
     }
 
     while (CurPos < Count)
     {
+		SearchPos.Pos.Update(CurPos, Depth);
         this.Content[CurPos].Get_RightPos(SearchPos, ContentPos, Depth + 1, false, StepEnd);
-        SearchPos.Pos.Update(CurPos, Depth);
 
         if (true === SearchPos.Found)
             return true;
@@ -4043,8 +3971,8 @@ CMathContent.prototype.GetRightPos = function(SearchPos, ContentPos, Depth, UseC
     if (true === bStepEnd)
     {
         // Перед выходом из контента встаем в его конец
+		SearchPos.Pos.Update(Count - 1, Depth);
         this.Content[Count - 1].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(Count - 1, Depth);
         SearchPos.Found = true;
 
         return true;

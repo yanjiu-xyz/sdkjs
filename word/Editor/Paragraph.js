@@ -5806,8 +5806,8 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 
 		if (!oPrev
 			|| !oNext
-			|| !oPrev.IsText()
-			|| !oNext.IsText()
+			|| (!oPrev.IsText() && !oPrev.IsMathText())
+			|| (!oNext.IsText() && !oNext.IsMathText())
 			|| !oNext.IsCombiningMark())
 			break;
 
@@ -6658,14 +6658,12 @@ Paragraph.prototype.GetPrevRunElements = function(oRunElements)
  * @param {AscWord.CParagraphContentPos} [oParaPos=undefined]
  * @returns {?AscWord.CRunElementBase}
  */
-Paragraph.prototype.GetNextRunElement = function(oParaPos, isMath)
+Paragraph.prototype.GetNextRunElement = function(oParaPos)
 {
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false);
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null);
-
-	if (isMath)
-		oRunElements.SkipMath = false;
+	oRunElements.SkipMath = false;
 
 	this.GetNextRunElements(oRunElements);
 
@@ -6679,14 +6677,12 @@ Paragraph.prototype.GetNextRunElement = function(oParaPos, isMath)
  * @param {AscWord.CParagraphContentPos} [oParaPos=undefined]
  * @returns {?AscWord.CRunElementBase}
  */
-Paragraph.prototype.GetPrevRunElement = function(oParaPos, isMath)
+Paragraph.prototype.GetPrevRunElement = function(oParaPos)
 {
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false)
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null, true);
-
-	if (isMath)
-		oRunElements.SkipMath = false;
+	oRunElements.SkipMath = false;
 
 	this.GetPrevRunElements(oRunElements);
 

@@ -978,6 +978,10 @@ CMathText.prototype.IsMathText = function()
 {
     return true;
 };
+CMathText.prototype.IsCombiningMark = function()
+{
+	return AscWord.isCombiningMark(this.value);
+};
 CMathText.prototype.IsBreakOperator = function ()
 {
 	return this.private_Is_BreakOperator(this.value);
