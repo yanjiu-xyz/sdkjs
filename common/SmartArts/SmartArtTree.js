@@ -1753,9 +1753,23 @@
 		}
 	}
 	BaseAlgorithm.prototype.setSibConnection = function (startNode, endNode, connectorAlgorithm) {
-		connectorAlgorithm.setFirstConnectorNode(startNode);
-		connectorAlgorithm.setLastConnectorNode(endNode);
-		connectorAlgorithm.setParentAlgorithm(this);
+		let srcNode;
+		let dstNode;
+		if (connectorAlgorithm.params[AscFormat.Param_type_srcNode]) {
+			srcNode = startNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
+		} else {
+			srcNode = startNode.getDefaultConnectionNode();
+		}
+		if (connectorAlgorithm.params[AscFormat.Param_type_dstNode]) {
+			dstNode = endNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
+		} else {
+			dstNode = endNode.getDefaultConnectionNode();
+		}
+		if (srcNode && dstNode) {
+			connectorAlgorithm.setParentAlgorithm(this);
+			connectorAlgorithm.setFirstConnectorNode(srcNode);
+			connectorAlgorithm.setLastConnectorNode(dstNode);
+		}
 	};
 	BaseAlgorithm.prototype.setConnections = function () {
 		const nodes = this.parentNode.childs;
@@ -5537,25 +5551,7 @@ function HierarchyAlgorithm() {
 			this.params[AscFormat.Param_type_vertAlign] = AscFormat.ParameterVal_verticalAlignment_mid;
 		}
 	};
-	CompositeAlgorithm.prototype.setSibConnection = function (startNode, endNode, connectorAlgorithm) {
-		let srcNode;
-		let dstNode;
-		if (connectorAlgorithm.params[AscFormat.Param_type_srcNode]) {
-			srcNode = startNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
-		} else {
-			srcNode = startNode.getDefaultConnectionNode();
-		}
-		if (connectorAlgorithm.params[AscFormat.Param_type_dstNode]) {
-			dstNode = endNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
-		} else {
-			dstNode = endNode.getDefaultConnectionNode();
-		}
-		if (srcNode && dstNode) {
-			connectorAlgorithm.setParentAlgorithm(this);
-			connectorAlgorithm.setFirstConnectorNode(srcNode);
-			connectorAlgorithm.setLastConnectorNode(dstNode);
-		}
-	};
+
 	CompositeAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
 		if (connectorAlgorithm && childNode.algorithm) {
 			let srcNode;
