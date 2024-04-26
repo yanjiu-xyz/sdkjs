@@ -698,6 +698,10 @@ CMathText.prototype.SetPlaceholder = function()
     this.Type = para_Math_Placeholder;
     this.value = StartTextElement;
 };
+CMathText.prototype.IsAccent = function ()
+{
+	return AscMath.MathLiterals.accent.fromSymbols[String.fromCharCode(this.value)] != undefined;
+}
 CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 {
     /*
@@ -973,6 +977,10 @@ CMathText.prototype.IsAlignPoint = function()
 CMathText.prototype.IsMathText = function()
 {
     return true;
+};
+CMathText.prototype.IsCombiningMark = function()
+{
+	return AscWord.isCombiningMark(this.value);
 };
 CMathText.prototype.IsBreakOperator = function ()
 {

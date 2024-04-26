@@ -5798,6 +5798,21 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 {
 	let oSearchPos;
 	let oCurrentPos  = oContentPos;
+	
+	function canCombinePositions(nextPos)
+	{
+		let depth = oContentPos.GetDepth();
+		if (depth !== nextPos.GetDepth())
+			return false;
+		
+		for (let i = 0; i < depth - 2; ++i)
+		{
+			if (oContentPos.Get(i) !== nextPos.Get(i))
+				return false;
+			
+		}
+		return true;
+	}
 
 	while (true)
 	{
@@ -5806,8 +5821,8 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 
 		if (!oPrev
 			|| !oNext
-			|| !oPrev.IsText()
-			|| !oNext.IsText()
+			|| (!oPrev.IsText() && !oPrev.IsMathText())
+			|| (!oNext.IsText() && !oNext.IsMathText())
 			|| !oNext.IsCombiningMark())
 			break;
 
@@ -5823,8 +5838,12 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 
 		if (!oSearchPos.IsFound())
 			break;
-
-		oCurrentPos = oSearchPos.GetPos().Copy();
+		
+		let newPos = oSearchPos.GetPos();
+		if (!canCombinePositions(newPos))
+			break;
+		
+		oCurrentPos = newPos.Copy();
 	}
 
 	return oCurrentPos;
@@ -6663,6 +6682,8 @@ Paragraph.prototype.GetNextRunElement = function(oParaPos)
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false);
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null);
+	oRunElements.SkipMath = false;
+
 	this.GetNextRunElements(oRunElements);
 
 	if (oRunElements.Elements.length <= 0)
@@ -6680,6 +6701,8 @@ Paragraph.prototype.GetPrevRunElement = function(oParaPos)
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false)
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null, true);
+	oRunElements.SkipMath = false;
+
 	this.GetPrevRunElements(oRunElements);
 
 	if (oRunElements.Elements.length <= 0)

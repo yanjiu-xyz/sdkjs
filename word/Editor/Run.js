@@ -1496,7 +1496,7 @@ ParaRun.prototype.Remove = function(Direction, bOnAddText)
 					this.SetRStyle(undefined);
 
 				let oItem = this.Content[CurPos];
-				if (oItem.IsText())
+				if (oItem.IsText() || oItem.IsMathText())
 				{
 					let oInfo = this.RemoveTextCluster(CurPos);
 					oInfo.SetDocumentPositionHere();
@@ -1536,7 +1536,7 @@ ParaRun.prototype.RemoveTextCluster = function(nPos)
 	let oParagraph     = this.GetParagraph();
 	let oLogicDocument = this.GetLogicDocument();
 	let isTrack        = oLogicDocument && oLogicDocument.IsTrackRevisions() && !this.CanDeleteInReviewMode();
-	if (!oParagraph || nPos >= this.Content.length || !this.Content[nPos].IsText())
+	if (!oParagraph || nPos >= this.Content.length || (!this.Content[nPos].IsText() && !this.Content[nPos].IsMathText()))
 		return new CRunWithPosition(this, nPos);
 
 	let oCurRun = this;
@@ -1557,7 +1557,7 @@ ParaRun.prototype.RemoveTextCluster = function(nPos)
 
 	let oNextInfo = oCurRun.GetNextRunElementEx(nPos);
 	let oNext     = oNextInfo ? oNextInfo.Element : null;
-	if (!oNext || !oNext.IsText() || !oNext.IsCombiningMark())
+	if (!oNext || (!oNext.IsText() && !oNext.IsMathText()) || !oNext.IsCombiningMark())
 		return new CRunWithPosition(oCurRun, nPos);
 
 	let oContentPos = oNextInfo.Pos;
@@ -2895,7 +2895,7 @@ ParaRun.prototype.GetNextRunElements = function(oRunElements, isUseContentPos, n
 
 	for (var nCurPos = nStartPos, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
 	{
-		if (oRunElements.IsEnoughElements())
+		if (oRunElements.IsEnoughElements() || this.IsEmpty())
 			return;
 
 		oRunElements.UpdatePos(nCurPos, nDepth);
@@ -2911,7 +2911,7 @@ ParaRun.prototype.GetPrevRunElements = function(oRunElements, isUseContentPos, n
 
 	for (var nCurPos = nStartPos; nCurPos >= 0; --nCurPos)
 	{
-		if (oRunElements.IsEnoughElements())
+		if (oRunElements.IsEnoughElements() || this.IsEmpty())
 			return;
 
 		oRunElements.UpdatePos(nCurPos, nDepth);
@@ -6419,6 +6419,20 @@ ParaRun.prototype.Cursor_Is_End = function()
         return true;
 
     return false;
+};
+ParaRun.prototype.IsStartPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	return 0 === contentPos.Get(depth);
+};
+ParaRun.prototype.IsEndPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	return contentPos.Get(depth) >= this.Content.length;
 };
 /**
  * Проверяем находится ли курсор в начале рана
@@ -11975,6 +11989,7 @@ ParaRun.prototype.GetNextRunElementEx = function(nPos)
 
 	let oContentPos  = this.GetParagraphContentPosFromObject(this.Content.length);
 	let oRunElements = new CParagraphRunElements(oContentPos, 1, null, true);
+	oRunElements.SkipMath = false;
 	oRunElements.SetSaveContentPositions(true);
 	oParagraph.GetNextRunElements(oRunElements);
 

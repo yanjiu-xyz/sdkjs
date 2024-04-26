@@ -1553,6 +1553,9 @@
 		{
 			let oEntity = this.GetEntityLiteral();
 
+			if (this.oLookahead.data === " ")
+				this.EatToken(this.oLookahead.class);
+
 			if (this.IsDiacriticsLiteral())
 			{
 				const oDiacritic = this.GetDiacriticsLiteral();
@@ -1568,6 +1571,12 @@
 				{
 					return this.GetOneBarLiteral(oEntity, oDiacritic);
 				}
+
+				//nbsp processing for accents
+				if (oEntity[oEntity.length - 1] && oEntity[oEntity.length - 1].value === String.fromCharCode(160)) //nbsp
+					oEntity.length--;
+				else if (oEntity.value === String.fromCharCode(160))
+					oEntity = {};
 
 				return {
 					type: MathLiteral.accent.id,
