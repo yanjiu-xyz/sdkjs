@@ -6420,6 +6420,20 @@ ParaRun.prototype.Cursor_Is_End = function()
 
     return false;
 };
+ParaRun.prototype.IsStartPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	return 0 === contentPos.Get(depth);
+};
+ParaRun.prototype.IsEndPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	return contentPos.Get(depth) >= this.Content.length;
+};
 /**
  * Проверяем находится ли курсор в начале рана
  * @returns {boolean}
