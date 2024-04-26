@@ -1165,14 +1165,21 @@
         const oApplyParagraph = this.getApplyParagraph(comparison);
         const oChange = this.changes[idxOfChange];
         const oFirstText = oChange.remove[0].element;
+				let oStartOfRemoveRun = oFirstText;
+	    if (oFirstText.firstRun)
+	    {
+		    oStartOfRemoveRun = oFirstText.firstRun;
+	    }
+	    else if (oFirstText instanceof CCommentElement)
+	    {
+		    oStartOfRemoveRun = oFirstText.element;
+	    }
 
         let k = posLastRunInContent;
-
-        let bBreak = false;
         for(k; k > -1; --k)
         {
             const oChildElement = oApplyParagraph.Content[k];
-            if(!(oChildElement === oFirstText.firstRun || oChildElement === oFirstText))
+            if(!(oChildElement === oStartOfRemoveRun))
             {
                 arrSetRemoveReviewType.push(oChildElement);
             }
