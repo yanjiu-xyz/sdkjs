@@ -483,6 +483,11 @@
 			//чтобы в versionHistory был один documentId для auth и open
 			this.CoAuthoringApi.setDocId(this.documentId);
 
+			if (this.DocInfo.get_Wopi())
+			{
+				this.documentShardKey = this.DocInfo.get_Wopi()["WOPISrc"];
+				this.documentIsWopi = true;
+			}
 			if (this.documentOpenOptions)
 			{
 				if (this.documentOpenOptions["watermark"])
