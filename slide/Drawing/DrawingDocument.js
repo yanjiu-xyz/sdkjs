@@ -6901,45 +6901,85 @@ function CAnimationPaneDrawer(page, htmlElement)
 			// If they were - recalculate corresponding elements
 			// If they were not - redraw animItems based on "selected" state of effects
 
-			// "oThis" here - Asc.editor.WordControl.m_oAnimPaneApi
-			if (!oThis.list.Control) { return }
+			const seqListContainer = oThis.list.Control;
+			if (!seqListContainer) { return; }
 
-			const newSeqList = oThis.list.Control.getTiming() ? oThis.list.Control.getTiming().getRootSequences() : []
-			const oldSeqList = oThis.list.Control.seqList.children ?
-				oThis.list.Control.seqList.children.map(function (seqItem) { return seqItem.getSeq() }) : []
+			// Compare number of sequences (main and interactive ones)
+			const timing = seqListContainer.getTiming();
+			const newSeqList = timing ? timing.getRootSequences() : [];
+			const oldSeqList = seqListContainer.seqList
+				? seqListContainer.seqList.children.map(function (animSequence) {
+					return animSequence.getSeq();
+				})
+				: [];
 
-			if (oldSeqList.length != newSeqList.length) {
-				return recalculateSeqListContainer()
+			if (oldSeqList.length !== newSeqList.length) {
+				recalculateSeqListContainer();
+				return;
 			}
 
-			newSeqList.some(function (newSeq, index) {
-				const oldSeq = oThis.list.Control.seqList.children[index] && oThis.list.Control.seqList.children[index].getSeq()
+			oldSeqList.some(function (_, nSeq) {
+				// Compare sequences by Id
+				const oldSeq = oldSeqList[nSeq];
+				const newSeq = newSeqList[nSeq];
 
-				// Not sure if we need to compare by Id here,
-				// cuz these are references either to the same object (CSeq) or to different ones
-				if (oldSeq !== newSeq) { return recalculateSeqListContainer() }
+				if (oldSeq.Id !== newSeq.Id) {
+					recalculateSeqListContainer();
+					return true;
+				}
 
-				oThis.list.Control.seqList.forEachAnimItem(function (animItem) {
-					animItem.onUpdate()
+				// Compare number of groups in current sequence
+				const oldSeqGroups = seqListContainer.seqList.children[nSeq].animGroups.map(function (animGroup) {
+					return animGroup.effects;
+				});
+				const newSeqGroupsAsObject = AscFormat.groupBy(
+					newSeq.getAllEffects(),
+					function (effect) { return effect.getIndexInSequence(); }
+				);
+				const newSeqGroups = Object.keys(newSeqGroupsAsObject).map(function (groupIndex) {
+					return newSeqGroupsAsObject[groupIndex];
 				})
 
-				// We need to return false here
-				// to continue Array.some method
-				return false
-			})
+				if (oldSeqGroups.length !== newSeqGroups.length) {
+					recalculateSeqListContainer();
+					return true;
+				}
 
-			function recalculateSeqListContainer () {
-				oThis.list.Control.seqList.recalculateChildren()
-				oThis.list.Control.seqList.recalculateChildrenLayout()
-				oThis.list.Control.recalculateChildrenLayout()
-				oThis.list.Control.onUpdate()
+				for (let nGroup = 0; nGroup < oldSeqGroups.length; ++nGroup) {
+					// Compare number of effects in current group
+					const oldSeqGroup = oldSeqGroups[nGroup];
+					const newSeqGroup = newSeqGroups[nGroup];
 
-				oThis.list.CheckScroll()
+					if (oldSeqGroup.length !== newSeqGroup.length) {
+						recalculateSeqListContainer();
+						return true;
+					}
 
-				// We need to return true here
-				// to stop comparing the following sequences
-				// if any of them have changed
-				return true
+					for (let nEffect = 0; nEffect < oldSeqGroup.length; ++nEffect) {
+						// Compare effects in currect group by Id
+						const oldEffect = oldSeqGroup[nEffect];
+						const newEffect = newSeqGroup[nEffect];
+
+						if (oldEffect.Id !== newEffect.Id) {
+							recalculateSeqListContainer();
+							return true;
+						}
+					}
+				}
+
+				seqListContainer.seqList.forEachAnimItem(function (animItem) {
+					animItem.onUpdate();
+				})
+
+				return false;
+			});
+
+			function recalculateSeqListContainer() {
+				oThis.list.Control.seqList.recalculateChildren();
+				oThis.list.Control.seqList.recalculateChildrenLayout();
+				oThis.list.Control.recalculateChildrenLayout();
+				oThis.list.Control.onUpdate();
+				oThis.list.CheckScroll();
 			}
 		})
 	};

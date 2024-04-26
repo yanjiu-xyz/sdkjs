@@ -2007,21 +2007,11 @@
 		}
 
 		const aAllEffects = this.seq.getAllEffects();
-		const animGroups = groupBy(aAllEffects, function (effect) { return effect.getIndexInSequence(); })
+		const animGroups = AscFormat.groupBy(aAllEffects, function (effect) { return effect.getIndexInSequence(); })
 
 		for (let indexInSequence in animGroups) {
 			const oAnimGroup = this.addControl(new CAnimGroup(this, animGroups[indexInSequence]));
 			this.animGroups[this.animGroups.length] = oAnimGroup;
-		}
-
-		// Own realization of Object.groupBy for IE11 compatibility
-		function groupBy(arr, callback) {
-			return arr.reduce(function (storage, item) {
-				let group = callback(item);
-				storage[group] = storage[group] || [];
-				storage[group].splice(0, 0, item);
-				return storage;
-			}, {});
 		}
 	};
 	CAnimSequence.prototype.recalculateChildrenLayout = function () {
