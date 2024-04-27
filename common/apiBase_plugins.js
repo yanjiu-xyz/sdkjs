@@ -688,7 +688,7 @@
                 }
                 case "hideContentControlTrack":
                 {
-                    if (this.editorId === AscCommon.c_oEditorId.Word && this.WordControl && this.WordControl.m_oLogicDocument)
+                    if (this.editorId === AscCommon.c_oEditorId.Word && this.WordControl && this.WordControl.m_oLogicDocument && !this.isPdfEditor())
                         this.WordControl.m_oLogicDocument.SetForceHideContentControlTrack(obj[prop]);
 
                     break;
@@ -702,7 +702,8 @@
 				{
 					if (this.editorId !== AscCommon.c_oEditorId.Word
 						|| !this.WordControl
-						|| !this.WordControl.m_oLogicDocument)
+						|| !this.WordControl.m_oLogicDocument
+						|| this.isPdfEditor())
 						break;
 
 					let oLogicDocument = this.WordControl.m_oLogicDocument;
