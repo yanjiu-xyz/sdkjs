@@ -3570,7 +3570,7 @@ background-repeat: no-repeat;\
 			
 			getNewValue : function(stylePr)
 			{
-				let val = 12 * g_dKoef_pt_to_mm;
+				let val = 12 * AscCommonWord.g_dKoef_pt_to_mm;
 				if (stylePr.Spacing.Before > 0.001)
 					val = stylePr.Spacing.Before;
 				
@@ -3603,7 +3603,7 @@ background-repeat: no-repeat;\
 			
 			getNewValue : function(stylePr)
 			{
-				let val = 12 * g_dKoef_pt_to_mm;
+				let val = 12 * AscCommonWord.g_dKoef_pt_to_mm;
 				if (stylePr.Spacing.After > 0.001)
 					val = stylePr.Spacing.After;
 				
