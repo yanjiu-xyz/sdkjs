@@ -1802,6 +1802,13 @@ function (window, undefined) {
 		return (new asc_CColor(this.r, this.g, this.b)).asc_getName();
 	};
 
+	CColor.prototype.getAscColor = function () {
+		return (new asc_CColor(this.r, this.g, this.b));
+	};
+	CColor.prototype.fromAscColor = function (oAscColor) {
+		return new CColor(oAscColor.r, oAscColor.g, oAscColor.b);
+	};
+
 	/** @constructor */
 	function asc_CColor() {
 		this.type = c_oAscColor.COLOR_TYPE_SRGB;
