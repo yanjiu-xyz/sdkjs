@@ -11134,9 +11134,15 @@
     };
     CMinusPlus.prototype.getDataRefs = function() {
         if(this.numRef) {
-            this.numRef.getDataRefs();
+            return this.numRef.getDataRefs();
         }
         return new CDataRefs([]);
+    };
+    CMinusPlus.prototype.isValid = function() {
+        if(this.numRef || this.numLit) {
+            return true;
+        }
+        return false;
     };
 
     function CMultiLvlStrCache() {
