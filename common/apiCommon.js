@@ -5445,6 +5445,26 @@ function (window, undefined) {
 	PluginType["PanelRight"] = PluginType.PanelRight;
 	PluginType["Unvisible"] = PluginType.Unvisible;
 
+	PluginType["getType"] = PluginType.getType = function(type) {
+		if (undefined === type)
+			return undefined;
+
+		if (typeof type !== "string")
+			return type;
+
+		switch (type) {
+			case "system" : return this.System;
+			case "background" : return this.Background;
+			case "window" : return this.Window;
+			case "panel" : return this.Panel;
+			case "panelRight" : return this.PanelRight;
+			case "invisible" : return this.Invisible;
+			default: break;
+		}
+
+		return this.Background;
+	};
+
 	function CPluginVariation() {
 		this.description = "";
 		this.url = "";
@@ -5551,31 +5571,7 @@ function (window, undefined) {
 		_object["isDisplayedInViewer"] = this.isDisplayedInViewer;
 		_object["EditorsSupport"] = this.EditorsSupport;
 
-		switch (this.type) {
-			case PluginType.System:
-				_object["type"] = "system";
-				break;
-
-			case PluginType.Window:
-				_object["type"] = "window";
-				break;
-
-			case PluginType.Panel:
-				_object["type"] = "panel";
-				break;
-
-			case PluginType.PanelRight:
-				_object["type"] = "panelRight";
-				break;
-
-			case PluginType.Invisible:
-				_object["type"] = "invisible";
-				break;
-		
-			default:
-				_object["type"] = "background";
-				break;
-		}
+		_object["type"] = this.type;
 
 		_object["isCustomWindow"] = this.isCustomWindow;
 		_object["isModal"] = this.isModal;
