@@ -5606,13 +5606,9 @@ function (window, undefined) {
 		// default: background
 		this.type = PluginType.Background;
 
-		let _type = _object["type"];
+		let _type = PluginType.getType(_object["type"]);
 		if (undefined !== _type) {
-			if ("system" === _type) this.type = PluginType.System;
-			if ("window" === _type) this.type = PluginType.Window;
-			if ("panel" === _type) this.type = PluginType.Panel;
-			if ("panelRight" === _type) this.type = PluginType.PanelRight;
-			if ("invisible" === _type) this.type = PluginType.Invisible;
+			this.type = _type;
 		}
 		else {
 			// old version: not support background plugins
