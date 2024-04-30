@@ -2987,9 +2987,16 @@
     CCommonTimingList.prototype.writeChildren = function (pWriter) {
         if (this.list.length > 0) {
             pWriter.StartRecord(0);
-            pWriter.WriteULong(this.list.length);
-            for (var nIndex = 0; nIndex < this.list.length; ++nIndex) {
-                this.writeRecord1(pWriter, 0, this.list[nIndex]);
+            let aListTowWrite = [];
+            for (let nIndex = 0; nIndex < this.list.length; ++nIndex) {
+                let oElement = this.list[nIndex];
+                if(!oElement.isValid || oElement.isValid()) {
+                    aListTowWrite.push(oElement);
+                }
+            }
+            pWriter.WriteULong(aListTowWrite.length);
+            for (let nIndex = 0; nIndex < aListTowWrite.length; ++nIndex) {
+                this.writeRecord1(pWriter, 0, aListTowWrite[nIndex]);
             }
             pWriter.EndRecord();
         }
@@ -5989,6 +5996,19 @@
             return this.spTgt.spid;
         }
         return null;
+    };
+    CTgtEl.prototype.isValid = function () {
+        if(!this.spTgt) {
+            return false;
+        }
+        let oSp = AscCommon.g_oTableId.Get_ById(this.spTgt.getTargetObject());
+        if(!oSp) {
+            return false;
+        }
+        if(!oSp.IsUseInDocument()) {
+            return false;
+        }
+        return true;
     };
 
 
@@ -9019,6 +9039,23 @@
                 }
             }
         }
+    };
+    CTimeNodeContainer.prototype.isValid = function() {
+        if(!this.isAnimEffect()) {
+            return true;
+        }
+        let bValid = true;
+        this.traverse(function (oElem) {
+            if(oElem.getObjectType() !== AscDFH.historyitem_type_TgtEl) {
+                return false;
+            }
+            if(!oElem.isValid()) {
+                bValid = false;
+                return true;
+            }
+            return false;
+        });
+        return bValid;
     };
 
     function CPar() {
