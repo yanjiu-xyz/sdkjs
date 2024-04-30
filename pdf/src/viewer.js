@@ -2782,7 +2782,8 @@
 				if (!this.file.pages[i].isConvertedToShapes) {
 					if (!page.Image && !isStretchPaint)
 					{
-						page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
+						let pageColor = this.Api.getPageBackgroundColor();
+						page.Image = this.file.getPage(i, natW, natH, undefined, (pageColor.R << 16) | (pageColor.G << 8) | pageColor.B);
 						if (this.bCachedMarkupAnnnots)
 							this._paintMarkupAnnotsOnPage(i, page.Image.getContext("2d"));
 
@@ -2819,7 +2820,8 @@
 				}
 				else
 				{
-					ctx.fillStyle = "#FFFFFF";
+					let pageColor = this.Api.getPageBackgroundColor();
+					ctx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
 					ctx.fillRect(x, y, w, h);
 				}
 				ctx.strokeRect(x + lineW / 2, y + lineW / 2, w - lineW, h - lineW);
