@@ -710,7 +710,8 @@
 	};
 	asc_docs_api.prototype._loadSdkImages = function () {
 		const aImages = AscCommon.getIconsForLoad();
-		this.ImageLoader.LoadDocumentImages(aImages);
+		this.ImageLoader.LoadImagesWithCallback(aImages, function() {
+		}, []);
 	};
 
 	/////////////////////////////////////////////////////////////////////////
