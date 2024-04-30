@@ -559,6 +559,7 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
 
 function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x, y, pageIndex, bWord)
 {
+    if(!shape.group) return;
     var hit_in_inner_area = shape.hitInInnerArea && shape.hitInInnerArea(x, y);
     var hit_in_path = shape.hitInPath && shape.hitInPath(x, y);
     var hit_in_text_rect = shape.hitInTextRect && shape.hitInTextRect(x, y);
