@@ -3061,6 +3061,7 @@ CGraphicObjects.prototype =
                 aPos = arrCenterPos[i];
                 var aDrawings = [];
                 var drawing;
+                this.document.Recalculate(true);
                 for(j = 0; j < sp_tree.length; ++j)
                 {
                     sp = sp_tree[j];
