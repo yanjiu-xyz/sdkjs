@@ -156,9 +156,10 @@ var editor;
   spreadsheet_api.prototype._loadSdkImages = function () {
     var aImages = AscCommonExcel.getIconsForLoad();
     aImages.push(AscCommonExcel.sFrozenImageUrl, AscCommonExcel.sFrozenImageRotUrl);
-
 	  this.ImageLoader.LoadImagesWithCallback(aImages, function() {
-		  this.asc_showWorksheet(this.asc_getActiveWorksheetIndex());
+		  if(this.wbModel && this.wb) {
+			  this.asc_showWorksheet(this.asc_getActiveWorksheetIndex());
+		  }
 	  }, []);
   };
 
