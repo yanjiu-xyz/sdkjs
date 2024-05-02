@@ -944,6 +944,7 @@
 			oData["IsSelected"] = oDrawing.selected;
 			oData["MediaFile"] = this.getName();
 			oData["From"] = 0;
+			oData["Theme"] = AscCommon.GlobalSkin.Type;
 			return oData;
 		};
 
