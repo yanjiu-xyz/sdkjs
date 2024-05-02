@@ -4952,7 +4952,7 @@
 				if (arguments[i] && arguments[i].toCValue)
 					arguments[i] = arguments[i].toCValue();
 			}
-			window["native"]["onJsEvent"](name, arguments);
+			window["native"]["onJsEvent"](name, Array.from(arguments));
 		});
 	};
 
