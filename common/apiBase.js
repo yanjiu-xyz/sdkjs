@@ -4943,7 +4943,7 @@
 		}
 	};
 
-	baseEditorsApi.prototype.wrapEvent = function(name, types) 
+	baseEditorsApi.prototype.wrapEvent = function(name) 
 	{
 		this.asc_registerCallback(name, function()
 		{
