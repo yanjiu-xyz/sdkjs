@@ -763,11 +763,34 @@
 		return this.element.getText();
 	};
 
+	CNode.prototype.getContentElement = function (isStart)
+	{
+		const element = this.element;
+		if (isStart)
+		{
+			if (element.firstRun)
+			{
+				return element.firstRun;
+			}
+		}
+		else
+		{
+			if (element.lastRun)
+			{
+				return element.lastRun;
+			}
+		}
+		if (element instanceof CCommentElement)
+		{
+			return element.element;
+		}
+		return element;
+	};
     CNode.prototype.cleanEndOfInsert = function (aContentToInsert, idxOfChange, comparison) {
         const oChange = this.changes[idxOfChange];
 				const oNode = oChange.insert[oChange.insert.length - 1];
         const oLastText = oNode.element;
-        const oEndOfInsertRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
+				const oEndOfInsertRun = oNode.getContentElement();
         const oParentParagraph =  (this.partner && this.partner.element) || oEndOfInsertRun.Paragraph;
         const applyingParagraph = this.getApplyParagraph(comparison);
 	    const arrEndBookmarks = oNode.getLastBookmarks();
@@ -849,7 +872,7 @@
         const oFirstText = oNode.element;
         if(oNewRun)
         {
-            if(oNewRun instanceof ParaRun)
+            if((oNewRun instanceof ParaRun) && oFirstText.firstRun)
             {
                 for(let t = 0; t < oFirstText.firstRun.Content.length; ++t)
                 {
@@ -875,32 +898,29 @@
 
     CNode.prototype.cleanStartOfInsertDifferentRun = function (aContentToInsert, posOfLastInsertRun, idxOfChange, comparison) {
         const oChange = this.changes[idxOfChange];
-        const oFirstText = oChange.insert[0].element;
-        const oFirstRun = oFirstText.firstRun ? oFirstText.firstRun : oFirstText;
-        const oLastText = oChange.insert[oChange.insert.length - 1].element;
+				const oFirstNode = oChange.insert[0];
+				const oLastNode = oChange.insert[oChange.insert.length - 1];
+	    const oFirstText = oFirstNode.element;
+			const oFirstElement = oFirstNode.getContentElement(true);
+	    const oLastText = oLastNode.element;
+			const oLastElement = oLastNode.getContentElement();
         const applyingParagraph = this.getApplyParagraph(comparison);
 
-        let oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
-        const oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
+        const oParentParagraph =  (this.partner && this.partner.element) || oLastElement.Paragraph;
         let k = posOfLastInsertRun;
         let lastCheckRun;
         for(k -= 1; k > -1; --k)
         {
-            oCurRun = oParentParagraph.Content[k];
+            const oCurRun = oParentParagraph.Content[k];
             // Пока не дошли до первого рана слова, закидываем его на добавление
-            if(!(oCurRun === oFirstRun || oCurRun === oFirstText))
+            if(oCurRun !== oFirstElement)
             {
                 this.pushToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
             }
             else
             {
-                if(oCurRun === oFirstText)
+								if (oCurRun instanceof AscCommonWord.ParaRun)
                 {
-                    this.pushToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
-                }
-                else
-                {
-
                     for(let t = 0; t < oCurRun.Content.length; ++t)
                     {
                         if(oFirstText.elements[0] === oCurRun.Content[t])
@@ -923,6 +943,10 @@
                         }
                     }
                 }
+								else
+								{
+									this.pushToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
+								}
                 break;
             }
         }
@@ -983,13 +1007,15 @@
 
         if(oChange.insert.length > 0)
         {
-            const oFirstText = oChange.insert[0].element;
-            const oLastText = oChange.insert[oChange.insert.length - 1].element;
+	        const oFirstNode = oChange.insert[0];
+					const oLastNode = oChange.insert[oChange.insert.length - 1];
+            const oFirstText = oFirstNode.getContentElement(true);
+            const oLastText = oLastNode.getContentElement();
 
             const posLastRunOfInsert = this.cleanEndOfInsert(aContentToInsert, idxOfChange, comparison);
 
             // изменения находятся внутри одного рана или это один и тот же элемент
-            if( (oLastText.lastRun && oFirstText.firstRun) && oLastText.lastRun === oFirstText.firstRun || (!oLastText.lastRun && !oFirstText.firstRun) && oLastText === oFirstText)
+            if(oFirstText === oLastText)
             {
                 this.cleanStartOfInsertSameRun(aContentToInsert[aContentToInsert.length - 1], idxOfChange);
             }
@@ -997,7 +1023,7 @@
             {
                 this.cleanStartOfInsertDifferentRun(aContentToInsert, posLastRunOfInsert, idxOfChange, comparison);
             }
-	        const oFirstNode = oChange.insert[0];
+
 	        const arrStartBookmarks = oFirstNode.getFirstBookmarks();
 	        if (arrStartBookmarks)
 	        {
@@ -1108,20 +1134,9 @@
     CNode.prototype.prepareEndOfRemoveChange = function (idxOfChange, comparison, arrSetRemove) {
         const oChange = this.changes[idxOfChange];
         const oApplyParagraph = this.getApplyParagraph(comparison);
-        const oLastText = oChange.remove[oChange.remove.length - 1].element;
-	    let oEndOfRemoveRun;
-			if (oLastText.lastRun)
-			{
-				oEndOfRemoveRun = oLastText.lastRun;
-			}
-			else if (oLastText instanceof CCommentElement)
-			{
-				oEndOfRemoveRun = oLastText.element;
-			}
-			else
-			{
-				oEndOfRemoveRun = oLastText;
-			}
+				const oNode = oChange.remove[oChange.remove.length - 1];
+        const oLastText = oNode.element;
+	    const oEndOfRemoveRun = oNode.getContentElement();
         let k = oApplyParagraph.Content.length - 1;
         let nInsertPosition = -1;
 
@@ -1164,17 +1179,9 @@
     CNode.prototype.setReviewTypeForRemoveChanges = function (comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType) {
         const oApplyParagraph = this.getApplyParagraph(comparison);
         const oChange = this.changes[idxOfChange];
-        const oFirstText = oChange.remove[0].element;
-				let oStartOfRemoveRun = oFirstText;
-	    if (oFirstText.firstRun)
-	    {
-		    oStartOfRemoveRun = oFirstText.firstRun;
-	    }
-	    else if (oFirstText instanceof CCommentElement)
-	    {
-		    oStartOfRemoveRun = oFirstText.element;
-	    }
-
+				const oNode = oChange.remove[0];
+        const oFirstText = oNode.element;
+				const oStartOfRemoveRun = oNode.getContentElement(true);
         let k = posLastRunInContent;
         for(k; k > -1; --k)
         {

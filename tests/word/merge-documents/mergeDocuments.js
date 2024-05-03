@@ -2003,7 +2003,6 @@ $(function ()
 				merge(readMainDocument(oTestInformation.originalDocument), readRevisedDocument(oTestInformation.revisedDocument), function ()
 				{
 					const oResultDocument = mockEditor.WordControl.m_oLogicDocument;
-					oMainComments = oResultDocument.Comments;
 					const oResultObject = getTestObject(oResultDocument);
 					assert.deepEqual(oResultObject, getTestObject(readMainDocument(arrAnswers[i].finalDocument)), comments[i]);
 				});
