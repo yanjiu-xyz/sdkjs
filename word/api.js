@@ -13908,6 +13908,7 @@ background-repeat: no-repeat;\
 	CAscSection.prototype['get_MarginRight']                            = CAscSection.prototype.get_MarginRight;
 	CAscSection.prototype['get_MarginTop']                              = CAscSection.prototype.get_MarginTop;
 	CAscSection.prototype['get_MarginBottom']                           = CAscSection.prototype.get_MarginBottom;
+	Asc.CHeaderProp = CHeaderProp;
 	CHeaderProp.prototype['get_Type']                                   = CHeaderProp.prototype.get_Type;
 	CHeaderProp.prototype['put_Type']                                   = CHeaderProp.prototype.put_Type;
 	CHeaderProp.prototype['get_Position']                               = CHeaderProp.prototype.get_Position;
