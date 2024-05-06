@@ -1607,14 +1607,12 @@
 
 		const currentlyPlayingDemoEffects = this.getCurrentlyPlayingDemoEffects(elapsedTicks);
 
-		// Для смещения полоски прогресса
 		const currentlyPlayingDemoEffect = currentlyPlayingDemoEffects[0]; // first in group
 		const correction = (currentlyPlayingDemoEffect)
 			? currentlyPlayingDemoEffect.originalNode.getBaseTime() - currentlyPlayingDemoEffect.getBaseTime()
 			: 0;
 		this.tmpScrollOffset = this.getNewTmpScrollOffset(elapsedTicks, correction);
 
-		// Для подсвечивания воспроизводимых эффектов
 		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
 		seqList.setCurrentlyPlaying(currentlyPlayingDemoEffects);
 
@@ -1625,10 +1623,41 @@
 	CTimeline.prototype.getCurrentlyPlayingDemoEffects = function (elapsedTicks) {
 		const demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
 		const rawDemoEffects = this.rawDemoTiming.getRootSequences()[0].getAllEffects();
+		rawDemoEffects.forEach(function (effect, index) {
+			effect.originalDemoNode = demoEffects[index];
+		});
 
-		// Отсюда я хочу вернуть массив из эффектов демоТайминга,
-		// которые в rawDemoTiming находятся в одной группе
-		return [];
+		// Getting level 3 Time Node Containers
+		// Each contains either 'after'-effect or 'click'-effect with mulpiple 'with'-effects
+		const lvl3DemoTimingNodes = this.demoTiming.getRootSequences(0)[0].getChildrenTimeNodes()[0].getChildrenTimeNodes();
+
+		// Getting first active level 3 Time Node Container
+		// to get currently active demo effect
+		let activeDemoEffect = null;
+		for (let nodeIndex = 0; nodeIndex < lvl3DemoTimingNodes.length; nodeIndex++) {
+			const node = lvl3DemoTimingNodes[nodeIndex];
+			if (node.isActive()) {
+				activeDemoEffect = node.getAllAnimEffects()[0];
+				break;
+			}
+		}
+
+		// Get index of active demo effect (in array of all raw demo effects)
+		let activeDemoEffectIndex;
+		for (let nEffect = 0; nEffect < rawDemoEffects.length; nEffect++) {
+			if (rawDemoEffects[nEffect].originalNode === activeDemoEffect.originalNode) {
+				activeDemoEffectIndex = nEffect;
+				break;
+			}
+		}
+
+		// Get group of active raw demo effects and their corresponding demo effects
+		const activeRawDemoEffects = rawDemoEffects[activeDemoEffectIndex].getTimeNodeWithLvl(2).getAllAnimEffects();
+		const activeDemoEffects = activeRawDemoEffects.map(function (rawEffect) {
+			return rawEffect.originalDemoNode;
+		});
+
+		return activeDemoEffects;
 	};
 	CTimeline.prototype.getNewTmpScrollOffset = function (elapsedTicks, correction) {
 		const leftLimit = 0;
