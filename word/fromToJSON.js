@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1400,57 +1400,67 @@
 			"ptCount":    oStrLit.ptCount
 		}
 	};
-	WriterToJSON.prototype.SerErrBars = function(oErrBars)
+	WriterToJSON.prototype.SerErrBars = function(aErrBars)
 	{
-		if (!oErrBars)
+		if(!Array.isArray(aErrBars))
 			return undefined;
 
-		var sErrBarType = undefined;
-		switch(oErrBars.errBarType)
+		let aResult = [];
+		for (let nErrBar = 0; nErrBar < aErrBars.length; ++nErrBar)
 		{
-			case AscFormat.st_errbartypeBOTH:
-				sErrBarType = "both";
-				break;
-			case AscFormat.st_errbartypeMINUS:
-				sErrBarType = "minus";
-				break;
-			case AscFormat.st_errbartypePLUS:
-				sErrBarType = "plus";
-				break;
-		}
+			let oErrBars = aErrBars[nErrBar];
+			if (!oErrBars)
+				return undefined;
 
-		var sErrDir = oErrBars.errDir === AscFormat.st_errdirX ? "x" : "y";
+			let sErrBarType = undefined;
+			switch(oErrBars.errBarType)
+			{
+				case AscFormat.st_errbartypeBOTH:
+					sErrBarType = "both";
+					break;
+				case AscFormat.st_errbartypeMINUS:
+					sErrBarType = "minus";
+					break;
+				case AscFormat.st_errbartypePLUS:
+					sErrBarType = "plus";
+					break;
+			}
 
-		var sErrValType = undefined;
-		switch(oErrBars.errValType)
-		{
-			case AscFormat.st_errvaltypeCUST:
-				sErrValType = "cust";
-				break;
-			case AscFormat.st_errvaltypeFIXEDVAL:
-				sErrValType = "fixedVal";
-				break;
-			case AscFormat.st_errvaltypePERCENTAGE:
-				sErrValType = "percentage";
-				break;
-			case AscFormat.st_errvaltypeSTDDEV:
-				sErrValType = "stdDev";
-				break;
-			case AscFormat.st_errvaltypeSTDERR:
-				sErrValType = "stdErr";
-				break;
-		}
+			let sErrDir = oErrBars.errDir === AscFormat.st_errdirX ? "x" : "y";
 
-		return {
-			"errBarType": sErrBarType,
-			"errDir":     sErrDir,
-			"errValType": sErrValType,
-			"minus":      this.SerMinusPlus(oErrBars.minus),
-			"noEndCap":   oErrBars.noEndCap,
-			"plus":       this.SerMinusPlus(oErrBars.plus),
-			"spPr":       this.SerSpPr(oErrBars.spPr),
-			"val":        oErrBars.val
+			let sErrValType = undefined;
+			switch(oErrBars.errValType)
+			{
+				case AscFormat.st_errvaltypeCUST:
+					sErrValType = "cust";
+					break;
+				case AscFormat.st_errvaltypeFIXEDVAL:
+					sErrValType = "fixedVal";
+					break;
+				case AscFormat.st_errvaltypePERCENTAGE:
+					sErrValType = "percentage";
+					break;
+				case AscFormat.st_errvaltypeSTDDEV:
+					sErrValType = "stdDev";
+					break;
+				case AscFormat.st_errvaltypeSTDERR:
+					sErrValType = "stdErr";
+					break;
+			}
+
+			aResult.push({
+				"errBarType": sErrBarType,
+				"errDir":     sErrDir,
+				"errValType": sErrValType,
+				"minus":      this.SerMinusPlus(oErrBars.minus),
+				"noEndCap":   oErrBars.noEndCap,
+				"plus":       this.SerMinusPlus(oErrBars.plus),
+				"spPr":       this.SerSpPr(oErrBars.spPr),
+				"val":        oErrBars.val
+			});
+
 		}
+		return aResult;
 	};
 	WriterToJSON.prototype.SerMinusPlus = function(oMinusPlus)
 	{
@@ -2290,64 +2300,64 @@
 			var sPrstType = undefined;
 			switch (oEffect.prst)
 			{
-				case c_oAscPresetShadowVal.shdw1:
+				case Asc.c_oAscPresetShadowVal.shdw1:
 					sPrstType = "shdw1";
 					break;
-				case c_oAscPresetShadowVal.shdw2:
+				case Asc.c_oAscPresetShadowVal.shdw2:
 					sPrstType = "shdw2";
 					break;
-				case c_oAscPresetShadowVal.shdw3:
+				case Asc.c_oAscPresetShadowVal.shdw3:
 					sPrstType = "shdw3";
 					break;
-				case c_oAscPresetShadowVal.shdw4:
+				case Asc.c_oAscPresetShadowVal.shdw4:
 					sPrstType = "shdw4";
 					break;
-				case c_oAscPresetShadowVal.shdw5:
+				case Asc.c_oAscPresetShadowVal.shdw5:
 					sPrstType = "shdw5";
 					break;
-				case c_oAscPresetShadowVal.shdw6:
+				case Asc.c_oAscPresetShadowVal.shdw6:
 					sPrstType = "shdw6";
 					break;
-				case c_oAscPresetShadowVal.shdw7:
+				case Asc.c_oAscPresetShadowVal.shdw7:
 					sPrstType = "shdw7";
 					break;
-				case c_oAscPresetShadowVal.shdw8:
+				case Asc.c_oAscPresetShadowVal.shdw8:
 					sPrstType = "shdw8";
 					break;
-				case c_oAscPresetShadowVal.shdw9:
+				case Asc.c_oAscPresetShadowVal.shdw9:
 					sPrstType = "shdw9";
 					break;
-				case c_oAscPresetShadowVal.shdw10:
+				case Asc.c_oAscPresetShadowVal.shdw10:
 					sPrstType = "shdw10";
 					break;
-				case c_oAscPresetShadowVal.shdw11:
+				case Asc.c_oAscPresetShadowVal.shdw11:
 					sPrstType = "shdw11";
 					break;
-				case c_oAscPresetShadowVal.shdw12:
+				case Asc.c_oAscPresetShadowVal.shdw12:
 					sPrstType = "shdw12";
 					break;
-				case c_oAscPresetShadowVal.shdw13:
+				case Asc.c_oAscPresetShadowVal.shdw13:
 					sPrstType = "shdw13";
 					break;
-				case c_oAscPresetShadowVal.shdw14:
+				case Asc.c_oAscPresetShadowVal.shdw14:
 					sPrstType = "shdw14";
 					break;
-				case c_oAscPresetShadowVal.shdw15:
+				case Asc.c_oAscPresetShadowVal.shdw15:
 					sPrstType = "shdw15";
 					break;
-				case c_oAscPresetShadowVal.shdw16:
+				case Asc.c_oAscPresetShadowVal.shdw16:
 					sPrstType = "shdw16";
 					break;
-				case c_oAscPresetShadowVal.shdw17:
+				case Asc.c_oAscPresetShadowVal.shdw17:
 					sPrstType = "shdw17";
 					break;
-				case c_oAscPresetShadowVal.shdw18:
+				case Asc.c_oAscPresetShadowVal.shdw18:
 					sPrstType = "shdw18";
 					break;
-				case c_oAscPresetShadowVal.shdw19:
+				case Asc.c_oAscPresetShadowVal.shdw19:
 					sPrstType = "shdw19";
 					break;
-				case c_oAscPresetShadowVal.shdw20:
+				case Asc.c_oAscPresetShadowVal.shdw20:
 					sPrstType = "shdw20";
 					break;
 			}
@@ -3779,7 +3789,7 @@
 		{
 			TempElm = aContent[nElm];
 
-			if (TempElm instanceof AscCommonWord.Paragraph)
+			if (TempElm instanceof AscWord.Paragraph)
 				aResult.push(this.SerParagraph(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
 			else if (TempElm instanceof AscCommonWord.CTable)
 				aResult.push(this.SerTable(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
@@ -3789,12 +3799,13 @@
 
 		return aResult;
 	};
-	WriterToJSON.prototype.SerParaPr = function(oParaPr)
+	WriterToJSON.prototype.SerParaPr = function(oParaPr, oPr)
 	{
-		if (!oParaPr)
+		oPr = oPr || {};
+		if (!oParaPr || (oPr.isSingleLvlPresetJSON && oParaPr.Is_Empty(oPr)))
 			return undefined;
 
-		let oResult = oParaPr.ToJson(true);
+		let oResult = oParaPr.ToJson(true, oPr);
 		if (oParaPr.PStyle != null)
 			oResult["pStyle"] = this.AddWordStyleForWrite(oParaPr.PStyle);
 
@@ -4195,7 +4206,7 @@
 		{
 			TempElm = oFootEndnote.Content[nElm];
 
-			if (TempElm instanceof AscCommonWord.Paragraph)
+			if (TempElm instanceof AscWord.Paragraph)
 				oFootEndnoteObj["content"].push(this.SerParagraph(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
 			else if (TempElm instanceof AscCommonWord.CTable)
 				oFootEndnoteObj["content"].push(this.SerTable(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
@@ -4256,6 +4267,9 @@
 				break;
 			case Asc.c_oAscRevisionsChangeType.RowsRem:
 				sChangeType = "rowsRem";
+				break;
+			case Asc.c_oAscRevisionsChangeType.TableRowPr:
+				sChangeType = "tableRowPr";
 				break;
 			case Asc.c_oAscRevisionsChangeType.MoveMark:
 				sChangeType = "moveMark";
@@ -4341,7 +4355,7 @@
 		{
 			TempElm = oDocument.Content[nElm];
 
-			if (TempElm instanceof AscCommonWord.Paragraph)
+			if (TempElm instanceof AscWord.Paragraph)
 				oDocObject["content"].push(this.SerParagraph(TempElm, aComplexFieldsToSave));
 			else if (TempElm instanceof AscCommonWord.CTable)
 				oDocObject["content"].push(this.SerTable(TempElm, aComplexFieldsToSave));
@@ -5367,7 +5381,7 @@
 			var oFieldEndPos          = null;
 			var arrTemp               = [];
 
-			if (oElm instanceof AscCommonWord.Paragraph)
+			if (oElm instanceof AscWord.Paragraph)
 			{
 				arrTemp = oElm.GetAllFields();
 				if (!bAll)
@@ -5425,7 +5439,7 @@
 		{
 			var oElm = arrContent[nElm];
 
-			if (oElm instanceof AscCommonWord.Paragraph)
+			if (oElm instanceof AscWord.Paragraph)
 			{
 				var aParaComments = oElm.GetAllComments();
 				for (var nComment = 0; nComment < aParaComments.length; nComment++)
@@ -5480,7 +5494,7 @@
 		{
 			var oElm = arrContent[nElm];
 
-			if (oElm instanceof AscCommonWord.Paragraph)
+			if (oElm instanceof AscWord.Paragraph)
 			{
 				for (var nItem = 0; nItem < oElm.Content.length; nItem++)
 				{
@@ -5560,7 +5574,8 @@
 				"abstractNum": {
 				},
 				"num": {
-				}
+				},
+				"type": "numbering"
 			}
 		}
 
@@ -7699,12 +7714,12 @@
 
 		return oResult;
 	};
-	WriterToJSON.prototype.SerTextPr = function(oTextPr)
+	WriterToJSON.prototype.SerTextPr = function(oTextPr, oPr)
 	{
 		if (!oTextPr)
 			return undefined;
-		
-		let oResult = oTextPr.ToJson(true)
+
+		let oResult = oTextPr.ToJson(true, oPr)
 		if (oTextPr.RStyle != null)
 			oResult["rStyle"] = this.AddWordStyleForWrite(oTextPr.RStyle);
 		
@@ -8902,7 +8917,7 @@
 		var aContent  = oParsedPara["content"];
 		var oDocument = private_GetLogicDocument();
 		var oParaPr   = oParsedPara["bFromDocument"] === true ? this.ParaPrFromJSON(oParsedPara["pPr"], oPrevNumIdInfo) : this.ParaPrDrawingFromJSON(oParsedPara["pPr"]);
-		var oPara     = new AscCommonWord.Paragraph(private_GetDrawingDocument(), oParent || oDocument, !oParsedPara["bFromDocument"]);
+		var oPara     = new AscWord.Paragraph(oParent || oDocument, !oParsedPara["bFromDocument"]);
 
 		// символ конца параграфа
 		oPara.TextPr.Set_Value(oParsedPara["bFromDocument"] === true ? this.TextPrFromJSON(oParsedPara["rPr"]) : this.TextPrDrawingFromJSON(oParsedPara["rPr"]));
@@ -9111,7 +9126,7 @@
 
 			var nBulleType = AscFormat.BULLET_TYPE_BULLET_NONE;
 			var nAutoNumType;
-			switch (oParsedBulletType["AutoNumType"])
+			switch (oParsedBulletType["autoNumType"])
 			{
 				case "alphaLcParenBoth":
 					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth;
@@ -9944,6 +9959,9 @@
 			case "tablePr":
 				nChangeType = Asc.c_oAscRevisionsChangeType.TablePr;
 				break;
+			case "tableRowPr":
+				nChangeType = Asc.c_oAscRevisionsChangeType.TableRowPr;
+				break;
 			case "rowsAdd":
 				nChangeType = Asc.c_oAscRevisionsChangeType.RowsAdd;
 				break;
@@ -10492,7 +10510,7 @@
 	ReaderFromJSON.prototype.AbstractNumFromJSON = function(oParsedAbstrNum)
 	{
 		var oDocument = private_GetLogicDocument();
-		var oAbstractNum = new CAbstractNum();
+		var oAbstractNum = new AscCommonWord.CAbstractNum();
 		var oTempLvl;
 
 		for (var nLvl = 0; nLvl < oParsedAbstrNum["lvl"].length; nLvl++)
@@ -11985,64 +12003,64 @@
 				switch (oParsedEff["prst"])
 				{
 					case "shdw1":
-						nPrstType = c_oAscPresetShadowVal.shdw1;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw1;
 						break;
 					case "shdw2":
-						nPrstType = c_oAscPresetShadowVal.shdw2;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw2;
 						break;
 					case "shdw3":
-						nPrstType = c_oAscPresetShadowVal.shdw3;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw3;
 						break;
 					case "shdw4":
-						nPrstType = c_oAscPresetShadowVal.shdw4;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw4;
 						break;
 					case "shdw5":
-						nPrstType = c_oAscPresetShadowVal.shdw5;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw5;
 						break;
 					case "shdw6":
-						nPrstType = c_oAscPresetShadowVal.shdw6;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw6;
 						break;
 					case "shdw7":
-						nPrstType = c_oAscPresetShadowVal.shdw7;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw7;
 						break;
 					case "shdw8":
-						nPrstType = c_oAscPresetShadowVal.shdw8;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw8;
 						break;
 					case "shdw9":
-						nPrstType = c_oAscPresetShadowVal.shdw9;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw9;
 						break;
 					case "shdw10":
-						nPrstType = c_oAscPresetShadowVal.shdw10;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw10;
 						break;
 					case "shdw11":
-						nPrstType = c_oAscPresetShadowVal.shdw11;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw11;
 						break;
 					case "shdw12":
-						nPrstType = c_oAscPresetShadowVal.shdw12;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw12;
 						break;
 					case "shdw13":
-						nPrstType = c_oAscPresetShadowVal.shdw13;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw13;
 						break;
 					case "shdw14":
-						nPrstType = c_oAscPresetShadowVal.shdw14;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw14;
 						break;
 					case "shdw15":
-						nPrstType = c_oAscPresetShadowVal.shdw15;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw15;
 						break;
 					case "shdw16":
-						nPrstType = c_oAscPresetShadowVal.shdw16;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw16;
 						break;
 					case "shdw17":
-						nPrstType = c_oAscPresetShadowVal.shdw17;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw17;
 						break;
 					case "shdw18":
-						nPrstType = c_oAscPresetShadowVal.shdw18;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw18;
 						break;
 					case "shdw19":
-						nPrstType = c_oAscPresetShadowVal.shdw19;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw19;
 						break;
 					case "shdw20":
-						nPrstType = c_oAscPresetShadowVal.shdw20;
+						nPrstType = Asc.c_oAscPresetShadowVal.shdw20;
 						break;
 				}
 
@@ -12170,7 +12188,7 @@
 	ReaderFromJSON.prototype.StyleFromJSON = function(oParsedStyle)
 	{
 		var sStyleName       = oParsedStyle["name"];
-		var nNextId          = oParsedStyle["next"];
+		var nNextId          = oParsedStyle["next"] != undefined ? oParsedStyle["next"] : null;
 		var nStyleType       = styletype_Paragraph;
 		var bNoCreateTablePr = !oParsedStyle["tblStylePr"];
 		var nBasedOnId       = oParsedStyle["basedOn"];
@@ -12191,8 +12209,7 @@
 				break;
 		}
 		var oStyle = new CStyle(sStyleName, nBasedOnId, nNextId, nStyleType, bNoCreateTablePr);
-		this.RestoredStylesMap[oParsedStyle.styleId] = oStyle;
-
+		
 		oParsedStyle["link"] != undefined && oStyle.SetLink(oParsedStyle["link"]);
 		oParsedStyle["customStyle"] != undefined && oStyle.SetCustom(oParsedStyle["customStyle"]);
 		oParsedStyle["qFormat"] != undefined && oStyle.SetQFormat(oParsedStyle["qFormat"]);
@@ -12243,6 +12260,8 @@
 			}
 		}
 
+		this.RestoredStylesMap[oParsedStyle["styleId"]] = oStyle;
+		
 		return oStyle;
 	};
 	ReaderFromJSON.prototype.TableStylePrFromJSON = function(oParsedPr)
@@ -13838,7 +13857,7 @@
 			oItem["cat"] && oBarSeries.setCat(this.CatFromJSON(oItem["cat"], oBarSeries));
 			oItem["dLbls"] && oBarSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oBarSeries));
 			this.DataPointsFromJSON(oItem["dPt"], oBarSeries);
-			oItem["errBars"] && oBarSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oBarSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oBarSeries.setIdx(oItem["idx"]);
 			oBarSeries.setInvertIfNegative(oItem["invertIfNegative"]);
 			oBarSeries.setOrder(oItem["order"]);
@@ -13897,7 +13916,7 @@
 			oItem["cat"] && oLineSeries.setCat(this.CatFromJSON(oItem["cat"], oLineSeries));
 			oItem["dLbls"] && oLineSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oLineSeries));
 			this.DataPointsFromJSON(oItem["dPt"], oLineSeries);
-			oItem["errBars"] && oLineSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oLineSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oLineSeries.setIdx(oItem["idx"]);
 			oItem["marker"] && oLineSeries.setMarker(this.MarkerFromJSON(oItem["marker"], oLineSeries));
 			oLineSeries.setOrder(oItem["order"]);
@@ -13998,7 +14017,7 @@
 			oItem["cat"] && oAreaSeries.setCat(this.CatFromJSON(oItem["cat"], oAreaSeries));
 			oItem["dLbls"] && oAreaSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"]));
 			this.DataPointsFromJSON(oItem["dPt"], oAreaSeries);
-			oItem["errBars"] && oAreaSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oAreaSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oAreaSeries.setIdx(oItem["idx"]);
 			oAreaSeries.setOrder(oItem["order"]);
 			oItem["pictureOptions"] && oAreaSeries.setPictureOptions(this.PicOptionsFromJSON(oItem["pictureOptions"]));
@@ -14099,7 +14118,7 @@
 			
 			oItem["dLbls"] && oScatterSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"]));
 			this.DataPointsFromJSON(oItem["dPt"], oScatterSeries);
-			oItem["errBars"] && oScatterSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oScatterSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oScatterSeries.setIdx(oItem["idx"]);
 			oItem["marker"] && oScatterSeries.setMarker(this.MarkerFromJSON(oItem["marker"], oScatterSeries));
 			oScatterSeries.setOrder(oItem["order"]);
@@ -14189,7 +14208,7 @@
 			oBubbleSeries.setBubbleSize(this.YVALFromJSON(oItem["bubbleSize"], oBubbleSeries));
 			oItem["dLbls"] && oBubbleSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oBubbleSeries));
 			this.DataPointsFromJSON(oItem["dPt"], oBubbleSeries);
-			oItem["errBars"] && oBubbleSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oBubbleSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oBubbleSeries.setIdx(oItem["idx"]);
 			oBubbleSeries.setInvertIfNegative(oItem["invertIfNegative"]);
 			oBubbleSeries.setOrder(oItem["order"]);
@@ -14323,56 +14342,64 @@
 
 		return oTrendLine;
 	};
-	ReaderFromJSON.prototype.ErrBarsFromJSON = function(oParsedErrBars)
+	ReaderFromJSON.prototype.ErrBarsFromJSON = function(aParsedErrBars)
 	{
-		var oErrBars = new AscFormat.CErrBars();
-
-		var nErrBarType = undefined;
-		switch(oParsedErrBars["errBarType"])
+		let aErrBars = [];
+		if(!Array.isArray(aParsedErrBars))
 		{
-			case "both":
-				nErrBarType = AscFormat.st_errbartypeBOTH;
-				break;
-			case "minus":
-				nErrBarType = AscFormat.st_errbartypeMINUS;
-				break;
-			case "plus":
-				nErrBarType = AscFormat.st_errbartypePLUS;
-				break;
+			return aErrBars;
 		}
-
-		var nErrDir = oParsedErrBars["errDir"] === "x" ? AscFormat.st_errdirX : AscFormat.st_errdirY;
-
-		var nErrValType = undefined;
-		switch(oParsedErrBars["errValType"])
+		for(let nErrB = 0; nErrB < aParsedErrBars.length; ++nErrB)
 		{
-			case "cust":
-				nErrValType = AscFormat.st_errvaltypeCUST;
-				break;
-			case "fixedVal":
-				nErrValType = AscFormat.st_errvaltypeFIXEDVAL;
-				break;
-			case "percentage":
-				nErrValType = AscFormat.st_errvaltypePERCENTAGE;
-				break;
-			case "stdDev":
-				nErrValType = AscFormat.st_errvaltypeSTDDEV;
-				break;
-			case "stdErr":
-				nErrValType = AscFormat.st_errvaltypeSTDERR;
-				break;
+			let oParsedErrBars = aParsedErrBars[nErrB];
+			var oErrBars = new AscFormat.CErrBars();
+			var nErrBarType = undefined;
+			switch(oParsedErrBars["errBarType"])
+			{
+				case "both":
+					nErrBarType = AscFormat.st_errbartypeBOTH;
+					break;
+				case "minus":
+					nErrBarType = AscFormat.st_errbartypeMINUS;
+					break;
+				case "plus":
+					nErrBarType = AscFormat.st_errbartypePLUS;
+					break;
+			}
+			var nErrDir = oParsedErrBars["errDir"] === "x" ? AscFormat.st_errdirX : AscFormat.st_errdirY;
+
+			var nErrValType = undefined;
+			switch(oParsedErrBars["errValType"])
+			{
+				case "cust":
+					nErrValType = AscFormat.st_errvaltypeCUST;
+					break;
+				case "fixedVal":
+					nErrValType = AscFormat.st_errvaltypeFIXEDVAL;
+					break;
+				case "percentage":
+					nErrValType = AscFormat.st_errvaltypePERCENTAGE;
+					break;
+				case "stdDev":
+					nErrValType = AscFormat.st_errvaltypeSTDDEV;
+					break;
+				case "stdErr":
+					nErrValType = AscFormat.st_errvaltypeSTDERR;
+					break;
+			}
+
+			oErrBars.setErrBarType(nErrBarType);
+			oErrBars.setErrDir(nErrDir);
+			oErrBars.setErrValType(nErrValType);
+			oParsedErrBars["minus"] && oErrBars.setMinus(this.MinusPlusFromJSON(oParsedErrBars["minus"]));
+			oParsedErrBars["plus"] && oErrBars.setPlus(this.MinusPlusFromJSON(oParsedErrBars["plus"]));
+			oErrBars.setNoEndCap(oParsedErrBars["noEndCap"]);
+			oParsedErrBars["spPr"] && oErrBars.setSpPr(this.SpPrFromJSON(oParsedErrBars["spPr"], oErrBars));
+			oErrBars.setVal(oParsedErrBars["val"]);
+
+			aErrBars.push(oErrBars);
 		}
-
-		oErrBars.setErrBarType(nErrBarType);
-		oErrBars.setErrDir(nErrDir);
-		oErrBars.setErrValType(nErrValType);
-		oParsedErrBars["minus"] && oErrBars.setMinus(this.MinusPlusFromJSON(oParsedErrBars["minus"]));
-		oParsedErrBars["plus"] && oErrBars.setPlus(this.MinusPlusFromJSON(oParsedErrBars["plus"]));
-		oErrBars.setNoEndCap(oParsedErrBars["noEndCap"]);
-		oParsedErrBars["spPr"] && oErrBars.setSpPr(this.SpPrFromJSON(oParsedErrBars["spPr"], oErrBars));
-		oErrBars.setVal(oParsedErrBars["val"]);
-
-		return oErrBars;
+		return aErrBars;
 	};
 	ReaderFromJSON.prototype.MinusPlusFromJSON = function(oParsedMinusPlus)
 	{
@@ -16225,7 +16252,7 @@
 		}
 	};
 
-	AscWord.CNumberingLvl.prototype.ToJson = function(nLvl)
+	AscWord.CNumberingLvl.prototype.ToJson = function(nLvl, oPr)
 	{
 		let oResult = {};
 
@@ -16285,10 +16312,10 @@
 		}
 
 		if (this.ParaPr && !this.ParaPr.IsEmpty())
-			oResult["pPr"] = WriterToJSON.prototype.SerParaPr(this.ParaPr);
+			oResult["pPr"] = WriterToJSON.prototype.SerParaPr(this.ParaPr, oPr);
 
 		if (this.TextPr && !this.TextPr.IsEmpty())
-			oResult["rPr"] = WriterToJSON.prototype.SerTextPr(this.TextPr); 
+			oResult["rPr"] = WriterToJSON.prototype.SerTextPr(this.TextPr, oPr);
 
 		if (undefined !== this.Restart && null !== this.Restart && -1 !== this.Restart)
 			oResult["restart"] = this.Restart;
@@ -16381,8 +16408,9 @@
 		numLvl.FromJson(json);
 		return numLvl;
 	};
-	AscWord.CParaPr.prototype.ToJson = function(bFromDocument)
+	AscWord.CParaPr.prototype.ToJson = function(bFromDocument, oPr)
 	{
+		oPr = oPr || {};
 		var oResult = {};
 		if (bFromDocument === false)
 		{
@@ -16491,7 +16519,7 @@
 			if (this.FramePr != null)
 				oResult["framePr"] = WriterToJSON.prototype.SerFramePr(this.FramePr);
 
-			if (this.Ind && !this.Ind.IsEmpty())
+			if (this.Ind && !this.Ind.IsEmpty() && !oPr.isSingleLvlPresetJSON)
 				oResult["ind"] = WriterToJSON.prototype.SerParaInd(this.Ind);
 
 			if (sJc != null)
@@ -16724,8 +16752,9 @@
 		paraPr.FromJson(json, bFromDocument);
 		return paraPr;
 	};
-	AscWord.CTextPr.prototype.ToJson = function(bFromDocument)
+	AscWord.CTextPr.prototype.ToJson = function(bFromDocument, oPr)
 	{
+		oPr = oPr || {};
 		let oResult = {};
 		if (bFromDocument === false)
 		{
@@ -16834,13 +16863,13 @@
 				oResult["color"] = {};
 
 				if (this.Color.Auto != null)
-					oResult["auto"] = this.Color.Auto;
+					oResult["color"]["auto"] = this.Color.Auto;
 				if (this.Color.r != null)
-					oResult["r"] = this.Color.r;
+					oResult["color"]["r"] = this.Color.r;
 				if (this.Color.g != null)
-					oResult["g"] = this.Color.g;
+					oResult["color"]["g"] = this.Color.g;
 				if (this.Color.b != null)
-					oResult["b"] = this.Color.b;
+					oResult["color"]["b"] = this.Color.b;
 			}
 
 			if (this.CS != null)
@@ -16928,11 +16957,14 @@
 			if (this.Spacing != null)
 				oResult["spacing"] = private_MM2Twips(this.Spacing);	
 			if (this.Strikeout != null)
-				oResult["strike"] = this.Strikeout;	
-			if (this.FontSize != null)
-				oResult["sz"] = 2.0 * this.FontSize;	
-			if (this.FontSizeCS != null)
-				oResult["szCs"] = 2.0 * this.FontSizeCS;	
+				oResult["strike"] = this.Strikeout;
+			if (!oPr.isSingleLvlPresetJSON)
+			{
+				if (this.FontSize != null)
+					oResult["sz"] = 2.0 * this.FontSize;
+				if (this.FontSizeCS != null)
+					oResult["szCs"] = 2.0 * this.FontSizeCS;
+			}
 			if (this.Underline != null)
 				oResult["u"] = this.Underline;	
 			if (this.Vanish != null)
@@ -17084,7 +17116,7 @@
 				this.BoldCS = oParsedJson["bCs"];
 			if (oParsedJson["caps"] != null)
 				this.Caps = oParsedJson["caps"];
-			if (oParsedJson["color"] != null)
+			if (oParsedJson["color"] != null && typeof(oParsedJson["color"]["r"]) == "number" && typeof(oParsedJson["color"]["g"]) == "number" && typeof(oParsedJson["color"]["b"]) == "number")
 				this.Color = new AscCommonWord.CDocumentColor(oParsedJson["color"]["r"], oParsedJson["color"]["g"], oParsedJson["color"]["b"], oParsedJson["color"]["auto"]);
 			if (oParsedJson["cs"] != null)
 				this.CS = oParsedJson["cs"];
@@ -20859,19 +20891,19 @@
 		var sBlendType = undefined;
 		switch (nVal)
 		{
-			case c_oAscBlendModeType.Darken:
+			case Asc.c_oAscBlendModeType.Darken:
 				sBlendType = "darken";
 				break;
-			case c_oAscBlendModeType.Lighten:
+			case Asc.c_oAscBlendModeType.Lighten:
 				sBlendType = "lighten";
 				break;
-			case c_oAscBlendModeType.Mult:
+			case Asc.c_oAscBlendModeType.Mult:
 				sBlendType = "mult";
 				break;
-			case c_oAscBlendModeType.Over:
+			case Asc.c_oAscBlendModeType.Over:
 				sBlendType = "over";
 				break;
-			case c_oAscBlendModeType.Screen:
+			case Asc.c_oAscBlendModeType.Screen:
 				sBlendType = "screen";
 				break;
 		}
@@ -20884,19 +20916,19 @@
 		switch (sVal)
 		{
 			case "darken":
-				nBlendType = c_oAscBlendModeType.Darken;
+				nBlendType = Asc.c_oAscBlendModeType.Darken;
 				break;
 			case "lighten":
-				nBlendType = c_oAscBlendModeType.Lighten;
+				nBlendType = Asc.c_oAscBlendModeType.Lighten;
 				break;
 			case "mult":
-				nBlendType = c_oAscBlendModeType.Mult;
+				nBlendType = Asc.c_oAscBlendModeType.Mult;
 				break;
 			case "over":
-				nBlendType = c_oAscBlendModeType.Over;
+				nBlendType = Asc.c_oAscBlendModeType.Over;
 				break;
 			case "screen":
-				nBlendType = c_oAscBlendModeType.Screen;
+				nBlendType = Asc.c_oAscBlendModeType.Screen;
 				break;
 		}
 
@@ -21096,6 +21128,18 @@
 			case Asc.c_oAscNumberingFormat.VietnameseCounting:
 				sVal = "vietnameseCounting";
 				break;
+			case Asc.c_oAscNumberingFormat.CustomGreece:
+				sVal = "customGreece";
+				break;
+			case Asc.c_oAscNumberingFormat.CustomDecimalFourZero:
+				sVal = "customDecimalFourZero";
+				break;
+			case Asc.c_oAscNumberingFormat.CustomDecimalThreeZero:
+				sVal = "customDecimalThreeZero";
+				break;
+			case Asc.c_oAscNumberingFormat.CustomDecimalTwoZero:
+				sVal = "customDecimalTwoZero";
+				break;
 		}
 
 		return sVal;
@@ -21293,6 +21337,18 @@
 				break;
 			case "vietnameseCounting":
 				nVal = Asc.c_oAscNumberingFormat.VietnameseCounting;
+				break;
+			case "customGreece":
+				nVal = Asc.c_oAscNumberingFormat.CustomGreece;
+				break;
+			case "customDecimalFourZero":
+				nVal = Asc.c_oAscNumberingFormat.CustomDecimalFourZero;
+				break;
+			case "customDecimalThreeZero":
+				nVal = Asc.c_oAscNumberingFormat.CustomDecimalThreeZero;
+				break;
+			case "customDecimalTwoZero":
+				nVal = Asc.c_oAscNumberingFormat.CustomDecimalTwoZero;
 				break;
 		}
 
@@ -21988,7 +22044,7 @@
 	}
 
     //----------------------------------------------------------export----------------------------------------------------
-	window['AscJsonConverter'] = window['AscJsonConverter'] || {};
+	window['AscJsonConverter'] = window.AscJsonConverter = window['AscJsonConverter'] || {};
 	window['AscJsonConverter'].WriterToJSON   = WriterToJSON;
 	window['AscJsonConverter'].ReaderFromJSON = ReaderFromJSON;
 	

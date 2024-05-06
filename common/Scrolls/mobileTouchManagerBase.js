@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -110,6 +110,8 @@
 	{
 		this.Manager = _manager;
 		this.Api = _manager.Api;
+
+		this.useDelayZoom = true;
 	}
 
 	CMobileDelegateSimple.prototype.Init = function()
@@ -266,7 +268,12 @@
 	};
 	CMobileDelegateEditor.prototype.SetZoom = function(_value)
 	{
-		this.HtmlPage.m_oApi.zoom(_value);
+		if (!this.useDelayZoom)
+			return this.HtmlPage.m_oApi.zoom(_value);
+
+		AscCommon.PaintMessageLoop.prototype.delayRun(this, function(){
+			this.HtmlPage.m_oApi.zoom(_value);
+		});
 	};
 	CMobileDelegateEditor.prototype.GetObjectTrack = function(x, y, page, bSelected, bText)
 	{
@@ -282,13 +289,13 @@
 		var selectionBounds = this.LogicDocument.GetSelectionBounds();
 		var eps = 0.0001;
 		if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
-			(Math.abs(selectionBounds.Start.W) > eps) &&
-			(Math.abs(selectionBounds.End.W) > eps))
+			((Math.abs(selectionBounds.Start.W) > eps) || (Math.abs(selectionBounds.End.W) > eps) || Math.abs(selectionBounds.Start.X - selectionBounds.End.X) > eps) ||
+			this.LogicDocument.IsNumberingSelection())
 		{
             _mode = AscCommon.MobileTouchContextMenuType.Select;
         }
 
-		if (_mode == 0 && this.LogicDocument.DrawingObjects.getSelectedObjectsBounds())
+		if (_mode === 0 && this.LogicDocument.DrawingObjects.getSelectedObjectsBounds())
 			_mode = AscCommon.MobileTouchContextMenuType.Object;
 
 		return _mode;
@@ -512,7 +519,7 @@
 	};
 	CMobileDelegateEditor.prototype.GetScrollerOffset = function()
 	{
-		return { W : 0, H : this.HtmlPage.offsetTop };
+		return { W : 0, H : (this.HtmlPage.offsetTop === undefined) ? 0 : this.HtmlPage.offsetTop };
 	};
 	CMobileDelegateEditor.prototype.ScrollTo = function(_scroll)
 	{

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -296,17 +296,17 @@
 
     /**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * * **"none"** - not display the selected tick labels.
-     * * **"nextTo"** - set the position of the selected tick labels next to the main label.
-     * * **"low"** - set the position of the selected tick labels in the part of the chart with lower values.
-     * * **"high"** - set the position of the selected tick labels in the part of the chart with higher values.
+     * * <b>"none"</b> - not display the selected tick labels.
+     * * <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
+     * * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
+     * * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
      * **/
 
     /**
      * The type of a fill which uses an image as a background.
-     * * **"tile"** - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * * **"stretch"** - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     * * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
      * */
 
@@ -729,7 +729,7 @@
      */
     Api.prototype.CreateParagraph = function()
     {
-        return this.private_CreateApiParagraph(new Paragraph(private_GetDrawingDocument(), null, true));
+        return this.private_CreateApiParagraph(new AscWord.Paragraph(null, true));
     };
 
     /**
@@ -885,7 +885,7 @@
 	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
 	 * @memberof Api
 	 * @param {JSON} sMessage - The JSON object to convert.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CPE"]
 	 */
 	Api.prototype.FromJSON = function(sMessage)
 	{
@@ -925,7 +925,7 @@
                 oCPres.attrAutoCompressPictures = oParsedObj["autoCompressPictures"];
                 oCPres.attrBookmarkIdSeed = oParsedObj["bookmarkIdSeed"];
                 oCPres.attrCompatMode = oParsedObj["compatMode"];
-                oCPres.attrConformance = oParsedObj["conformance"] === "strict" ? c_oAscConformanceType.Strict : c_oAscConformanceType.Transitional;
+                oCPres.attrConformance = oParsedObj["conformance"] === "strict" ? Asc.c_oAscConformanceType.Strict : Asc.c_oAscConformanceType.Transitional;
                 oCPres.attrEmbedTrueTypeFonts = oParsedObj["embedTrueTypeFonts"];
                 oCPres.attrFirstSlideNum = oParsedObj["firstSlideNum"];
                 oCPres.attrRemovePersonalInfoOnSave = oParsedObj["removePersonalInfoOnSave"];
@@ -1034,6 +1034,7 @@
 
     /**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
+     * @function
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
@@ -1043,6 +1044,7 @@
 
 	/**
 	 * Unsubscribes from the specified event.
+     * @function
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
@@ -1285,7 +1287,7 @@
      */
      ApiPresentation.prototype.GetWidth = function() {
         if(this.Presentation){
-            this.Presentation.GetWidthEMU();
+            return this.Presentation.GetWidthEMU();
         }
     };
 
@@ -1297,7 +1299,7 @@
      */
     ApiPresentation.prototype.GetHeight = function() {
         if(this.Presentation){
-            this.Presentation.GetHeightEMU();
+            return this.Presentation.GetHeightEMU();
         }
     };
 
@@ -1358,7 +1360,105 @@
         }
     };
 
-    //------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns all comments from the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiComment[]}
+	 */
+	ApiPresentation.prototype.GetAllComments = function()
+	{
+		let aCommentsData = this.Presentation.GetAllComments();
+		let aApiComments = [];
+		for(let nComment = 0; nComment < aCommentsData.length; ++nComment) {
+			aApiComments.push(private_GetApi().private_CreateApiComment(aCommentsData[nComment].comment));
+		}
+		return aApiComments;
+	};
+
+	/**
+	 * Returns the document information:
+	 * * <b>Application</b> - the application the document has been created with.
+	 * * <b>CreatedRaw</b> - the date and time when the file was created.
+	 * * <b>Created</b> - the parsed date and time when the file was created.
+	 * * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * * <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * * <b>Autrors</b> - the persons who has created the file.
+	 * * <b>Title</b> - this property allows you to simplify your documents classification.
+	 * * <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * * <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {object}
+	 */
+	ApiPresentation.prototype.GetDocumentInfo = function()
+	{
+		const oDocInfo = {
+			Application: '',
+			CreatedRaw: null,
+			Created: '',
+			LastModifiedRaw: null,
+			LastModified: '',
+			LastModifiedBy: '',
+			Autrors: [],
+			Title: '',
+			Tags: '',
+			Subject: '',
+			Comment: ''
+		};
+		const api = this.Presentation.Api;
+
+		let props = (api) ? api.asc_getAppProps() : null;
+		oDocInfo.Application = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
+
+		let langCode = 1033; // en-US
+		let langName = 'en-us';
+		if (api.asc_getLocale) {
+			langName = api.asc_getLocale().replace('_', '-').toLowerCase();
+		} else if (this.Presentation.GetDefaultLanguage && window['Common']) {
+			langCode = this.Presentation.GetDefaultLanguage();
+			langName = window['Common']['util']['LanguageInfo']['getLocalLanguageName'](langCode)[0].toLowerCase();
+
+		}
+
+		props = api.asc_getCoreProps();
+		oDocInfo.CreatedRaw = props.asc_getCreated();
+		oDocInfo.LastModifiedRaw = props.asc_getModified();
+
+		try {
+			if (oDocInfo.CreatedRaw)
+				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' +oDocInfo. CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			
+			if (oDocInfo.LastModifiedRaw)
+				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+		} catch (e) {
+			langName = 'en';
+			if (oDocInfo.CreatedRaw)
+				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+
+			if (oDocInfo.LastModifiedRaw)
+				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+		}
+
+		const LastModifiedBy = props.asc_getLastModifiedBy();
+		oDocInfo.LastModifiedBy = AscCommon.UserInfoParser.getParsedName(LastModifiedBy);
+
+		oDocInfo.Title = (props.asc_getTitle() || '');
+		oDocInfo.Tags = (props.asc_getKeywords() || '');
+		oDocInfo.Subject = (props.asc_getSubject() || '');
+		oDocInfo.Comment = (props.asc_getDescription() || '');
+
+		const authors = props.asc_getCreator();
+		if (authors)
+			oDocInfo.Autrors = authors.split(/\s*[,;]\s*/);
+
+		return oDocInfo;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiMaster
     //
@@ -2664,6 +2764,35 @@
             bg.bgPr.Fill = oApiFill.UniFill;
             this.Slide.changeBackground(bg);
             this.Slide.recalculateBackground();
+            return true;
+        }
+        return false;
+    };
+
+
+    /**
+     * Returns the visibility of the current presentation slide.
+     * @memberOf ApiSlide
+     * @typeofeditors ["CPE"]
+     * @returns {boolean}
+     * */
+    ApiSlide.prototype.GetVisible = function(){
+        if(this.Slide){
+            return this.Slide.isVisible();
+        }
+        return false;
+    };
+
+    /**
+     * Sets the visibility to the current presentation slide.
+     * @memberOf ApiSlide
+     * @typeofeditors ["CPE"]
+     * @param {boolean} value - Slide visibility.
+     * @returns {boolean}
+     * */
+    ApiSlide.prototype.SetVisible = function(value){
+        if(this.Slide){
+            this.Slide.setShow(value);
             return true;
         }
         return false;
@@ -4851,6 +4980,8 @@
     ApiPresentation.prototype["SetLanguage"]              = ApiPresentation.prototype.SetLanguage;
     ApiPresentation.prototype["GetWidth"]                 = ApiPresentation.prototype.GetWidth;
     ApiPresentation.prototype["GetHeight"]                = ApiPresentation.prototype.GetHeight;
+    ApiPresentation.prototype["GetAllComments"]           = ApiPresentation.prototype.GetAllComments;
+    ApiPresentation.prototype["GetDocumentInfo"]          = ApiPresentation.prototype.GetDocumentInfo;
 
     ApiPresentation.prototype["SlidesToJSON"]             = ApiPresentation.prototype.SlidesToJSON;
     ApiPresentation.prototype["ToJSON"]                   = ApiPresentation.prototype.ToJSON;
@@ -4933,6 +5064,8 @@
     ApiSlide.prototype["AddObject"]                       = ApiSlide.prototype.AddObject;
     ApiSlide.prototype["RemoveObject"]                    = ApiSlide.prototype.RemoveObject;
     ApiSlide.prototype["SetBackground"]                   = ApiSlide.prototype.SetBackground;
+    ApiSlide.prototype["GetVisible"]                      = ApiSlide.prototype.GetVisible;
+    ApiSlide.prototype["SetVisible"]                      = ApiSlide.prototype.SetVisible;
     ApiSlide.prototype["GetWidth"]                        = ApiSlide.prototype.GetWidth;
     ApiSlide.prototype["GetHeight"]                       = ApiSlide.prototype.GetHeight;
     ApiSlide.prototype["ApplyLayout"]                     = ApiSlide.prototype.ApplyLayout;

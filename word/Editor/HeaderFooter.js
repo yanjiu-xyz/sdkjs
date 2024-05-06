@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -739,9 +739,9 @@ CHeaderFooter.prototype =
 		this.Content.AddNewParagraph();
 	},
 
-	AddInlineImage : function(W, H, Img, Chart, bFlow)
+	AddInlineImage : function(W, H, Img, GraphicObject, bFlow)
     {
-        this.Content.AddInlineImage(W,H,Img, Chart, bFlow);
+        this.Content.AddInlineImage(W,H,Img, GraphicObject, bFlow);
     },
 	AddImages : function(aImages)
     {
@@ -754,7 +754,7 @@ CHeaderFooter.prototype =
 
 	AddOleObject : function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
     {
-        this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+        return this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
     },
 
 	AddTextArt : function(nStyle)
@@ -782,9 +782,9 @@ CHeaderFooter.prototype =
 		this.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
 	},
 
-	PasteFormatting : function(TextPr, ParaPr, ApplyPara)
+	PasteFormatting : function(oData)
 	{
-		this.Content.PasteFormatting(TextPr, ParaPr, ApplyPara);
+		this.Content.PasteFormatting(oData);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
@@ -975,7 +975,7 @@ CHeaderFooter.prototype =
 
 	GetCalculatedTextPr : function()
 	{
-		return this.Content.GetCalculatedTextPr();
+		return this.Content.GetCalculatedTextPr(true);
 	},
 
 	GetDirectTextPr : function()
@@ -1030,16 +1030,20 @@ CHeaderFooter.prototype =
     {
         this.Set_Page( PageIndex );
 
-        if ( true === editor.isStartAddShape )
+        if (editor.isStartAddShape || editor.isInkDrawerOn())
         {
             this.Content.SetDocPosType(docpostype_DrawingObjects);
             this.Content.Selection.Use   = true;
             this.Content.Selection.Start = true;
 
-            if ( true != this.LogicDocument.DrawingObjects.isPolylineAddition() )
-                this.LogicDocument.DrawingObjects.startAddShape( editor.addShapePreset );
+			let oDrawingObjects = this.LogicDocument.DrawingObjects;
+			if(true === editor.isStartAddShape)
+			{
+				if(!oDrawingObjects.isPolylineAddition())
+					oDrawingObjects.startAddShape(editor.addShapePreset);
 
-            this.LogicDocument.DrawingObjects.OnMouseDown(MouseEvent, X, Y, PageIndex);
+			}
+	        oDrawingObjects.OnMouseDown(MouseEvent, X, Y, PageIndex);
         }
         else
 		{
@@ -1232,7 +1236,7 @@ CHeaderFooter.prototype =
 //-----------------------------------------------------------------------------------
 	AddHyperlink : function(HyperProps)
 	{
-		this.Content.AddHyperlink(HyperProps);
+		return this.Content.AddHyperlink(HyperProps);
 	},
 
 	ModifyHyperlink : function(HyperProps)
@@ -1427,7 +1431,7 @@ CHeaderFooter.prototype.FindWatermark = function()
             }
             else
             {
-                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || ComparisonByZIndexSimple(oDrawing, oCandidate))
+                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || (typeof ComparisonByZIndexSimple !== undefined && ComparisonByZIndexSimple(oDrawing, oCandidate)))
                 {
                     oCandidate = oDrawing;
                 }
@@ -1626,18 +1630,18 @@ CHeaderFooterController.prototype =
         else
             return null;
     },
-
-    Set_CurHdrFtr_ById : function(Id)
-    {
-        var HdrFtr = AscCommon.g_oTableId.Get_ById( Id );
-        if ( -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr( HdrFtr ) )
-            return false;
-        
-        this.CurHdrFtr = HdrFtr;
-        HdrFtr.Content.MoveCursorToStartPos();
-              
-        return true;
-    },
+	
+	Set_CurHdrFtr_ById : function(Id)
+	{
+		let HdrFtr = AscCommon.g_oTableId.GetById(Id);
+		if (!HdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
+			return false;
+		
+		this.CurHdrFtr = HdrFtr;
+		HdrFtr.Content.MoveCursorToStartPos();
+		
+		return true;
+	},
 //-----------------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------------   
@@ -1651,15 +1655,17 @@ CHeaderFooterController.prototype =
 
     Recalculate : function(PageIndex)
     {
+		let logicDocument = this.LogicDocument;
+		
         // Определим четность страницы и является ли она первой в данной секции. Заметим, что четность страницы 
         // отсчитывается от начала текущей секции и не зависит от настроек нумерации страниц для данной секции.
-        var SectionPageInfo = this.LogicDocument.Get_SectionPageNumInfo( PageIndex );
+        var SectionPageInfo = logicDocument.Get_SectionPageNumInfo( PageIndex );
         
         var bFirst = SectionPageInfo.bFirst;
         var bEven  = SectionPageInfo.bEven;
         
         // Запросим нужный нам колонтитул 
-        var HdrFtr = this.LogicDocument.Get_SectionHdrFtr( PageIndex, bFirst, bEven );
+        var HdrFtr = logicDocument.Get_SectionHdrFtr( PageIndex, bFirst, bEven );
         
         var Header = HdrFtr.Header;
         var Footer = HdrFtr.Footer;
@@ -1672,8 +1678,12 @@ CHeaderFooterController.prototype =
         var oFrame = SectPr.GetContentFrame(PageIndex);
         var X      = oFrame.Left;
         var XLimit = oFrame.Right;
-
-        var bRecalcHeader = false;
+		
+		let maxContentH = SectPr.GetPageHeight() / 2;
+		if (logicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
+			maxContentH = AscWord.MAX_MM_VALUE;
+		
+		var bRecalcHeader = false;
 
         var HeaderDrawings, HeaderTables, FooterDrawings, FooterTables;
         // Рассчитываем верхний колонтитул
@@ -1682,7 +1692,7 @@ CHeaderFooterController.prototype =
             if ( true === Header.Is_NeedRecalculate( PageIndex ) )
             {
                 var Y      = SectPr.GetPageMarginHeader();
-                var YLimit = SectPr.GetPageHeight() / 2;
+                var YLimit = Y + maxContentH;
 
                 Header.Reset( X, Y, XLimit, YLimit );
                 bRecalcHeader = Header.Recalculate(PageIndex, SectPr);
@@ -1706,16 +1716,13 @@ CHeaderFooterController.prototype =
                 // Нижний колонтитул рассчитываем 2 раза. Сначала, с 0 позиции, чтобы рассчитать суммарную высоту колонитула.
                 // Исходя из уже известной высоты располагаем и рассчитываем колонтитул.
 
-                var Y      = 0;
-                var YLimit = SectPr.GetPageHeight();
-
-                Footer.Reset( X, Y, XLimit, YLimit );
+                Footer.Reset( X, 0, XLimit, maxContentH );
                 Footer.RecalculateContent(PageIndex);
 
-                var SummaryHeight = Footer.Content.GetSummaryHeight();
-                Y = Math.max( 2 * YLimit / 3, YLimit - SectPr.GetPageMarginFooter() - SummaryHeight );
+				let contentBounds = Footer.Content.GetPageBounds(0);
+                let Y = Math.max(0, SectPr.GetPageHeight() - SectPr.GetPageMarginFooter() - (contentBounds.Bottom - contentBounds.Top));
 
-                Footer.Reset( X, Y, XLimit, YLimit );
+                Footer.Reset( X, Y, XLimit, Y + maxContentH );
                 bRecalcFooter = Footer.Recalculate(PageIndex, SectPr);
             }
             else
@@ -1977,11 +1984,8 @@ CHeaderFooterController.prototype =
 
 	IsUseInDocument : function(Id)
 	{
-		var HdrFtr = AscCommon.g_oTableId.Get_ById(Id);
-		if (-1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
-			return false;
-
-		return true;
+		let hdrFtr = AscCommon.g_oTableId.GetById(Id);
+		return !(!hdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(hdrFtr));
 	},
 
     Check_Page : function(HdrFtr, PageIndex)
@@ -2031,10 +2035,10 @@ CHeaderFooterController.prototype =
 			return this.CurHdrFtr.AddNewParagraph();
 	},
 
-	AddInlineImage : function(W, H, Img, Chart, bFlow)
+	AddInlineImage : function(W, H, Img, GraphicObject, bFlow)
     {
         if ( null != this.CurHdrFtr )
-            return this.CurHdrFtr.AddInlineImage(W,H,Img, Chart, bFlow);
+            return this.CurHdrFtr.AddInlineImage(W,H,Img, GraphicObject, bFlow);
     },
 	AddImages : function(aImages)
     {
@@ -2088,10 +2092,10 @@ CHeaderFooterController.prototype =
 			return this.CurHdrFtr.ClearParagraphFormatting();
 	},
 
-	PasteFormatting : function(TextPr, ParaPr, ApplyPara)
+	PasteFormatting : function(oData)
 	{
 		if (null != this.CurHdrFtr)
-			return this.CurHdrFtr.PasteFormatting(TextPr, ParaPr, ApplyPara);
+			return this.CurHdrFtr.PasteFormatting(oData);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
@@ -2334,7 +2338,7 @@ CHeaderFooterController.prototype =
 
         var PageMetrics = this.LogicDocument.Get_PageContentStartPos( PageIndex );
         
-        if ( MouseEvent.ClickCount >= 2 && true != editor.isStartAddShape &&
+        if ( MouseEvent.ClickCount >= 2 && (!editor.isStartAddShape && !editor.isInkDrawerOn()) &&
             !( Y <= PageMetrics.Y      || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) &&
             !( Y >= PageMetrics.YLimit || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Footer ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) )
         {
@@ -2354,7 +2358,7 @@ CHeaderFooterController.prototype =
 
         // Проверяем попали ли мы в колонтитул, если он есть. Если мы попали в
         // область колонтитула, а его там нет, тогда добавим новый колонтитул.
-        if ( Y <= PageMetrics.Y || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) || true === editor.isStartAddShape )
+        if ( Y <= PageMetrics.Y || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) || (editor.isStartAddShape || editor.isInkDrawerOn()) )
         {
             if ( null === this.Pages[PageIndex].Header )
             {
@@ -2502,7 +2506,7 @@ CHeaderFooterController.prototype =
 
     Get_NearestPos : function(PageNum, X, Y, bAnchor, Drawing)
     {
-        var HdrFtr = (true === editor.isStartAddShape ? this.CurHdrFtr : this.Internal_GetContentByXY( X, Y, PageNum ));
+        var HdrFtr = (editor.isStartAddShape || editor.isInkDrawerOn() ? this.CurHdrFtr : this.Internal_GetContentByXY( X, Y, PageNum ));
         
         if ( null != HdrFtr )
             return HdrFtr.Get_NearestPos( X, Y, bAnchor, Drawing );
@@ -2671,7 +2675,9 @@ CHeaderFooterController.prototype =
 	AddHyperlink : function(HyperProps)
 	{
 		if (null != this.CurHdrFtr)
-			this.CurHdrFtr.AddHyperlink(HyperProps);
+			return this.CurHdrFtr.AddHyperlink(HyperProps);
+		
+		return null;
 	},
 
 	ModifyHyperlink : function(HyperProps)
@@ -2739,8 +2745,14 @@ CHeaderFooterController.prototype.GetStyleFromFormatting = function()
 };
 CHeaderFooterController.prototype.GetSimilarNumbering = function(oEngine)
 {
-	if (this.CurHdrFtr)
-		this.CurHdrFtr.Content.GetSimilarNumbering(oEngine)
+	if (!this.CurHdrFtr)
+		return null;
+	
+	let docContent = this.CurHdrFtr.GetContent();
+	if (docpostype_DrawingObjects === docContent.GetDocPosType() && this.LogicDocument)
+		return this.LogicDocument.DrawingsController.GetSimilarNumbering(oEngine);
+	else
+		return this.CurHdrFtr.Content.GetSimilarNumbering(oEngine)
 };
 CHeaderFooterController.prototype.GetPlaceHolderObject = function()
 {

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -49,6 +49,10 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             break;
         case AscFormat.LineEndType.Arrow:
         {
+            if (Asc.editor.isPdfEditor() == true) {
+                drawer.CheckDash();
+            }
+
             var _ex = xPrev - xEnd;
             var _ey = yPrev - yEnd;
             var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
@@ -60,6 +64,39 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
 
             var tmpx = xEnd + len * _ex;
             var tmpy = yEnd + len * _ey;
+
+            var x1 = tmpx + _vx * w/2;
+            var y1 = tmpy + _vy * w/2;
+
+            var x3 = tmpx - _vx * w/2;
+            var y3 = tmpy - _vy * w/2;
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
+            drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+            drawer.ds();
+            drawer._e();
+
+            break;
+        }
+        case AscFormat.LineEndType.ReverseArrow:
+        {
+            if (Asc.editor.isPdfEditor() == true) {
+                drawer.CheckDash();
+            }
+
+            var _ex = xPrev - xEnd;
+            var _ey = yPrev - yEnd;
+            var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
+            _ex /= _elen;
+            _ey /= _elen;
+
+            var _vx = _ey;
+            var _vy = -_ex;
+
+            var tmpx = xEnd - len * _ex;
+            var tmpy = yEnd - len * _ey;
 
             var x1 = tmpx + _vx * w/2;
             var y1 = tmpy + _vy * w/2;
@@ -105,6 +142,13 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
             drawer.drawStrokeFillStyle();
             drawer._e();
 
@@ -117,6 +161,93 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer.ds();
             drawer._e();
 
+            break;
+        }
+        case AscFormat.LineEndType.Square:
+        {
+            var angle = Math.atan2(yEnd - yPrev, xEnd - xPrev);
+            function rotatePoints(aPoints) {
+                // Поворачиваем каждую вершину вокруг центра
+                for (var i = 0; i < aPoints.length; i++) {
+                    var x = aPoints[i].x - xEnd;
+                    var y = aPoints[i].y - yEnd;
+
+                    // Применяем матрицу поворота
+                    var rotatedX = x * Math.cos(angle) - y * Math.sin(angle);
+                    var rotatedY = x * Math.sin(angle) + y * Math.cos(angle);
+
+                    // Возвращаем вершины на место
+                    aPoints[i].x = rotatedX + xEnd;
+                    aPoints[i].y = rotatedY + yEnd;
+                }
+            }
+
+            var x1 = xEnd - w/2;
+            var y1 = yEnd + w/2;
+
+            var x2 = xEnd - w/2;
+            var y2 = yEnd - w/2;
+
+            var x3 = xEnd + w/2;
+            var y3 = yEnd - w/2;
+
+            var x4 = xEnd + w/2;
+            var y4 = yEnd + w/2;
+
+            let aSmall = [
+                { x: x1, y: y1 },
+                { x: x2, y: y2 },
+                { x: x3, y: y3 },
+                { x: x4, y: y4 }
+            ]
+
+            rotatePoints(aSmall);
+            
+            drawer._s();
+            drawer._m(trans.TransformPointX(aSmall[0].x, aSmall[0].y), trans.TransformPointY(aSmall[0].x, aSmall[0].y));
+            for (var i = 1; i < aSmall.length; i++) {
+                drawer._l(trans.TransformPointX(aSmall[i].x, aSmall[i].y), trans.TransformPointY(aSmall[i].x, aSmall[i].y));
+            }
+            drawer._z();
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
+            drawer.drawStrokeFillStyle();
+            drawer._e();
+
+            x1 = xEnd - w * 2/4;
+            y1 = yEnd + w * 2/4;
+
+            x2 = xEnd - w * 2/4;
+            y2 = yEnd - w * 2/4;
+
+            x3 = xEnd + w * 2/4;
+            y3 = yEnd - w * 2/4;
+
+            x4 = xEnd + w * 2/4;
+            y4 = yEnd + w * 2/4;
+
+            let aBig = [
+                { x: x1, y: y1 },
+                { x: x2, y: y2 },
+                { x: x3, y: y3 },
+                { x: x4, y: y4 }
+            ]
+
+            rotatePoints(aBig);
+            
+            drawer._s();
+            drawer._m(trans.TransformPointX(aBig[0].x, aBig[0].y), trans.TransformPointY(aBig[0].x, aBig[0].y));
+            for (var i = 1; i < aBig.length; i++) {
+                drawer._l(trans.TransformPointX(aBig[i].x, aBig[i].y), trans.TransformPointY(aBig[i].x, aBig[i].y));
+            }
+            drawer._z();
+            drawer.ds();
+            drawer._e();
             break;
         }
         case AscFormat.LineEndType.Oval:
@@ -156,6 +287,13 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
                 trans.TransformPointX(cx3, cy3), trans.TransformPointY(cx3, cy3),
                 trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
 
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
             drawer.drawStrokeFillStyle();
             drawer._e();
 
@@ -216,6 +354,51 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
 
             break;
         }
+        case AscFormat.LineEndType.ReverseTriangle:
+        {
+            var _ex = xPrev - xEnd;
+            var _ey = yPrev - yEnd;
+            var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
+            _ex /= _elen;
+            _ey /= _elen;
+
+            var _vx = _ey;
+            var _vy = -_ex;
+
+            var tmpx = xEnd - len * _ex;
+            var tmpy = yEnd - len * _ey;
+
+            var x1 = tmpx + _vx * w/2;
+            var y1 = tmpy + _vy * w/2;
+
+            var x3 = tmpx - _vx * w/2;
+            var y3 = tmpy - _vy * w/2;
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
+            drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+            drawer._z();
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
+
+            drawer.drawStrokeFillStyle();
+            drawer._e();
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
+            drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+            drawer._z();
+            drawer.ds();
+            drawer._e();
+            break;
+        }
         case AscFormat.LineEndType.Triangle:
         {
             var _ex = xPrev - xEnd;
@@ -241,6 +424,14 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
+
             drawer.drawStrokeFillStyle();
             drawer._e();
 
@@ -251,6 +442,63 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._z();
             drawer.ds();
             drawer._e();
+            break;
+        }
+        case AscFormat.LineEndType.Butt:
+        {
+            var _ex = xPrev - xEnd;
+            var _ey = yPrev - yEnd;
+            var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
+            _ex /= _elen;
+            _ey /= _elen;
+
+            var _vx = _ey;
+            var _vy = -_ex;
+
+            var tmpx = xEnd + len * _ex;
+            var tmpy = yEnd + len * _ey;
+
+            var angle = Math.atan2(yEnd - yPrev, xEnd - xPrev);
+            // Вычисляем координаты конца перпендикулярной линии
+            var perpendicularLength = w;
+            var x1 = xEnd + perpendicularLength * Math.cos(angle - Math.PI / 2);
+            var y1 = yEnd + perpendicularLength * Math.sin(angle - Math.PI / 2);
+            var x2 = xEnd - perpendicularLength * Math.cos(angle - Math.PI / 2);
+            var y2 = yEnd - perpendicularLength * Math.sin(angle - Math.PI / 2);
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(x2, y2), trans.TransformPointY(x2, y2));
+            drawer.ds();
+            break;
+        }
+        case AscFormat.LineEndType.Slash:
+        {
+            var _ex = xPrev - xEnd;
+            var _ey = yPrev - yEnd;
+            var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
+            _ex /= _elen;
+            _ey /= _elen;
+
+            var _vx = _ey;
+            var _vy = -_ex;
+
+            var tmpx = xEnd + len * _ex;
+            var tmpy = yEnd + len * _ey;
+
+            var angle = Math.atan2(yEnd - yPrev, xEnd - xPrev) + (30 * Math.PI / 180);
+
+            // Вычисляем координаты конца перпендикулярной линии
+            var perpendicularLength = w;
+            var x1 = xEnd + perpendicularLength * Math.cos(angle - Math.PI / 2);
+            var y1 = yEnd + perpendicularLength * Math.sin(angle - Math.PI / 2);
+            var x2 = xEnd - perpendicularLength * Math.cos(angle - Math.PI / 2);
+            var y2 = yEnd - perpendicularLength * Math.sin(angle - Math.PI / 2);
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(x2, y2), trans.TransformPointY(x2, y2));
+            drawer.ds();
             break;
         }
     }
@@ -342,12 +590,24 @@ CShapeDrawer.prototype =
 
     CheckDash : function()
     {
-        if (this.Ln.prstDash != null && AscCommon.DashPatternPresets[this.Ln.prstDash])
+        if (Asc.editor.isPdfEditor()) {
+            let aDash = this.Shape.GetDash && this.Shape.GetDash();
+            if (aDash) {
+                this.Graphics.p_dash(aDash.map(function(measure) {
+                    return measure / 2;
+                }));
+            }
+        }
+        else if (this.Ln.prstDash != null && AscCommon.DashPatternPresets[this.Ln.prstDash])
         {
             var _arr = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();
             for (var indexD = 0; indexD < _arr.length; indexD++)
                 _arr[indexD] *= this.StrokeWidth;
             this.Graphics.p_dash(_arr);
+        }
+        else if (this.Graphics.isPdf())
+        {
+            this.Graphics.p_dash(null);
         }
     },
 
@@ -355,13 +615,13 @@ CShapeDrawer.prototype =
     {
         this.fromShape(shape, graphics);
 
-        if (!geom)
+        if (!geom && !graphics.bDrawRectWithLines)
         {
             this.IsRectShape = true;
         }
         else
         {
-            if (geom.preset == "rect")
+            if (geom.preset == "rect" && !graphics.bDrawRectWithLines)
                 this.IsRectShape = true;
         }
     },
@@ -448,7 +708,7 @@ CShapeDrawer.prototype =
         if (this.Ln == null || this.Ln.Fill == null || this.Ln.Fill.fill == null)
         {
             this.bIsNoStrokeAttack = true;
-            if (true === graphics.IsTrack)
+            if (graphics.isTrack())
                 graphics.Graphics.ArrayPoints = null;
             else
                 graphics.ArrayPoints = null;
@@ -525,14 +785,14 @@ CShapeDrawer.prototype =
             
             this.CheckDash();
 
-            if (graphics.IsSlideBoundsCheckerType && !this.bIsNoStrokeAttack)
+            if (graphics.isBoundsChecker() && !this.bIsNoStrokeAttack)
                 graphics.LineWidth = this.StrokeWidth;
 
             var isUseArrayPoints = false;
             if ((this.Ln.headEnd != null && this.Ln.headEnd.type != null) || (this.Ln.tailEnd != null && this.Ln.tailEnd.type != null))
                 isUseArrayPoints = true;
 
-            if (true === graphics.IsTrack && graphics.Graphics != undefined && graphics.Graphics != null)
+            if (graphics.isTrack() && graphics.Graphics)
                 graphics.Graphics.ArrayPoints = isUseArrayPoints ? [] : null;
             else
                 graphics.ArrayPoints = isUseArrayPoints ? [] : null;
@@ -562,17 +822,10 @@ CShapeDrawer.prototype =
             bIsPatt = true;
         }
 
-        if (this.Graphics.RENDERER_PDF_FLAG && (this.bIsTexture || bIsPatt))
+        if (this.Graphics.isPdf() && (this.bIsTexture || bIsPatt))
         {
             this.Graphics.put_TextureBoundsEnabled(true);
             this.Graphics.put_TextureBounds(this.min_x, this.min_y, this.max_x - this.min_x, this.max_y - this.min_y);
-        }
-
-        var _old_composite = null;
-        if (this.Graphics.ClearMode === true)
-        {
-            _old_composite = this.Graphics.m_oContext.globalCompositeOperation;
-            this.Graphics.m_oContext.globalCompositeOperation = "destination-out";
         }
 
         if(geom)
@@ -592,19 +845,14 @@ CShapeDrawer.prototype =
         }
         this.Graphics.ArrayPoints = null;
 
-        if (this.Graphics.RENDERER_PDF_FLAG && (this.bIsTexture || bIsPatt))
+        if (this.Graphics.isPdf() && (this.bIsTexture || bIsPatt))
         {
             this.Graphics.put_TextureBoundsEnabled(false);
         }
 
-        if (this.Graphics.IsSlideBoundsCheckerType && this.Graphics.AutoCheckLineWidth)
+        if (this.Graphics.isBoundsChecker() && this.Graphics.AutoCheckLineWidth)
         {
             this.Graphics.CorrectBounds2();
-        }
-
-        if (this.Graphics.ClearMode === true)
-        {
-            this.Graphics.m_oContext.globalCompositeOperation = _old_composite;
         }
 
         this.Graphics.p_dash(null);
@@ -686,15 +934,30 @@ CShapeDrawer.prototype =
             this.Graphics.ArrayPoints = [];
     },
 
+    drawTransitionTextures : function(oCanvas1, dAlpha1, oCanvas2, dAlpha2)
+    {
+        const dOldGlobalAlpha = this.Graphics.m_oContext.globalAlpha;
+        const dX = this.min_x;
+        const dY = this.min_y;
+        const dW = this.max_x - this.min_x;
+        const dH = this.max_y - this.min_y;
+        this.Graphics.m_oContext.globalAlpha = dAlpha1;
+        this.Graphics.drawImage(null, dX, dY, dW, dH, undefined, null, oCanvas1);
+        this.Graphics.m_oContext.globalAlpha = dAlpha2;
+        this.Graphics.drawImage(null, dX, dY, dW, dH, undefined, null, oCanvas2);
+        this.Graphics.m_oContext.globalAlpha = dOldGlobalAlpha;
+    },
+
+
     df : function(mode)
     {
         if (mode == "none" || this.bIsNoFillAttack)
             return;
 
-        if (this.Graphics.IsTrack)
+        if (this.Graphics.isTrack())
             this.Graphics.m_oOverlay.ClearAll = true;
 
-        if (this.Graphics.IsSlideBoundsCheckerType === true)
+        if (this.Graphics.isBoundsChecker() === true)
             return;
 
         var editorInfo = this.getEditorInfo();
@@ -708,7 +971,7 @@ CShapeDrawer.prototype =
                 bIsIntegerGridTRUE = true;
             }
 
-            if (this.Graphics.RENDERER_PDF_FLAG)
+            if (this.Graphics.isPdf())
             {
                 if (null == this.UniFill.fill.tile || this.Graphics.m_oContext === undefined)
                 {
@@ -741,7 +1004,11 @@ CShapeDrawer.prototype =
             {
                 if (this.IsRectShape)
                 {
-                    if ((null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if(this.UniFill.IsTransitionTextures)
+                    {
+                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
+                    }
+                    else if ((null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
                     }
@@ -758,7 +1025,11 @@ CShapeDrawer.prototype =
                     this.Graphics.save();
                     this.Graphics.clip();
 
-                    if (this.Graphics.IsNoSupportTextDraw == true || true == this.Graphics.IsTrack || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if(this.UniFill.IsTransitionTextures)
+                    {
+                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
+                    }
+                    else if (!this.Graphics.isSupportTextDraw() || this.Graphics.isTrack() || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
                     }
@@ -782,7 +1053,7 @@ CShapeDrawer.prototype =
                     this.Graphics.save();
                     this.Graphics.clip();
 
-                    if (this.Graphics.IsNoSupportTextDraw === true || true == this.Graphics.IsTrack || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if (!this.Graphics.isSupportTextDraw() || this.Graphics.isTrack() || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y));
                     }
@@ -799,7 +1070,7 @@ CShapeDrawer.prototype =
                 else
                 {
                     var _is_ctx = false;
-                    if (this.Graphics.IsNoSupportTextDraw === true || undefined === this.Graphics.m_oContext || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if (!this.Graphics.isSupportTextDraw() || undefined === this.Graphics.m_oContext || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         _is_ctx = false;
                     }
@@ -808,7 +1079,7 @@ CShapeDrawer.prototype =
                         _is_ctx = true;
                     }
 
-                    var _gr = (this.Graphics.IsTrack === true) ? this.Graphics.Graphics : this.Graphics;
+                    var _gr = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
                     var _ctx = _gr.m_oContext;
 
                     var patt = !_img_native ? _ctx.createPattern(_img.Image, "repeat") : _ctx.createPattern(_img_native, "repeat");
@@ -875,7 +1146,7 @@ CShapeDrawer.prototype =
                 }
 
                 var _is_ctx = false;
-                if (this.Graphics.IsNoSupportTextDraw === true || undefined === this.Graphics.m_oContext || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                if (!this.Graphics.isSupportTextDraw() || undefined === this.Graphics.m_oContext || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                 {
                     _is_ctx = false;
                 }
@@ -884,7 +1155,7 @@ CShapeDrawer.prototype =
                     _is_ctx = true;
                 }
 
-                var _gr = (this.Graphics.IsTrack === true) ? this.Graphics.Graphics : this.Graphics;
+                var _gr = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
                 var _ctx = _gr.m_oContext;
 
                 var _patt_name = AscCommon.global_hatch_names[_fill.ftype];
@@ -959,7 +1230,7 @@ CShapeDrawer.prototype =
                 }
 
                 var _is_ctx = false;
-                if (this.Graphics.IsNoSupportTextDraw === true || undefined === this.Graphics.m_oContext || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                if (!this.Graphics.isSupportTextDraw() || undefined === this.Graphics.m_oContext || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                 {
                     _is_ctx = false;
                 }
@@ -968,7 +1239,7 @@ CShapeDrawer.prototype =
                     _is_ctx = true;
                 }
 
-                var _gr = (this.Graphics.IsTrack === true) ? this.Graphics.Graphics : this.Graphics;
+                var _gr = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
                 var _ctx = _gr.m_oContext;
 
                 var gradObj = null;
@@ -977,7 +1248,7 @@ CShapeDrawer.prototype =
                     var _angle = _fill.lin.angle;
                     if (_fill.rotateWithShape === false)
                     {
-                        var matrix_transform = (this.Graphics.IsTrack === true) ? this.Graphics.Graphics.m_oTransform : this.Graphics.m_oTransform;
+                        var matrix_transform = this.Graphics.isTrack() ? this.Graphics.Graphics.m_oTransform : this.Graphics.m_oTransform;
                         if (matrix_transform)
                         {
                             //_angle -= (60000 * this.Graphics.m_oTransform.GetRotation());
@@ -1002,14 +1273,32 @@ CShapeDrawer.prototype =
                     gradObj = _ctx.createLinearGradient(points.x0, points.y0, points.x1, points.y1);
                 }
 
-                for (var i = 0; i < _fill.colors.length; i++)
+                const nTransparent = this.UniFill.transparent;
+                let bUseGlobalAlpha = (null !== nTransparent && undefined !== nTransparent);
+                const aColors = _fill.colors;
+                const nClrCount = aColors.length;
+                if(_fill.path && AscCommon.AscBrowser.isMozilla && bUseGlobalAlpha)
                 {
-                    gradObj.addColorStop(_fill.colors[i].pos / 100000, _fill.colors[i].color.getCSSColor(this.UniFill.transparent));
+                    bUseGlobalAlpha = false;
+                    const dTransparent = nTransparent / 255.0;
+                    for (let nClr = 0; nClr < nClrCount; nClr++)
+                    {
+                        let oClr = aColors[nClr];
+                        gradObj.addColorStop(oClr.pos / 100000, oClr.color.getCSSWithTransparent(dTransparent));
+                    }
+                }
+                else
+                {
+                    for (let nClr = 0; nClr < nClrCount; nClr++)
+                    {
+                        let oClr = aColors[nClr];
+                        gradObj.addColorStop(oClr.pos / 100000, oClr.color.getCSSColor(nTransparent));
+                    }
                 }
 
                 _ctx.fillStyle = gradObj;
 
-                if (null !== this.UniFill.transparent && undefined !== this.UniFill.transparent)
+                if (bUseGlobalAlpha)
                 {
                     var _old_global_alpha = this.Graphics.m_oContext.globalAlpha;
                     _ctx.globalAlpha = this.UniFill.transparent / 255;
@@ -1059,7 +1348,7 @@ CShapeDrawer.prototype =
         }
         if(rgba)
         {
-            if (this.UniFill != null && this.UniFill.transparent != null && this.Graphics.ClearMode !== true)
+            if (this.UniFill != null && this.UniFill.transparent != null)
                 rgba.A = this.UniFill.transparent;
             this.Graphics.b_color1(rgba.R, rgba.G, rgba.B, rgba.A);
         }
@@ -1071,7 +1360,7 @@ CShapeDrawer.prototype =
         if (this.bIsNoStrokeAttack)
             return;
 
-        if (this.Graphics.IsTrack)
+        if (this.Graphics.isTrack())
             this.Graphics.m_oOverlay.ClearAll = true;
 
         if (null != this.OldLineJoin && !this.IsArrowsDrawing)
@@ -1101,14 +1390,18 @@ CShapeDrawer.prototype =
             }
         }
 
-		var arr = (this.Graphics.IsTrack === true) ? this.Graphics.Graphics.ArrayPoints : this.Graphics.ArrayPoints;
+		var arr = this.Graphics.isTrack() ? this.Graphics.Graphics.ArrayPoints : this.Graphics.ArrayPoints;
         var isArrowsPresent = (arr != null && arr.length > 1 && this.IsCurrentPathCanArrows === true) ? true : false;
 
         var rgba = this.StrokeUniColor;
-		if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null && !isArrowsPresent)
-			rgba.A = this.Ln.Fill.transparent;
+        let nAlpha = 0xFF;
+        if(!isArrowsPresent && !this.IsArrowsDrawing || Asc.editor.isPdfEditor())
+        {
+            if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
+                nAlpha = this.Ln.Fill.transparent;
+        }
 
-        this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
+        this.Graphics.p_color(rgba.R, rgba.G, rgba.B, nAlpha);
 
         if (this.IsRectShape && this.Graphics.AddSmartRect !== undefined)
         {
@@ -1136,7 +1429,7 @@ CShapeDrawer.prototype =
             // трансформируем точки в окончательные.
             // и отправляем на отрисовку (с матрицей)
 
-			var _graphicsCtx = (this.Graphics.IsTrack === true) ? this.Graphics.Graphics : this.Graphics;
+			var _graphicsCtx = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 
 			var trans = _graphicsCtx.m_oFullTransform;
             var trans1 = AscCommon.global_MatrixTransformer.Invert(trans);
@@ -1146,7 +1439,7 @@ CShapeDrawer.prototype =
             var x2 = trans.TransformPointX(1, 1);
             var y2 = trans.TransformPointY(1, 1);
             var dKoef = Math.sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
-            var _pen_w = (this.Graphics.IsTrack === true) ? (this.Graphics.Graphics.m_oContext.lineWidth * dKoef) : (this.Graphics.m_oContext.lineWidth * dKoef);
+            var _pen_w = this.Graphics.isTrack() ? (this.Graphics.Graphics.m_oContext.lineWidth * dKoef) : (this.Graphics.m_oContext.lineWidth * dKoef);
 			var _max_w = undefined;
 			if (_graphicsCtx.IsThumbnail === true)
 			    _max_w = 2;
@@ -1216,12 +1509,12 @@ CShapeDrawer.prototype =
 
     drawFillStroke : function(bIsFill, fill_mode, bIsStroke)
     {
-        if (this.Graphics.IsTrack)
+        if (this.Graphics.isTrack())
             this.Graphics.m_oOverlay.ClearAll = true;
 
-        if(this.Graphics.IsSlideBoundsCheckerType)
+        if(this.Graphics.isBoundsChecker())
             return;
-        if (this.Graphics.RENDERER_PDF_FLAG === undefined)
+        if (!this.Graphics.isPdf())
         {
             if (bIsFill)
                 this.df(fill_mode);
@@ -1244,10 +1537,15 @@ CShapeDrawer.prototype =
                 }
 
                 var rgba = this.StrokeUniColor;
-				if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null && !isArrowsPresent)
-					rgba.A = this.Ln.Fill.transparent;
+                let nAlpha = 0xFF;
+                if(!isArrowsPresent && !this.IsArrowsDrawing)
+                {
+                    if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
+                        nAlpha = this.Ln.Fill.transparent;
+                }
 
-                this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
+                this.Graphics.p_color(rgba.R, rgba.G, rgba.B, nAlpha);
+
             }
 
             if (fill_mode == "none" || this.bIsNoFillAttack)
@@ -1400,7 +1698,7 @@ CShapeDrawer.prototype =
                         }
                         if (rgba)
                         {
-                            if (this.UniFill != null && this.UniFill.transparent != null && this.Graphics.ClearMode !== true)
+                            if (this.UniFill != null && this.UniFill.transparent != null)
                                 rgba.A = this.UniFill.transparent;
                             this.Graphics.b_color1(rgba.R, rgba.G, rgba.B, rgba.A);
                         }
@@ -1444,10 +1742,10 @@ CShapeDrawer.prototype =
                 // трансформируем точки в окончательные.
                 // и отправляем на отрисовку (с матрицей)
 
-                var trans = (this.Graphics.RENDERER_PDF_FLAG === undefined) ? this.Graphics.m_oFullTransform : this.Graphics.GetTransform();
+                var trans = (!this.Graphics.isPdf()) ? this.Graphics.m_oFullTransform : this.Graphics.GetTransform();
                 var trans1 = AscCommon.global_MatrixTransformer.Invert(trans);
 
-                var lineSize = (this.Graphics.RENDERER_PDF_FLAG === undefined) ? this.Graphics.m_oContext.lineWidth : this.Graphics.GetLineWidth();
+                var lineSize = (!this.Graphics.isPdf()) ? this.Graphics.m_oContext.lineWidth : this.Graphics.GetLineWidth();
 
                 var x1 = trans.TransformPointX(0, 0);
                 var y1 = trans.TransformPointY(0, 0);
@@ -1516,9 +1814,9 @@ CShapeDrawer.prototype =
 
     drawStrokeFillStyle : function()
     {
-        if (this.Graphics.RENDERER_PDF_FLAG === undefined)
+        if (!this.Graphics.isPdf())
         {
-            var gr = (this.Graphics.IsTrack == true) ? this.Graphics.Graphics : this.Graphics;
+            var gr = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 
             var tmp = gr.m_oBrush.Color1;
             var p_c = gr.m_oPen.Color;
@@ -1774,7 +2072,7 @@ CShapeDrawer.prototype =
     }
 };
 
-function ShapeToImageConverter(shape, pageIndex)
+function ShapeToImageConverter(shape, pageIndex, sImageFormat)
 {
     AscCommon.IsShapeToImageConverter = true;
     var _bounds_cheker = new AscFormat.CSlideBoundsChecker();
@@ -1852,7 +2150,8 @@ function ShapeToImageConverter(shape, pageIndex)
     var _ret = { ImageNative : _canvas, ImageUrl : "" };
     try
     {
-        _ret.ImageUrl = _canvas.toDataURL("image/png");
+        const sFormat = sImageFormat || "image/png";
+        _ret.ImageUrl = _canvas.toDataURL(sFormat);
     }
     catch (err)
     {
@@ -1861,6 +2160,8 @@ function ShapeToImageConverter(shape, pageIndex)
         else
             _ret.ImageUrl = "";
     }
+    if (_canvas.isNativeGraphics === true)
+        _canvas.Destroy();
     return _ret;
 }
 

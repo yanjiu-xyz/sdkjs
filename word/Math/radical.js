@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -661,24 +661,12 @@ CRadical.prototype.setPosition = function(pos, PosInfo)
 
     pos.x += this.size.width;
 };
-CRadical.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, _CurRange, StepEnd)
+CRadical.prototype.getParagraphContentPosByXY = function(searchState)
 {
-    var bResult;
-
-    if(this.Pr.type == DEGREE_RADICAL)
-    {
-        bResult = CMathBase.prototype.Get_ParaContentPosByXY.call(this, SearchPos, Depth, _CurLine, _CurRange, StepEnd);
-    }
-    else
-    {
-        if(true === this.Content[1].Get_ParaContentPosByXY(SearchPos, Depth + 1, _CurLine, _CurRange, StepEnd))
-        {
-            SearchPos.Pos.Update2(1, Depth);
-            bResult = true;
-        }
-    }
-
-    return bResult;
+	if (DEGREE_RADICAL === this.Pr.type)
+		CMathBase.prototype.getParagraphContentPosByXY.call(this, searchState);
+	else
+		this.Content[1].getParagraphContentPosByXY(searchState);
 };
 CRadical.prototype.Draw_LinesForContent = function(PDSL)
 {
@@ -762,33 +750,47 @@ CRadical.prototype.Is_ContentUse = function(MathContent)
 
     return false;
 };
-CRadical.prototype.GetTextOfElement = function(isLaTex) {
+CRadical.prototype.GetTextOfElement = function(isLaTeX)
+{
 	var strTemp = "";
-	var strDegree = this.CheckIsEmpty(this.getDegree().GetTextOfElement(isLaTex));
-	var strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement(isLaTex));
-	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTex);
-	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTex);
+	var strDegree = this.getDegree().GetMultipleContentForGetText(isLaTeX, true);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 
-	if (strDegree.length > 0 && isLaTex) {
-		strDegree =  '[' + strDegree + ']';
-	}
-	if (strBase.length > 1 && ((strDegree.length === 0 && !isLaTex) || isLaTex)) {
-		strBase = strStartBracet + strBase + strCloseBracet;
-	}
-	if (isLaTex) {
-		strTemp = '\\sqrt' + strDegree + strBase;
-	} else {
-		var strRadicalSymbol = String.fromCharCode(8730); //√
-		if (strDegree.length > 0) {
-			strDegree = strDegree + '&';
-		}
+	if (isLaTeX)
+    {
+        if (strDegree.length > 0)
+            strDegree = '[' + strDegree + ']';
 
-		if (strDegree.length >= 1) {
-			strTemp = strRadicalSymbol + strStartBracet + strDegree + strBase + strCloseBracet;
-		} else {
-			strTemp = strRadicalSymbol + strDegree + strBase;
-		}
+        strTemp = '\\sqrt' + strDegree + "{" + strBase + "}";
+    }
+	else
+    {
+		var strRadicalSymbol = "√";
+
+        if (strDegree === "3" || strDegree === "4")
+        {
+            strRadicalSymbol = strDegree === "3" ?  "∛" : "∜";
+            strTemp = strRadicalSymbol + strBase;
+        }
+        else
+        {
+            if (strDegree.length > 0)
+            {
+                strDegree = "(" + strDegree + '&';
+                if (strBase[0] != "(" && strBase[strBase.length - 1] !== ")")
+                {
+                    strBase = strBase + ")";
+                }
+            }
+            else
+            {
+                strBase = "(" + strBase + ")";
+            }
+
+            strTemp = strRadicalSymbol + strDegree + strBase;
+        }
 	}
+
 	return strTemp;
 };
 

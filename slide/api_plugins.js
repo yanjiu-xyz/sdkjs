@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -44,16 +44,22 @@
     var Api = window["asc_docs_api"];
 
     /**
+	 * @typedef {Object} CommentData
+	 * The comment data.
+	 * @property {string} UserName - The comment author.
+	 * @property {string} QuoteText - The quote comment text.
+	 * @property {string} Text - The comment text.
+	 * @property {string} Time - The time when the comment was posted (in milliseconds).
+	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
+	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
+	 */
+
+	/**
 	 * Adds a comment to the presentation.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @alias AddComment
-	 * @param {object}  oCommentData - An object which contains the comment data
-	 * @param {string}  oCommentData.UserName - the comment author
-	 * @param {string}  oCommentData.Text - the comment text
-	 * @param {string}  oCommentData.Time - the comment time
-	 * @param {boolean}  oCommentData.Solved - is the comment resolved
-	 * @param {undefined | array} oCommentData.Replies - an array of replies, they are in the same format as oCommentData
+	 * @param {CommentData}  oCommentData - An object which contains the comment data.
 	 * @return {string | null} - The comment ID in the string format or null if the comment cannot be added.
 	 * @since 7.3.0
 	 */
@@ -79,7 +85,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @alias ChangeComment
 	 * @param {string} sId - The comment ID.
-	 * @param {object} oCommentData - An object which contains the new comment data: "comment" - the comment text, "author" - the comment author.
+	 * @param {CommentData} oCommentData - An object which contains the new comment data.
 	 * @return {boolean}
 	 * @since 7.3.0
 	 */
@@ -104,13 +110,129 @@
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @alias RemoveComments
-	 * @return {undefined}
 	 * @since 7.3.0
 	 */
 	Api.prototype["pluginMethod_RemoveComments"] = function(arrIds)
 	{
-		for (let comm of arrIds)
-			this.asc_removeComment(comm);
+		for (let comm in arrIds)
+		{
+			if (arrIds.hasOwnProperty(comm))
+			{
+				this.asc_removeComment(arrIds[comm]);
+			}
+		}
+	};
+
+	/**
+	 * Returns all the comments from the document.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias GetAllComments
+	 * @returns {comment[]} - An array of comment objects containing the comment data.
+	 */
+	Api.prototype["pluginMethod_GetAllComments"] = function()
+	{
+		const oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return;
+
+		const arrResult = [];
+
+		const oComments = oLogicDocument.GetAllComments();
+		for (let index = 0; index < oComments.length; index++)
+		{
+			const oComment = oComments[index].comment;
+			arrResult.push({"Id" : oComment.GetId(), "Data" : oComment.GetData().ConvertToSimpleObject()});
+		}
+
+		return arrResult;
+	};
+
+	/**
+	 * Starts the presentation slide show.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias StartSlideShow
+	 * @since 8.0.0
+	 */
+	Api.prototype["pluginMethod_StartSlideShow"] = function()
+	{
+		this.sendEvent("asc_onStartDemonstration");
+	};
+
+	/**
+	 * Pauses the current slide show.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias PauseSlideShow
+	 * @since 8.0.0
+	 */
+	Api.prototype["pluginMethod_PauseSlideShow"] = function()
+	{
+		this.WordControl.DemonstrationManager.Pause();
+		this.sendEvent("asc_onDemonstrationStatus", "pause");
+	};
+	/**
+	 * Resumes the current slide show.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias ResumeSlideShow
+	 * @since 8.0.0
+	 */
+	Api.prototype["pluginMethod_ResumeSlideShow"] = function()
+	{
+		this.WordControl.DemonstrationManager.Play();
+		this.sendEvent("asc_onDemonstrationStatus", "play");
+	};
+
+
+	/**
+	 * Ends the current slide show.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias EndSlideShow
+	 * @since 8.0.0
+	 */
+	Api.prototype["pluginMethod_EndSlideShow"] = function()
+	{
+		this.EndDemonstration();
+	};
+
+	/**
+	 * Displays the slide following the current slide in the slide show.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias GoToNextSlideInSlideShow
+	 * @since 8.0.0
+	 */
+	Api.prototype["pluginMethod_GoToNextSlideInSlideShow"] = function()
+	{
+		this.DemonstrationNextSlide();
+	};
+
+	/**
+	 * Displays the slide following the current slide in the slide show.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias GoToPreviousSlideInSlideShow
+	 * @since 8.0.0
+	 */
+	Api.prototype["pluginMethod_GoToPreviousSlideInSlideShow"] = function()
+	{
+		this.DemonstrationPrevSlide();
+	};
+
+	/**
+	 * Displays the slide with the specific index.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias GoToSlideInSlideShow
+	 * @param {number} nSlideIndex - The slide index.
+	 * @since 8.0.0
+	 */
+	Api.prototype["pluginMethod_GoToSlideInSlideShow"] = function(nSlideIndex)
+	{
+		this.DemonstrationGoToSlide(nSlideIndex - 1);
 	};
 
 })(window);

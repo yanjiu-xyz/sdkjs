@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -318,11 +318,12 @@
     };
     CTextBody.prototype.draw = function(graphics) {
         if((!this.content || this.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.parent.isEmptyPlaceholder() && !this.checkCurrentPlaceholder()) {
-            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2) {
-                if(graphics.IsNoSupportTextDraw) {
-                    var _w2 = this.content2.XLimit;
-                    var _h2 = this.content2.GetSummaryHeight();
+            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.isPdf()) {
+                if(!graphics.isSupportTextDraw()) {
+                    let _w2 = this.content2.XLimit;
+                    let _h2 = this.content2.GetSummaryHeight();
                     graphics.rect(this.content2.X, this.content2.Y, _w2, _h2);
+					return;
                 }
 
                 this.content2.Set_StartPage(0);
@@ -330,11 +331,12 @@
             }
         }
         else if(this.content) {
-            if(graphics.IsNoSupportTextDraw) {
-                var bEmpty = this.content.IsEmpty();
-                var _w = bEmpty ? 0.1 : this.content.XLimit;
-                var _h = this.content.GetSummaryHeight();
+            if(!graphics.isSupportTextDraw()) {
+                let bEmpty = this.content.IsEmpty();
+                let _w = bEmpty ? 0.1 : this.content.XLimit;
+                let _h = this.content.GetSummaryHeight();
                 graphics.rect(this.content.X, this.content.Y, _w, _h);
+				return;
             }
             var old_start_page = this.content.StartPage;
             this.content.Set_StartPage(0);
@@ -593,6 +595,9 @@
         }
         oParagraph.Set_DocumentIndex(0); //TODO: ?
         return oParagraph.Pr;
+    };
+    CTextBody.prototype.getDrawingDocument = function() {
+        return Asc.editor.getDrawingDocument();
     };
 
     function GetContentOneStringSizes(oContent) {

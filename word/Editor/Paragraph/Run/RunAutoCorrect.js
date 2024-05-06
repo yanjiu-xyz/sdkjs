@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -87,7 +87,7 @@
 			return;
 
 		let oDocument = this.Paragraph.GetLogicDocument();
-		if (!oDocument || !(oDocument instanceof CDocument) && !(oDocument instanceof CPresentation))
+		if (!oDocument || (!oDocument.IsDocumentEditor() && !oDocument.IsPresentationEditor()))
 			return;
 
 		this.Document = oDocument;
@@ -816,7 +816,7 @@
 				return false;
 
 			// Проверяем исключения
-			if (1 === oRunElements.Elements.length && oDocument.IsDocumentEditor())
+			if (1 === oRunElements.Elements.length)
 			{
 				let autoCorrectSettings = oDocument.GetAutoCorrectSettings();
 
@@ -1076,9 +1076,12 @@
 					{
 						var oNum = oDocument.GetNumbering().CreateNum();
 						oNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
-						for (var nIndex = 0, nCount = arrResult.length; nIndex < nCount; ++nIndex)
+						for (var iLvl = 0, nCount = arrResult.length; iLvl < nCount; ++iLvl)
 						{
-							oNum.SetLvl(arrResult[nIndex].Lvl, nIndex);
+							let oldLvl = oNum.GetLvl(iLvl);
+							let newLvl = arrResult[iLvl].Lvl;
+							newLvl.SetParaPr(oldLvl.GetParaPr());
+							oNum.SetLvl(newLvl, iLvl);
 						}
 
 						oNumPr = new CNumPr(oNum.GetId(), arrResult.length - 1);
@@ -1182,6 +1185,7 @@
 				nPos = oNum.Pos;
 
 				var oNumberingLvl = new CNumberingLvl();
+				oNumberingLvl.InitDefault(0, c_oAscMultiLevelNumbering.Numbered);
 				if ('.' === oNum.Char)
 					oNumberingLvl.SetByType(c_oAscNumberingLevel.DecimalDot_Left, nCurLvl);
 				else if (')' === oNum.Char)

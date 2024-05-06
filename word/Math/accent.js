@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -690,35 +690,43 @@ CAccent.prototype.Get_InterfaceProps = function()
 };
 CAccent.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
-	var strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement(isLaTeX));
-	var strAccent = String.fromCharCode(this.Pr.chr);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+	var strAccent = this.Pr.chr === null ? "̂" : String.fromCharCode(this.Pr.chr);
 	var strStartBracet = (strBase.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
 	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
 	
-	if (isLaTeX) {
+	if (isLaTeX)
+    {
 		var intAccentCode = strAccent.charCodeAt();
 		switch (intAccentCode) {
 			case 0:		strAccent = '\\hat'; 				break;
 			case 768:	strAccent = '\\grave';				break;
 			case 769:	strAccent = '\\acute';				break;
 			case 771:	strAccent = '\\tilde';				break;
-			case 831:
+			case 831:	strAccent = '\\bar{\\bar';			break;
 			case 773:	strAccent = '\\bar';				break;
 			case 774:	strAccent = '\\breve';				break;
 			case 775:	strAccent = '\\dot';				break;
 			case 776:	strAccent = '\\ddot';				break;
 			case 780:	strAccent = '\\check';				break;
-			case 8400:	strAccent = '\\overleftharpoon';	break;
-			case 8401:	strAccent = '\\overrightharpoon';	break;
-			case 8406:	strAccent = '\\overleftarrow';		break;
-			case 8407:	strAccent = '\\overrightarrow';		break;
 			case 8411:	strAccent = '\\dddot';				break;
-			case 8417:	strAccent = '\\overleftrightarrow';	break;
+			case 8400:	strAccent = '\\lhvec';				break;
+			case 8401:	strAccent = '\\hvec';				break;
+			case 8406:	strAccent = '\\lvec';				break;
+			case 8407:	strAccent = '\\vec';			    break;
+			case 8417:	strAccent = '\\tvec';				break;
 			default:	strAccent = '\\hat';				break;
 		}
 		strTemp = strAccent + strStartBracet + strBase + strCloseBracet
-	} else {
-		strTemp = strStartBracet + strBase + strCloseBracet + strAccent;
+
+		if (intAccentCode === 831)
+			strTemp += "}";
+	}
+    else
+    {
+        if (strBase.length === 0)
+            strBase = "()";
+	   strTemp = strStartBracet + strBase + strCloseBracet + strAccent;
 	}
 	return strTemp;
 };

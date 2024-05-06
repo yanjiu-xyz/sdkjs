@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.05.2017
- * Time: 12:12
- */
 
 function CSdtPr()
 {
@@ -381,6 +376,10 @@ CSdtPr.prototype.IsBuiltInDocPart = function()
 
 	return false;
 };
+CSdtPr.prototype.GetDocPartGallery = function()
+{
+	return this.DocPartObj ? this.DocPartObj.Gallery : undefined;
+}
 
 function CContentControlPr(nType)
 {
@@ -391,23 +390,25 @@ function CContentControlPr(nType)
 	this.Lock       = undefined;
 	this.InternalId = undefined;
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
-
-    // section property
+	
+	this.Temporary  = undefined;
+	
+	// section property
 	this.SectionBreak = undefined;
-	this.PageSizeW	  = undefined;
-	this.PageSizeH	  = undefined;
-	this.Orient 	  = undefined;
-
+	this.PageSizeW    = undefined;
+	this.PageSizeH    = undefined;
+	this.Orient       = undefined;
+	
 	// Margins 
-	this.MarginT	 		 = undefined;
-	this.MarginL	 		 = undefined;
-	this.MarginR	 		 = undefined;
-	this.MarginB	 		 = undefined;
+	this.MarginT = undefined;
+	this.MarginL = undefined;
+	this.MarginR = undefined;
+	this.MarginB = undefined;
 	
 	
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
 	this.Color      = undefined;
-
+	
 	this.CheckBoxPr    = undefined;
 	this.ComboBoxPr    = undefined;
 	this.DropDownPr    = undefined;
@@ -415,9 +416,9 @@ function CContentControlPr(nType)
 	this.TextFormPr    = undefined;
 	this.PictureFormPr = undefined;
 	this.ComplexFormPr = undefined;
-
+	
 	this.PlaceholderText = undefined;
-
+	
 	this.FormPr = undefined;
 }
 CContentControlPr.prototype.GetEventObject = function()
@@ -469,15 +470,24 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Alias      = oContentControl.GetAlias();
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
+	this.Temporary  = oContentControl.IsContentControlTemporary();
 
 	if (oContentControl.IsCheckBox())
+	{
 		this.CheckBoxPr = oContentControl.GetCheckBoxPr().Copy();
+		if (oContentControl.IsRadioButton())
+			this.CheckBoxPr.SetChoiceName(oContentControl.GetFormKey());
+	}
 	else if (oContentControl.IsComboBox())
 		this.ComboBoxPr = oContentControl.GetComboBoxPr().Copy();
 	else if (oContentControl.IsDropDownList())
 		this.DropDownPr = oContentControl.GetDropDownListPr().Copy();
 	else if (oContentControl.IsDatePicker())
+	{
 		this.DateTimePr = oContentControl.GetDatePickerPr().Copy();
+		if (oContentControl.GetInnerText() !== this.DateTimePr.ToString())
+			this.DateTimePr.SetNullFullDate(true);
+	}
 	else if (oContentControl.IsTextForm())
 		this.TextFormPr = oContentControl.GetTextFormPr().Copy();
 	else if (oContentControl.IsPictureForm())
@@ -489,8 +499,17 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 
 	if (oContentControl.IsForm())
 	{
-		this.FormPr = oContentControl.GetFormPr().Copy();
-		this.FormPr.SetFixed(oContentControl.IsFixedForm());
+		let mainForm = oContentControl.IsMainForm() ? oContentControl : oContentControl.GetMainForm();
+		
+		this.FormPr = mainForm.GetFormPr().Copy();
+		this.FormPr.SetFixed(mainForm.IsFixedForm());
+		
+		if (mainForm !== oContentControl)
+		{
+			let subFormPr = oContentControl.GetFormPr();
+			this.FormPr.SetAscBorder(subFormPr.GetAscBorder());
+			this.FormPr.SetShd(subFormPr.GetShd());
+		}
 	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
@@ -505,11 +524,10 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	{
 		oContentControl.GetLogicDocument().OnChangeRadioRequired(oContentControl.GetRadioButtonGroupKey(), this.FormPr.GetRequired());
 	}
-
-
+	
 	if (undefined !== this.Tag)
 		oContentControl.SetTag(this.Tag);
-
+	
 	if (undefined !== this.Id)
 		oContentControl.SetContentControlId(this.Id);
 
@@ -530,12 +548,23 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		else
 			oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
 	}
+	
+	if (undefined !== this.Temporary)
+		oContentControl.SetContentControlTemporary(this.Temporary);
 
 	if (undefined !== this.CheckBoxPr)
 	{
-		if (undefined !== this.CheckBoxPr.GroupKey && undefined !== this.CheckBoxPr.Checked)
+		let prevGroupKey = oContentControl.GetCheckBoxPr() ? oContentControl.GetCheckBoxPr().GetGroupKey() : undefined;
+		if (prevGroupKey !== this.CheckBoxPr.GroupKey && undefined !== this.CheckBoxPr.Checked)
 			this.CheckBoxPr.Checked = false;
-
+		
+		if (undefined !== this.CheckBoxPr.GetChoiceName())
+		{
+			oContentControl.SetFormKey(this.CheckBoxPr.GetChoiceName());
+			if (this.FormPr)
+				this.FormPr.SetKey(this.CheckBoxPr.GetChoiceName());
+		}
+		
 		oContentControl.SetCheckBoxPr(this.CheckBoxPr);
 		oContentControl.private_UpdateCheckBoxContent();
 	}
@@ -547,7 +576,17 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetDropDownListPr(this.DropDownPr);
 
 	if (undefined !== this.DateTimePr)
-		oContentControl.ApplyDatePickerPr(this.DateTimePr);
+	{
+		let dateTimePr = this.DateTimePr;
+		if (dateTimePr.IsNullFullDate())
+		{
+			dateTimePr = dateTimePr.Copy();
+			dateTimePr.SetNullFullDate(false);
+			dateTimePr.SetFullDate(oContentControl.GetDatePickerPr().GetFullDate());
+		}
+		
+		oContentControl.ApplyDatePickerPr(dateTimePr);
+	}
 
 	if (undefined !== this.TextFormPr && oContentControl.IsInlineLevel())
 	{
@@ -564,7 +603,7 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		else if (!this.TextFormPr.Comb && isCombChanged && oContentControl.IsPlaceHolder())
 			oContentControl.ReplaceContentWithPlaceHolder(false, true);
 
-		if (oContentControl.IsFixedForm() && !isCombChanged)
+		if (oContentControl.IsFixedForm() && oContentControl.IsMainForm() && !isCombChanged)
 			oContentControl.UpdateFixedFormSizeByCombWidth();
 
 		if (!this.TextFormPr.MultiLine)
@@ -574,8 +613,7 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	if (undefined !== this.PlaceholderText)
 		oContentControl.SetPlaceholderText(this.PlaceholderText);
 
-	if (undefined !== this.FormPr)
-		oContentControl.SetFormPr(this.FormPr);
+	this.SetFormPrToContentControl(oContentControl);
 
 	if (undefined !== this.PictureFormPr && oContentControl.IsInlineLevel())
 	{
@@ -585,6 +623,118 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 	if (undefined !== this.ComplexFormPr)
 		oContentControl.SetComplexFormPr(this.ComplexFormPr);
+};
+CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
+{
+	if (!this.FormPr)
+		return;
+	
+	let formPr = this.FormPr;
+	
+	let newRole = formPr.GetRole();
+	if (contentControl.IsForm() && !contentControl.IsMainForm())
+	{
+		// Ключ у подформы должен сохраняться
+		let oldKey    = contentControl.GetFormKey();
+		let newFormPr = formPr.Copy();
+		newFormPr.SetKey(oldKey);
+		contentControl.SetFormPr(newFormPr);
+
+		contentControl = contentControl.GetMainForm();
+		if (!contentControl)
+			return;
+
+		formPr = contentControl.GetFormPr().Copy();
+		formPr.SetRole(newRole);
+	}
+
+	if (contentControl.IsComplexForm())
+	{
+		let subForms = contentControl.GetAllSubForms();
+		for (let index = 0, count = subForms.length; index < count; ++index)
+		{
+			subForms[index].SetFormRole(newRole);
+		}
+	}
+	
+	let newKey = formPr.GetKey();
+	let oldKey = contentControl.GetFormKey();
+	
+	let fieldMaster = contentControl.GetFieldMaster();
+	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
+	let oldRole     = userMaster ? userMaster.getRole() : null;
+	
+	let isKeyChanged = newKey && newKey !== oldKey;
+	let isRoleChanged = newRole && newRole !== oldRole;
+	
+	if (isKeyChanged && isRoleChanged)
+	{
+		// Такого не должно быть, ключ и роль не должны меняться одновременно, но если все же произошло,
+		// то выставляем все как задано в настройках, не делая ничего дополнительного
+	}
+	else if (isKeyChanged)
+	{
+		this.OnSetKeyToForm(newKey, contentControl);
+	}
+	else if (isRoleChanged)
+	{
+		this.OnSetRoleToForm(newRole, contentControl);
+	}
+	
+	contentControl.SetFormPr(formPr);
+};
+CContentControlPr.prototype.OnSetKeyToForm = function(newKey, form)
+{
+	let logicDocument = form.GetLogicDocument();
+	if (!logicDocument)
+		return;
+	
+	let formManager = logicDocument.GetFormsManager();
+	let allForms = formManager.GetAllFormsByKey(newKey, form.GetSpecificType());
+	for (let iForm = 0, nForms = allForms.length; iForm < nForms; ++iForm)
+	{
+		if (allForms[iForm] === form)
+			continue;
+		
+		// Напрямую у formManager не вызываем, т.к. еще может быть не выставлен ключ у текущей формы
+		logicDocument.OnChangeForm(allForms[iForm]);
+		break;
+	}
+	
+	let role = formManager.GetRoleByKey(newKey, form.GetSpecificType());
+	if (!role)
+		return;
+	
+	this.FormPr.SetRole(role);
+};
+CContentControlPr.prototype.OnSetRoleToForm = function(newRole, form)
+{
+	let logicDocument = form.GetLogicDocument();
+	if (!logicDocument)
+		return;
+	
+	let formManager = logicDocument.GetFormsManager();
+	
+	let formKey = form.GetFormKey();
+	if (!formKey || "" === formKey)
+		return;
+	
+	let allForms = formManager.GetAllFormsByKey(formKey, form.GetSpecificType());
+	for (let index = 0, formCount = allForms.length; index < formCount; ++index)
+	{
+		let curForm = allForms[index];
+		if (curForm !== form)
+		{
+			let formPr = curForm.GetFormPr();
+			if (!formPr)
+				continue;
+			
+			let newFormPr = formPr.Copy();
+			newFormPr.SetRole(newRole);
+			newFormPr.SetFieldMaster(null);
+			curForm.SetFormPr(newFormPr);
+		}
+	}
 };
 CContentControlPr.prototype.GetId = function()
 {
@@ -649,6 +799,14 @@ CContentControlPr.prototype.SetColor = function(r, g, b)
 		this.Color = null;
 	else
 		this.Color = new CDocumentColor(r, g, b);
+};
+CContentControlPr.prototype.GetTemporary = function()
+{
+	return this.Temporary;
+};
+CContentControlPr.prototype.SetTemporary = function(isTemporary)
+{
+	this.Temporary = isTemporary;
 };
 CContentControlPr.prototype.GetSpecificType = function()
 {
@@ -759,109 +917,6 @@ CContentControlPr.prototype.GetNewKey = function()
 	return keyGenerator.GetNewKey(this.CC);
 };
 
-/**
- * Класс с глобальными настройками для всех контейнеров
- * @constructor
- */
-function CSdtGlobalSettings()
-{
-	this.Color         = new AscCommonWord.CDocumentColor(220, 220, 220);
-	this.ShowHighlight = false;
-}
-/**
- * Проверяем все ли параметры выставлены по умолчанию
- * @returns {boolean}
- */
-CSdtGlobalSettings.prototype.IsDefault = function()
-{
-	if (!this.Color
-		|| 220 !== this.Color.r
-		|| 220 !== this.Color.g
-		|| 220 !== this.Color.b
-		|| false !== this.ShowHighlight)
-		return false;
-
-	return true;
-};
-CSdtGlobalSettings.prototype.Copy = function()
-{
-	var oSettings = new CSdtGlobalSettings();
-
-	oSettings.Color         = this.Color.Copy();
-	oSettings.ShowHighlight = this.ShowHighlight;
-
-	return oSettings;
-};
-CSdtGlobalSettings.prototype.Write_ToBinary = function(oWriter)
-{
-	// CDocumentColor : Color
-	// Bool           : ShowHighlight
-
-	this.Color.WriteToBinary(oWriter);
-	oWriter.WriteBool(this.ShowHighlight);
-};
-CSdtGlobalSettings.prototype.Read_FromBinary = function(oReader)
-{
-	this.Color.ReadFromBinary(oReader);
-	this.ShowHighlight = oReader.GetBool();
-};
-
-/**
- * Класс с глобальными настройками для всех специальных форм
- */
-function CSpecialFormsGlobalSettings()
-{
-	this.Highlight = new AscCommonWord.CDocumentColor(201, 200, 255);
-}
-CSpecialFormsGlobalSettings.prototype.Copy = function()
-{
-	var oSettings = new CSpecialFormsGlobalSettings();
-
-	if (this.Highlight)
-		oSettings.Highlight = this.Highlight.Copy();
-
-	return oSettings;
-};
-/**
- * Проверяем все ли параметры выставлены по умолчанию
- * @returns {boolean}
- */
-CSpecialFormsGlobalSettings.prototype.IsDefault = function()
-{
-	return (undefined === this.Highlight || (!this.Highlight.IsAuto() && this.Highlight.IsEqualRGB({r : 201, g: 200, b : 255})));
-};
-CSpecialFormsGlobalSettings.prototype.Write_ToBinary = function(oWriter)
-{
-	var nStartPos = oWriter.GetCurPosition();
-	oWriter.Skip(4);
-	var nFlags = 0;
-
-	if (undefined !== this.Highlight)
-	{
-		this.Highlight.WriteToBinary(oWriter);
-		nFlags |= 1;
-	}
-
-	var nEndPos = oWriter.GetCurPosition();
-	oWriter.Seek(nStartPos);
-	oWriter.WriteLong(nFlags);
-	oWriter.Seek(nEndPos);
-};
-CSpecialFormsGlobalSettings.prototype.Read_FromBinary = function(oReader)
-{
-	var nFlags = oReader.GetLong();
-
-	if (nFlags & 1)
-	{
-		this.Highlight = new AscCommonWord.CDocumentColor();
-		this.Highlight.ReadFromBinary(oReader);
-	}
-	else
-	{
-		this.Highlight = undefined;
-	}
-};
-
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord']        = window['AscCommonWord'] || {};
 window['AscCommonWord'].CSdtPr = CSdtPr;
@@ -885,6 +940,8 @@ CContentControlPr.prototype['get_Appearance']         = CContentControlPr.protot
 CContentControlPr.prototype['put_Appearance']         = CContentControlPr.prototype.SetAppearance;
 CContentControlPr.prototype['get_Color']              = CContentControlPr.prototype.GetColor;
 CContentControlPr.prototype['put_Color']              = CContentControlPr.prototype.SetColor;
+CContentControlPr.prototype['get_Temporary']          = CContentControlPr.prototype.GetTemporary;
+CContentControlPr.prototype['put_Temporary']          = CContentControlPr.prototype.SetTemporary;
 CContentControlPr.prototype['get_SpecificType']       = CContentControlPr.prototype.GetSpecificType;
 CContentControlPr.prototype['get_CheckBoxPr']         = CContentControlPr.prototype.GetCheckBoxPr;
 CContentControlPr.prototype['put_CheckBoxPr']         = CContentControlPr.prototype.SetCheckBoxPr;

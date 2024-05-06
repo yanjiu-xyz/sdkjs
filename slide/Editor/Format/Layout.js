@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -108,6 +108,7 @@ function SlideLayout()
     this.matchingName = "";
     this.preserve = false;
     this.showMasterPhAnim = false;
+		this.showMasterSp = true;
     this.type = null;
 
     this.userDrawn = true;
@@ -168,9 +169,12 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
             copy.setMatchingName(this.matchingName);
         }
 
-        if(copy.showMasterPhAnim !== this.showMasterPhAnim){
+        if(copy.showMasterPhAnim !== this.showMasterPhAnim) {
             copy.setShowPhAnim(this.showMasterPhAnim);
         }
+	    if(copy.showMasterSp !== this.showMasterSp) {
+			copy.setShowMasterSp(this.showMasterSp);
+	    }
         if(this.type !== copy.type){
             copy.setType(this.type);
         }
@@ -203,6 +207,13 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
     {
         History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideLayoutSetBg, this.cSld.Bg, bg));
         this.cSld.Bg = bg;
+        this.recalcInfo.recalculateBackground = true;
+    };
+    SlideLayout.prototype.needRecalc = function()
+    {
+        return  this.recalcInfo.recalculateBackground ||
+                this.recalcInfo.recalculateSpTree ||
+                this.recalcInfo.recalculateBounds;
     };
     SlideLayout.prototype.setCSldName = function(name)
     {
@@ -236,6 +247,7 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
         History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideLayoutAddToSpTree, pos, [item], true));
         this.cSld.spTree.splice(pos, 0, item);
         item.setParent2(this);
+        this.recalcInfo.recalculateSpTree = true;
     };
     SlideLayout.prototype.addToSpTreeToPos = function(pos, obj)
     {
@@ -295,23 +307,18 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
         if(slide){
             if(slide.num !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = slide.num;
-                this.handleAllContents(function (oContent) {
-                    if(oContent){
-                        if(oContent.AllFields && oContent.AllFields.length > 0){
-                            for(var j = 0; j < oContent.AllFields.length; j++){
-                                oContent.AllFields[j].RecalcInfo.Measure = true;
-                                oContent.AllFields[j].Refresh_RecalcData2();
-                            }
-                        }
-                    }
-                });
+                this.cSld.refreshAllContentsFields();
                 this.recalculate();
 
             }
         }
-        for (var i = 0; i < this.cSld.spTree.length; ++i) {
-            if (this.cSld.spTree[i].isPlaceholder && !this.cSld.spTree[i].isPlaceholder())
-                this.cSld.spTree[i].draw(graphics);
+        for (let nSp = 0; nSp < this.cSld.spTree.length; ++nSp) {
+            let oSp = this.cSld.spTree[nSp];
+            if(AscCommon.IsHiddenObj(oSp)) {
+                continue;
+            }
+            if (oSp.isPlaceholder && !oSp.isPlaceholder())
+                oSp.draw(graphics);
         }
     };
     SlideLayout.prototype.calculateType = function()
@@ -339,7 +346,7 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
             _shape = _shapes[_shape_index];
             if(_shape.isPlaceholder())
             {
-                var _cur_type = _shape.getPhType();
+                var _cur_type = _shape.getPlaceholderType();
                 if(!(typeof(_cur_type) == "number"))
                 {
                     _cur_type = AscFormat.phType_body;
@@ -408,6 +415,8 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
             }
             this.recalcInfo.recalculateBounds = false;
         }
+        this.recalcInfo.recalculateBackground = false;
+        this.recalcInfo.recalculateSpTree = false;
     };
     SlideLayout.prototype.recalculate2 = function()
     {
@@ -495,6 +504,11 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
                 case AscDFH.historyitem_SlideLayoutAddToSpTree:
                 {
                     this.recalcInfo.recalculateBounds = true;
+                    this.addToRecalculate();
+                    break;
+                }
+                case AscDFH.historyitem_SlideLayoutSetBg:
+                {
                     this.addToRecalculate();
                     break;
                 }
@@ -795,7 +809,6 @@ function DrawNativeDashRect(g, transform, extX, extY) {
 function CLayoutThumbnailDrawer()
 {
     this.CanvasImage    = null;
-    this.IsRetina       = false;
     this.WidthMM        = 0;
     this.HeightMM       = 0;
 
@@ -859,7 +872,7 @@ function CLayoutThumbnailDrawer()
 
         if (use_master_shapes !== false)
         {
-            if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+            if (_layout.showMasterSp)
             {
                 if(_master.needRecalc && _master.needRecalc())
                 {
@@ -873,7 +886,7 @@ function CLayoutThumbnailDrawer()
         {
             var _sp_elem = _layout.cSld.spTree[i];
             _sp_elem.recalculate();
-            if(_sp_elem.isPlaceholder && _sp_elem.isPlaceholder())
+            if(_sp_elem.isPlaceholder && _sp_elem.isPlaceholder() && !AscCommon.IsHiddenObj(_sp_elem))
             {
                 var _ph_type = _sp_elem.getPlaceholderType();
                 var _usePH = true;
@@ -1071,3 +1084,5 @@ function CLayoutThumbnailDrawer()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 window['AscCommonSlide'].SlideLayout = SlideLayout;
+window['AscCommonSlide'].LAYOUT_TYPE_MAP = LAYOUT_TYPE_MAP;
+window['AscCommonSlide'].LAYOUT_TYPE_TO_STRING = LAYOUT_TYPE_TO_STRING;

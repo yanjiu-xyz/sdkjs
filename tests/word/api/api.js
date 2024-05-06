@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -41,7 +41,7 @@ $(function () {
 	{
 		AscTest.ClearDocument();
 
-		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p);
 
 		logicDocument.SelectAll();
@@ -52,7 +52,7 @@ $(function () {
 		logicDocument.SelectAll();
 		assert.strictEqual(logicDocument.GetSelectedText(false, {NewLineParagraph : true}), "Hello World!\r\n", "Add text 'Hello World!'");
 
-		let p2 = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p2 = new AscWord.Paragraph();
 		logicDocument.AddToContent(1, p2);
 
 		logicDocument.RemoveSelection();
@@ -71,7 +71,7 @@ $(function () {
 		function StartTest(text)
 		{
 			AscTest.ClearDocument();
-			let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+			let p = new AscWord.Paragraph();
 			logicDocument.AddToContent(0, p);
 			logicDocument.AddTextWithPr(text);
 			logicDocument.MoveCursorToEndPos();
@@ -142,5 +142,53 @@ $(function () {
 		assert.strictEqual(GetText(), "123 Text", "Check wrap spaces 123 Text");
 
 
+	});
+	
+	QUnit.test("Change numbering level", function(assert)
+	{
+		AscTest.ClearDocument();
+		
+		let p1 = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p1);
+		
+		let p2 = AscTest.CreateParagraph();
+		logicDocument.AddToContent(1, p2);
+		
+		AscTest.MoveCursorToParagraph(p1, true);
+		AscTest.AddNumbering(1, 1);
+		AscTest.MoveCursorToParagraph(p2, true);
+		AscTest.AddNumbering(1, 1);
+		
+		let numPr1 = p1.GetNumPr();
+		let numPr2 = p2.GetNumPr();
+		
+		assert.strictEqual(!!numPr1, true, "Check paragraph 1 numbering");
+		assert.strictEqual(!!numPr2, true, "Check paragraph 2 numbering");
+		assert.deepEqual(numPr1, numPr2, "Check paragraphs have the same paragraph 2 numbering");
+		assert.strictEqual(numPr2.Lvl, 0, "Check numbering lvl of paragraph 2");
+		
+		// При двойном Enter на нулевом уровне в пустом параграфе нумерация должна убираться
+		assert.strictEqual(p2.IsEmpty(), true, "Check if paragraph 2 is empty");
+		
+		AscTest.MoveCursorToParagraph(p2, true);
+		AscTest.PressKey(AscTest.Key.enter);
+		
+		assert.strictEqual(!!p2.GetNumPr(), false, "Check of removing numbering from paragraph 2");
+		
+		
+		AscTest.MoveCursorToParagraph(p2, true);
+		AscTest.AddNumbering(1, 1);
+		assert.strictEqual(!!p2.GetNumPr(), true, "Check paragraph 2 numbering");
+		assert.deepEqual(p1.GetNumPr(), p2.GetNumPr(), "Check paragraphs have the same paragraph 2 numbering");
+		
+		AscTest.SetParagraphNumberingLvl(p2, 1);
+		assert.deepEqual(p2.GetNumPr().Lvl, 1, "Check level of second paragraph");
+		
+		// При двойном Enter на ненулевом уровне в пустом параграфе уровень нумераации должен уменьшаться
+		AscTest.MoveCursorToParagraph(p2, true);
+		AscTest.PressKey(AscTest.Key.enter);
+		
+		assert.strictEqual(!!p2.GetNumPr(), true, "Check paragraph 2 numbering");
+		assert.deepEqual(p2.GetNumPr().Lvl, 0, "Check level of second paragraph");
 	});
 });

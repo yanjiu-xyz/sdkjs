@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -144,6 +144,13 @@ Asc['asc_docs_api'].prototype._saveLocalCheck = function()
 	return !this.isLongAction();
 };
 
+AscCommon.baseEditorsApi.prototype.asc_setCurrentPasswordBase = AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword;
+AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword = AscCommon.baseEditorsApi.prototype["asc_setCurrentPassword"] = function(password)
+{
+	this.currentPasswordOld = this.currentPassword;
+	return this.asc_setCurrentPasswordBase(password);
+};
+
 Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack, options)
 {
 	if (!isResaveAttack && !isSaveAs && !this.asc_isDocumentCanSave())
@@ -174,12 +181,29 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 		}
 		else
 		{
+			// TODO:
+			if (this.isPdfEditor() && this.IsUserSave)
+			{
+				AscCommon.History.Reset_SavedIndex(this.IsUserSave);
+				this.IsUserSave = false;
+			}
+
 			this.canSave = true;
 		}
 		
 		if (_isNaturalSave === true)
 			window["DesktopOfflineAppDocumentStartSave"](isSaveAs, undefined, undefined, undefined, options);
 	}
+};
+Asc['asc_docs_api'].prototype["getAdditionalSaveParams"] = function()
+{
+	return {
+		"documentLayout" : {
+			"openedAt" : this.openedAt
+		},
+		"locale" : this.asc_getLocale(),
+		"translate" : AscCommon.translateManager.mapTranslate
+	};
 };
 window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isForce, docinfo, options)
 {
@@ -196,23 +220,33 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 	if (isSaveAs === true)
 		_param += "saveas=true;";
 
-	var jsonOptions = {
-		"documentLayout" : {
-			"openedAt" : editor.openedAt
-		}
-	};
+	var jsonOptions = editor["getAdditionalSaveParams"]();
+
+	if (options && options.isPdfPrint)
+		jsonOptions["isPrint"] = true;
 
 	if (options && options.advancedOptions)
 	{
 		let nativeOptions = options.advancedOptions.asc_getNativeOptions();
 		if (nativeOptions)
 		{
+			jsonOptions["isPrint"] = true;
 			jsonOptions["nativeOptions"] = nativeOptions;
 			jsonOptions["nativeOptions"]["currentPage"] = editor.getCurrentPage() + 1;
  		}
 	}
 
-	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password, docinfo, (options && options.fileType) ? options.fileType : 0, JSON.stringify(jsonOptions));
+	if (editor.isUseNativeViewer && editor.isDocumentRenderer())
+	{
+		let changes = editor.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
+		if (changes)
+			window["AscDesktopEditor"]["AddChanges"](0, AscCommon.Base64.encode(changes, 0, changes.length));
+	}
+
+	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password,
+		docinfo,
+		(options && options.fileType) ? options.fileType : 0,
+		JSON.stringify(jsonOptions), editor.currentPasswordOld ? editor.currentPasswordOld : "");
 };
 window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
 {
@@ -271,7 +305,7 @@ Asc['asc_docs_api'].prototype.AddImageUrl = function(urls, imgProp, token, obj)
 		var localUrl = window["AscDesktopEditor"]["LocalFileGetImageUrl"](currentValue);
 		return AscCommon.g_oDocumentUrls.getImageUrl(localUrl);
 	});
-	this._addImageUrl(_urls, imgProp, obj);
+	this._addImageUrl(_urls, obj);
 };
 Asc['asc_docs_api'].prototype.AddImage = Asc['asc_docs_api'].prototype.asc_addImage = function(obj)
 {

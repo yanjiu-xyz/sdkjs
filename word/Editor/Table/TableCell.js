@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -256,9 +256,19 @@ CTableCell.prototype =
     // Формируем конечные свойства параграфа на основе стиля и прямых настроек.
     Get_CompiledPr : function(bCopy)
     {
+		let forceCompile = false;
+		if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+		{
+			let logicDocument = this.GetLogicDocument();
+			if (logicDocument
+				&& logicDocument.IsDocumentEditor()
+				&& logicDocument.CompileStyleOnLoad)
+				forceCompile = true;
+		}
+		
         if ( true === this.CompiledPr.NeedRecalc )
         {
-            if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+            if (!forceCompile && (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead))
             {
                 this.CompiledPr.Pr     = g_oDocumentDefaultTableCellPr;
                 this.CompiledPr.ParaPr = g_oDocumentDefaultParaPr;
@@ -272,7 +282,7 @@ CTableCell.prototype =
                 this.CompiledPr.Pr         = FullPr.CellPr;
                 this.CompiledPr.ParaPr     = FullPr.ParaPr;
                 this.CompiledPr.TextPr     = FullPr.TextPr;
-                this.CompiledPr.NeedRecalc = false;
+                this.CompiledPr.NeedRecalc = forceCompile;
             }
         }
 
@@ -328,7 +338,8 @@ CTableCell.prototype =
 			var bFirstCol = false;
 			if (true === TableLook.IsFirstCol())
 			{
-				var oTableStyle = this.Get_Styles().Get(this.Row.Table.Get_TableStyle());
+				var oStyles = this.Get_Styles();
+				var oTableStyle = oStyles && oStyles.Get(this.Row.Table.Get_TableStyle());
 				if (oTableStyle && styletype_Table === oTableStyle.Get_Type() && oTableStyle.TableFirstCol)
 				{
 					var oCondStyle = oTableStyle.TableFirstCol;
@@ -937,14 +948,15 @@ CTableCell.prototype =
 
 	RecalculateMinMaxContentWidth : function(isRotated, nPctWidth)
 	{
-		var oTable         = this.GetTable();
-		var oLogicDocument = oTable ? oTable.GetLogicDocument() : null;
+		var oLogicDocument = this.GetLogicDocument();
 
 		if (undefined === isRotated)
 			isRotated = false;
 
 		if (true === this.IsVerticalText())
 			isRotated = true !== isRotated;
+		
+		let layoutCoeff = this.GetTable().getLayoutScaleCoefficient();
 
 		var oResult;
 		if (oLogicDocument && oLogicDocument.GetRecalcId() === this.CachedMinMax.RecalcId)
@@ -1004,6 +1016,8 @@ CTableCell.prototype =
 			{
 				nAdd = oMargins.Left.W + oMargins.Right.W;
 			}
+			
+			nAdd *= layoutCoeff;
 
 			oResult.Min += nAdd;
 			oResult.Max += nAdd;
@@ -1014,11 +1028,11 @@ CTableCell.prototype =
 			var oPrefW = this.GetW();
 			if (tblwidth_Mm === oPrefW.Type)
 			{
-				if (oResult.Min < oPrefW.W)
-					oResult.Min = oPrefW.W;
+				if (oResult.Min < oPrefW.W * layoutCoeff)
+					oResult.Min = oPrefW.W * layoutCoeff;
 
-				if (oResult.Max < oPrefW.W)
-					oResult.Max = oPrefW.W;
+				if (oResult.Max < oPrefW.W * layoutCoeff)
+					oResult.Max = oPrefW.W * layoutCoeff;
 			}
 			else if (tblwidth_Pct === oPrefW.Type && nPctWidth)
 			{
@@ -1176,11 +1190,16 @@ CTableCell.prototype =
 
 	Set_Pr : function(CellPr)
 	{
+		let isHavePrChange = this.HavePrChange();
+		
 		this.private_AddPrChange();
 		History.Add(new CChangesTableCellPr(this, this.Pr, CellPr));
 		this.Pr = CellPr;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
+		
+		if (isHavePrChange || this.HavePrChange())
+			this.updateTrackRevisions();
 	},
 
     Copy_Pr : function(OtherPr, bCopyOnlyVisualProps)
@@ -1883,6 +1902,16 @@ CTableCell.prototype =
     {
         return this.BorderInfo;
     },
+	
+	GetBorderInfoLeft : function()
+	{
+		return this.BorderInfo.Left;
+	},
+	
+	GetBorderInfoRight : function()
+	{
+		return this.BorderInfo.Right;
+	},
 
     //-----------------------------------------------------------------------------------
     // Undo/Redo функции
@@ -2041,6 +2070,18 @@ CTableCell.prototype.GetTable = function()
 		return null;
 
 	return oRow.GetTable();
+};
+/**
+ * Доступ к главному классу документа
+ * @returns {CDocument|null}
+ */
+CTableCell.prototype.GetLogicDocument = function()
+{
+	let table = this.GetTable();
+	if (table)
+		return table.GetLogicDocument();
+	
+	return null;
 };
 /**
  * Доступ к родительскому классу для родительской таблицы
@@ -2565,11 +2606,11 @@ CTableCell.prototype.GetColumn = function()
 
 	return oTable.GetColumn(this.GetIndex(), this.GetRow().GetIndex());
 };
-CTableCell.prototype.private_UpdateTrackRevisions = function()
+CTableCell.prototype.updateTrackRevisions = function()
 {
 	var oTable = this.GetTable();
 	if (oTable)
-		oTable.UpdateTrackRevisions();
+		oTable.updateTrackRevisions();
 };
 CTableCell.prototype.HavePrChange = function()
 {
@@ -2587,7 +2628,7 @@ CTableCell.prototype.AddPrChange = function()
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo
 		}));
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTableCell.prototype.RemovePrChange = function()
@@ -2602,7 +2643,7 @@ CTableCell.prototype.RemovePrChange = function()
 			ReviewInfo : undefined
 		}));
 		this.Pr.RemovePrChange();
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTableCell.prototype.private_AddPrChange = function()
@@ -2664,6 +2705,13 @@ CTableCell.prototype.CheckContentControlEditingLock = function()
         this.Row.Table.Parent.CheckContentControlEditingLock();
 };
 /**
+ * @returns {AscWord.CBorder}
+ */
+CTableCell.prototype.GetBottomBorder = function()
+{
+	return this.GetBorder(2);
+};
+/**
  * Запрашиваем пересчет сетки таблицы
  */
 CTableCell.prototype.private_UpdateTableGrid = function()
@@ -2710,6 +2758,12 @@ CTableCell.prototype.private_GetRowTopMargin = function()
 	}
 
 	return nTop;
+};
+CTableCell.prototype.OnContentChange = function()
+{
+	let table = this.GetTable();
+	if (table)
+		table.OnContentChange();
 };
 
 

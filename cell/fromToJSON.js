@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -5926,7 +5926,7 @@
 		var oExtLst = new CT_ExtensionList();
 
 		for (var nExt = 0; nExt < oParsed["ext"].length; nExt++)
-			aResult.push(this.ExtensionFromJSON(oParsed["ext"].ext[nExt]));
+			oExtLst.ext.push(this.ExtensionFromJSON(oParsed["ext"].ext[nExt]));
 
 		return oExtLst;
 	};
@@ -6308,7 +6308,7 @@
 			oMembers.member.push(this.MemberFromJSON(oParsed["member"][nElm]));
 
 		if (oParsed["level"] != null)
-			oMembers.level = level;
+			oMembers.level = oParsed["level"];
 
 		return oMembers;
 	};
@@ -6758,7 +6758,7 @@
 	{
 		var oPage = new CT_PCDSCPage();
 		for (var nElm = 0; nElm < oParsed["pageItem"].length; nElm++)
-			oPages.pageItem.push(this.PageItemFromJSON(oParsed["pageItem"][nElm]));
+			oPage.pageItem.push(this.PageItemFromJSON(oParsed["pageItem"][nElm]));
 
 		return oPage;
 	};
@@ -7466,9 +7466,9 @@
 		var oGroup = new CT_MeasureGroup();
 
 		if (oParsed["name"] != null)
-            oDimension.name = oParsed["name"];
+			oGroup.name = oParsed["name"];
 		if (oParsed["caption"] != null)
-            oDimension.caption = oParsed["caption"];
+			oGroup.caption = oParsed["caption"];
 
 		return oGroup;
 	};
@@ -7486,9 +7486,9 @@
 		var oMap = new CT_MeasureDimensionMap();
 
 		if (oParsed["measureGroup"] != null)
-            oDimension.measureGroup = oParsed["measureGroup"];
+			oMap.measureGroup = oParsed["measureGroup"];
 		if (oParsed["dimension"] != null)
-            oDimension.dimension = oParsed["dimension"];
+			oMap.dimension = oParsed["dimension"];
 
 		return oMap;
 	};
@@ -7572,9 +7572,9 @@
 		var oLvlName = new Asc.CT_slicerCacheOlapLevelName();
 
 		if (oParsed["uniqueName"] != null)
-			oCache.uniqueName = oParsed["uniqueName"];
+			oLvlName.uniqueName = oParsed["uniqueName"];
 		if (oParsed["count"] != null)
-			oCache.count = oParsed["count"];
+			oLvlName.count = oParsed["count"];
 
 		return oLvlName;
 	};
@@ -9972,8 +9972,6 @@
 		var res = "";
 		if (Asc.c_oAscPivotAreaType.None === val) {
 			res = "none";
-		} else if (Asc.c_oAscPivotAreaType.Normal === val) {
-			res = "normal";
 		} else if (Asc.c_oAscPivotAreaType.Data === val) {
 			res = "data";
 		} else if (Asc.c_oAscPivotAreaType.All === val) {
@@ -9988,11 +9986,10 @@
 		return res;
 	}
 	function FromXml_ST_PivotAreaType(val) {
-		var res = -1;
+		// Normal is default.
+		var res = Asc.c_oAscPivotAreaType.Normal;
 		if ("none" === val) {
 			res = Asc.c_oAscPivotAreaType.None;
-		} else if ("normal" === val) {
-			res = Asc.c_oAscPivotAreaType.Normal;
 		} else if ("data" === val) {
 			res = Asc.c_oAscPivotAreaType.Data;
 		} else if ("all" === val) {

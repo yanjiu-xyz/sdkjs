@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 05.04.2017
- * Time: 11:42
- */
 
 var type_Unknown = 0x00;
 
@@ -206,6 +201,59 @@ CDocumentContentElementBase.prototype.IsEmptyPage = function(nCurPage)
 };
 CDocumentContentElementBase.prototype.Reset_RecalculateCache = function()
 {
+};
+/**
+ * @param iPage {number} relative page index
+ * @returns {recalcresult}
+ */
+CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
+{
+	if (!(this.Parent instanceof CDocument))
+		return recalcresult_NextElement;
+	
+	// Такая настройка срабатывает в единственном случае:
+	// У предыдущего параграфа выставлена данная настройка, а текущий параграф сразу начинается с новой страницы
+	// ( при этом у него не выставлен флаг "начать с новой страницы", иначе будет зацикливание здесь ).
+	if (1 === iPage && this.IsEmptyPage(0))
+	{
+		// Если у предыдущего параграфа стоит настройка "не отрывать от следующего".
+		// И сам параграф не разбит на несколько страниц и не начинается с новой страницы,
+		// тогда мы должны пересчитать предыдущую страницу, с учетом того, что предыдущий параграф
+		// надо начать с новой страницы.
+		let curr = this.Get_DocumentPrev();
+		while (curr && curr.IsParagraph() && !curr.Get_SectionPr())
+		{
+			let currKeepNext = curr.Get_CompiledPr2(false).ParaPr.KeepNext;
+			if (!currKeepNext || curr.getPageCount() > 1 || !curr.IsInline() || curr.Check_PageBreak())
+				break;
+			
+			let prev = curr.Get_DocumentPrev();
+			if (!prev || (prev.IsParagraph() && prev.Get_SectionPr()))
+				break;
+			
+			if (!prev.IsParagraph() || !prev.Get_CompiledPr2(false).ParaPr.KeepNext)
+			{
+				if (this.Parent.RecalcInfo.Can_RecalcObject())
+				{
+					this.Parent.RecalcInfo.Set_KeepNext(curr, this);
+					return recalcresult_PrevPage | recalcresultflags_Column;
+				}
+				
+				break;
+			}
+			
+			curr = prev;
+		}
+	}
+	
+	if (this.Parent.RecalcInfo.Check_KeepNextEnd(this))
+	{
+		// Дошли до сюда, значит уже пересчитали данную ситуацию.
+		// Делаем Reset здесь, потому что Reset надо делать в том же месте, гды мы запросили пересчет заново.
+		this.Parent.RecalcInfo.Reset();
+	}
+	
+	return recalcresult_NextElement;
 };
 CDocumentContentElementBase.prototype.Write_ToBinary2 = function(Writer)
 {
@@ -455,7 +503,7 @@ CDocumentContentElementBase.prototype.SetContentPosition = function(DocPos, Dept
 CDocumentContentElementBase.prototype.GetNumberingInfo = function(oNumberingEngine)
 {
 };
-CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 };
 CDocumentContentElementBase.prototype.AddImages = function(aImages)
@@ -463,6 +511,7 @@ CDocumentContentElementBase.prototype.AddImages = function(aImages)
 };
 CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
@@ -566,7 +615,7 @@ CDocumentContentElementBase.prototype.SetTableProps = function(oProps)
 CDocumentContentElementBase.prototype.GetSelectedContent = function(oSelectedContent)
 {
 };
-CDocumentContentElementBase.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CDocumentContentElementBase.prototype.PasteFormatting = function(oData)
 {
 };
 CDocumentContentElementBase.prototype.GetCurPosXY = function()
@@ -644,6 +693,7 @@ CDocumentContentElementBase.prototype.GetTableProps = function()
 };
 CDocumentContentElementBase.prototype.AddHyperlink = function(Props)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.ModifyHyperlink = function(Props)
 {
@@ -788,6 +838,39 @@ CDocumentContentElementBase.prototype.GetDocumentPositionFromObject = function(a
 
 	return arrPos;
 };
+/**
+ * Получаем массив всех конент контролов, внутри которых лежит данный класс
+ * @returns {Array}
+ */
+CDocumentContentElementBase.prototype.GetParentContentControls = function()
+{
+	let docPos = this.GetDocumentPositionFromObject();
+	
+	let contentControls = [];
+	for (let pos = 0, len = docPos.length; pos < len; ++pos)
+	{
+		if (docPos[pos].Class instanceof AscWord.CInlineLevelSdt)
+			contentControls.push(docPos[pos].Class);
+		else if (docPos[pos].Class instanceof AscWord.CDocumentContent && docPos[pos].Class.Parent instanceof AscWord.CBlockLevelSdt)
+			contentControls.push(docPos[pos].Class.Parent);
+	}
+	
+	return contentControls;
+};
+/**
+ * @returns {boolean}
+ */
+CDocumentContentElementBase.prototype.IsInPlaceholder = function()
+{
+	let contentControls = this.GetParentContentControls();
+	for (let index = 0, count = contentControls.length; index < count; ++index)
+	{
+		if (contentControls[index].IsPlaceHolder())
+			return true;
+	}
+	
+	return false;
+};
 CDocumentContentElementBase.prototype.Get_Index = function()
 {
 	return this.GetIndex();
@@ -898,6 +981,10 @@ CDocumentContentElementBase.prototype.GetPagesCount = function()
 {
 	return this.Get_PagesCount();
 };
+CDocumentContentElementBase.prototype.getPageCount = function()
+{
+	return this.Get_PagesCount();
+};
 CDocumentContentElementBase.prototype.GetIndex = function()
 {
 	if (!this.Parent)
@@ -909,6 +996,10 @@ CDocumentContentElementBase.prototype.GetIndex = function()
 		this.Index = -1;
 
 	return this.Index;
+};
+CDocumentContentElementBase.prototype.getPageBounds = function(iPage)
+{
+	return this.Get_PageBounds(iPage);
 };
 CDocumentContentElementBase.prototype.GetPageBounds = function(CurPage)
 {
@@ -1139,6 +1230,17 @@ CDocumentContentElementBase.prototype.GetTopElement = function()
 	return this.Parent.GetTopElement();
 };
 /**
+ * Получаем верхний DocContent, в котором лежит данный элемент
+ * @returns {?CDocumentContentBase}
+ */
+CDocumentContentElementBase.prototype.GetTopDocumentContent = function()
+{
+	if (!this.Parent)
+		return null;
+	
+	return this.Parent.GetTopDocumentContent();
+};
+/**
  * Получаем объект лока данного элемента
  * @returns {AscCommon.CLock}
  */
@@ -1217,7 +1319,39 @@ CDocumentContentElementBase.prototype.RecalculateEndInfo = function() {};
  */
 CDocumentContentElementBase.prototype.GetLogicDocument = function()
 {
+	if (!this.LogicDocument && this.Parent && this.Parent.GetLogicDocument)
+		this.LogicDocument = this.Parent.GetLogicDocument();
+	
 	return this.LogicDocument;
+};
+/**
+ * @returns {?CDrawingDocument}
+ */
+CDocumentContentElementBase.prototype.getDrawingDocument = function()
+{
+	return Asc.editor.getDrawingDocument();
+};
+/**
+ * @returns {?CDocumentSpellChecker}
+ */
+CDocumentContentElementBase.prototype.getSpelling = function()
+{
+	let oLogicDocument = this.GetLogicDocument();
+	if(oLogicDocument)
+	{
+		return oLogicDocument.Spelling;
+	}
+	return null;
+};
+/**
+ * @returns {boolean}
+ */
+CDocumentContentElementBase.prototype.IsSpellingUse = function()
+{
+	let oSpelling = this.getSpelling();
+	if(!oSpelling)
+		return false;
+	return oSpelling.Use;
 };
 /**
  * Получаем настройки рамки для данного элемента
@@ -1242,6 +1376,39 @@ CDocumentContentElementBase.prototype.CalculateTextToTable = function(oEngine){}
  * @param arrChanges
  */
 CDocumentContentElementBase.prototype.GetSelectedReviewChanges = function(arrChanges, oTrackChanges) {return arrChanges ? arrChanges : [];};
+/**
+ * Прокидываем наверх событие об изменении содержимого данного элемента
+ */
+CDocumentContentElementBase.prototype.OnContentChange = function()
+{
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
+};
+/**
+ * Get the scale coefficient for the current element depending on the current section and the document layout
+ * @returns {number}
+ */
+CDocumentContentElementBase.prototype.getLayoutScaleCoefficient = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor() || !this.Get_SectPr)
+		return 1;
+	
+	let layout = logicDocument.Layout;
+	logicDocument.Layout = logicDocument.Layouts.Print;
+	
+	let sectPr = this.Get_SectPr();
+	logicDocument.Layout = layout;
+	
+	if (!sectPr)
+		return 1;
+	
+	return logicDocument.GetDocumentLayout().GetScaleBySection(sectPr);
+};
+CDocumentContentElementBase.prototype.updateTrackRevisions = function()
+{
+	AscWord.checkElementInRevision(this);
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -127,7 +127,7 @@ CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Addition
 		for (var Index = 0; Index < UnlockCount2; Index++)
 		{
 			var Class = this.m_aNeedUnlock2[Index];
-			Class.Lock.Set_Type(AscCommon.locktype_None, false);
+			Class.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeNone, false);
 			editor.CoAuthoringApi.releaseLocks(Class.Get_Id());
 		}
 
@@ -182,7 +182,7 @@ CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Addition
         editor.WordControl.m_oLogicDocument.DrawingDocument.FirePaint();
     }
 
-    editor.WordControl.m_oLogicDocument.Check_CompositeInputRun();
+    editor.WordControl.m_oLogicDocument.getCompositeInput().checkState();
 };
 CWordCollaborativeEditing.prototype.Release_Locks = function()
 {
@@ -190,9 +190,9 @@ CWordCollaborativeEditing.prototype.Release_Locks = function()
     for (var Index = 0; Index < UnlockCount; Index++)
     {
         var CurLockType = this.m_aNeedUnlock[Index].Lock.Get_Type();
-        if (AscCommon.locktype_Other3 != CurLockType && AscCommon.locktype_Other != CurLockType)
+        if (AscCommon.c_oAscLockTypes.kLockTypeOther3 != CurLockType && AscCommon.c_oAscLockTypes.kLockTypeOther != CurLockType)
         {
-            this.m_aNeedUnlock[Index].Lock.Set_Type(AscCommon.locktype_None, false);
+            this.m_aNeedUnlock[Index].Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeNone, false);
 
             if (this.m_aNeedUnlock[Index] instanceof AscCommonWord.CHeaderFooterController)
                 editor.sync_UnLockHeaderFooters();
@@ -207,9 +207,9 @@ CWordCollaborativeEditing.prototype.Release_Locks = function()
             else if (this.m_aNeedUnlock[Index] instanceof AscCommonWord.CDocProtect)
                 editor.sendEvent("asc_onLockDocumentProtection", false);
         }
-        else if (AscCommon.locktype_Other3 === CurLockType)
+        else if (AscCommon.c_oAscLockTypes.kLockTypeOther3 === CurLockType)
         {
-            this.m_aNeedUnlock[Index].Lock.Set_Type(AscCommon.locktype_Other, false);
+            this.m_aNeedUnlock[Index].Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeOther, false);
         }
     }
 };
@@ -237,6 +237,10 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 	this.m_oLogicDocument.ResumeRecalculate();
 	this.m_oLogicDocument.RecalculateByChanges(this.CoHistory.GetAllChanges(), this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
 	this.m_oLogicDocument.UpdateTracks();
+	
+	let oform = this.m_oLogicDocument.GetOFormDocument();
+	if (oform)
+		oform.onEndLoadChanges();
 
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };
@@ -341,7 +345,7 @@ CWordCollaborativeEditing.prototype.private_LockByMe = function()
 			var oClass = AscCommon.g_oTableId.Get_ById(oItem);
 			if (oClass)
 			{
-				oClass.Lock.Set_Type(AscCommon.locktype_Mine);
+				oClass.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine);
 				this.Add_Unlock2(oClass);
 			}
 		}
@@ -370,10 +374,10 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if (true === oEditor.isChartEditor)
+            if (oEditor.isOpenedChartFrame)
                 oEditor.sync_closeChartEditor();
 
-          if (true === oEditor.isOleEditor)
+          if (oEditor.isOleEditor)
             oEditor.sync_closeOleEditor();
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
@@ -498,6 +502,15 @@ CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 
 		if (this.m_oLogicDocument && this.m_oLogicDocument.ClearListsCache)
 			this.m_oLogicDocument.ClearListsCache();
+
+		if (this.m_oLogicDocument && this.m_oLogicDocument.Settings && this.m_oLogicDocument.Settings.DocumentProtection)
+		{
+			let updateFromUser = this.m_oLogicDocument.Settings.DocumentProtection.GetNeedUpdate();
+			if (updateFromUser) {
+				oApi.asc_OnProtectionUpdate(updateFromUser);
+				this.m_oLogicDocument.Settings.DocumentProtection.SetNeedUpdate(null);
+			}
+		}
 	}
 };
 CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges)

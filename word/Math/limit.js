@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -318,27 +318,31 @@ CLimit.prototype.Can_ModifyArgSize = function()
 CLimit.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strLimitSymbol = "";
-	var strFuncName = this.CheckIsEmpty(this.getFName().GetTextOfElement(isLaTeX));
-	var strArgument = this.CheckIsEmpty(this.getIterator().GetTextOfElement(isLaTeX));
+	var strFuncName = this.getFName().GetMultipleContentForGetText(isLaTeX, true);
+	var strArgument = this.getIterator().GetMultipleContentForGetText(isLaTeX, true);
 	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
 	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
 
-	if (isLaTeX) {
-		strLimitSymbol = (this.Pr.type == 1) ? "^" : "_";
+	if (isLaTeX)
+    {
+        strLimitSymbol = (this.Pr.type == 1) ? "\\above" : "\\below";
 		if (strFuncName === 'lim' ||
 			strFuncName === 'log' ||
 			strFuncName === 'max' ||
 			strFuncName === 'min' ||
-			strFuncName === 'ln') {
-				strFuncName = '\\' + strFuncName;
+			strFuncName === 'ln')
+        {
+            strFuncName = '\\' + strFuncName;
 		}
-	} else {
+	}
+    else
+    {
 		strLimitSymbol = (this.Pr.type == 1) ? "┴" : "┬";
 	}
-	
-	if (strArgument.length > 1) {
+
+	if (strArgument.length > 1 || isLaTeX)
 		strArgument = strStartBracet + strArgument + strCloseBracet;
-	}
+
 	strTemp = strFuncName + strLimitSymbol+ strArgument;
 	return strTemp;
 };
@@ -445,64 +449,25 @@ CMathFunc.prototype.fillContent = function()
 };
 CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
-	var strFuncName = this.CheckIsEmpty(this.getFName().GetTextOfElement(isLaTeX));
-	var strArgument = " "+this.CheckIsEmpty(this.getArgument().GetTextOfElement(isLaTeX));
-	var strStartBracet = "";
-	var strCloseBracet = "";
+	var strFuncName = this.getFName().GetMultipleContentForGetText(isLaTeX, true);
+	var strArgument = this.getArgument().GetMultipleContentForGetText(isLaTeX, true);
 
-	if (isLaTeX) {
-		strStartBracet = strArgument.trim().length > 1 ? " {" : "";
-		strCloseBracet = strArgument.trim().length > 1 ? "}" : "";
-	} else {
-		strStartBracet = strArgument.trim().length > 1 ? " 〖" : "";
-		strCloseBracet = strArgument.trim().length > 1 ? "〗" : "";
+	if (!isLaTeX)
+	{
+		let strFuncApply = String.fromCharCode(8289);
+		if (this.getArgument().haveMixedContent())
+			strArgument = strFuncApply + "〖" + strArgument + "〗";
+		else
+			strArgument = strFuncApply + strArgument;
+	}
+	if (isLaTeX)
+	{
+		strArgument = "{" + strArgument + "}";
+		if (AscMath.LimitFunctions.includes(strFuncName) || AscMath.functionNames.includes(strFuncName))
+			strFuncName = '\\'+ strFuncName;
 	}
 
-	//	Unicode
-	//	if strArgument is block.. such as (2+1), then don't add brackets
-
-	if (isLaTeX) {
-		switch (strFuncName) {
-			case 'cos':
-			case 'sin':
-			case 'tan':
-			case 'sec':
-			case 'cot':
-			case 'csc':
-			case 'arcsin':
-			case 'arccos':
-			case 'arctan':
-			case 'arcsec':
-			case 'arccot':
-			case 'arccsc':
-			case 'sinh':
-			case 'cosh':
-			case 'tanh':
-			case 'coth':
-			case 'sech':
-			case 'csch':
-			case 'srcsinh':
-			case 'arctanh':
-			case 'arcsech':
-			case 'arccosh':
-			case 'arccoth':
-			case 'arccsch':
-			case 'log':
-
-			case 'lin':
-			case 'ln':
-			case 'max':
-			case 'min':
-			case 'exp': strFuncName = '\\'+ strFuncName; break;
-			default: break;
-		}
-	}
-	
-	strTemp = strFuncName
-		+ strStartBracet
-		+ strArgument
-		+ strCloseBracet;
-
+	strTemp = strFuncName + strArgument;
 	return strTemp;
 };
 

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,12 +31,6 @@
  */
 
 "use strict";
-
-/**
- * User: Ilja.Kirillov
- * Date: 26.10.2016
- * Time: 18:45
- */
 
 (/**
  * @param {Window} window
@@ -69,13 +63,13 @@
 	};
 	CTableId.prototype.Add = function(Class, Id)
 	{
-		if (false === this.m_bTurnOff)
-		{
-			Class.Id          = Id;
-			this.m_aPairs[Id] = Class;
-
-			AscCommon.History.Add(new AscCommon.CChangesTableIdAdd(this, Id, Class));
-		}
+		if (this.m_bTurnOff || !Class)
+			return;
+		
+		Class.Id          = Id;
+		this.m_aPairs[Id] = Class;
+		
+		AscCommon.History.Add(new AscCommon.CChangesTableIdAdd(this, Id, Class));
 	};
 	CTableId.prototype.TurnOff = function()
 	{
@@ -145,9 +139,15 @@
 		this.Id         = AscCommon.g_oIdCounter.Get_NewId();
 		this.Add(this, this.Id);
 	};
+	CTableId.prototype.Delete = function(sId)
+	{
+		if(this.m_aPairs.hasOwnProperty(sId)) {
+			delete this.m_aPairs[sId];
+		}
+	};
 	CTableId.prototype.private_InitFactoryClass = function()
 	{
-		this.m_oFactoryClass[AscDFH.historyitem_type_Paragraph]              = AscCommonWord.Paragraph;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Paragraph]              = AscWord.Paragraph;
 		this.m_oFactoryClass[AscDFH.historyitem_type_TextPr]                 = AscCommonWord.ParaTextPr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Hyperlink]              = AscCommonWord.ParaHyperlink;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Drawing]                = AscCommonWord.ParaDrawing;
@@ -390,15 +390,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNodeData  ]     = AscFormat.SmartArtNodeData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
 
-		if (window['AscOForm'])
-		{
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster]  = AscOForm.CUserMaster;
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User]        = AscOForm.CUser;
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster] = AscOForm.CFieldMaster;
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document]    = AscOForm.CDocument;
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup]  = AscOForm.CFieldGroup;
-		}
-
 		if (window['AscCommonSlide'])
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Slide]               = AscCommonSlide.Slide;
@@ -488,6 +479,8 @@
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;
+		
+		this.InitOFormClasses();
 	};
 	CTableId.prototype.GetClassFromFactory = function(nType)
 	{
@@ -498,6 +491,25 @@
 	};
 	CTableId.prototype.Refresh_RecalcData = function(Data)
 	{
+	};
+	CTableId.prototype.InitOFormClasses = function()
+	{
+		if (AscCommon.IsSupportOFormFeature())
+		{
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster]  = AscOForm.CUserMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User]        = AscOForm.CUser;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster] = AscOForm.CFieldMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document]    = AscOForm.CDocument;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup]  = AscOForm.CFieldGroup;
+		}
+		else
+		{
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup];
+		}
 	};
 	//-----------------------------------------------------------------------------------
 	// Функции для работы с совместным редактирования

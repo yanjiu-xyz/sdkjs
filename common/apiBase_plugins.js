@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -56,21 +56,23 @@
 
     /**
      * The editors which the plugin is available for:
-	 * * **word** - text document editor,
-	 * * **cell** - spreadsheet editor,
-	 * * **slide** - presentation editor.
-	 * @typedef {("word" | "cell" | "slide")} editorType
+	 * * <b>word</b> - text document editor,
+	 * * <b>cell</b> - spreadsheet editor,
+	 * * <b>slide</b> - presentation editor,
+	 * * <b>pdf</b> - pdf editor.
+	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
      */
 
     /**
 	 * The data type selected in the editor and sent to the plugin:
-     * * **text** - the text data,
-	 * * **html** - HTML formatted code,
-	 * * **ole** - OLE object data,
-     * * **desktop** - the desktop editor data,
-     * * **destop-external** - the main page data of the desktop app (system messages),
-     * * **none** - no data will be send to the plugin from the editor.
-	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none")} initDataType
+     * * <b>text</b> - the text data,
+	 * * <b>html</b> - HTML formatted code,
+	 * * <b>ole</b> - OLE object data,
+     * * <b>desktop</b> - the desktop editor data,
+     * * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * * <b>none</b> - no data will be send to the plugin from the editor,
+	 * * <b>sign</b> - the sign for the keychain plugin.
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
      */
 
     /**
@@ -148,6 +150,18 @@
 	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 */
 
+	/**
+	 * OLE-object properties
+	 * @typed {Object} OLEProperties
+	 * @property {string} data - OLE object data (internal format).
+	 * @property {string} imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
+	 * @property {string} guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
+	 * @property {number} width - The OLE object width measured in millimeters.
+	 * @property {number} height - The OLE object height measured in millimeters.
+	 * @property {number} widthPix - The OLE object image width in pixels.
+	 * @property {number} heightPix - The OLE object image height in pixels.
+	 */
+
     /**
      * Base class
      * @global
@@ -172,14 +186,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddOleObject
 	 * @this Api
-     * @param {Object} data - The OLE object properties.
-     * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {string} data.guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
-     * @param {number} data.width - The OLE object width measured in millimeters.
-     * @param {number} data.height - The OLE object height measured in millimeters.
-     * @param {number} data.widthPix - The OLE object image width in pixels.
-     * @param {number} data.heightPix - The OLE object image height in pixels.
+     * @param {OLEProperties} data - The OLE object properties.
     */
     Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data); };
 
@@ -188,16 +195,30 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EditOleObject
-     * @param {Object} data - The OLE object properties.
-     * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {string} data.objectId - The OLE object identifier.
-     * @param {number} data.width - The OLE object width measured in millimeters.
-     * @param {number} data.height - The OLE object height measured in millimeters.
-     * @param {number} data.widthPix - The OLE object image width in pixels.
-     * @param {number} data.heightPix - The OLE object image height in pixels.
+     * @param {OLEProperties} data - The OLE object properties.
      */
     Api.prototype["pluginMethod_EditOleObject"] = function(data) { return this.asc_editOleObject(data); };
+
+
+	/**
+	 * Returns an array of selected ole-objects.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias GetSelectedOleObjects
+	 * @returns {OLEProperties[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
+	 */
+	Api.prototype["pluginMethod_GetSelectedOleObjects"] = function()
+	{
+		let oDrawingsController = this.getGraphicController();
+		let aRes = [];
+		if(!oDrawingsController) return aRes;
+		let aSelectedOle = oDrawingsController.getSelectedOleObjects();
+		for(let nIdx = 0; nIdx < aSelectedOle.length; ++nIdx)
+		{
+			aRes.push(aSelectedOle[nIdx].getPluginDataObject());
+		}
+		return aRes;
+	};
 
     /**
 	 * An object containing the font information.
@@ -218,7 +239,7 @@
 	 * @property {number} m_usWeigth The visual weight (stroke blackness or thickness) of the font characters (1-1000).
 	 * @property {number} m_usWidth The relative change from the normal aspect ratio (width to height ratio).
 	 * @property {number} m_sFamilyClass The font family class which values are assigned by IBM to each font family.
-	 * @property {number} m_eFontFormat The specific file type(s) used to store font data: **0** - *.fon, **1** - *.ttf, **2** - *.ttf, *.otf (CFF), **3** - unknown font format.
+	 * @property {number} m_eFontFormat The specific file type(s) used to store font data: <b>0</b> - *.fon, <b>1</b> - *.ttf, <b>2</b> - *.ttf, *.otf (CFF), <b>3</b> - unknown font format.
 	 * @property {number} m_shAvgCharWidth The arithmetic average of the escapement (width) of all non-zero width glyphs in the font.
 	 * @property {number} m_shAscent The height above the baseline for a clipping region.
 	 * @property {number} m_shDescent The vertical extent below the baseline for a clipping region.
@@ -249,7 +270,7 @@
      */
     Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
     {
-        if (this.isViewMode || !AscCommon.g_inputContext)
+        if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
             return;
 
         if (textReplace)
@@ -262,87 +283,78 @@
         AscCommon.g_inputContext.keyPressInput = "";
     };
 
-    /**
-     * Pastes text in the HTML format into the document.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @alias PasteHtml
-     * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
-     */
-    Api.prototype["pluginMethod_PasteHtml"] = function(htmlText)
-    {
-        if (!AscCommon.g_clipboardBase)
-            return null;
-
-		if (this.isViewMode)
+	/**
+	 * Pastes text in the HTML format into the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias PasteHtml
+	 * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
+	 */
+	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText) {
+		if (!AscCommon.g_clipboardBase)
 			return null;
 
-        var _elem = document.getElementById("pmpastehtml");
-        if (_elem)
-            return;
+		if (!this.canEdit() || this.isPdfEditor())
+			return null;
 
-        _elem = document.createElement("div");
-        _elem.id = "pmpastehtml";
+		let _elem = document.getElementById("pmpastehtml");
+		if (_elem)
+			return;
 
-        if (this.editorId == AscCommon.c_oEditorId.Word || this.editorId == AscCommon.c_oEditorId.Presentation)
-        {
-            var textPr = this.get_TextProps();
-            if (textPr)
-            {
-                if (undefined !== textPr.TextPr.FontSize)
-                    _elem.style.fontSize = textPr.TextPr.FontSize + "pt";
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
+		_elem = document.createElement("div");
+		_elem.id = "pmpastehtml";
+		_elem.style.color = "rgb(0,0,0)";
 
-                _elem.style.fontWeight = (true === textPr.TextPr.Bold) ? "bold" : "normal";
-                _elem.style.fontStyle = (true === textPr.TextPr.Italic) ? "italic" : "normal";
+		if (this.editorId === AscCommon.c_oEditorId.Word || this.editorId === AscCommon.c_oEditorId.Presentation) {
+			let textPr = this.get_TextProps();
+			if (textPr) {
+				if (undefined !== textPr.TextPr.FontSize)
+					_elem.style.fontSize = textPr.TextPr.FontSize + "pt";
 
-                var _color = textPr.TextPr.Color;
-                if (_color)
-                    _elem.style.color = "rgb(" + _color.r + "," + _color.g + "," + _color.b + ")";
-                else
-                    _elem.style.color = "rgb(0,0,0)";
-            }
-        }
-        else if (this.editorId == AscCommon.c_oEditorId.Spreadsheet)
-        {
-            var props = this.asc_getCellInfo();
+				_elem.style.fontWeight = (true === textPr.TextPr.Bold) ? "bold" : "normal";
+				_elem.style.fontStyle = (true === textPr.TextPr.Italic) ? "italic" : "normal";
 
-            if (props && props.font)
-            {
-                if (undefined != props.font.size)
-                    _elem.style.fontSize = props.font.size + "pt";
+				let _color = textPr.TextPr.Color;
+				if (_color)
+					_elem.style.color = "rgb(" + _color.r + "," + _color.g + "," + _color.b + ")";
+				else
+					_elem.style.color = "rgb(0,0,0)";
+			}
+		} else if (this.editorId === AscCommon.c_oEditorId.Spreadsheet) {
+			let props = this.asc_getCellInfo();
 
-                _elem.style.fontWeight = (true === props.font.bold) ? "bold" : "normal";
-                _elem.style.fontStyle = (true === props.font.italic) ? "italic" : "normal";
-            }
-        }
+			if (props && props.font) {
+				if (undefined != props.font.size)
+					_elem.style.fontSize = props.font.size + "pt";
 
-        _elem.innerHTML = htmlText;
-        document.body.appendChild(_elem);
-        this.incrementCounterLongAction();
-        var b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
-        AscCommon.g_clipboardBase.bSaveFormat = true;
-        this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem);
-        this.decrementCounterLongAction();
+				_elem.style.fontWeight = (true === props.font.bold) ? "bold" : "normal";
+				_elem.style.fontStyle = (true === props.font.italic) ? "italic" : "normal";
+			}
+		}
 
-        if (true)
-        {
-            var fCallback = function ()
-            {
-                document.body.removeChild(_elem);
-                _elem = null;
-                AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
-            };
-            if(this.checkLongActionCallback(fCallback, null)){
-                fCallback();
-            }
-        }
-        else
-        {
-            document.body.removeChild(_elem);
-            _elem = null;
-            AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
-        }
-    };
+		_elem.innerHTML = htmlText;
+		document.body.appendChild(_elem);
+		this.incrementCounterLongAction();
+		let b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
+		AscCommon.g_clipboardBase.bSaveFormat = false;
+		let _t = this;
+		this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
+			function () {
+				_t.decrementCounterLongAction();
+
+				let fCallback = function () {
+					document.body.removeChild(_elem);
+					_elem = null;
+					AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
+				};
+				if (_t.checkLongActionCallback(fCallback, null)) {
+					fCallback();
+				}
+				window.g_asc_plugins &&	window.g_asc_plugins.onPluginMethodReturn(true);
+			}
+		);
+	};
 
     /**
      * Pastes text into the document.
@@ -391,7 +403,7 @@
     };
 
 	/**
-	 * Returns all VBA macros into a document.
+	 * Returns all VBA macros from the document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias GetVBAMacros
@@ -408,7 +420,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias StartAction
-     * @param {number} type - A value which defines an action type which can take **0** if this is an *Information* action or **1** if this is a *BlockInteraction* action.
+     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is an *Information* action or <b>1</b> if this is a *BlockInteraction* action.
 	 * @param {string} description - A string value that specifies the description text for the start action of the operation.
      */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
@@ -421,8 +433,9 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EndAction
-     * @param {number} type - A value which defines an action type which can take **0** if this is the *Information* action or **1** if this is the *BlockInteraction* action.
+     * @param {number} type - A value which defines an action type which can take <b>"Block"</b> if this is the *BlockInteraction* action or <b>"Information</b> if this is the *Information* action.
      * @param {string} description - A string value that specifies the description text for the operation end action.
+	 * @param {string} status - The error status code. If no error occurs, then an empty string is passed.
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
     {
@@ -476,11 +489,10 @@
      * @alias OnEncryption
      * @param {object} obj - The encryption properties.
      * @param {string} obj.type - The type of encrypting operation:
-     * * **generatePassword** - generates a password for the document,
-     * * **getPasswordByFile** - sends the password when opening the document,
-     * * **setPasswordByFile** - sets a password to the document,
-     * * **encryptData** - encrypts changes when co-editing,
-     * * **decryptData** - decrypts changes when co-editing.
+     * * <b>generatePassword</b> - generates a password for the document,
+     * * <b>getPasswordByFile</b> - sends the password when opening the document,
+     * * <b>encryptData</b> - encrypts changes when co-editing,
+     * * <b>decryptData</b> - decrypts changes when co-editing.
      * @param {string} obj.password - A string value specifying the password to access the document.
      * @param {string} obj.data - Encrypted/decrypted changes.
      * @param {boolean} obj.check - Checks if the encryption/decryption operation is successful or not (used only for *encryptData* or *decryptData* types).
@@ -557,14 +569,14 @@
 	 * @property {number} height The watermark height measured in millimeters.
 	 * @property {number} rotate The watermark rotation angle measured in degrees.
 	 * @property {Array.<number>} margins The text margins measured in millimeters in the watermark shape.
-	 * @property {Array.<number>} fill The watermark fill color in the RGB format. The empty array [] means that the watermark has no fill.
+	 * @property {Array.<number> | string} fill The watermark fill color in the RGB format, or the URL to image (base64 support: data:image/png;...). The empty array [] means that the watermark has no fill.
      * @property {number} stroke-width The watermark stroke width measured in millimeters.
 	 * @property {Array.<number>} stroke The watermark stroke color in the RGB format. The empty array [] means that the watermark stroke has no fill.
-	 * @property {number} align The vertical text align in the watermark shape: **0** - bottom, **1** - center, **4** - top.
+	 * @property {number} align The vertical text align in the watermark shape: <b>0</b> - bottom, <b>1</b> - center, <b>4</b> - top.
 	 * @property {Array.<object>} paragraphs The array with paragraphs from the current watermark with their properties.
-	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: **0** - right, **1** - left, **2** - center, **3** - justify.
+	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: <b>0</b> - right, <b>1</b> - left, <b>2</b> - center, <b>3</b> - justify.
 	 * @property {Array.<number>} paragraphs.fill The paragraph highlight in the RGB format. The empty array [] means that the paragraph is not highlighted.
-	 * @property {number} paragraphs.linespacing The text linespecing in the current paragraph.
+	 * @property {number} paragraphs.linespacing The text linespacing in the current paragraph.
 	 * @property {Array.<object>} paragraphs.runs The array with runs from the current paragraph with their properties.
 	 * @property {string} paragraphs.runs.text The run text.
 	 * @property {Array.<number>} paragraphs.runs.fill The text highlight in the RGB format. The empty array [] means that the text is not highlighted.
@@ -581,7 +593,7 @@
      * @typedef {Object} fillForms
      * @property {object} tags The form tags which specify the content for each form type with such a tag.
      * @property {string} tags.text The text field value (some text).
-	 * @property {string} tags.checkBox The checkbox form value (**true** - checked, **false** - unchecked).
+	 * @property {string} tags.checkBox The checkbox form value (<b>true</b> - checked, <b>false</b> - unchecked).
 	 * @property {string} tags.picture The image form value (a link to the image).
 	 * @property {string} tags.comboBox The combo box form value (one of the items from the combo box list values).
      */
@@ -1061,16 +1073,17 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CPE", "CSE"]
      * @alias GetSelectedText
-     * @param {object} numbering - The resulting string display properties.
-     * @param {boolean} numbering.NewLine - Defines if the resulting string will include line boundaries or not.
-     * @param {boolean} numbering.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
-     * @param {boolean} numbering.Numbering - Defines if the resulting string will include numbering or not.
-     * @param {boolean} numbering.Math - Defines if the resulting string will include mathematical expressions or not.
-     * @param {string} numbering.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
-     * @param {string} numbering.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
-     * @param {string} numbering.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
-     * @param {string} numbering.TabSymbol - Defines how the tab will be specified in the resulting string.
-     * @return {string} - Selected text.
+     * @param {object} prop - The resulting string display properties.
+     * @param {boolean} prop.NewLine - Defines if the resulting string will include line boundaries or not (they will be replaced with '\r').
+     * @param {boolean} prop.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
+     * @param {boolean} prop.Numbering - Defines if the resulting string will include numbering or not.
+     * @param {boolean} prop.Math - Defines if the resulting string will include mathematical expressions or not.
+     * @param {string} prop.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
+     * @param {string} prop.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
+     * @param {string} prop.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
+     * @param {string} prop.TabSymbol - Defines how the tab will be specified in the resulting string.
+     * @param {string} prop.NewLineSeparator - Defines how the line separator will be specified in the resulting string (this property has the priority over *NewLine*).
+	 * @return {string} - Selected text.
      * @since 7.1.0
      * @example
      * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
@@ -1089,6 +1102,7 @@
                 TableCellSeparator: prop["TableCellSeparator"],
                 TableRowSeparator: prop["TableRowSeparator"],
                 ParaSeparator: prop["ParaSeparator"],
+                NewLineSeparator: prop["NewLineSeparator"],
                 TabSymbol: prop["TabSymbol"]
             }
         }
@@ -1117,7 +1131,7 @@
      */
     Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
     {
-		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.incrementCounterLongAction();
 
 		function ReplaceTextSmart()
@@ -1138,8 +1152,7 @@
 
 			this.decrementCounterLongAction();
 
-			if (guid)
-				window.g_asc_plugins.onPluginMethodReturn(guid, true);
+			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
 		}
 
 		let sOverAll = "";
@@ -1160,7 +1173,7 @@
      */
 	Api.prototype["pluginMethod_GetFileToDownload"] = function(format)
 	{
-		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		let dwnldF = Asc.c_oAscFileType[format] || Asc.c_oAscFileType[this.DocInfo.Format.toUpperCase()];
 		let opts = new Asc.asc_CDownloadOptions(dwnldF);
 		let _t = this;
@@ -1168,13 +1181,16 @@
 			_t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
 			_t.fCurCallback = function(res) {
 				let data = (res.status == "ok") ? res.data : "error";
-				if (guid)
-					window.g_asc_plugins.onPluginMethodReturn(guid, data);
+				window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(data);
 			};
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
 	};
 
+	/**
+	 * Specifies how to adjust the image object in case of replacing the selected image.
+	 * @typedef {("fill" | "fit" | "original" | "stretch")} ReplaceImageMode
+	 */
 
     /**
      * An object containing the information about the base64 encoded *png* image.
@@ -1182,6 +1198,7 @@
      * @property {string} src The image source in the base64 format.
      * @property {number} width The image width in pixels.
      * @property {number} height The image height in pixels.
+     * @property {?ReplaceImageMode} replaceMode Specifies how to adjust the image object in case of replacing the selected image.
      */
 
 	/**
@@ -1207,9 +1224,25 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-        this._beforeEvalCommand();
-		this.putImageToSelection(oImageData["src"], oImageData["width"], oImageData["height"]);
-        this._afterEvalCommand();
+		if(!this.canEdit() || this.isPdfEditor())
+		{
+			return;
+		}
+		window.g_asc_plugins.setPluginMethodReturnAsync();
+		let sImgSrc = oImageData["src"];
+		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
+		{
+			let nWidth = oImageData["width"];
+			let nHeight = oImageData["height"];
+			const isN = AscFormat.isRealNumber;
+			if(!isN(nWidth) || !isN(nHeight))
+			{
+				nWidth = oImage.Image.width;
+				nHeight = oImage.Image.height;
+			}
+			this.putImageToSelection(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), nWidth, nHeight, oImageData["replaceMode"]);
+			window.g_asc_plugins.onPluginMethodReturn();
+		});
 	};
 
 	function getLocalStorageItem(key)
@@ -1245,6 +1278,22 @@
 				"guid" : ""
 			};
 		}
+		
+		// desktop detecting (it's necessary when we work with clouds into desktop)
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
+		if (isLocal)
+		{
+			// Отдаём весь конфиг, внутри вычислим путь к deploy
+			// TODO: отслеживать возможные ошибки при +/- плагинов: из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
+			// UPD: done. Ничего не изменять в менеджере плагинов, если guid пуст
+
+            let result = window["AscDesktopEditor"]["PluginInstall"](JSON.stringify(config));
+			
+			return {
+				"type" : loadFuncName,
+				"guid" : result ? config["guid"] : ""
+			};
+		}
 
 		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
 		if (!currentInstalledPlugins)
@@ -1269,10 +1318,39 @@
 		};
 	}
 
+	Api.prototype.getUsedBackgroundPlugins = function()
+	{
+		let services = [];
+		try
+		{
+			services = JSON.parse(window.localStorage.getItem("asc_plugins_background"));
+			if (!services)
+				services = [];
+		}
+		catch (e)
+		{
+			services = [];
+		}
+		return services;
+	};
+	Api.prototype["getUsedBackgroundPlugins"] = Api.prototype.getUsedBackgroundPlugins;
+
+	Api.prototype.setUsedBackgroundPlugins = function(services)
+	{
+		window.localStorage.setItem("asc_plugins_background", JSON.stringify(services));
+	};
+
 	Api.prototype.checkInstalledPlugins = function()
 	{
 		if (this.disableCheckInstalledPlugins)
 			return;
+
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
+		if (isLocal) {
+			// В случае Desktop не работаем с localStorage и extensions, этот метод может быть вызван из интерфейса
+			// если по какой-то причине (неактуальный cache) у пользователя есть asc_plugins_installed, asc_plugins_removed, то их нужно игнорировать/удалить
+			return;
+		}
 
 		let arrayPlugins = [];
 
@@ -1361,6 +1439,29 @@
 			}
 		*/
 
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
+
+		// В случае Desktop нужно проверить какие плагины нельзя удалять. В UpdateInstallPlugins работаем с двумя типами папок.
+		// Пока проверка тут, но грамотнее будет сделать и использовать доп.свойство isSystemInstall класса CPlugin
+		// т.к. не будем лишний раз парсить папки, только при +/- плагинов.
+		let protectedPlugins = [];
+
+		if (isLocal) {
+			var _pluginsTmp = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
+
+			var len = _pluginsTmp[0]["pluginsData"].length;
+			for (var i = 0; i < len; i++) {
+				protectedPlugins.push(_pluginsTmp[0]["pluginsData"][i]["guid"]);
+			}
+			
+			// Также смотрим плагины из папки пользователя, возможно там есть обновленные системные
+			len = _pluginsTmp[1]["pluginsData"].length;
+			for (var i = 0; i < len; i++) {
+				if (_pluginsTmp[1]["pluginsData"][i]["canRemoved"] === false)
+					protectedPlugins.push(_pluginsTmp[1]["pluginsData"][i]["guid"]);
+			}
+		}
+
 		let baseUrl = window.location.href;
 		let posQ = baseUrl.indexOf("?");
 		if (-1 !== posQ)
@@ -1376,11 +1477,14 @@
 			returnArray.push({
 				"baseUrl" : baseUrl,
 				"guid" : pluginsArray[i].guid,
-				"canRemoved" : true,
+				"canRemoved" : protectedPlugins.indexOf(pluginsArray[i].guid) == -1,
 				"obj" : pluginsArray[i].serialize(),
 				"removed" : false
 			});
 		}
+
+		if (isLocal)
+			return returnArray;
 
 		// нужно послать и удаленные. так как удаленный может не быть в сторе. тогда его никак не установить обратно
 		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
@@ -1408,15 +1512,36 @@
     * Removes a plugin with the specified GUID.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [guid] - The plugin identifier. It must be of the *asc.{UUID}* type.
+     * @param {string} guid - The plugin identifier. It must be of the *asc.{UUID}* type.
+	 * @param {string} backup - The plugin backup. This parameter is used when working with the desktop editors.
      * @alias RemovePlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
      */
-	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
+	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
 		let removedPlugin = window.g_asc_plugins.unregister(guid);
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 
+		if (isLocal)
+		{
+			// Вызываем только этот ++код, никаких дополнительных действий типа:
+			// window.g_asc_plugins.unregister(guid), window["UpdateInstallPlugins"](), this.sendEvent("asc_onPluginsReset"), window.g_asc_plugins.updateInterface()
+			// не требуется, т.к. ++код вызывает UpdateInstallPlugins, в нём идёт перестроение списка плагинов и обновление интерфейса.
+			// Просто отдаём менеджеру плагинов ответ.
+			// TODO: отслеживать возможные ошибки при +/- плагинов:
+			// из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
+			// ничего не изменять в менеджере плагинов, если guid пуст
+
+			let result = window["AscDesktopEditor"]["PluginUninstall"](guid, backup);
+						
+			return {
+				"type" : "Removed",
+				"guid" : result ? guid : "",
+				"backup" : backup
+			};
+		}
+		
 		if (removedPlugin)
 		{
 			let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
@@ -1441,15 +1566,15 @@
 		}
 
 		return {
-			type : "Removed",
-			guid : removedPlugin ? removedPlugin.guid : ""
+			"type" : "Removed",
+			"guid" : removedPlugin ? removedPlugin.guid : ""
 		};
 	};
 	/**
     * Installs a plugin by the URL to the plugin config.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [url] - The URL to the plugin config for installing.
+     * @param {object} [config] - The plugin config for installing.
      * @alias InstallPlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
@@ -1462,31 +1587,399 @@
     * Updates a plugin by the URL to the plugin config.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [url] - The URL to the plugin config for updating.
+     * @param {object} [config] - The plugin config for updating.
      * @alias UpdatePlugin
      * @returns {object} - An object with the result information.
-     * @since 7.2.0
+     * @since 7.3.0
      */
-	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
+	Api.prototype["pluginMethod_UpdatePlugin"] = function(config)
 	{
 		return installPlugin(config, "Updated");
 	};
 
 	/**
-    * Shows or hides buttons in the header.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [id] - The button ID.
-     * @param {boolean} [bShow] - The flag specifies whether the button is shown (**true**) or hidden (**false**).
-     * @alias ShowButton 
-     * @since 7.2.0
-     */
-	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
+	 * Installs a plugin by the URL to the plugin config.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} configUrl - The URL to the plugin *config.json* for installing.
+	 * @alias InstallDeveloperPlugin
+	 * @returns {boolean} - Returns true if the plugin is installed.
+	 * @since 7.4.0
+	 */
+	Api.prototype["installDeveloperPlugin"] = function(configUrl)
+	{
+		try
+		{
+			var xhrObj = new XMLHttpRequest();
+			if ( xhrObj )
+			{
+				xhrObj.open('GET', configUrl, false);
+				xhrObj.send('');
+
+				var configJson = JSON.parse(xhrObj.responseText);
+				configJson["baseUrl"] = configUrl.substr(0, configUrl.lastIndexOf("/") + 1);
+
+				installPlugin(configJson, "Installed");
+				return true;
+			}
+		}
+		catch (e) {}
+		return false;
+	};
+
+	/**
+	* Shows or hides buttons in the header.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} id - The button ID.
+	 * @param {boolean} bShow - The flag specifies whether the button is shown (**true**) or hidden (**false**).
+	 * @param {string} align - The parameter indicates whether the button will be displayed on the right side of the window or on the left. The default value is "left".
+	 * @alias ShowButton 
+	 * @since 7.2.0
+	 */
+	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow, align)
 	{
 		if (bShow) {
-			this.sendEvent("asc_onPluginShowButton", id);
+			this.sendEvent("asc_onPluginShowButton", id, (align === 'right'));
 		} else {
 			this.sendEvent("asc_onPluginHideButton", id);
 		}
+	};
+
+	Api.prototype["pluginMethod_GetKeychainStorageInfo"] = function(keys)
+	{
+		if (!this.keychainStorage)
+			this.keychainStorage = new AscCrypto.Storage.CStorageLocalStorage();
+
+		window.g_asc_plugins.setPluginMethodReturnAsync();
+		this.keychainStorage.command(keys, function(retObj){
+			window.g_asc_plugins.onPluginMethodReturn(retObj);
+		});
+	};
+
+	Api.prototype["pluginMethod_SetKeychainStorageInfo"] = function(items)
+	{
+		window.g_asc_plugins.setPluginMethodReturnAsync();
+
+		this.keychainStorage.command(items, function(retObj) {
+			window.g_asc_plugins.onPluginMethodReturn(retObj);
+		});
+	};
+
+	Api.prototype["pluginMethod_OnSignWithKeychain"] = function(data)
+	{
+	};
+
+	/**
+	 * Implements the external drag&drop emulation.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {object} obj The drag&drop emulation properties.
+     * @param {string} obj.type - The drag&drop event type:
+     * * <b>onbeforedrop</b> - an event that is fired when the selected text or element is dragged;
+     * * <b>ondrop</b> - an event that is fired when the selected text or element is dropped on a valid drop target.
+     * @param {number} obj.x - The horizontal coordinate (in pixels) at which the mouse was clicked, relative to the left edge of the entire document.
+     * @param {number} obj.y - The vertical coordinate (in pixels) at which the mouse was clicked, relative to the top edge of the entire document.
+     * @param {string} obj.html - The dragged HTML element.
+     * @param {string} obj.text - The dragged text.
+	 * @alias OnDropEvent
+	 * @since 7.3.0
+	 */
+	Api.prototype["pluginMethod_OnDropEvent"] = function(obj)
+	{
+		if (!obj || !obj["type"])
+			return;
+
+		var e = {
+			pageX : obj["x"],
+			pageY : obj["y"]
+		};
+
+		switch (obj.type)
+		{
+			case "onbeforedrop":
+			{
+				this.beginInlineDropTarget(e);
+				break;
+			}
+			case "ondrop":
+			{
+				this.endInlineDropTarget(e);
+
+				if (obj["html"])
+					this["pluginMethod_PasteHtml"](obj["html"]);
+				else if (obj["text"])
+					this["pluginMethod_PasteText"](obj["text"]);
+
+				break;
+			}
+			default:
+				break;
+		}
+	};
+
+    /**
+     * Returns the document language.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CPE"]
+     * @alias GetDocumentLang
+     * @returns {string} - Document language.
+	 * @since 7.4.0
+     */
+    Api.prototype["pluginMethod_GetDocumentLang"] = function()
+    {
+        let langCode = 1033; // en-US
+        let langName = "en-US";
+
+        if (this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.GetDefaultLanguage)
+            langCode = this.WordControl.m_oLogicDocument.GetDefaultLanguage();
+
+        if (window["Common"])
+            langName = window["Common"]["util"]['LanguageInfo']['getLocalLanguageName'](langCode)[0];
+
+        return langName;
+    };
+
+	function correctItemIcons(item, baseUrl)
+	{
+		if (item && item["icons"])
+		{
+			if ((0 === item["icons"].indexOf("http://")) ||
+				(0 === item["icons"].indexOf("https://")) ||
+				(0 === item["icons"].indexOf("file://")) ||
+				(0 === item["icons"].indexOf("www.")))
+			{
+				// nothing
+			}
+			else if (0 === item["icons"].indexOf("external://"))
+			{
+				item["icons"] = item["icons"].substr("external://".length);
+			}
+			else
+			{
+				item["icons"] = baseUrl + item["icons"];
+			}
+		}
+	}
+
+	function correctItemsWithData(items, baseUrl)
+	{
+		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
+		{
+			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
+				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
+
+			correctItemIcons(items[i], baseUrl);
+
+			if (items[i]["items"])
+				correctItemsWithData(items[i]["items"], baseUrl);
+		}
+	};
+
+	/**
+	 * @typedef {Object} ContextMenuItem
+	 * The context menu item.
+	 * @property {string} id - The item ID.
+	 * @property {string} text - The item text.
+	 * @property {string} [data] - The item data (this data will be sended to click event callback).
+	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {string} [icons] - The item icons (see plugins config documentation)
+	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
+	 */
+
+	/**
+	 * Adds an item to the context menu.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias AddContextMenuItem
+	 * @param {ContextMenuItem[]} items - An array containing the context menu items for the current item.
+	 * @since 7.4.0
+	 */
+	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
+	{
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
+		this.onPluginAddContextMenuItem(items);
+	};
+
+	/**
+	 * Updates an item in the context menu with the specified items.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias UpdateContextMenuItem
+	 * @param {ContextMenuItem[]} items - An array containing the context menu items for the current item.
+	 * @since 7.4.0
+	 */
+	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
+	{
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
+		this.onPluginUpdateContextMenuItem([items]);
+	};
+
+	/**
+	 * The possible values for the base which the relative vertical positioning of an object will be calculated from.
+	 * @typedef {("button" | "...")} ToolbarMenuItemType
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuItem
+	 * The toolbar menu item.
+	 * @property {string} id - The item ID.
+	 * @property {ToolbarMenuItemType} The item type
+	 * @property {string} text - The item text.
+	 * @property {string} hint - The item text.
+	 * @property {string} [icons] - The item icons (see plugins config documentation)
+	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {boolean} [enableToggle]
+	 * @property {boolean} [lockInViewMode]
+	 * @property {boolean} [separator]
+	 * @property {boolean} [split]
+	 * @property {ContextMenuItem[]} [items] - An array containing the context menu items for the current item.
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuTab
+	 * The toolbar menu item.
+	 * @property {string} id - The tab ID.
+	 * @property {string} text - The tab text.
+	 * @property {ToolbarMenuItem[]} [items] - The tab items.
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuMainItem
+	 * The toolbar menu item.
+	 * @property {string} giud - The plugin guid.
+	 * @property {ToolbarMenuTab[]} tabs
+	 */
+
+	/**
+	 * Adds an item to the toolbar menu.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias AddToolbarMenuItem
+	 * @param {ToolbarMenuMainItem[]} items - An array containing the context menu items for the current item.
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
+	{
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		for (let i = 0, len = items.tabs.length; i < len; i++)
+		{
+			if (items.tabs[i]["items"])
+				correctItemsWithData(items.tabs[i]["items"], baseUrl);
+		}
+
+		this.sendEvent("onPluginToolbarMenu", [items]);
+	};
+
+	/**
+	 * Shows the plugin modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @param {variation} variation - The plugin variation.
+	 * @alias ShowWindow 
+	 * @since 7.4.0
+	 */
+	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
+	{
+		let guid = window.g_asc_plugins.getCurrentPluginGuid();
+		variation["guid"] = guid;
+
+		let baseUrl = this.pluginsManager.pluginsMap[guid].baseUrl;
+		correctItemIcons(variation["icons"], baseUrl);
+
+		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
+	};
+
+	/**
+	 * Activate (move to front) the plugin window/panel.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @alias ActivateWindow
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_ActivateWindow"] = function(frameId)
+	{
+		this.sendEvent("asc_onPluginWindowActivate", frameId);
+	};
+
+	/**
+	 * Closes the plugin modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @alias CloseWindow
+	 * @since 7.4.0
+	 */
+	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
+	{
+		this.sendEvent("asc_onPluginWindowClose", frameId);
+	};
+
+	/**
+	 * Sends a message to the plugin modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} windowID - The frame ID.
+	 * @param {string} name - The event name.
+	 * @param {object} data - The event data.
+	 * @alias SendToWindow
+	 * @since 7.4.0
+	 */
+	Api.prototype["pluginMethod_SendToWindow"] = function(windowID, name, data)
+	{
+		window.g_asc_plugins.onPluginEventWindow(windowID, name, data);
+	};
+
+	/**
+	 * Resizes the plugin modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @param {number} size - The frame size.
+	 * @param {number} minSize - The frame minimum size.
+	 * @param {number} maxSize - The frame maximum size.
+	 * @alias ResizeWindow
+	 * @since 7.4.0
+	 */
+	Api.prototype["pluginMethod_ResizeWindow"] = function(frameId, size, minSize, maxSize)
+	{
+		window.g_asc_plugins.setPluginMethodReturnAsync();
+		this.sendEvent("asc_onPluginWindowResize", frameId, size, minSize, maxSize, function(){
+			window.g_asc_plugins.onPluginMethodReturn("resize_result");
+		});
+	};
+
+	/**
+	 * Sends an event to the plugin when the mouse button is released inside the plugin iframe.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @param {number} x - The X coordinate.
+	 * @param {number} y - The Y coordinate.
+	 * @alias MouseUpWindow
+	 * @since 7.4.0
+	 */
+	Api.prototype["pluginMethod_MouseUpWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseUp", frameId, x, y);
+	};
+
+	/**
+	 * Sends an event to the plugin when the mouse button is moved inside the plugin iframe.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+ 	 * @param {number} x - The X coordinate.
+	 * @param {number} y - The Y coordinate.
+	 * @alias MouseMoveWindow
+	 * @since 7.4.0
+	 */
+	Api.prototype["pluginMethod_MouseMoveWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseMove", frameId, x, y);
 	};
 })(window);

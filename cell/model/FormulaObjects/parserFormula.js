@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -47,8 +47,9 @@ function (window, undefined) {
   var parserHelp = AscCommon.parserHelp;
   var g_oFormatParser = AscCommon.g_oFormatParser;
   var CellAddress = AscCommon.CellAddress;
-	var cDate = Asc.cDate;
+  var cDate = Asc.cDate;
   var bIsSupportArrayFormula = true;
+  var bIsSupportDynamicArrays = false;
 
   var c_oAscError = Asc.c_oAscError;
 
@@ -70,6 +71,35 @@ function (window, undefined) {
 
 	var TOK_SUBTYPE_UNION = 15;
 
+	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1, "LOOKUP": 1, "AGGREGATE": 1};
+
+	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
+
+	function getArrayCopy(arr) {
+		var newArray = [];
+		for (var i = 0; i < arr.length; i++) {
+			newArray[i] = arr[i].slice();
+		}
+		return newArray
+	}
+
+	function generate3DLink(externalPath, sheet, range) {
+		let filePrefix = "file:///";
+		if (externalPath && 0 === externalPath.indexOf(filePrefix)) {
+			//"file:///C:\root\from1.xlsx"
+			sheet = sheet.split(":");
+			var wsFrom = sheet[0], wsTo = sheet[1] === undefined ? wsFrom : sheet[1];
+			wsFrom = wsFrom.replace(/'/g, "''");
+			wsTo = wsTo.replace(/'/g, "''");
+			return "'" + externalPath + (wsFrom !== wsTo ? wsFrom + ":" + wsTo : wsFrom) + "'!" + range;
+		} else {
+			if (!externalPath) {
+				externalPath = "";
+			}
+			return parserHelp.get3DRef(externalPath + sheet, range);
+		}
+	}
+	
 	function ParsedThing(value, type, subtype, pos, length) {
 		this.value = value;
 		this.type = type;
@@ -405,6 +435,41 @@ function (window, undefined) {
 		return tokens;
 	}
 
+	function prepareTypedArrayUniversal(array, lookingElem, isByRangeCall) {
+		const typedArr = [];
+
+		for (let i = 0; i < array.length; i++) {
+			let arrayElemValue = isByRangeCall ? array[i].v : array[i];
+			// let elemType = isByRangeCall ? array[i].v.type : array[i].type;
+			let elemType = arrayElemValue.type;
+			let elemIndex = isByRangeCall ? array[i].i : i;
+
+			if (lookingElem.type === cElementType.bool) {
+				// return only bool
+				if (lookingElem.type !== elemType) {
+					continue
+				}
+				typedArr.push({i: elemIndex, v: arrayElemValue});
+			} else if (lookingElem.type === cElementType.number) {
+				// return only numbers or string.tocNumber
+				if (elemType !== cElementType.string && elemType !== cElementType.number) {
+					continue
+				}
+				let temp = arrayElemValue.tocNumber();
+				if (temp.type !== cElementType.error) {
+					typedArr.push({i: elemIndex, v: temp});
+				}
+			} else if (cElementType.string === lookingElem.type) {
+				// return only strings
+				if (lookingElem.type !== elemType) {
+					continue
+				}
+				typedArr.push({i: elemIndex, v: new cString(arrayElemValue.toString().toLowerCase())});
+			}
+		}
+
+		return typedArr;
+	}
 
 /** @enum */
 var cElementType = {
@@ -438,10 +503,10 @@ var cErrorType = {
 		wrong_name          : 5,
 		not_numeric         : 6,
 		not_available       : 7,
-		getting_data        : 8
+		getting_data        : 8,
+		array_not_calc      : 9,
+		cannot_be_spilled	: 10
   };
-
-
 //добавляю константу cReturnFormulaType для корректной обработки формул массива
 // value - функция умеет возвращать только значение(не массив)
 // в этом случае данная функция вызывается множество раз для каждого элемента внутренних массивов
@@ -453,6 +518,7 @@ var cErrorType = {
 // area_to_ref - заменяем area на массив ссылок на ячейку(REF)
 // replace_only_array - в случае с Area - оставляем его в аргументах и рассчитываем только 1 значение(аналогично array)
 // replace_only_array - в слуае с массивом - обрабатываем стандартно по элементам
+// dynamic_array - в отличие от обычного массива такой тип будут использовать формулы которые могут не иметь в аргументах диапазонов/массивов, но при этом будут их возвращать(прим. SEQUENCE)
 
 /** @enum */
 var cReturnFormulaType = {
@@ -461,7 +527,25 @@ var cReturnFormulaType = {
 	array: 2,
 	area_to_ref: 3,
 	replace_only_array: 4,
-	setArrayRefAsArg: 5//для row/column если нет аргументов
+	setArrayRefAsArg: 5, //для row/column если нет аргументов
+	dynamic_array: 6
+};
+
+/*
+	arrayIndexesType - an supporting structure that shows what type of data (associated only with arrays) we expect to see in the argument
+	There are functions whose arguments only work with a certain type
+	For example, the argument can process an array, but a range with the same data will not be processed (as in the WORKDAY_INTL function for the first two arguments)
+	Each type is used to obtain that type in its pure form in a function, for example:
+	If the data type is array, we process only ranges, and pass the arrays unchanged into the formula
+	If the data type is range, we process only arrays, and pass ranges unchanged to the formula
+	If the data type is any - any data type is passed unchanged to the formula (analogous to the previous use of arrayIndex in the format {0: 1, 1: 1})
+*/
+
+/** @enum */
+const arrayIndexesType = {
+	array: 0,
+	any: 1,
+	range: 2,
 };
 
 var cExcelSignificantDigits = 15; //количество цифр в числе после запятой
@@ -470,13 +554,22 @@ var cExcelMinExponent = -308;
 var c_Date1904Const = 24107; //разница в днях между 01.01.1970 и 01.01.1904 годами
 var c_Date1900Const = 25568; //разница в днях между 01.01.1970 и 01.01.1900 годами
 var rx_sFuncPref = /_xlfn\./i;
+var rx_sFuncPrefXlWS = /_xlws\./i;// /_xlfn\.(_xlws\.)?/i;
 var rx_sDefNamePref = /_xlnm\./i;
+var rx_sFuncPrefXLUFD = /__xludf.DUMMYFUNCTION\./i;
 var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
 var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
 
 
+// set type weight of base types
+let cElementTypeWeight =  new Map();
+	cElementTypeWeight.set(cElementType.number, 0);
+	cElementTypeWeight.set(cElementType.empty, 0);
+	cElementTypeWeight.set(cElementType.string, 1);
+	cElementTypeWeight.set(cElementType.bool, 2);
+	cElementTypeWeight.set(cElementType.error, 3);
 
 
 
@@ -532,6 +625,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.getDimensions = function () {
 		return {col: 1, row: 1};
 	};
+	cBaseType.prototype.isOneElement = function () {
+		let dimensions = this.getDimensions();
+		if (dimensions.col === 1 && dimensions.row === 1) {
+			return true;
+		}
+		return false;
+	};
 	cBaseType.prototype.getExternalLinkStr = function (externalLink, locale) {
 		var wb = Asc["editor"] && Asc["editor"].wb;
 
@@ -556,10 +656,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 
-	cBaseType.prototype.toArray = function (putValue, checkOnError) {
+	cBaseType.prototype.toArray = function (putValue, checkOnError, fPrepareElem) {
 		let arr = [];
 		if (this.getMatrix) {
 			arr = this.getMatrix();
+			arr = getArrayCopy(arr);
+
 			if (putValue || checkOnError) {
 				for (let i = 0; i < arr.length; i++) {
 					if (arr[i]) {
@@ -567,6 +669,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							if (checkOnError) {
 								if (arr[i][j].type === cElementType.error) {
 									return arr[i][j];
+								}
+							}
+							if (fPrepareElem) {
+								arr[i][j] = fPrepareElem(arr[i][j]);
+								if (checkOnError) {
+									if (arr[i][j].type === cElementType.error) {
+										return arr[i][j];
+									}
 								}
 							}
 							if (putValue) {
@@ -582,11 +692,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					return this;
 				}
 			}
-
+			let _res = fPrepareElem ? fPrepareElem(this) : this;
+			if (fPrepareElem && checkOnError) {
+				if (this.type === cElementType.error) {
+					return this;
+				}
+			}
 			if (!arr[0]) {
 				arr[0] = [];
 			}
-			arr[0][0] = putValue ? this.getValue() : this;
+			arr[0][0] = putValue ? _res.getValue() : _res;
 		}
 		return arr;
 	};
@@ -800,6 +915,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				this.errorType = cErrorType.unsupported_function;
 				break;
 			}
+			case cErrorLocal["calc"]:
+			case cErrorOrigin["calc"]:
+			case cErrorType.array_not_calc: {
+				this.value = "#CALC!";
+				this.errorType = cErrorType.array_not_calc;
+				break;
+			}
+			case cErrorLocal["spill"]:
+			case cErrorOrigin["spill"]:
+			case cErrorType.cannot_be_spilled: {
+				this.value = "#SPILL!";
+				this.errorType = cErrorType.cannot_be_spilled;
+				break;
+			}
 		}
 
 		return this;
@@ -856,6 +985,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			case cErrorType.unsupported_function: {
 				return cErrorLocal["uf"];
 			}
+
+			case cErrorOrigin["calc"]:
+			case cErrorType.array_not_calc: {
+				return cErrorLocal["calc"];
+			}
+			case cErrorOrigin["spill"]:
+			case cErrorType.cannot_be_spilled: {
+				return cErrorLocal["spill"];
+			}
 		}
 		return cErrorLocal["na"];
 	};
@@ -896,6 +1034,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 			case cErrorOrigin["uf"]: {
 				res = cErrorType.unsupported_function;
+				break;
+			}
+			case cErrorOrigin["calc"]: {
+				res = cErrorType.array_not_calc;
+				break;
+			}
+			case cErrorOrigin["spill"]: {
+				res = cErrorType.cannot_be_spilled;
 				break;
 			}
 			default: {
@@ -942,6 +1088,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 			case cErrorType.unsupported_function: {
 				res = cErrorOrigin["uf"];
+				break;
+			}
+			case cErrorType.array_not_calc: {
+				res = cErrorOrigin["calc"];
+				break;
+			}
+			case cErrorType.cannot_be_spilled: {
+				res = cErrorOrigin["spill"];
 				break;
 			}
 			default:
@@ -1014,14 +1168,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cArea.prototype.getValueByRowCol = function (i, j) {
-		var res, r;
+		let res, r;
 		r = this.getRange();
 		r.worksheet._getCellNoEmpty(r.bbox.r1 + i, r.bbox.c1 + j, function(cell) {
 			if(cell) {
 				res = checkTypeCell(cell);
 			}
 		});
-
 		return res;
 	};
 	cArea.prototype.getRange = function () {
@@ -1040,7 +1193,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return v;
 	};
 	cArea.prototype.tocString = function () {
-		return this.getValue()[0].tocString();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cString("");
+		}
+		return val.tocString();
 	};
 	cArea.prototype.tocBool = function () {
 		return new cError(cErrorType.wrong_value_type);
@@ -1161,16 +1318,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (!emptyReplaceOn) {
 			emptyReplaceOn = new cEmpty();
 		}
-		let elem;
 		for (let i = bbox.r1; i <= Math.min(bbox.r2, maxRowCount != null ? bbox.r1 + maxRowCount : bbox.r2); i++) {
 			if ( !arr.array[i - bbox.r1] ) {
 				arr.addRow();
 			}
 			for (let j = bbox.c1; j <= Math.min(bbox.c2, maxColCount != null ? bbox.c1 + maxColCount : bbox.c2); j++) {
+				let elem = null;
 				if (elemsNoEmpty && elemsNoEmpty[i - bbox.r1] && elemsNoEmpty[i - bbox.r1][j - bbox.c1]) {
 					elem = elemsNoEmpty[i - bbox.r1][j - bbox.c1];
 				}
-				if (!elem || elem.type === cElementType.empty) {
+				if (elem === null || elem.type === cElementType.empty) {
 					elem = emptyReplaceOn;
 				}
 
@@ -1231,6 +1388,43 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
+	cArea.prototype.getFirstElement = function () {
+		return this.getValueByRowCol(0, 0);
+	};
+	cArea.prototype._getCol = function (colIndex) {
+		let dimensions = this.getDimensions();
+		if (colIndex < 0 || colIndex > dimensions.col) {
+			return null;
+		}
+
+		let col = [];
+		for (let i = 0; i < dimensions.row; i++) {
+			let elem = this.getValueByRowCol(i, colIndex);
+			if (!elem) {
+				elem = new cEmpty();
+			}
+			col[i] = [];
+			col[i].push(elem);
+		}
+		return col;
+	};
+	cArea.prototype._getRow = function (rowIndex) {
+		let dimensions = this.getDimensions();
+		if (rowIndex < 0 || rowIndex > dimensions.row) {
+			return null;
+		}
+
+		let row = [[]];
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			let elem = this.getValueByRowCol(rowIndex, j);
+			if (!elem) {
+				elem = new cEmpty();
+			}
+			row[0].push(elem);
+		}
+		return row;
+	};
+
 
 	/**
 	 * @constructor
@@ -1266,6 +1460,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return oRes;
 	};
 	cArea3D.prototype.wsRange = function () {
+		if (this.externalLink != null) {
+			return [this.wsFrom];
+		}
 		var wb = this.wsFrom.workbook;
 		var wsF = this.wsFrom.getIndex(), wsL = this.wsTo.getIndex(), r = [];
 		for (var i = wsF; i <= wsL; i++) {
@@ -1362,7 +1559,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return (null == _val[0]) ? new cEmpty() : _val[0];
 	};
 	cArea3D.prototype.getValueByRowCol = function (i, j) {
-		var r = this.getRanges(), res;
+		let r = this.getRanges(), res;
 
 		if (r[0]) {
 			r[0].worksheet._getCellNoEmpty(r[0].bbox.r1 + i, r[0].bbox.c1 + j, function (cell) {
@@ -1386,33 +1583,41 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = AscCommonExcel.g_ProcessShared && this.bbox ? this.bbox.getName() : this.value;
-		return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
+		var exPath = this.getExternalLinkStr(this.externalLink);
+		return parserHelp.get3DRef(wsFrom !== wsTo ? (exPath + wsFrom + ':' + wsTo) : (exPath + wsFrom), name);
 	};
 	cArea3D.prototype.toLocaleString = function () {
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = this.bbox ? this.bbox.getName() : this.value;
 		var exPath = this.getExternalLinkStr(this.externalLink, true);
-		return  parserHelp.get3DRef(wsFrom !== wsTo ? exPath + wsFrom + ':' + wsTo : exPath + wsFrom, name);
+		return generate3DLink(exPath, wsFrom !== wsTo ? (wsFrom + ':' + wsTo) : wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
 		return this.getValue()[0].tocNumber();
 	};
 	cArea3D.prototype.tocString = function () {
-		return this.getValue()[0].tocString();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cString("");
+		}
+		return val.tocString();
 	};
 	cArea3D.prototype.tocBool = function () {
 		return new cError(cErrorType.wrong_value_type);
 	};
 	cArea3D.prototype.tocArea = function () {
 		var wsR = this.wsRange();
-		if (wsR.length == 1) {
+		if (wsR.length === 1) {
 			return new cArea(this.value, wsR[0]);
 		}
 		return false;
 	};
 	cArea3D.prototype.getWS = function () {
 		return this.wsFrom;
+	};
+	cArea3D.prototype.getWsId = function () {
+		return this.wsFrom && this.wsFrom.Id;
 	};
 	cArea3D.prototype.cross = function (arg, ws) {
 		if (!this.isSingleSheet()) {
@@ -1527,16 +1732,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (!emptyReplaceOn) {
 			emptyReplaceOn = new cEmpty();
 		}
-		let elem;
 		for (let i = bbox.r1; i <= Math.min(bbox.r2, maxRowCount != null ? bbox.r1 + maxRowCount : bbox.r2); i++) {
 			if (!arr.array[i - bbox.r1]) {
 				arr.addRow();
 			}
 			for (let j = bbox.c1; j <= Math.min(bbox.c2, maxColCount != null ? bbox.c1 + maxColCount : bbox.c2); j++) {
+				let elem = null;
 				if (elemsNoEmpty && elemsNoEmpty[0] && elemsNoEmpty[0][i - bbox.r1] && elemsNoEmpty[0][i - bbox.r1][j - bbox.c1]) {
 					elem = elemsNoEmpty[0][i - bbox.r1][j - bbox.c1];
 				}
-				if (!elem || elem.type === cElementType.empty) {
+				if (elem === null || elem.type === cElementType.empty) {
 					elem = emptyReplaceOn;
 				}
 
@@ -1594,6 +1799,42 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			res = {col: this.bbox.c2 - this.bbox.c1 + 1, row: this.bbox.r2 - this.bbox.r1 + 1, bbox: this.bbox};
 		}
 		return res;
+	};
+	cArea3D.prototype.getFirstElement = function () {
+		return this.getValueByRowCol(0, 0);
+	};
+	cArea3D.prototype._getCol = function (colIndex) {
+		let dimensions = this.getDimensions();
+		if (colIndex < 0 || colIndex > dimensions.col) {
+			return null;
+		}
+
+		let col = [];
+		for (let i = 0; i < dimensions.row; i++) {
+			let elem = this.getValueByRowCol(i, colIndex);
+			if (!elem) {
+				elem = new cEmpty();
+			}
+			col[i] = [];
+			col[i].push(elem);
+		}
+		return col;
+	};
+	cArea3D.prototype._getRow = function (rowIndex) {
+		let dimensions = this.getDimensions();
+		if (rowIndex < 0 || rowIndex > dimensions.row) {
+			return null;
+		}
+
+		let row = [[]];
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			let elem = this.getValueByRowCol(rowIndex, j);
+			if (!elem) {
+				elem = new cEmpty();
+			}
+			row[0].push(elem);
+		}
+		return row;
 	};
 
 	/**
@@ -1791,15 +2032,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cRef3D.prototype.toString = function () {
+		var exPath = this.getExternalLinkStr(this.externalLink);
 		if (AscCommonExcel.g_ProcessShared) {
-			return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
+			return parserHelp.get3DRef(exPath + this.ws.getName(), this.range.getName());
 		} else {
-			return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.value);
+			return parserHelp.get3DRef(exPath + this.ws.getName(), this.value);
 		}
 	};
 	cRef3D.prototype.toLocaleString = function () {
 		var exPath = this.getExternalLinkStr(this.externalLink, true);
-		return parserHelp.get3DRef(exPath + this.ws.getName(), this.range.getName());
+		return generate3DLink(exPath, this.ws.getName(), this.range.getName());
 	};
 	cRef3D.prototype.getWS = function () {
 		return this.ws;
@@ -2456,6 +2698,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.rowCount = 0;
 		this.countElementInRow = [];
 		this.countElement = 0;
+
+		this.realSize = null;
+		this.missedValue = null;
 	}
 
 	cArray.prototype = Object.create(cBaseType.prototype);
@@ -2480,6 +2725,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return this.array[rowIndex];
 	};
+	cArray.prototype._getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.array.length - 1) {
+			return null;
+		}
+		return [this.array[rowIndex]];
+	};
 	cArray.prototype.getCol = function (colIndex) {
 		var col = [];
 		for (var i = 0; i < this.rowCount; i++) {
@@ -2487,8 +2738,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return col;
 	};
-	cArray.prototype.getElementRowCol = function (row, col) {
+	cArray.prototype._getCol = function (colIndex) {
+		let col = [];
+		for (let i = 0; i < this.rowCount; i++) {
+			col[i] = [];
+			col[i].push(this.array[i][colIndex]);
+		}
+		return col;
+	};
+	cArray.prototype.getElementRowCol = function (row, col, checkRealSize) {
 		if (row > this.rowCount || col > this.getCountElementInRow()) {
+			if (checkRealSize && this.realSize && row <= this.realSize.row && col <= this.realSize.col) {
+				if (this.missedValue) {
+					return this.missedValue
+				}
+				return new cEmpty();
+			}
 			return new cError(cErrorType.not_available);
 		}
 		return this.array[row] && this.array[row][col] ? this.array[row][col] : new cEmpty();
@@ -2540,19 +2805,40 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.getCountElement = function () {
 		return this.countElement;
 	};
-	cArray.prototype.getCountElementInRow = function () {
-		return this.countElementInRow[0];
+	cArray.prototype.getCountElementInRow = function (getRealSize) {
+		return getRealSize && this.realSize ? this.realSize.col : this.countElementInRow[0];
 	};
-	cArray.prototype.getRowCount = function () {
-		return this.rowCount;
+	cArray.prototype.getRowCount = function (getRealSize) {
+		return getRealSize && this.realSize ? this.realSize.row : this.rowCount;
 	};
 	cArray.prototype.geMaxElementInRow = function () {
 		return Math.max.apply(null, this.countElementInRow);
 	};
+	cArray.prototype.getRealArraySize = function () {
+		if (!this.realSize) {
+			return;
+		}
+
+		return this.realSize;
+	};
+	cArray.prototype.getMissedValue = function () {
+		if (!this.missedValue) {
+			return;
+		}
+
+		return this.missedValue;
+	};
+	cArray.prototype.setRealArraySize = function (row, col) {
+		if (row > 0 && col > 0) {
+			this.realSize = {row: row, col: col}
+		}
+	};
 	cArray.prototype.tocNumber = function () {
-		var retArr = new cArray();
-		for (var ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
-			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
+		let retArr = new cArray();
+		retArr.realSize = this.getRealArraySize();
+		retArr.missedValue = this.getMissedValue();
+		for (let ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
+			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				retArr.addElement(this.array[ir][ic].tocNumber());
 			}
 			if (ir === this.rowCount - 1) {
@@ -2684,8 +2970,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 	};
-	cArray.prototype.getDimensions = function () {
-		return {col: this.getCountElementInRow(), row: this.getRowCount()};
+	cArray.prototype.getDimensions = function (getRealSize) {
+		let realSize = getRealSize ? this.getRealArraySize() : false;
+		return {col: realSize ? realSize.col : this.getCountElementInRow(), row: realSize ? realSize.row : this.getRowCount()};
 	};
 	cArray.prototype.fillMatrix = function (replace_empty) {
 		let maxColCount = Math.max.apply(null, this.countElementInRow);
@@ -2702,13 +2989,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			this.countElement += this.array[i].length;
 		}
 	};
-	cArray.prototype.recalculate = function () {
+	cArray.prototype.recalculateOld = function () {
 		this.rowCount = this.array.length;
 		this.countElementInRow = [];
 		this.countElement = 0;
 		for (var i = 0; i < this.array.length; i++) {
 			this.countElementInRow[i] = this.array[i].length;
 			this.countElement += this.array[i].length;
+		}
+	};
+	cArray.prototype.recalculate = function (row) {
+		this.rowCount = this.array.length;
+		if (row === undefined) {
+			// full recalculation of the number of elements in the entire array, long execution
+			this.countElementInRow = [];
+			this.countElement = 0;
+			for (let i = 0; i < this.array.length; i++) {
+				this.countElementInRow[i] = this.array[i].length;
+				this.countElement += this.array[i].length;
+			}
+		} else {
+			// changing only the affected values ​​(by row)
+			let lookingRow = this.array[row];
+			this.countElementInRow[row] = lookingRow.length;
+			this.countElement += lookingRow.length;
 		}
 	};
 	cArray.prototype.pushCol = function (matrix, colNum) {
@@ -2722,10 +3026,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		this.recalculate();
 	};
-	cArray.prototype.pushRow = function (matrix, colNum) {
-		if (matrix && matrix[colNum]) {
-			this.array.push(matrix[colNum]);
-			this.recalculate();
+	cArray.prototype.pushRow = function (matrix, rowNum) {
+		if (matrix && matrix[rowNum]) {
+			this.array.push(matrix[rowNum]);
+			this.recalculate(this.array.length - 1);	
 		}
 	};
 	cArray.prototype.crop = function (row, col) {
@@ -2750,6 +3054,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let res = new cArray();
 		res.fillFromArray(newArray);
 		return res;
+	};
+	cArray.prototype.getFirstElement = function () {
+		return this.getElementRowCol(0,0);	
 	};
 
 
@@ -2870,8 +3177,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				res = new cArray();
 				for (var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? res.addRow() : true) {
 					for (var iCol = 0; iCol < colCount; iCol++) {
-						var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol) : operand1;
-						var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol) : operand2;
+						var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol, true) : operand1;
+						var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol, true) : operand2;
 						res.addElement(func(elem1, elem2));
 					}
 				}
@@ -2920,8 +3227,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				str += ",";
 			}
 		}
-		if (this.isXLFN) {
-			return new cString("_xlfn." + this.name + "(" + str + ")");
+		if (this.isXLFN || this.isXLWS) {
+			return new cString((this.isXLFN ? "_xlfn." : "") + (this.isXLWS ? "_xlws." : "") + this.name + "(" + str + ")");
+		} else if (this.isXLUDF) {
+			//return new cString("__xludf.DUMMYFUNCTION." + this.name + "(" + str + ")");
 		}
 		return new cString(this.toString() + "(" + str + ")");
 	};
@@ -2944,7 +3253,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.toString = function (/*locale*/) {
 		/*var name = this.toString();
 		var localeName = locale ? locale[name] : name;*/
-		return this.name.replace(rx_sFuncPref, "_xlfn.");
+		return this.name.replace(rx_sFuncPref, "_xlfn.").replace(rx_sFuncPrefXlWS, "_xlws.").replace(rx_sFuncPrefXLUFD, "__xludf.DUMMYFUNCTION.");
 	};
 	cBaseFunction.prototype.toLocaleString = function (/*locale*/) {
 		var name = this.toString();
@@ -3018,15 +3327,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var newArgs = [];
 		var indexArr = null;
 
+		var excludeHiddenRows = this && this.excludeHiddenRows;
+		var excludeErrorsVal = this && this.excludeErrorsVal;
+		var excludeNestedStAg = this && this.excludeNestedStAg;
 		for (var i = 0; i < args.length; i++) {
 			var arg = args[i];
 
 			//для массивов отдельная ветка
 			if (typeArray && cElementType.array === typeArray[i]) {
 				if (cElementType.cellsRange === arg.type || cElementType.array === arg.type) {
-					newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
+					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg);
 				} else if (cElementType.cellsRange3D === arg.type) {
-					newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg)[0];
+					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg)[0];
 				} else if (cElementType.error === arg.type) {
 					newArgs[i] = arg;
 				} else {
@@ -3312,6 +3624,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var res = null;
 		var t = this;
 
+		let dynamicRange = null, dynamicArraySize = null;
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			if (!parserFormula.dynamicRange && !parserFormula.ref) {
+				dynamicArraySize = this.getDynamicArraySize(arg);
+				if (dynamicArraySize && parserFormula.parent && parserFormula.parent.nCol != null && parserFormula.parent.nRow != null) {
+					dynamicRange = Asc.Range(parserFormula.parent.nCol, parserFormula.parent.nRow, dynamicArraySize.width + parserFormula.parent.nCol - 1, dynamicArraySize.height + parserFormula.parent.nRow - 1);
+					// parserFormula.ref = dynamicRange;
+					parserFormula.dynamicRange = dynamicRange;
+					this.bArrayFormula = true;
+				}
+			}
+		}
+
 		var functionsCanReturnArray = ["index"];
 
 		var returnFormulaType = this.returnValueType;
@@ -3329,15 +3654,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//добавлен специальный тип для функции сT, она использует из области всегда первый аргумент
 		var replaceOnlyArray = cReturnFormulaType.replace_only_array === returnFormulaType;
 
-		var checkArrayIndex = function(index) {
-			var res = false;
+		// Проверка должен ли элемент поступать в формулу без изменени?
+		const checkArrayIndex = function(index) {
+			let res = false;
 			if(arrayIndexes) {
-				if(1 === arrayIndexes[index]) {
+				if(arrayIndexes[index] === arrayIndexesType.any) {
 					res = true;
 				} else if(typeof arrayIndexes[index] === "object") {
 					//для данной проверки запрашиваем у объекта 0 индекс, там хранится значение индекса аргумента
 					//от которого зависит стоит ли вопринимать данный аргумент как массив или нет
-					var tempsArgIndex = arrayIndexes[index][0];
+					let tempsArgIndex = arrayIndexes[index][0];
 					if(undefined !== tempsArgIndex && arg[tempsArgIndex]) {
 						if(cElementType.cellsRange === arg[tempsArgIndex].type || cElementType.cellsRange3D === arg[tempsArgIndex].type || cElementType.array === arg[tempsArgIndex].type) {
 							res = true;
@@ -3348,9 +3674,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return res;
 		};
 
-		var checkOneRowCol = function() {
-			var res = false;
-			for (var j = 0; j < argumentsCount; j++) {
+		const checkArayIndexType = function(index, argType) {
+			// check for type of argument - whether array and range can be processed or just one of them
+			let res = false;
+			if(arrayIndexes && argType === arrayIndexes[index]) {
+				res = true;
+			}
+			return res;
+		};
+
+		const checkOneRowCol = function() {
+			let res = false;
+			for (let j = 0; j < argumentsCount; j++) {
 				if(cElementType.array === arg[j].type) {
 					if(1 === arg[j].getRowCount() || 1 === arg[j].getCountElementInRow()) {
 						res = true;
@@ -3383,7 +3718,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				_checkArrayIndex = checkArrayIndex(j);
 				if (!_checkArrayIndex) {
 					if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type) {
-						if (replaceAreaByValue) {
+						if (checkArayIndexType(j, arrayIndexesType.range)) {
+							// transfer range to argument without changing 
+							tempArg = tempArg;
+						} else if (replaceAreaByValue) {
 							tempArg = tempArg.cross(opt_bbox);
 						} else if (replaceAreaByRefs) {
 							//добавляю специальные заглушки для функций row/column
@@ -3404,18 +3742,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							tempArg = window['AscCommonExcel'].convertAreaToArray(tempArg);
 						}
 					}
-				}
 
-				if (cElementType.array === tempArg.type && !_checkArrayIndex) {
-					//пытаемся найти массив, которые имеет более 1 столбца и более 1 строки
-					if (!firstArray) {
-						firstArray = tempArg;
-					} else if((1 === firstArray.getRowCount() || 1 === firstArray.getCountElementInRow()) && 1 !== tempArg.getRowCount() && 1 !== tempArg.getCountElementInRow()) {
-						firstArray = tempArg;
-					} else if((1 === firstArray.getRowCount() && 1 === firstArray.getCountElementInRow()) && (1 !== tempArg.getRowCount() || 1 !== tempArg.getCountElementInRow())){
-						firstArray = tempArg;
+					if (cElementType.array === tempArg.type) {
+						if (checkArayIndexType(j, arrayIndexesType.array)) {
+							// transfer array to argument without changing
+							tempArg = tempArg;
+						} else if (!firstArray) {	//пытаемся найти массив, которые имеет более 1 столбца и более 1 строки
+							firstArray = tempArg;
+						} else if((1 === firstArray.getRowCount() || 1 === firstArray.getCountElementInRow()) && 1 !== tempArg.getRowCount() && 1 !== tempArg.getCountElementInRow()) {
+							firstArray = tempArg;
+						} else if((1 === firstArray.getRowCount() && 1 === firstArray.getCountElementInRow()) && (1 !== tempArg.getRowCount() || 1 !== tempArg.getCountElementInRow())){
+							firstArray = tempArg;
+						}
 					}
 				}
+
 				tempArgs.push(tempArg);
 			}
 
@@ -3467,7 +3808,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					if (0 === argumentsCount && parserFormula.ref) {
 						temp_opt_bbox = new Asc.Range(c + parserFormula.ref.c1, r + parserFormula.ref.r1, c + parserFormula.ref.c1, r + parserFormula.ref.r1);
 					}
-					array.addElement(t.Calculate(newArgs, temp_opt_bbox, opt_defName, parserFormula.ws, null, _row, _col));
+					array.addElement(t.Calculate(newArgs, temp_opt_bbox, opt_defName, parserFormula.ws, null, _row ? _row : r, _col ? _col : c));
 				};
 
 				if (firstArray.foreach) {
@@ -3494,14 +3835,112 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 
+		if (AscCommonExcel.bIsSupportDynamicArrays && (dynamicRange || dynamicArraySize)) {
+			// parserFormula.ref = null;
+			this.bArrayFormula = null;
+		}
+
 		return res;
 	};
 
+	cBaseFunction.prototype.checkFormulaArray2 = function (arg, opt_bbox, opt_defName, parserFormula, bIsSpecialFunction, argumentsCount) {
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			const t = this;
+			let res = null;
+			let functionsCanReturnArray = ["index"];
+	
+			let returnFormulaType = this.returnValueType;
+			if (cReturnFormulaType.setArrayRefAsArg === returnFormulaType) {
+				// todo check if this situation occurs
+				if (arg.length === 0 && parserFormula.ref) {
+					res = this.Calculate([new cArea(parserFormula.ref.getName(), parserFormula.ws)], opt_bbox, opt_defName, parserFormula.ws);
+				} else {
+					return null;
+				}
+			}
+	
+			let arrayIndexes = this.arrayIndexes;
+			let replaceAreaByValue = cReturnFormulaType.value_replace_area === returnFormulaType;
+			let replaceAreaByRefs = cReturnFormulaType.area_to_ref === returnFormulaType;
+			let replaceOnlyArray = cReturnFormulaType.replace_only_array === returnFormulaType;
+	
+			const checkArrayIndex = function(index) {
+				let res = false;
+				if(arrayIndexes) {
+					if(1 === arrayIndexes[index]) {
+						res = true;
+					} else if(typeof arrayIndexes[index] === "object") {
+						// for this situation check object 0 for an index, the value of the argument index is stored there
+						// which determines whether a given argument should be treated as an array or not
+						let tempsArgIndex = arrayIndexes[index][0];
+						if(undefined !== tempsArgIndex && arg[tempsArgIndex]) {
+							if(cElementType.cellsRange === arg[tempsArgIndex].type || cElementType.cellsRange3D === arg[tempsArgIndex].type || cElementType.array === arg[tempsArgIndex].type) {
+								res = true;
+							}
+						}
+					}
+				}
+				return res;
+			};
+			if((!returnFormulaType || replaceAreaByValue || replaceAreaByRefs || arrayIndexes || replaceOnlyArray)) {
+				if (functionsCanReturnArray.indexOf(this.name.toLowerCase()) !== -1) {
+					let _tmp = this.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
+					if (_tmp && _tmp.type === cElementType.array) {
+						return _tmp;
+					}
+				}
+	
+				let tempArgs = [], tempArg, firstArray, _checkArrayIndex;
+				for (let j = 0; j < argumentsCount; j++) {
+					tempArg = arg[j];
+	
+					_checkArrayIndex = checkArrayIndex(j);
+					if (!_checkArrayIndex) {
+						if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type || cElementType.array === tempArg.type) {
+							res = true
+						}
+					}
+					if (res) {
+						return res;
+					}
+	
+					tempArgs.push(tempArg);
+				}
+			}
+	
+			return res;
+		}
+	};
+
+	cBaseFunction.prototype.getDynamicArraySize = function (arg) {
+
+		if (!AscCommonExcel.bIsSupportDynamicArrays || this.returnValueType === AscCommonExcel.cReturnFormulaType.array) {
+			return null;
+		}
+
+		let width = 1, height = 1;
+		for (let i = 0; i < arg.length; i++) {
+			if (!this.arrayIndexes || !this.arrayIndexes[i]) {
+				let objSize = arg[i].getDimensions();
+				if (objSize) {
+					height = Math.max(objSize.row, height);
+					width = Math.max(objSize.col, width);
+				}
+			}
+		}
+
+		if (width !== 1 || height !== 1) {
+			return {width: width, height: height};
+		}
+		return null;
+	};
 
 	/** @constructor */
 	function cUnknownFunction(name) {
 		this.name = name;
 		this.isXLFN = null;
+		this.isXLWS = null;
+		this.isXLUDF = null;
 	}
 	cUnknownFunction.prototype = Object.create(cBaseFunction.prototype);
 	cUnknownFunction.prototype.constructor = cUnknownFunction;
@@ -3547,7 +3986,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cRangeUnionOperator.prototype.priority = 50;
 	cRangeUnionOperator.prototype.argumentsCurrent = 2;
 	cRangeUnionOperator.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], ws0, ws1, ws, res;
+		let arg0 = arg[0], arg1 = arg[1], ws0, ws1, ws, res;
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
 		if (( cElementType.cell === arg0.type || cElementType.cellsRange === arg0.type ||
 			cElementType.cell3D === arg0.type ||
 			cElementType.cellsRange3D === arg0.type && (ws0 = arg0.wsFrom) === arg0.wsTo ) &&
@@ -3844,33 +4289,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cPowOperator.prototype.priority = 40;
 	cPowOperator.prototype.argumentsCurrent = 2;
 	cPowOperator.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea) {
-			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1], arguments[3]);
-		}
-		arg0 = arg0.tocNumber();
-		if (arg1 instanceof cArea) {
-			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1], arguments[3]);
-		}
-		arg1 = arg1.tocNumber();
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
+		let res = AscCommonExcel.cFormulaFunction["POWER"].prototype.Calculate(arg, arguments[1]);
+
+		if (res) {
+			return res;
 		}
 
-		var _v = Math.pow(arg0.getValue(), arg1.getValue());
-		if (isNaN(_v)) {
-			return new cError(cErrorType.not_numeric);
-		} else if (_v === Number.POSITIVE_INFINITY) {
-			return new cError(cErrorType.division_by_zero);
-		}
-		return new cNumber(_v);
+		return new cError(cErrorType.wrong_value_type);
 	};
 
 	/**
@@ -4306,6 +4731,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			list.push(b);
 		}
 		return list;
+	}
+	function addNewFunction(func) {
+		if (!func) {
+			return;
+		}
+		let a = new func();
+		let f = new AscCommon.asc_CFormula(a);
+		cFormulaFunction[f.asc_getName()] = func;
+		cAllFormulaFunction[a.name] = func;
 	}
 	function getRangeByRef(ref, ws, onlyRanges, checkMultiSelection, checkFormula) {
 		var activeCell = ws.getSelection().activeCell;
@@ -4963,7 +5397,7 @@ _func[cElementType.cellsRange][cElementType.cellsRange] = function ( arg0, arg1,
 
 _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbox, bIsSpecialFunction ) {
 	if (bIsSpecialFunction) {
-		var specialArray = specialFuncArrayToArray(arg0, arg1, what);
+		let specialArray = specialFuncArrayToArray(arg0, arg1, what);
 		if(null !== specialArray){
 			return specialArray;
 		}
@@ -4985,35 +5419,60 @@ _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbo
 _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElementType.string] =
     _func[cElementType.array][cElementType.bool] = _func[cElementType.array][cElementType.error] =
         _func[cElementType.array][cElementType.empty] = function ( arg0, arg1, what ) {
-            var res = new cArray();
-            arg0.foreach( function ( elem, r ) {
+            let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg0.getDimensions();
+
+			if (arg0.realSize && arg0.missedValue) {
+				realArraySize = arg0.getRealArraySize();
+				rowDiff = realArraySize.row - arg0.getRowCount();
+				colDiff = realArraySize.col - arg0.getCountElementInRow();
+				funcResult = _func[arg0.missedValue.type][arg1.type](arg0.missedValue, arg1, what);
+				
+				// set realSize to res
+				res.setRealArraySize(realArraySize.row, realArraySize.col);
+				res.missedValue = funcResult;
+			}
+
+			arg0.foreach( function ( elem, r ) {
                 if ( !res.array[r] ) {
                     res.addRow();
                 }
                 res.addElement( _func[elem.type][arg1.type]( elem, arg1, what ) );
             } );
+
             return res;
         };
-
 
 _func[cElementType.number][cElementType.array] = _func[cElementType.string][cElementType.array] =
     _func[cElementType.bool][cElementType.array] = _func[cElementType.error][cElementType.array] =
         _func[cElementType.empty][cElementType.array] = function ( arg0, arg1, what ) {
-            var res = new cArray();
-            arg1.foreach( function ( elem, r ) {
+			let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg1.getDimensions();
+
+			if (arg1.realSize && arg1.missedValue) {
+				realArraySize = arg1.getRealArraySize();
+				rowDiff = realArraySize.row - arg1.getRowCount();
+				colDiff = realArraySize.col - arg1.getCountElementInRow();
+				funcResult = _func[arg0.type][arg1.missedValue.type](arg0, arg1.missedValue, what);
+
+				// set realSize to res
+				res.setRealArraySize(realArraySize.row, realArraySize.col);
+				res.missedValue = funcResult;
+			}
+
+			arg1.foreach( function ( elem, r ) {
                 if ( !res.array[r] ) {
                     res.addRow();
                 }
                 res.addElement( _func[arg0.type][elem.type]( arg0, elem, what ) );
             } );
+
             return res;
         };
 
 
 _func.binarySearch = function ( sElem, arrTagert, regExp ) {
-	var first = 0, /* Номер первого элемента в массиве */
-		last = arrTagert.length - 1, /* Номер элемента в массиве, СЛЕДУЮЩЕГО ЗА последним */
-		/* Если просматриваемый участок непустой, first<last */
+	var first = 0, /* The number of the first element in the array */
+		last = arrTagert.length - 1, /* The number of the element in the array that comes AFTER the last one */
+		/* If the viewed segment is not empty, first<last */
 		mid;
 
 	var arrTagertOneType = [], isString = false;
@@ -5031,98 +5490,129 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 		}
 	}
 
+	// comparing the lengths of arrays and the first and last element
 	if (arrTagert.length === 0) {
 		return -1;
-		/* массив пуст */
+		/* array empty */
 	} else if (arrTagert[0].value > sElem.value) {
 		return -2;
 	} else if (arrTagert[arrTagert.length - 1].value < sElem.value) {
 		return arrTagert.length - 1;
 	}
 
+	// according to the sorting in MS, the comparison will be like this: cError > cBool > cText > (cNumber == cEmpty)
 	while (first < last) {
 		mid = Math.floor(first + (last - first) / 2);
-		if (sElem.value <= arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
-			last = mid;
+		if (sElem.type !== arrTagert[mid].type) {
+			if (sElem.type === cElementType.empty || arrTagert[mid].type === cElementType.empty) {
+				if (sElem.value <= arrTagert[mid].value) {
+					// cEmpty.tocNumber() ?
+					last = mid;
+				} else {
+					first = mid + 1;
+				}
+			} else {
+				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {
+					last = mid;
+				} else {
+					first = mid + 1;
+				}
+			}
 		} else {
-			first = mid + 1;
+			// if cError && cError ?
+			if (sElem.value < arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
+				last = mid;
+			} else {
+				first = mid + 1;
+			}
 		}
 	}
 
-	/* Если условный оператор if(n==0) и т.д. в начале опущен - значит, тут раскомментировать!    */
+	/* If the conditional operator if(n==0) and so on is omitted at the beginning - then uncomment it here!    */
 	if (/* last<n &&*/ arrTagert[last].value === sElem.value) {
 		return last;
-		/* Искомый элемент найден. last - искомый индекс */
+		/* The desired element is found. last is the desired index */
 	} else {
 		return last - 1;
-		/* Искомый элемент не найден. Но если вам вдруг надо его вставить со сдвигом, то его место - last.    */
+		/* The desired element is not found. But if you suddenly need to insert it with a shift, its place is at last.    */
 	}
 
 };
 
-_func.binarySearchByRange = function ( sElem, area, regExp ) {
-	var bbox, ws;
-	if (cElementType.cellsRange3D === area.type) {
-		bbox = area.bbox;
-		ws = area.getWS();
-	} else if (cElementType.cellsRange === area.type) {
-		bbox = area.range.bbox;
-		ws = area.ws;
-	}
-	var bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;//r>=c
-	var first = 0, /* Номер первого элемента в массиве */
-		last = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1, /* Номер элемента в массиве, СЛЕДУЮЩЕГО ЗА последним */
-		/* Если просматриваемый участок непустой, first<last */
-		mid;
+_func.lookupBinarySearch = function ( sElem, arrayNoEmpty, isByRangeCall, regExp ) {
+	let first = 0, last, mid;
+	let typedArr;
 
-	var getValuesNoEmpty = function () {
-		var _r1 = bbox.r1;
-		var _r2 = bVertical ? bbox.r2 : bbox.r1;
-		var _c1 = bbox.c1;
-		var _c2 = bVertical ? bbox.c1 : bbox.c2;
-		var _val = [];
-		ws.getRange3(_r1, _c1, _r2, _c2)._foreachNoEmpty(function(cell) {
-			var checkTypeVal = checkTypeCell(cell);
-			if (checkTypeVal.type !== cElementType.empty) {
-				_val.push(checkTypeVal);
-				mapEmptyFullValues[_val.length - 1] = bVertical ? cell.nRow - bbox.r1 : cell.nCol - bbox.c1;
-			}
-		});
-		return _val;
-	};
-
-	var mapEmptyFullValues = [];
-	var noEmptyValues = getValuesNoEmpty();
-	last = noEmptyValues.length - 1;
-
-	if (noEmptyValues.length === 0) {
+	typedArr = prepareTypedArrayUniversal(arrayNoEmpty, sElem, isByRangeCall);
+	
+	if (typedArr.length === 0) {
+		/* array empty */
 		return -1;
-		/* массив пуст */
-	} else if (noEmptyValues[0].value > sElem.value) {
-		return -2;
-	} else if (noEmptyValues[last].value < sElem.value) {
-		return last;
+	}
+	// 2 elements next to each other
+	if (typedArr.length === 2) {
+		// todo check two element behaviour
+	}
+	// With 0-9 < A-Z, if query is numeric and data found is string, or
+	// vice versa, the (yet another undocumented) Excel behavior is to
+	// return #N/A instead.
+
+	if (sElem.type === cElementType.string) {
+		sElem = new cString(sElem.toString().toLowerCase());
 	}
 
-	var tempValue;
+	let cacheIndex, isFound;
+	first = 0, last = typedArr.length - 1;
 	while (first < last) {
 		mid = Math.floor(first + (last - first) / 2);
-		tempValue = noEmptyValues[mid];
-		if (sElem.value <= tempValue.value || ( regExp && regExp.test(tempValue.value) )) {
+
+		let midValue = typedArr[mid].v;
+		// let cmp = compareValues(sElem, midValue)
+		if (sElem.value === midValue.value) {
+			/* cmp === 0 */
+			last = _func.getLastMatch(mid, sElem, typedArr);
+			break;
+		}
+
+		if (sElem.value < midValue.value || ( regExp && regExp.test(midValue.value) )) {
+			/* cmp > 0 */
 			last = mid;
 		} else {
+			/* cmp < 0 */	
+			cacheIndex = mid;														
 			first = mid + 1;
 		}
 	}
 
-	/* Если условный оператор if(n==0) и т.д. в начале опущен - значит, тут раскомментировать!    */
-	if (/* last<n &&*/ noEmptyValues[last].value === sElem.value) {
-		return mapEmptyFullValues[last];
-		/* Искомый элемент найден. last - искомый индекс */
+	if (typedArr[last].v.value <= sElem.value) {
+		return typedArr[last].i;
+	} else if (cacheIndex !== undefined && typedArr[cacheIndex].v.value <= sElem.value) {
+		return typedArr[cacheIndex].i;
 	} else {
-		return mapEmptyFullValues[last - 1];
-		/* Искомый элемент не найден. Но если вам вдруг надо его вставить со сдвигом, то его место - last.    */
+		return -2;
 	}
+};
+
+_func.getLastMatch = function (startIndex, lookingElem, array) {
+	// todo add compare to all types?
+	let resIndex = startIndex, exactMatchIndex;
+	for (let i = startIndex; i < array.length; i++) {
+		if (array[i].v.type !== lookingElem.type) {
+			continue;
+		}
+		if (lookingElem.type === cElementType.bool && array[i].v.value !== lookingElem.value) {
+			break;
+		}
+
+		if (array[i].v.value === lookingElem.value) {
+			exactMatchIndex = i;
+		} else if (array[i].v.value <= lookingElem.value) {
+			resIndex = i;
+		} else if (array[i].v.value > lookingElem.value) {
+			break;
+		}
+	}
+	return exactMatchIndex ? exactMatchIndex : resIndex;
 
 };
 
@@ -5558,6 +6048,10 @@ function parserFormula( formula, parent, _ws ) {
 		} else if (AscCommon.c_oNotifyType.Prepare === data.type) {
 			this.removeDependencies();
 			this.processNotifyPrepare(data);
+		} else if (AscCommon.c_oNotifyType.ChangeExternalLink === data.type) {
+			this._changeExternalLink(data);
+			this.Formula = this.assemble(true);
+			this.buildDependencies();
 		} else {
 			this.removeDependencies();
 			var needAssemble = true;
@@ -5574,6 +6068,15 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			this.Formula = eventData.assemble;
 			this.buildDependencies();
+		}
+	};
+	parserFormula.prototype._changeExternalLink = function(data) {
+		for (var i = 0; i < this.outStack.length; i++) {
+			if (this.outStack[i].type === cElementType.cell3D || this.outStack[i].type === cElementType.cellsRange3D || this.outStack[i].type === cElementType.name3D) {
+				if (this.outStack[i].externalLink == data.data.from) {
+					this.outStack[i].externalLink = data.data.to;
+				}
+			}
 		}
 	};
 	parserFormula.prototype.processNotifyPrepare = function(data) {
@@ -5687,7 +6190,7 @@ function parserFormula( formula, parent, _ws ) {
 		var needAssemble = false;
 		var cFormulaList;
 
-		var startSumproduct = false, counterSumproduct = 0;
+		var startArrayFunc = false, counterArrayFunc = 0, isFoundImportFunctions;
 
 		if (this.isParsed) {
 			return this.isParsed;
@@ -5887,13 +6390,18 @@ function parserFormula( formula, parent, _ws ) {
 								elem = cAllFormulaFunction[val].prototype;
 							} else {
 								elem = new cUnknownFunction(val);
-								elem.isXLFN = (0 === val.indexOf("_xlfn."));
+								let xlfnFrefix = "_xlfn.";
+								let xlwsFrefix = "_xlws.";
+								//let xludfFrefix = "__xludf.DUMMYFUNCTION.";
+								//_xlws only together with _xlfn
+								elem.isXLFN = (val.indexOf(xlfnFrefix) === 0);
+								elem.isXLWS = elem.isXLFN && xlfnFrefix.length === val.indexOf(xlwsFrefix);
 							}
-							if("SUMPRODUCT" === val){
-								startSumproduct = true;
+							if(arrayFunctionsMap[val]){
+								startArrayFunc = true;
 
-								counterSumproduct++;
-								if(1 === counterSumproduct){
+								counterArrayFunc++;
+								if(1 === counterArrayFunc){
 									this.outStack.push(cSpecialOperandStart.prototype);
 								}
 							}
@@ -5933,10 +6441,10 @@ function parserFormula( formula, parent, _ws ) {
 									//this.outStack.push(arg_count);
 									this.outStack.splice(this.outStack.length - 1, 0, arg_count);
 
-									if(startSumproduct && "SUMPRODUCT" === tmp.name){
-										counterSumproduct--;
-										if(counterSumproduct < 1){
-											startSumproduct = false;
+									if(startArrayFunc && arrayFunctionsMap[tmp.name]){
+										counterArrayFunc--;
+										if(counterArrayFunc < 1){
+											startArrayFunc = false;
 											this.outStack.push(cSpecialOperandEnd.prototype);
 										}
 									}
@@ -6149,9 +6657,9 @@ function parserFormula( formula, parent, _ws ) {
 			leftParentArgumentsCurrentArr[elemArr.length - 1] = 1;
 			parseResult.argPos = 1;
 
-			if (startSumproduct) {
-				counterSumproduct++;
-				if (1 === counterSumproduct) {
+			if (startArrayFunc) {
+				counterArrayFunc++;
+				if (1 === counterArrayFunc) {
 					t.outStack.push(cSpecialOperandStart.prototype);
 				}
 			}
@@ -6247,10 +6755,10 @@ function parserFormula( formula, parent, _ws ) {
 			parseResult.operand_expected = false;
 			wasLeftParentheses = false;
 
-			if (startSumproduct) {
-				counterSumproduct--;
-				if (counterSumproduct < 1) {
-					startSumproduct = false;
+			if (startArrayFunc) {
+				counterArrayFunc--;
+				if (counterArrayFunc < 1) {
+					startArrayFunc = false;
 					t.outStack.push(cSpecialOperandEnd.prototype);
 				}
 			}
@@ -6266,8 +6774,9 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 				var _argPos = argPosArrMap[currentFuncLevel];
-				if (_argPos && _argPos[_argPos.length - 1] && undefined === _argPos[_argPos.length - 1].end) {
-					_argPos[_argPos.length - 1].end = ph.pCurrPos;
+				var lastArgPos = _argPos && _argPos[_argPos.length - 1];
+				if (lastArgPos && undefined === lastArgPos.end) {
+					lastArgPos.end = lastArgPos.start > ph.pCurrPos ? lastArgPos.start : ph.pCurrPos;
 				}
 
 				if (!parseResult.allFunctionsPos) {
@@ -6516,6 +7025,11 @@ function parserFormula( formula, parent, _ws ) {
 
 				var wsF, wsT;
 				var externalLink = _3DRefTmp[3];
+				//check on add to this document
+				let thisTitle = externalLink && window["Asc"]["editor"] && window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
+				if (thisTitle === externalLink) {
+					externalLink = null;
+				}
 				if (externalLink) {
 					if (local) {
 						externalLink = t.wb.getExternalLinkIndexByName(externalLink);
@@ -6527,7 +7041,7 @@ function parserFormula( formula, parent, _ws ) {
 							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
 								parseResult.externalReferenesNeedAdd[externalLink] = [];
 							}
-							parseResult.externalReferenesNeedAdd[externalLink].push(_3DRefTmp[1]);
+							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: _3DRefTmp[1]});
 						}
 					}
 
@@ -6672,14 +7186,20 @@ function parserFormula( formula, parent, _ws ) {
 					elemArr.push(new cMultOperator());
 				}
 
-				var found_operator = null, operandStr = ph.operand_str.replace(rx_sFuncPref, "").toUpperCase();
+				var found_operator = null, operandStr = ph.operand_str.replace(rx_sFuncPref, "").replace(rx_sFuncPrefXlWS, "").replace(rx_sFuncPrefXLUFD, "").toUpperCase();
 				if (operandStr in cFormulaList) {
 					found_operator = cFormulaList[operandStr].prototype;
 				} else if (operandStr in cAllFormulaFunction) {
 					found_operator = cAllFormulaFunction[operandStr].prototype;
 				} else {
 					found_operator = new cUnknownFunction(operandStr);
-					found_operator.isXLFN = (ph.operand_str.indexOf("_xlfn.") === 0);
+					let xlfnFrefix = "_xlfn.";
+					let xlwsFrefix = "_xlws.";
+					//let xludfFrefix = "__xludf.DUMMYFUNCTION.";
+
+					//_xlws only together with _xlfn
+					found_operator.isXLFN = (ph.operand_str.indexOf(xlfnFrefix) === 0);
+					found_operator.isXLWS = found_operator.isXLFN && xlfnFrefix.length === ph.operand_str.indexOf(xlwsFrefix);
 				}
 
 				if (found_operator !== null) {
@@ -6692,8 +7212,12 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					elemArr.push(found_operator);
 					parseResult.addElem(found_operator);
-					if ("SUMPRODUCT" === found_operator.name) {
-						startSumproduct = true;
+					if (arrayFunctionsMap[found_operator.name]) {
+						startArrayFunc = true;
+					}
+
+					if (found_operator.name === "IMPORTRANGE") {
+						isFoundImportFunctions = true;
 					}
 
 					if (needCalcArgPos) {
@@ -6761,8 +7285,9 @@ function parserFormula( formula, parent, _ws ) {
 					parseResult.activeArgumentPos = argFuncMap[currentFuncLevel].count;
 				}
 				var _argPos = argPosArrMap[currentFuncLevel];
-				if (_argPos && _argPos[_argPos.length - 1] && undefined === _argPos[_argPos.length - 1].end) {
-					_argPos[_argPos.length - 1].end = ph.pCurrPos;
+				var lastArgPos = _argPos && _argPos[_argPos.length - 1];
+				if (lastArgPos && undefined === lastArgPos.end) {
+					lastArgPos.end = lastArgPos.start > ph.pCurrPos ? lastArgPos.start : ph.pCurrPos;
 				}
 				if (levelFuncMap[currentFuncLevel]) {
 					if (!parseResult.allFunctionsPos) {
@@ -6862,12 +7387,169 @@ function parserFormula( formula, parent, _ws ) {
 			if (needAssemble) {
 				this.Formula = this.assemble();
 			}
+			if (isFoundImportFunctions) {
+				//share external links
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
+				this.calculate();
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
+
+				this.importFunctionsRangeLinks = AscCommonExcel.importRangeLinksState.importRangeLinks;
+
+				if (this.importFunctionsRangeLinks) {
+					for (let i in this.importFunctionsRangeLinks) {
+						let externalLink = this.wb.getExternalLinkIndexByName(i);
+						if (externalLink === null) {
+							externalLink = i;
+							if (!parseResult.externalReferenesNeedAdd) {
+								parseResult.externalReferenesNeedAdd = [];
+							}
+							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
+								parseResult.externalReferenesNeedAdd[externalLink] = [];
+							}
+
+							for (var j = 0; j < this.importFunctionsRangeLinks[i].length; j++) {
+								parseResult.externalReferenesNeedAdd[externalLink].push({sheet: this.importFunctionsRangeLinks[i][j].sheet, notUpdateId: true});
+							}
+						}
+					}
+
+					AscCommonExcel.importRangeLinksState.importRangeLinks = null;
+				}
+			}
 			return this.isParsed = true;
 		} else {
 			return this.isParsed = false;
 		}
 	};
 
+	parserFormula.prototype.findRefByOutStack = function () {
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			// using outStack, look at all the arguments in the formulas and compare them with the arrayIndex positions for this formula
+			// go through the stack in the same order as .calculate method
+			if (this.ref) {
+				return true;
+			}
+
+			if (this.outStack && this.outStack.length > 0) {
+				let elemArr = [], _tmp, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
+				let length = this.outStack.length;
+				let isRef, opt_bbox;
+
+				if (!opt_bbox && this.parent && this.parent.onFormulaEvent) {
+					opt_bbox = this.parent.onFormulaEvent(AscCommon.c_oNotifyParentType.GetRangeCell);
+				}
+				if (!opt_bbox) {
+					opt_bbox = new Asc.Range(0, 0, 0, 0);
+				}
+
+				if (length === 1) {
+					let singleElem = this.outStack[0];
+					if (singleElem.type === cElementType.cellsRange || singleElem.type === cElementType.cellsRange3D || singleElem.type === cElementType.array) {
+						isRef = true;
+					} else if (singleElem.type === cElementType.name || singleElem.type === cElementType.name3D) {
+						// let defName = singleElem.getDefName();
+						let defNameResult = singleElem.Calculate(null, opt_bbox, true);
+						if (defNameResult && defNameResult.type === cElementType.array || defNameResult.type === cElementType.cellsRange || defNameResult.type === cElementType.cellsRange3D) {
+							isRef = true;
+						}
+					} else if (singleElem.type === cElementType.table) {
+						let tableArea = singleElem.toRef(opt_bbox);
+						if (tableArea && tableArea.type === cElementType.cellsRange || tableArea.type === cElementType.cellsRange3D || tableArea.type === cElementType.array) {
+							isRef = true;
+						}
+					}
+
+					if (isRef) {
+						return isRef;
+					}
+				}
+
+				for (let i = 0; i < this.outStack.length; i++) {
+					currentElement = this.outStack[i];
+					if (!currentElement) {
+						continue;
+					}
+
+					if(currentElement.name === "(" || currentElement.type === cElementType.specialFunctionStart || currentElement.type === cElementType.specialFunctionEnd || "number" === typeof(currentElement)) {
+						continue;
+					}
+		
+					if (currentElement.type === cElementType.operator || currentElement.type === cElementType.func) {
+						argumentsCount = "number" === typeof(this.outStack[i - 1]) ? this.outStack[i - 1] : currentElement.argumentsCurrent;
+						if (argumentsCount < 0) {
+							argumentsCount = -argumentsCount;
+							currentElement.bArrayFormula = true;
+						}
+						if (elemArr.length < argumentsCount) {
+							// elemArr = [];
+							// todo test these cases
+							return false;
+						} else if (argumentsCount + defNameArgCount > currentElement.argumentsMax) {
+							// elemArr = [];
+							// todo test these cases
+							return false;
+						} else {
+							// if operator - check whether each of the arguments is a range or an array
+							let isOperator = currentElement.type === cElementType.operator;
+							let arg = [];
+							for (let i = 0; i < argumentsCount + defNameArgCount; i++) {
+								if ("number" === typeof(elemArr[elemArr.length - 1])) {
+									elemArr.pop();
+								}
+								let tempElem = elemArr.pop();
+								if (isOperator && (tempElem.type === cElementType.cellsRange || tempElem.type === cElementType.cellsRange3D || tempElem.type === cElementType.array)) {
+									isRef = true;
+								}
+
+								// arg.unshift(elemArr.pop());
+								arg.unshift(tempElem);
+							}
+		
+							let formulaArray = null;
+							if (currentElement.type === cElementType.func) {
+								formulaArray = cBaseFunction.prototype.checkFormulaArray2.call(currentElement, arg, opt_bbox, null, this, bIsSpecialFunction, argumentsCount);
+							} else if (currentElement.type === cElementType.operator && currentElement.bArrayFormula) {
+								bIsSpecialFunction = true;
+							}
+
+							if(formulaArray) {
+								isRef = true;
+							} else {
+								// todo results SEQUENCE, RANDARRAY etc... can return an array when using regular values ​​in arguments
+								_tmp = currentElement.Calculate(arg, opt_bbox, null, this.ws, bIsSpecialFunction);
+							}
+
+							if (isRef || (_tmp && (_tmp.type === cElementType.array || _tmp.type === cElementType.cellsRange || _tmp.type === cElementType.cellsRange3D))) {
+								return true;
+							}
+		
+							defNameArgCount = 0;
+							elemArr.push(_tmp);
+						}
+					} else if (currentElement.type === cElementType.name || currentElement.type === cElementType.name3D) {
+						// let defName = currentElement.getDefName();
+						defNameCalcArr = currentElement.Calculate(null, opt_bbox, true);
+						defNameArgCount = [];
+						if(defNameCalcArr && defNameCalcArr.length) {
+							defNameArgCount = defNameCalcArr.length - 1;
+							for(let j = 0; j < defNameCalcArr.length; j++) {
+								elemArr.push(defNameCalcArr[j]);
+							}
+						} else {
+							elemArr.push(defNameCalcArr);
+						}
+					} else if (currentElement.type === cElementType.table) {
+						elemArr.push(currentElement.toRef(opt_bbox));
+					} else {
+						elemArr.push(currentElement);
+					}
+				}
+
+				return isRef;
+			}
+			return false;
+		}
+	};
 	parserFormula.prototype.calculateCycleError = function () {
 			this.value = new cError(cErrorType.bad_reference);
 			this._endCalculate();
@@ -6987,14 +7669,53 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 
+		// ref(CSE) - legacy array-formula
+		// dynamic range(DAF) - newest dynamic array-formula
+		// Differences:
+		// The DAF formula is entered into one cell and is completed by simply pressing enter 'spill' occurs automatically
+		// In the case of CSE, you must select the range in advance and press the cse combination after entering the formula
+		// The DAF size automatically changes when the data in the original range changes. Dynamic range reference is written in D2# format
+		// DAF is edited in the first cell (parent) of the range; to edit cse we need to select the entire previously created range
+		// In CSE we cannot delete previously created rows, but DAF can be edited
+		// CSE can expand to all cells except the same CSE arrays, tables, pivot tables
+		// DAF can only expand to completely empty cells(empty values)
+
+		let isRangeCanFitIntoCells;
 		//TODO заглушка для парсинга множественного диапазона в _xlnm.Print_Area. Сюда попадаем только в одном случае - из функции findCell для отображения диапазона области печати
 		if(checkMultiSelect && elemArr.length > 1 && this.parent && this.parent instanceof window['AscCommonExcel'].DefName /*&& this.parent.name === "_xlnm.Print_Area"*/) {
 			this.value = elemArr;
+
+			if (AscCommonExcel.bIsSupportDynamicArrays) {
+				// check further dynamic range
+				isRangeCanFitIntoCells =  this.checkDynamicRangeByElement(this.value, opt_bbox);
+				if (!isRangeCanFitIntoCells) {
+					this.aca = true;
+					this.ca = true;
+					this.value = new cError(cErrorType.cannot_be_spilled);
+				} else {
+					this.ca = false;
+					this.aca = false;
+				}
+			}
+
 			this._endCalculate();
 		} else {
 			this.value = elemArr.pop();
-			this.value.numFormat = numFormat;
 
+			if (AscCommonExcel.bIsSupportDynamicArrays) {
+				// check further dynamic range
+				isRangeCanFitIntoCells = this.checkDynamicRangeByElement(this.value, opt_bbox);
+				if (!isRangeCanFitIntoCells) {
+					this.aca = true;
+					this.ca = true;
+					this.value = new cError(cErrorType.cannot_be_spilled);
+				} else {
+					this.ca = false;
+					this.aca = false;
+				}
+			}
+
+			this.value.numFormat = numFormat;
 			//***array-formula***
 			//для обработки формулы массива
 			//передаётся последним параметром cell и временно подменяется parent у parserFormula для того, чтобы поменялось значение в элементе массива
@@ -7659,6 +8380,22 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 		}
+
+		if (this.importFunctionsRangeLinks) {
+			for (let i in this.importFunctionsRangeLinks) {
+				let externalLink = this.wb.getExternalLinkByName(i);
+				if (externalLink) {
+					for (let j in this.importFunctionsRangeLinks[i]) {
+						let _rangeInfo = this.importFunctionsRangeLinks[i][j];
+						let _ws = externalLink.worksheets[_rangeInfo.sheet];
+						if (_ws) {
+							this._buildDependenciesRef(_ws.getId(), AscCommonExcel.g_oRangeCache.getRangesFromSqRef(_rangeInfo.range)[0], null, true);
+						}
+					}
+				}
+			}
+
+		}
 	};
 	parserFormula.prototype.removeDependencies = function() {
 		if (!this.isInDependencies) {
@@ -7828,6 +8565,11 @@ function parserFormula( formula, parent, _ws ) {
 	parserFormula.prototype.getArrayFormulaRef = function() {
 		return this.ref;
 	};
+	parserFormula.prototype.getDynamicRef = function() {
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			return this.dynamicRange;
+		}
+	};
 	parserFormula.prototype.setArrayFormulaRef = function(ref) {
 		this.ref = ref;
 	};
@@ -7873,7 +8615,7 @@ function parserFormula( formula, parent, _ws ) {
 		return false;
 	};
 	parserFormula.prototype.simplifyRefType = function (val, opt_ws, opt_row, opt_col) {
-		var ref = this.getArrayFormulaRef(), row, col;
+		let ref = this.getArrayFormulaRef(), dynamicRef = this.getDynamicRef(), row, col;
 
 		if (val == null) {
 			return;
@@ -7887,8 +8629,9 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		} else if (cElementType.array === val.type) {
 			if (ref && opt_ws) {
+				// TODO check behaviour when row === 1
 				row = 1 === val.array.length ? 0 : opt_row - ref.r1;
-				col = 1 === val.array[0].length ? 0 : opt_col - ref.c1;
+				col = (val.array[0] && 1 === val.array[0].length) ? 0 : opt_col - ref.c1;
 				if (val.array[row] && val.array[row][col]) {
 					val = val.getElementRowCol(row, col);
 				} else {
@@ -7906,20 +8649,25 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		} else if (cElementType.cellsRange === val.type || cElementType.cellsRange3D === val.type) {
 			if (opt_ws) {
-				var range;
+				let range;
 				if (ref) {
 					range = val.getRange();
 					if (range) {
-						var bbox = range.bbox;
-						var rowCount = bbox.r2 - bbox.r1 + 1;
-						var colCount = bbox.c2 - bbox.c1 + 1;
+						let bbox = range.bbox;
+						let rowCount = bbox.r2 - bbox.r1 + 1,
+							colCount = bbox.c2 - bbox.c1 + 1;
+						
 						row = 1 === rowCount ? 0 : opt_row - ref.r1;
 						col = 1 === colCount ? 0 : opt_col - ref.c1;
 						if (row > rowCount - 1 || col > colCount - 1) {
 							val = null;
 						} else {
 							val = val.getValueByRowCol(row, col);
+							if (!val) {
+								val = new cEmpty();
+							}
 						}
+
 						if (!val) {
 							val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
 						}
@@ -7969,6 +8717,125 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 		return false;
+	};
+
+	parserFormula.prototype.setDynamicRef = function (range) {
+		if (!range) {
+			return
+		}
+		this.ref = range;
+		this.dynamicRange = range;
+	};
+
+	parserFormula.prototype.checkDynamicRange = function () {
+		/* this function checks if the current value in formula can fit in the cells */
+		if (!this.dynamicRange) {
+			return true
+		}
+
+		if (this.value && (this.value.type !== cElementType.array && this.value.type !== cElementType.cellsRange)) {
+			return true
+		} else if (this.value && (this.value.type === cElementType.array || this.value.type === cElementType.cellsRange)) {
+			// go through the range and see if the array can fit into it
+			let dimensions = this.value.getDimensions(), 
+				mainCell = this.parent, isHaveNonEmptyCell;
+
+			if (this.value.isOneElement()) {
+				return true
+			}
+
+			if (mainCell) {
+				const t = this;
+				let rangeRow = mainCell.nRow,
+					rangeCol = mainCell.nCol;
+
+				for (let i = rangeRow; i < (rangeRow + dimensions.row); i++) {
+					for (let j = rangeCol; j < (rangeCol + dimensions.col); j++) {
+						if (i === rangeRow && j === rangeCol) {
+							continue
+						}
+						this.ws._getCellNoEmpty(i, j, function(cell) {
+							if (cell) {
+								let formula = cell.getFormulaParsed();
+								let dynamicRangeFromCell = formula && formula.getDynamicRef();
+								if (formula && dynamicRangeFromCell) {
+									// check if cell belong to current dynamicRange
+									// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)
+									if (!t.dynamicRange.isEqual(dynamicRangeFromCell)) {
+										// if the cell is part of another dynamic range, then the range that is in the area of ​​the previous range is displayed (except for the first cell, but we do not check it)
+										// that is, if one of the ranges is “lower” or “to the right” in the editor, then it will be displayed, and the other will receive a SPILL error
+										isHaveNonEmptyCell = true
+									}
+								} else if (cell.formulaParsed || !cell.isEmptyTextString()) {
+									isHaveNonEmptyCell = true
+								}
+							}
+						});
+						if (isHaveNonEmptyCell) {
+							return false
+						}
+					}
+				}
+				return true
+			}
+		}
+
+		return false
+	};
+
+	parserFormula.prototype.checkDynamicRangeByElement = function (element, parentCell) {
+		/* this function checks if element can fit in the cells */
+		if (!element || !parentCell) {
+			return true;
+		}
+
+		if (element.type !== cElementType.array && element.type !== cElementType.cellsRange && element.type !== cElementType.cellsRange3D) {
+			return true;
+		} else if (element.type === cElementType.array || element.type === cElementType.cellsRange || element.type === cElementType.cellsRange3D) {
+			// go through the range and see if the array can fit into it
+			let dimensions = element.getDimensions(), isHaveNonEmptyCell;
+
+			if (element.isOneElement()) {
+				return true
+			}
+
+			// todo if an element is defname, it has no parent element?
+			const t = this;
+			let rangeRow = parentCell.r1,
+				rangeCol = parentCell.c1;
+
+			let supposedDynamicRange = this.ws.getRange3(rangeRow, rangeCol, (rangeRow + dimensions.row) - 1, (rangeCol + dimensions.col) - 1);
+			for (let i = rangeRow; i < (rangeRow + dimensions.row); i++) {
+				for (let j = rangeCol; j < (rangeCol + dimensions.col); j++) {
+					if (i === rangeRow && j === rangeCol) {
+						continue
+					}
+					this.ws._getCellNoEmpty(i, j, function(cell) {
+						if (cell) {
+							let formula = cell.getFormulaParsed();
+							let dynamicRangeFromCell = formula && formula.getDynamicRef();
+							if (formula && dynamicRangeFromCell) {
+								// check if cell belong to current dynamicRange
+								// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)
+								if (!supposedDynamicRange.bbox.isEqual(dynamicRangeFromCell)) {
+									// if the cell is part of another dynamic range, then the range that is in the area of ​​the previous range is displayed (except for the first cell, but we do not check it)
+									// that is, if one of the ranges is “lower” or “to the right” in the editor, then it will be displayed, and the other will receive a SPILL error
+									isHaveNonEmptyCell = true
+								}
+							} else if (cell.formulaParsed || !cell.isEmptyTextString()) {
+								isHaveNonEmptyCell = true
+							}
+						}
+					});
+					if (isHaveNonEmptyCell) {
+						return false
+					}
+				}
+			}
+			return true
+		}
+
+		return false
 	};
 
 	function CalcRecursion() {
@@ -8065,7 +8932,7 @@ function parserFormula( formula, parent, _ws ) {
 		return res;
 	}
 
-	function matching(x, matchingInfo, doNotParseNum) {
+	function matching(x, matchingInfo, doNotParseNum, doNotParseFormat) {
 		var y = matchingInfo.val;
 		var operator = matchingInfo.op;
 		var res = false, rS;
@@ -8127,7 +8994,7 @@ function parserFormula( formula, parent, _ws ) {
 							res = true;
 							break;
 						}
-						var parseRes = AscCommon.g_oFormatParser.parse(x.value);
+						var parseRes = !doNotParseFormat && AscCommon.g_oFormatParser.parse(x.value);
 						if (parseRes && parseRes.value === y.value) {
 							res = true;
 							break;
@@ -8243,6 +9110,71 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 		return bRes;
+	}
+
+	function getArrayHelper(args, func, exceptions) {
+		// check for arrays and find max length
+		let isContainsArray = false,
+			maxRows = 1,
+			maxColumns = 1;
+
+		for (let i = 0; i < args.length; i++) {
+			if ((cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) && (!exceptions || (exceptions && !exceptions.get(i)))) {
+				let argDimensions = args[i].getDimensions();
+				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
+				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
+				isContainsArray = true;
+			}
+		}
+
+		if (!isContainsArray) {
+			return false;
+		}
+
+		let resultArr = new cArray();
+
+		for (let i = 0; i < maxRows; i++) {
+			resultArr.addRow();
+			for (let j = 0; j < maxColumns; j++) {
+				let values = [];
+
+				for (let k = 0; k < args.length; k++) {
+					let value = args[k];
+
+					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && (!exceptions || (exceptions && !exceptions.get(k)))) {
+						let valueDimensions = value.getDimensions();
+						if (value.isOneElement()) {
+							// single row with single element
+							value = value.getFirstElement();
+						} else if (valueDimensions.col !== 1 && valueDimensions.row === 1) {
+							// single row with many elements
+							value = _getValueInRange(value, 0, j);
+						} else if (valueDimensions.col === 1 && valueDimensions.row !== 1) {
+							// many rows with single element
+							value = _getValueInRange(value, i, 0);
+						} else {
+							value = _getValueInRange(value, i, j);
+						}
+					}
+
+					values.push(value);
+				}
+
+				resultArr.addElement(func(values, true));
+			}
+		}
+
+		return resultArr;
+	}
+
+	// if went beyond the cellsRange
+	const _getValueInRange = function (array, _row, _col) {
+		let sizes = array.getDimensions();
+		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
+			return new cError(cErrorType.not_available);
+		}
+		let res = array.getValueByRowCol ? array.getValueByRowCol(_row, _col) : array.getElementRowCol(_row, _col);
+		return res;
 	}
 
 	/*
@@ -8391,6 +9323,9 @@ function parserFormula( formula, parent, _ws ) {
 						case cElementType.cellsRange3D:
 							_3DRefTmp = parserHelp.is3DRef.call(parserHelp, formula2, refPos.start);
 							if (_3DRefTmp[0]) {
+								if ((_3DRefTmp[3] || refPos.oper.externalLink) && _3DRefTmp[3] !== refPos.oper.externalLink) {
+									return false;
+								}
 								if (cElementType.cell3D === refPos.oper.type) {
 									if (_3DRefTmp[1] !== refPos.oper.getWS().getName()) {
 										return false;
@@ -8430,9 +9365,12 @@ function parserFormula( formula, parent, _ws ) {
 	}
 
 	function convertAreaToArray(area){
-		var retArr = new cArray(), _arg0;
-		var dimension = area.getDimensions();
-		var ws;
+		let retArr = new cArray(), _arg0;
+		let dimension = area.getDimensions();
+
+		retArr.realSize = {row: dimension.row, col: dimension.col}
+		
+		let ws;
 		if(cElementType.cellsRange3D === area.type) {
 			ws = area.wsFrom;
 			area = area.getMatrixNoEmpty()[0];
@@ -8442,14 +9380,29 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		if (dimension) {
-			var oBBox = dimension.bbox, minC = Math.min( ws.getColDataLength(), oBBox.c2 ), minR = Math.min( ws.cellsByColRowsCount - 1, oBBox.r2 );
-			var rowCount = (minR - oBBox.r1) >= 0 ? minR - oBBox.r1 + 1 : 0;
-			var colCount = (minC - oBBox.c1) >= 0 ? minC - oBBox.c1 + 1 : 0;
+			let oBBox = dimension.bbox, 
+				minC = Math.min( ws.getColDataLength(), oBBox.c2 ), 
+				minR = Math.min( ws.cellsByColRowsCount - 1, oBBox.r2 ),
+				rowCount = (minR - oBBox.r1) >= 0 ? minR - oBBox.r1 + 1 : 0,
+				colCount = (minC - oBBox.c1) >= 0 ? minC - oBBox.c1 + 1 : 0;
 
-			for ( var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
-				for ( var iCol = 0; iCol < colCount; iCol++ ) {
-					_arg0 = area[iRow] && area[iRow][iCol] ? area[iRow][iCol] : new cEmpty();
-					retArr.addElement(_arg0);
+			if (rowCount < dimension.row || colCount < dimension.col) {
+				retArr.missedValue = new cEmpty();
+			} else {
+				retArr.realSize = null;
+			}
+
+			if (area && area.length < 1) {
+				// let emptyElem = new cEmpty();
+				// empty array, fill with empty elements or return empty array
+				retArr.setRealArraySize(dimension.row, dimension.col);
+				retArr.missedValue = new cEmpty();
+			} else {
+				for ( let iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
+					for ( let iCol = 0; iCol < colCount; iCol++ ) {
+						_arg0 = area[iRow] && area[iRow][iCol] ? area[iRow][iCol] : new cEmpty();
+						retArr.addElement(_arg0);
+					}
 				}
 			}
 		}
@@ -8500,59 +9453,137 @@ function parserFormula( formula, parent, _ws ) {
 	}
 
 	function specialFuncArrayToArray(arg0, arg1, what) {
-		var retArr = null, _arg0, _arg1;
-		var iRow, iCol;
-		if (arg0.getRowCount() === arg1.getRowCount() && 1 === arg0.getCountElementInRow()) {
+		let retArr = null, _arg0, _arg1;
+		let iRow, iCol;
+		
+		let arg0RowCount = arg0.getRowCount(true),
+			arg0ColCount = arg0.getCountElementInRow(true),
+			arg1RowCount = arg1.getRowCount(true),
+			arg1ColCount = arg1.getCountElementInRow(true);
+		
+		if (arg0RowCount === arg1RowCount && 1 === arg0ColCount) {
 			retArr = new cArray();
-			for (iRow = 0; iRow < arg1.getRowCount(); iRow++, iRow < arg1.getRowCount() ? retArr.addRow() : true) {
-				for (iCol = 0; iCol < arg1.getCountElementInRow(); iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, 0);
-					_arg1 = arg1.getElementRowCol(iRow, iCol);
+			for (iRow = 0; iRow < arg1RowCount; iRow++, iRow < arg1RowCount ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arg1ColCount; iCol++) {
+					_arg0 = arg0.getElementRowCol(iRow, 0, true);
+					_arg1 = arg1.getElementRowCol(iRow, iCol, true);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
-		} else if (arg0.getRowCount() === arg1.getRowCount() && 1 === arg1.getCountElementInRow()) {
+		} else if (arg0RowCount === arg1RowCount && 1 === arg1ColCount) {
 			retArr = new cArray();
-			for (iRow = 0; iRow < arg0.getRowCount(); iRow++, iRow < arg0.getRowCount() ? retArr.addRow() : true) {
-				for (iCol = 0; iCol < arg0.getCountElementInRow(); iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, iCol);
-					_arg1 = arg1.getElementRowCol(iRow, 0);
+			for (iRow = 0; iRow < arg0RowCount; iRow++, iRow < arg0RowCount ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arg0ColCount; iCol++) {
+					_arg0 = arg0.getElementRowCol(iRow, iCol, true);
+					_arg1 = arg1.getElementRowCol(iRow, 0, true);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
-		} else if (arg0.getCountElementInRow() === arg1.getCountElementInRow() && 1 === arg0.getRowCount()) {
+		} else if (arg0ColCount === arg1ColCount && 1 === arg0RowCount) {
 			retArr = new cArray();
-			for (iRow = 0; iRow < arg1.getRowCount(); iRow++, iRow < arg1.getRowCount() ? retArr.addRow() : true) {
-				for (iCol = 0; iCol < arg1.getCountElementInRow(); iCol++) {
-					_arg0 = arg0.getElementRowCol(0, iCol);
-					_arg1 = arg1.getElementRowCol(iRow, iCol);
+			for (iRow = 0; iRow < arg1RowCount; iRow++, iRow < arg1RowCount ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arg1ColCount; iCol++) {
+					_arg0 = arg0.getElementRowCol(0, iCol, true);
+					_arg1 = arg1.getElementRowCol(iRow, iCol, true);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
-		} else if (arg0.getCountElementInRow() === arg1.getCountElementInRow() && 1 === arg1.getRowCount()) {
+		} else if (arg0ColCount === arg1ColCount && 1 === arg1RowCount) {
 			retArr = new cArray();
-			for (iRow = 0; iRow < arg0.getRowCount(); iRow++, iRow < arg0.getRowCount() ? retArr.addRow() : true) {
-				for (iCol = 0; iCol < arg0.getCountElementInRow(); iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, iCol);
-					_arg1 = arg1.getElementRowCol(0, iCol);
+			for (iRow = 0; iRow < arg0RowCount; iRow++, iRow < arg0RowCount ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arg0ColCount; iCol++) {
+					_arg0 = arg0.getElementRowCol(iRow, iCol, true);
+					_arg1 = arg1.getElementRowCol(0, iCol, true);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
-		} else if (1 === arg0.getCountElementInRow() && 1 === arg1.getRowCount()) {
+		} else if (1 === arg0ColCount && 1 === arg1RowCount) {
 			retArr = new cArray();
-			for (iRow = 0; iRow < arg0.getRowCount(); iRow++, iRow < arg0.getRowCount() ? retArr.addRow() : true) {
-				for (iCol = 0; iCol < arg1.getCountElementInRow(); iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, 0);
-					_arg1 = arg1.getElementRowCol(0, iCol);
+			for (iRow = 0; iRow < arg0RowCount; iRow++, iRow < arg0RowCount ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arg1ColCount; iCol++) {
+					_arg0 = arg0.getElementRowCol(iRow, 0, true);
+					_arg1 = arg1.getElementRowCol(0, iCol, true);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
-		} else if (1 === arg1.getCountElementInRow() && 1 === arg0.getRowCount()) {
+		} else if (1 === arg1ColCount && 1 === arg0RowCount) {
 			retArr = new cArray();
-			for (iRow = 0; iRow < arg1.getRowCount(); iRow++, iRow < arg1.getRowCount() ? retArr.addRow() : true) {
-				for (iCol = 0; iCol < arg0.getCountElementInRow(); iCol++) {
-					_arg0 = arg0.getElementRowCol(0, iCol);
-					_arg1 = arg1.getElementRowCol(iRow, 0);
+			for (iRow = 0; iRow < arg1RowCount; iRow++, iRow < arg1RowCount ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arg0ColCount; iCol++) {
+					_arg0 = arg0.getElementRowCol(0, iCol, true);
+					_arg1 = arg1.getElementRowCol(iRow, 0, true);
+					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
+				}
+			}
+		} else if (arg0.getCountElement() !== arg1.getCountElement() || arg0RowCount !== arg1RowCount || arg0ColCount !== arg1ColCount) {
+			let errNA = new cError(cErrorType.not_available);
+
+			// if there is only one element in the range, get this element and call the function again
+			if (arg0.isOneElement()) {
+				let arg0FirstElem = arg0.getFirstElement();
+				return _func[arg0FirstElem.type][arg1.type](arg0FirstElem, arg1, what);
+			} else if (arg1.isOneElement()) {
+				let arg1FirstElem = arg1.getFirstElement();
+				return _func[arg0.type][arg1FirstElem.type](arg0, arg1FirstElem, what);
+			}
+
+			// Logic:
+			// find the effective range (the one that is involved in the calculations)
+			// calculate it 
+			// then fill the remaining rows and columns with N/A errors
+
+			let arrayMaxRows = Math.max(arg0RowCount, arg1RowCount), arrayMaxCols = Math.max(arg0ColCount, arg1ColCount);
+			retArr = new cArray();
+			retArr.setRealArraySize(arrayMaxRows, arrayMaxCols);
+				
+			// arg0RowCount, arg0ColCount, arg1RowCount, arg1ColCount
+			let usefulCol = Math.min(arg0ColCount, arg1ColCount), 
+				usefulRow = Math.min(arg0RowCount, arg1RowCount),
+				arg0Dimensions = arg0.getDimensions(),
+				arg1Dimensions = arg1.getDimensions();
+
+			// if we have one of the element with single row|col, set the value to be obtained from this particular row or column
+			let fromArg0Row, fromArg1Row, fromArg0Col, fromArg1Col;
+			if (arg0Dimensions.row === 1 && arrayMaxRows > 1) {
+				// arg1.row more than arg0.row
+				usefulRow = arrayMaxRows;
+				fromArg0Row = 0;
+			}
+			if (arg1Dimensions.row === 1 && arrayMaxRows > 1) {
+				// arg0.row more than arg1.row
+				usefulRow = arrayMaxRows;
+				fromArg1Row = 0;
+			}
+			if (arg0Dimensions.col === 1 && arrayMaxCols > 1) {
+				// arg1.col more than arg0.col
+				usefulCol = arrayMaxCols;
+				fromArg0Col = 0;
+			}
+			if (arg1Dimensions.col === 1 && arrayMaxCols > 1) {
+				// arg0.col more than arg1.col
+				usefulCol = arrayMaxCols;
+				fromArg1Col = 0;
+			}
+
+			// fill the array
+			for (let iRow = 0; iRow < arrayMaxRows; iRow++, iRow < usefulRow ? retArr.addRow() : true) {
+				if (iRow >= usefulRow) {
+					// fill row with N/A and continue
+					let errRow = new Array(arrayMaxCols).fill(errNA);
+					retArr.pushRow([errRow], 0);
+					continue
+				}
+
+				for (let iCol = 0; iCol < arrayMaxCols; iCol++) {
+					if (iCol >= usefulCol) {
+						// add N/A error and continue
+						retArr.addElement(errNA);
+						continue
+					}
+
+					_arg0 = arg0.getElementRowCol(fromArg0Row !== undefined ? fromArg0Row : iRow, fromArg0Col !== undefined ? fromArg0Col : iCol, true);
+					_arg1 = arg1.getElementRowCol(fromArg1Row !== undefined ? fromArg1Row : iRow, fromArg1Col !== undefined ? fromArg1Col : iCol, true);
+
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -8564,6 +9595,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].cElementType = cElementType;
 	window['AscCommonExcel'].cErrorType = cErrorType;
+	window['AscCommonExcel'].cElementTypeWeight = cElementTypeWeight;
 	window['AscCommonExcel'].cExcelSignificantDigits = cExcelSignificantDigits;
 	window['AscCommonExcel'].cExcelMaxExponent = cExcelMaxExponent;
 	window['AscCommonExcel'].cExcelMinExponent = cExcelMinExponent;
@@ -8575,8 +9607,10 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].g_cCalcRecursion = g_cCalcRecursion;
 	window['AscCommonExcel'].g_ProcessShared = false;
 	window['AscCommonExcel'].cReturnFormulaType = cReturnFormulaType;
+	window['AscCommonExcel'].arrayIndexesType = arrayIndexesType;
 
 	window['AscCommonExcel'].bIsSupportArrayFormula = bIsSupportArrayFormula;
+	window['AscCommonExcel'].bIsSupportDynamicArrays = bIsSupportDynamicArrays;
 
 	window['AscCommonExcel'].cNumber = cNumber;
 	window['AscCommonExcel'].cString = cString;
@@ -8594,6 +9628,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].cBaseFunction = cBaseFunction;
 	window['AscCommonExcel'].cUnknownFunction = cUnknownFunction;
 	window['AscCommonExcel'].cStrucTable = cStrucTable;
+	window['AscCommonExcel'].cBaseOperator = cBaseOperator;
 
 	window['AscCommonExcel'].checkTypeCell = checkTypeCell;
 	window['AscCommonExcel'].cFormulaFunctionGroup = cFormulaFunctionGroup;
@@ -8604,6 +9639,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].getFormulasInfo = getFormulasInfo;
 	window['AscCommonExcel'].getRangeByRef = getRangeByRef;
+	window['AscCommonExcel'].addNewFunction = addNewFunction;
 
 	window['AscCommonExcel']._func = _func;
 
@@ -8623,5 +9659,8 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertRefToRowCol = convertRefToRowCol;
 	window['AscCommonExcel'].convertAreaToArray = convertAreaToArray;
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
+	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
+
+	window['AscCommonExcel'].importRangeLinksState = importRangeLinksState;
 
 })(window);

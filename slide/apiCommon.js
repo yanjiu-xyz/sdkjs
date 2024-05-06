@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -97,6 +97,10 @@ CAscSlideTransition.prototype.createDuplicate = function(v)
 };
 CAscSlideTransition.prototype.makeDuplicate = function(_slideT)
 {
+    this.fillObject(_slideT);
+};
+CAscSlideTransition.prototype.fillObject = function(_slideT)
+{
     if (!_slideT)
         return;
 
@@ -108,6 +112,13 @@ CAscSlideTransition.prototype.makeDuplicate = function(_slideT)
     _slideT.SlideAdvanceAfter          = this.SlideAdvanceAfter;
     _slideT.SlideAdvanceDuration       = this.SlideAdvanceDuration;
     _slideT.ShowLoop                   = this.ShowLoop;
+};
+
+CAscSlideTransition.prototype.createDuplicate = function()
+{
+    let oCopy = new CAscSlideTransition();
+    this.fillObject(oCopy);
+    return oCopy;
 };
 CAscSlideTransition.prototype.setUndefinedOptions = function()
 {
@@ -382,6 +393,27 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         {
             this.TransitionType = c_oAscSlideTransitionTypes.Zoom;
             this.TransitionOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
+        }
+        else if ("p159:morph" === _type)
+        {
+
+            this.TransitionType = c_oAscSlideTransitionTypes.Morph;
+            this.TransitionOption = c_oAscSlideTransitionParams.Morph_Objects;
+            if(_paramNames[0] === "option")
+            {
+                if ("byObject" === _paramValues[0])
+                {
+                    this.TransitionOption = c_oAscSlideTransitionParams.Morph_Objects;
+                }
+                else if("byWord" === _paramValues[0])
+                {
+                    this.TransitionOption = c_oAscSlideTransitionParams.Morph_Words;
+                }
+                else if("byChar" === _paramValues[0])
+                {
+                    this.TransitionOption = c_oAscSlideTransitionParams.Morph_Letters;
+                }
+            }
         }
         else if ("p:none" !== _type)
         {
@@ -676,6 +708,35 @@ CAscSlideTransition.prototype.fillXmlParams = function (aAttrNames, aAttrValues)
             }
             break;
         }
+        case c_oAscSlideTransitionTypes.Morph:
+        {
+            sNodeName = "p159:morph";
+            aAttrNames.push("option");
+            switch (this.TransitionOption)
+            {
+                case c_oAscSlideTransitionParams.Morph_Objects:
+                {
+                    aAttrValues.push("byObject");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Morph_Words:
+                {
+                    aAttrValues.push("byWord");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Morph_Letters:
+                {
+                    aAttrValues.push("byChar");
+                    break;
+                }
+                default:
+                {
+                    aAttrValues.push("byObject");
+                    break;
+                }
+            }
+            break;
+        }
         default:
             break;
     }
@@ -782,7 +843,10 @@ CAscDateTime.prototype['get_DateTimeExamples'] = CAscDateTime.prototype.get_Date
         for(var key in oMap) {
             if(oMap.hasOwnProperty(key)) {
                 oParaField.FieldType = key;
-                oMap[key] = oParaField.private_GetString();
+                 let sVal = oParaField.private_GetString();
+                 if(sVal) {
+                     oMap[key] = sVal;
+                 }
             }
         }
     }, this, []);
@@ -829,38 +893,54 @@ CAscHFProps.prototype['put_ShowDateTime'] = CAscHFProps.prototype.put_ShowDateTi
 
 CAscHFProps.prototype['put_DivId'] = CAscHFProps.prototype.put_DivId = function(v){this.DivId = v;};
 CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = function(){
+    if(!this.api) {
+        return;
+    }
     var oCanvas = AscCommon.checkCanvasInDiv(this.DivId);
     if(!oCanvas) {
         return;
     }
+    const oPresentation = this.api.private_GetLogicDocument();
     var oContext = oCanvas.getContext('2d');
     oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
     var oSp, nPhType, aSpTree, oSlideObject = null, l, t, r, b;
     var i;
+    let dWidth, dHeight;
     if(this.slide) {
         oSlideObject = this.slide.Layout;
+        dWidth = oPresentation.GetWidthMM();
+        dHeight = oPresentation.GetHeightMM();
     }
     else if(this.notes) {
         oSlideObject = this.notes.Master;
+        dWidth = oPresentation.GetNotesWidthMM();
+        dHeight = oPresentation.GetNotesHeightMM();
     }
     if(oSlideObject) {
         aSpTree = oSlideObject.cSld.spTree;
 
         oContext.fillStyle = "#FFFFFF";
         oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        oContext.lineWidth = Math.round(rPR);
+        const rPR = AscCommon.AscBrowser.retinaPixelRatio;
+        const nLineWidth = Math.round(rPR);
+        oContext.lineWidth = nLineWidth;
         oContext.fillStyle = "#000000";
         if(Array.isArray(aSpTree)) {
             for(i = 0; i < aSpTree.length; ++i) {
                 oSp = aSpTree[i];
                 if(oSp.isPlaceholder()) {
                     oSp.recalculate();
-                    l = ((oSp.x / oSlideObject.Width * oCanvas.width) >> 0) + Math.round(rPR);
-                    t = ((oSp.y / oSlideObject.Height * oCanvas.height) >> 0) + Math.round(rPR);
-                    r = (((oSp.x + oSp.extX)/ oSlideObject.Width * oCanvas.width) >> 0);
-                    b = (((oSp.y + oSp.extY)/ oSlideObject.Height * oCanvas.height) >> 0);
-                    nPhType = oSp.getPhType();
+                    l = ((oSp.x / dWidth * oCanvas.width) >> 0) + nLineWidth;
+                    t = ((oSp.y / dHeight * oCanvas.height) >> 0) + nLineWidth;
+                    r = (((oSp.x + oSp.extX)/ dWidth * oCanvas.width) >> 0);
+                    b = (((oSp.y + oSp.extY)/ dHeight * oCanvas.height) >> 0);
+                    if(r <= oCanvas.width && r + nLineWidth >= oCanvas.width) {
+                        r = oCanvas.width - nLineWidth - 1;
+                    }
+                    if(b <= oCanvas.height && b + nLineWidth >= oCanvas.height) {
+                        b = oCanvas.height - nLineWidth - 1;
+                    }
+                    nPhType = oSp.getPlaceholderType();
                     oContext.beginPath();
                     if(nPhType === AscFormat.phType_dt ||
                     nPhType === AscFormat.phType_ftr ||

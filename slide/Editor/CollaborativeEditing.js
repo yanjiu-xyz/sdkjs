@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -122,7 +122,7 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 		for ( var Index = 0; Index < UnlockCount2; Index++ )
 		{
 			var Class = this.m_aNeedUnlock2[Index];
-			Class.Lock.Set_Type( AscCommon.locktype_None, false);
+			Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeNone, false);
 			if(Class.getObjectType && Class.getObjectType() === AscDFH.historyitem_type_Slide)
 			{
 				editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
@@ -274,12 +274,12 @@ CCollaborativeEditing.prototype.Release_Locks = function()
     for ( var Index = 0; Index < UnlockCount; Index++ )
     {
         var CurLockType = this.m_aNeedUnlock[Index].Lock.Get_Type();
-        if  ( AscCommon.locktype_Other3 != CurLockType && AscCommon.locktype_Other != CurLockType )
+        if  ( AscCommon.c_oAscLockTypes.kLockTypeOther3 != CurLockType && AscCommon.c_oAscLockTypes.kLockTypeOther != CurLockType )
         {
             //if(this.m_aNeedUnlock[Index] instanceof AscCommonSlide.Slide)                                                      //TODO: проверять LockObject
             //    editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(this.m_aNeedUnlock[Index].num);
             var Class =  this.m_aNeedUnlock[Index];
-            this.m_aNeedUnlock[Index].Lock.Set_Type( AscCommon.locktype_None, false);
+            this.m_aNeedUnlock[Index].Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeNone, false);
             if ( Class instanceof AscCommonSlide.PropLocker )
             {
                 var object = AscCommon.g_oTableId.Get_ById(Class.objectId);
@@ -301,6 +301,10 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     {
                         editor.sendEvent("asc_onUnLockViewProps");
                     }
+                    else if (Class === editor.WordControl.m_oLogicDocument.hdrFtrLock)
+                    {
+	                    editor.sendEvent("asc_onUnLockSlideHdrFtrApplyToAll");
+                    }
                 }
                 if(object.getObjectType && object.getObjectType() === AscDFH.historyitem_type_Slide && object.deleteLock === Class)
                 {
@@ -320,9 +324,9 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                 editor.sendEvent("asc_onLockCore", false);
             }
         }
-        else if ( AscCommon.locktype_Other3 === CurLockType )
+        else if ( AscCommon.c_oAscLockTypes.kLockTypeOther3 === CurLockType )
         {
-            this.m_aNeedUnlock[Index].Lock.Set_Type( AscCommon.locktype_Other, false);
+            this.m_aNeedUnlock[Index].Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeOther, false);
             if(this.m_aNeedUnlock[Index] instanceof AscCommonSlide.Slide)
                 editor.WordControl.m_oLogicDocument.DrawingDocument.LockSlide(this.m_aNeedUnlock[Index].num);
         }
@@ -426,7 +430,7 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
                         var Class = AscCommon.g_oTableId.Get_ById( item );
                         if ( null != Class )
                         {
-                            Class.Lock.Set_Type( AscCommon.locktype_Mine, false );
+                            Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeMine, false );
                             if(Class instanceof AscCommonSlide.Slide)
                                 editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
                             this.Add_Unlock2( Class );
@@ -483,7 +487,7 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
                     var Class = AscCommon.g_oTableId.Get_ById( item );
                     if ( null != Class )
                     {
-                        Class.Lock.Set_Type( AscCommon.locktype_Mine );
+                        Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeMine );
                         if(Class instanceof AscCommonSlide.Slide)
                             editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
                         AscCommon.CollaborativeEditing.Add_Unlock2( Class );
@@ -495,7 +499,7 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if ( true === editor.isChartEditor )
+            if ( true === editor.isOpenedChartFrame )
                 editor.sync_closeChartEditor();
 
             if ( true === editor.isOleEditor )

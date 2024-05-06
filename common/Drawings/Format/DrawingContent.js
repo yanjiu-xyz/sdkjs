@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -468,10 +468,7 @@
             var oSection = this.Pages[0].Sections[0];
             if(oSection){
 
-                if (pGraphics.Start_Command)
-                {
-                    pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
-                }
+                pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
 
                 for (var ColumnIndex = 0, ColumnsCount = oSection.Columns.length; ColumnIndex < ColumnsCount; ++ColumnIndex)
                 {
@@ -503,10 +500,7 @@
                      }*/
                 }
 
-                if (pGraphics.End_Command)
-                {
-                    pGraphics.End_Command();
-                }
+                pGraphics.End_Command();
             }
 
             else{
@@ -788,17 +782,19 @@
             }
         }
     };
-    CDrawingDocContent.prototype.Is_Empty = function()
+    CDrawingDocContent.prototype.Is_Empty = function(bDefault)
     {
-        if (this.isDocumentContentInSmartArtShape()) {
-            var oShape = this.Parent.parent;
-            var contentPoints = oShape.getSmartArtPointContent();
-            if (contentPoints && contentPoints.length !== 0) {
-                var isPhldr = contentPoints.every(function (point) {
-                    return point && point.prSet && point.prSet.phldr;
-                });
-                if (isPhldr) {
-                    return true;
+        if (!bDefault) {
+            if (this.isDocumentContentInSmartArtShape()) {
+                var oShape = this.Parent.parent;
+                var contentPoints = oShape.getSmartArtPointContent();
+                if (contentPoints && contentPoints.length !== 0) {
+                    var isPhldr = contentPoints.every(function (point) {
+                        return point && point.prSet && point.prSet.phldr;
+                    });
+                    if (isPhldr) {
+                        return true;
+                    }
                 }
             }
         }
@@ -807,7 +803,29 @@
 
     CDrawingDocContent.prototype.isDocumentContentInSmartArtShape = function () {
         return this.Parent && this.Parent.parent && this.Parent.parent.isObjectInSmartArt && this.Parent.parent.isObjectInSmartArt();
-    }
+    };
+
+	CDrawingDocContent.prototype.RecalcAllFields = function() {
+		const aFields = this.AllFields;
+		for(let nField = 0; nField < aFields.length; ++nField)
+		{
+			let oField = aFields[nField];
+			oField.RecalcMeasure();
+			oField.Refresh_RecalcData2();
+		}
+	};
+
+    CDrawingDocContent.prototype.getDrawingDocument = function() {
+        if(this.Parent && this.Parent.getDrawingDocument) {
+            return this.Parent.getDrawingDocument();
+        }
+        return null;
+    };
+    CDrawingDocContent.prototype.GetLogicDocument = function() {
+        if(Asc.editor.private_GetLogicDocument)
+            return Asc.editor.private_GetLogicDocument();
+        return null;
+    };
     // TODO: сделать по-нормальному!!!
     function CDocument_prototype_private_GetElementPageIndexByXY(ElementPos, X, Y, PageIndex)
     {

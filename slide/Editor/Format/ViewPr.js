@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -236,10 +236,18 @@
     CViewPr.prototype.toXml = function (writer, name) {
     };
     CViewPr.prototype.DEFAULT_GRID_SPACING = 360000;
+    CViewPr.prototype.MAX_GRID_SPACING = 2*914400;//2 inches
     CViewPr.prototype.getGridSpacing = function () {
         let oSpacing = this.gridSpacing;
         if(oSpacing) {
-            return oSpacing.cx || this.DEFAULT_GRID_SPACING;
+            if(AscFormat.isRealNumber(oSpacing.cx) && oSpacing.cx > 0) {
+                let nGridSpacing = oSpacing.cx;
+                while(nGridSpacing > this.MAX_GRID_SPACING) {
+                    nGridSpacing /= 1000;
+                }
+                return nGridSpacing
+            }
+            return this.DEFAULT_GRID_SPACING;
         }
         return  this.DEFAULT_GRID_SPACING;
     };
@@ -258,10 +266,6 @@
         }
     };
     CViewPr.prototype.drawGuides = function(oGraphics) {
-	    if(oGraphics.IsThumbnail || oGraphics.animationDrawer ||
-		    oGraphics.IsDemonstrationMode || AscCommon.IsShapeToImageConverter) {
-		    return;
-	    }
         if(this.slideViewPr) {
             this.slideViewPr.drawGuides(oGraphics);
         }
@@ -313,6 +317,11 @@
             return this.slideViewPr.hitInGuide(x, y);
         }
         return null;
+    };
+    CViewPr.prototype.scaleGuides = function(dCW, dCH) {
+        if(this.slideViewPr) {
+            this.slideViewPr.scaleGuides(dCW, dCH);
+        }
     };
     CViewPr.prototype.Refresh_RecalcData = function(Data) {
         this.Refresh_RecalcData2(Data);
@@ -410,6 +419,11 @@
             return this.cSldViewPr.hitInGuide(x, y);
         }
         return null;
+    };
+    CCommonViewPr.prototype.scaleGuides = function(dCW, dCH) {
+        if(this.cSldViewPr) {
+            this.cSldViewPr.scaleGuides(dCW, dCH);
+        }
     };
     CCommonViewPr.prototype.Refresh_RecalcData = function(Data) {
         this.Refresh_RecalcData2(Data);
@@ -546,9 +560,13 @@
     };
     CCSldViewPr.prototype.drawGuides = function (oGraphics) {
         let aGds = this.guideLst;
+	    oGraphics.SaveGrState();
+	    oGraphics.SetIntegerGrid(true);
+	    oGraphics.transform3(new AscCommon.CMatrix());
         for(let nGd = 0; nGd < aGds.length; ++nGd) {
             aGds[nGd].draw(oGraphics);
         }
+	    oGraphics.RestoreGrState();
     };
     CCSldViewPr.prototype.insertGuide = function(bHorizontal) {
         let oLastGuide = null;
@@ -658,6 +676,14 @@
         }
         return null;
     };
+
+    CCSldViewPr.prototype.scaleGuides = function(dCW, dCH) {
+        let nLength = this.guideLst.length;
+        for(let nGd = nLength - 1; nGd > -1; nGd --) {
+            let oGd = this.guideLst[nGd];
+            oGd.scale(dCW, dCH);
+        }
+    };
     CCSldViewPr.prototype.Refresh_RecalcData = function(Data) {
         this.Refresh_RecalcData2(Data);
     };
@@ -742,6 +768,14 @@
         return false;
     };
 
+    CGuide.prototype.scale = function(dCW, dCH) {
+        if(this.isHorizontal()) {
+            this.setPos(this.pos * dCH + 0.5 >> 0);
+        }
+        else {
+            this.setPos(this.pos * dCW + 0.5 >> 0);
+        }
+    };
     CGuide.prototype.Refresh_RecalcData = function (Data) {
         if(this.parent) {
             this.parent.Refresh_RecalcData2(Data);

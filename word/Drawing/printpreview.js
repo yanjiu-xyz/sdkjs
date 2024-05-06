@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -94,11 +94,9 @@
 		g.m_oFontManager = AscCommon.g_fontManager;
 		g.transform(1, 0, 0, 1, 0, 0);
 
-		if (AscCommon.AscBrowser.isCustomScalingAbove2())
-			g.IsRetina = true;
-
 		g.IsNoDrawingEmptyPlaceholderText = true;
 		g.IsNoDrawingEmptyPlaceholder = true;
+		g.isPrintMode = true;
 
 		return g;
 	};
@@ -124,11 +122,13 @@
 
 		let ctx = this.canvas.getContext("2d");
 
+		let strokeRect = null;
+
 		switch (this.api.editorId)
 		{
 			case AscCommon.c_oEditorId.Word:
 			{
-				let isPdf = this.api.isDocumentRenderer();
+				let isPdf = this.api.isPdfEditor();
 				if (!isPdf)
 				{
 					if (this.api.WordControl.m_oDrawingDocument.IsFreezePage(this.page))
@@ -141,12 +141,18 @@
 					let g = this.checkGraphics(width, height, w_mm, h_mm);
 
 					let oldViewMode = this.api.isViewMode;
-					let oldShowMarks = this.api.isViewMode;
+					let oldShowMarks = this.api.ShowParaMarks;
 
 					this.api.isViewMode = true;
 					this.api.ShowParaMarks = false;
 
+					this.api.WordControl.m_oLogicDocument.SetupBeforeNativePrint({
+						"drawPlaceHolders" : false,
+						"drawFormHighlight" : false,
+						"isPrint" : true
+					}, g);
 					this.api.WordControl.m_oLogicDocument.DrawPage(this.page, g);
+					this.api.WordControl.m_oLogicDocument.RestoreAfterNativePrint();
 
 					this.api.isViewMode = oldViewMode;
 					this.api.ShowParaMarks = oldShowMarks;
@@ -219,6 +225,13 @@
 					let x = (width_canvas - w) >> 1;
 					let y = (height_canvas - h) >> 1;
 
+					strokeRect = {
+						x : x,
+						y : y,
+						w : w,
+						h : h
+					};
+
 					ctx.fillStyle = "#FFFFFF";
 					ctx.fillRect(x, y, w, h);
 					ctx.beginPath();
@@ -243,11 +256,21 @@
 
 			if (undefined === paperSize)
 			{
+				strokeRect = {
+					x : x,
+					y : y,
+					w : this.pageImage.width,
+					h : this.pageImage.height
+				};
+			}
+
+			if (null != strokeRect)
+			{
 				ctx.strokeStyle = AscCommon.GlobalSkin.PageOutline;
 				let lineW = AscCommon.AscBrowser.retinaPixelRatio >> 0;
 
 				ctx.lineWidth = lineW;
-				ctx.strokeRect(x + lineW / 2, y + lineW / 2, this.pageImage.width - lineW, this.pageImage.height - lineW);
+				ctx.strokeRect(strokeRect.x + lineW / 2, strokeRect.y + lineW / 2, strokeRect.w - lineW, strokeRect.h - lineW);
 				ctx.beginPath();
 			}
 		}

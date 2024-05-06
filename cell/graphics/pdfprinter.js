@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -42,12 +42,14 @@ function CPdfPrinter(fontManager, font)
     this._ppiX = 96;
     this._ppiY = 96;
     this._zoom = 1;
+    var CoreDocInfo = null;
 
     if (window.Asc && window.Asc.editor)
     {
         this._zoom = window.Asc.editor.asc_getZoom();
         this._ppiX = 96;
         this._ppiY = 96;
+        CoreDocInfo = window.Asc.editor.asc_getCoreProps();
     }
 
     vector_koef = 25.4 / (this._ppiX * this._zoom);
@@ -58,6 +60,7 @@ function CPdfPrinter(fontManager, font)
 	   this.DocumentRenderer.InitPicker(fontManager);
     }
     this.DocumentRenderer.VectorMemoryForPrint = new AscCommon.CMemory();
+    this.DocumentRenderer.DocInfo(CoreDocInfo);
 
     this.font = font;
     this.Transform = new AscCommon.CMatrix();
@@ -294,6 +297,10 @@ CPdfPrinter.prototype =
         this.SetFont(font);
         return this;
     },
+	setTextRotated : function(isRotated)
+	{
+		// For compatibility with Asc.DrawingContext in spreadsheets
+	},
 
     measureChar : function(text, units)
     {
@@ -336,6 +343,10 @@ CPdfPrinter.prototype =
         }
         return this;
     },
+	tg : function(gid, x, y, codePoints)
+	{
+		this.DocumentRenderer.tg(gid, x * vector_koef, y * vector_koef, codePoints);
+	},
 
     beginPath : function()
     {
@@ -591,10 +602,6 @@ CPdfPrinter.prototype =
     FillText2 : function(x,y,text)
     {
         return this.DocumentRenderer.FillText2(x,y,text);
-    },
-    charspace : function(space)
-    {
-        return this.DocumentRenderer.charspace(space);
     },
     SetIntegerGrid : function(param)
     {

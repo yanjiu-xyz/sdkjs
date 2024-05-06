@@ -220,7 +220,7 @@ function EasySAXParser(config) {
         };
 
         if (!ns || typeof root !== 'string') {
-            throw error('required args ns(string, object)');
+            throw Error('required args ns(string, object)');
         };
 
         isNamespace = !!(useNS = ns || null);
@@ -1563,6 +1563,12 @@ StaxParser.prototype.GetEventType = function() {
 StaxParser.prototype.GetContext = function() {
     return this.context;
 };
+StaxParser.prototype.GetOformContext = function() {
+	if (!this.context)
+		return null;
+	
+	return this.context.getOformContext();
+};
 StaxParser.prototype.getState = function() {
     return {
         depth: this.depth,
@@ -1620,6 +1626,7 @@ function XmlParserContext(){
     this.oReadResult = new AscCommonWord.DocReadResult();
     this.maxZIndex = 0;
 
+    this.oformContext = null;
     this.sdtPrWithFieldPath = [];
     this.fieldMasterMap = {};
 
@@ -1682,7 +1689,7 @@ XmlParserContext.prototype.assignFieldsToFieldMasters = function() {
                 if(sKey.indexOf(sTarget) > -1) {
                     let oFieldMaster = this.fieldMasterMap[sKey];
                     if(oFieldMaster) {
-                        oFieldMaster.setField(oPair.field);
+                        oFieldMaster.setLogicField(oPair.field);
                         break;
                     }
                 }
@@ -1741,7 +1748,7 @@ XmlParserContext.prototype.assignUsersToUserMasters = function() {
                 if(sKey.indexOf(sTarget) > -1) {
                     let oUserMaster = this.userMasterMap[sKey];
                     if(oUserMaster) {
-                        oUserMaster.addUser(oPair.user);
+                        oUserMaster.setUserId(oPair.user.Id);
                         break;
                     }
                 }
@@ -1763,6 +1770,12 @@ XmlParserContext.prototype.assignFormLinks = function() {
     this.fieldGroupsWithFieldMasterPath = [];
     this.fieldWithFieldMastersPath = [];
     this.userWithUserMastersPath = [];
+};
+XmlParserContext.prototype.getOformContext = function() {
+	return this.oformContext;
+};
+XmlParserContext.prototype.setOformContext = function(context) {
+	this.oformContext = context;
 };
 
 XmlParserContext.prototype.addTableStyle = function(sGuid, oStyle) {
