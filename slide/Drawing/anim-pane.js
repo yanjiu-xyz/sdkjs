@@ -1600,41 +1600,54 @@
 		// this.onUpdate();
 	}
 	CTimeline.prototype.onPreview = function(elapsedTicks) {
-		if (this.tmpScrollOffset === null) { return }
-		if (!this.demoTiming) { return }
+		if (this.tmpScrollOffset === null) { return; }
+		if (!this.demoTiming) { return; }
 
-		let demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
-		let correction = 0;
-		demoEffects.forEach(function (effect) {
-			let originalEffectStart = effect.originalNode.getFullDelay();
+		const currentlyPlayingDemoEffects = this.getCurrentlyPlayingDemoEffects(elapsedTicks);
+		const currentlyPlayingDemoEffect = currentlyPlayingDemoEffects[0];
+		const correction = (currentlyPlayingDemoEffect)
+			? currentlyPlayingDemoEffect.originalNode.getFullDelay() - currentlyPlayingDemoEffect.getFullDelay()
+			: 0;
 
-			let demoEffectStart = effect.getFullDelay();
-			let demoEffectEnd = demoEffectStart + effect.asc_getDuration();
+		this.tmpScrollOffset = this.getNewTmpScrollOffset(elapsedTicks, correction);
 
-			if (effect.getBaseTime() < elapsedTicks && elapsedTicks < demoEffectEnd) {
-				correction = originalEffectStart - demoEffectStart;
+		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
+		seqList.setCurrentlyPlaying(currentlyPlayingDemoEffects);
+
+		// this.parentControl.drawer == editor.WordControl.m_oAnimPaneApi.timeline
+		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
+		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+	}
+	CTimeline.prototype.getCurrentlyPlayingDemoEffects = function (elapsedTicks) {
+		const demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
+
+		const effectsToReturn = [];
+		for (let nEffect = 0; nEffect < demoEffects.length; ++nEffect) {
+			const demoEffect = demoEffects[nEffect];
+			const demoEffectStart = demoEffect.getFullDelay();
+			const demoEffectEnd = demoEffectStart + demoEffect.asc_getDuration();
+			if (demoEffectStart < elapsedTicks && elapsedTicks < demoEffectEnd) {
+				effectsToReturn.push(demoEffect);
 			}
-		})
+		}
+		return effectsToReturn;
+	};
+	CTimeline.prototype.getNewTmpScrollOffset = function (elapsedTicks, correction) {
+		const leftLimit = 0;
+		const rightLimit = this.getRulerEnd() - this.getZeroShift();
 
 		let newTmpScrollOffset = ms_to_mm(elapsedTicks + correction) - ms_to_mm(this.getStartTime() * 1000);
-
-		const rightLimit = this.getRulerEnd() - this.getZeroShift();
+		if (newTmpScrollOffset < leftLimit) {
+			this.setStartTime(0);
+			newTmpScrollOffset = 0;
+		}
 		if (newTmpScrollOffset > rightLimit) {
 			const rulerDur = mm_to_ms(this.getRulerEnd() - this.getRulerStart()) / 1000; // seconds
 			this.setStartTime(this.getStartTime() + rulerDur / 2);
 			newTmpScrollOffset -= ms_to_mm(rulerDur / 2);
 		}
-		const leftLimit = 0;
-		if (newTmpScrollOffset < leftLimit) {
-			this.setStartTime(0);
-			newTmpScrollOffset = 0;
-		}
 
-		this.tmpScrollOffset = newTmpScrollOffset;
-
-		// this.parentControl.drawer == editor.WordControl.m_oAnimPaneApi.timeline
-		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
-		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+		return newTmpScrollOffset;
 
 		function ms_to_mm(nMilliseconds) {
 			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
@@ -1644,7 +1657,7 @@
 			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
 			return nMillimeters / TIME_INTERVALS[index] * TIME_SCALES[index] * 1000;
 		}
-	}
+	};
 
 	CTimeline.prototype.getRulerStart = function () {
 		return this.startButton.getRight();
@@ -1979,7 +1992,20 @@
 			this.cachedCanvas = null;
 		}
 	};
+	CSeqList.prototype.setCurrentlyPlaying = function (demoEffects) {
+		if (!demoEffects) { return; }
 
+		const originalEffects = demoEffects.map(
+			function (demoEffect) {
+				return demoEffect.originalNode;
+			}
+		);
+		this.forEachAnimItem(
+			function (animItem) {
+				animItem.isCurrentlyPlaying = (originalEffects.indexOf(animItem.effect.originalNode) > -1);
+			}
+		)
+	};
 	CSeqList.prototype.forEachAnimItem = function (callback) {
 		// У счетчиков сквозная нумерация
 		let seqCounter = 0;
@@ -1995,8 +2021,7 @@
 			})
 			seqCounter++;
 		})
-	}
-
+	};
 
 
 	// mainSeq or interactiveSeq
@@ -2594,27 +2619,25 @@
 		let sFillColor, sOutlineColor;
 		let oFillColor, oOutlineColor;
 
-		sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
-		sOutlineColor = oSkin.AnimPaneEffectBarOutlineEntrance;
 		switch (this.effect.cTn.presetClass) {
 			case AscFormat.PRESET_CLASS_ENTR:
-				sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
-				sOutlineColor = oSkin.AnimPaneEffectBarOutlineEntrance;
+				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillEntranceActive : oSkin.AnimPaneEffectBarFillEntrance;
+				sOutlineColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarOutlineEntranceActive : oSkin.AnimPaneEffectBarOutlineEntrance;
 				break;
 
 			case AscFormat.PRESET_CLASS_EMPH:
-				sFillColor = oSkin.AnimPaneEffectBarFillEmphasis;
-				sOutlineColor = oSkin.AnimPaneEffectBarOutlineEmphasis;
+				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillEmphasisActive : oSkin.AnimPaneEffectBarFillEmphasis;
+				sOutlineColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarOutlineEmphasisActive : oSkin.AnimPaneEffectBarOutlineEmphasis;
 				break;
 
 			case AscFormat.PRESET_CLASS_EXIT:
-				sFillColor = oSkin.AnimPaneEffectBarFillExit;
-				sOutlineColor = oSkin.AnimPaneEffectBarOutlineExit;
+				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillExitActive : oSkin.AnimPaneEffectBarFillExit;
+				sOutlineColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarOutlineExitActive : oSkin.AnimPaneEffectBarOutlineExit;
 				break;
 
 			case AscFormat.PRESET_CLASS_PATH:
-				sFillColor = oSkin.AnimPaneEffectBarFillPath;
-				sOutlineColor = oSkin.AnimPaneEffectBarOutlinePath;
+				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillPathvActive : oSkin.AnimPaneEffectBarFillPath;
+				sOutlineColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarOutlinePathActive : oSkin.AnimPaneEffectBarOutlinePath;
 				break;
 		}
 
