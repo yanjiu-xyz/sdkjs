@@ -3570,7 +3570,7 @@ background-repeat: no-repeat;\
 			
 			getNewValue : function(stylePr)
 			{
-				let val = 12 * g_dKoef_pt_to_mm;
+				let val = 12 * AscCommonWord.g_dKoef_pt_to_mm;
 				if (stylePr.Spacing.Before > 0.001)
 					val = stylePr.Spacing.Before;
 				
@@ -3603,7 +3603,7 @@ background-repeat: no-repeat;\
 			
 			getNewValue : function(stylePr)
 			{
-				let val = 12 * g_dKoef_pt_to_mm;
+				let val = 12 * AscCommonWord.g_dKoef_pt_to_mm;
 				if (stylePr.Spacing.After > 0.001)
 					val = stylePr.Spacing.After;
 				
@@ -13637,19 +13637,19 @@ background-repeat: no-repeat;\
 		
 		return menuInfo;
 	};
-
-	asc_docs_api.prototype.asc_getDocumentProtection = function () {
-		let oDocument = this.private_GetLogicDocument();
-		if (!oDocument) {
-			return;
-		}
-
-		var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
-		if (docProtection) {
-			return docProtection.Copy();
-		}
+	
+	asc_docs_api.prototype.asc_getDocumentProtection = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return null;
+		
+		let docProtection = logicDocument.GetDocumentSettings().DocumentProtection;
+		if (!docProtection)
+			return null;
+		
+		return docProtection.getAscDocProtect();
 	};
-
 	asc_docs_api.prototype.asc_setDocumentProtection = function (props) {
 		//props -> CDocProtect
 
