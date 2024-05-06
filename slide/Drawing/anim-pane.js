@@ -1020,7 +1020,8 @@
 			PLAY_BUTTON_MAX_LABEL_WIDTH,
 			PLAY_BUTTON_HEIGHT
 		);
-		let dLabelWidth = Math.min(PLAY_BUTTON_MAX_LABEL_WIDTH, oButtonLabel.getContentOneStringSizes().w)
+		// let dLabelWidth = Math.min(PLAY_BUTTON_MAX_LABEL_WIDTH, oButtonLabel.getContentOneStringSizes().w)
+		let dLabelWidth = PLAY_BUTTON_MAX_LABEL_WIDTH;
 		oButtonLabel.setLayout(
 			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN,
 			0,
@@ -1574,10 +1575,10 @@
 
 		const previewTimings = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings;
 		this.demoTiming = previewTimings[0]; // effects are smoothed to follow each other
-		const rawDemoTiming = previewTimings[1]; // timing with only effects for preview (without smoothing)
+		this.rawDemoTiming = previewTimings[1]; // timing with only effects for preview (without smoothing)
 
 		const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
-		oPaneApi.list.Control.recalculateByTiming(previewTimings[1]);
+		oPaneApi.list.Control.recalculateByTiming(this.rawDemoTiming);
 
 		oPaneApi.header.Control.recalculateChildrenLayout();
 		oPaneApi.header.OnPaint();
@@ -1587,6 +1588,7 @@
 	}
 	CTimeline.prototype.onPreviewStop = function() {
 		this.demoTiming = null;
+		this.rawDemoTiming = null;
 		this.tmpScrollOffset = null;
 		this.setStartTime(0);
 
@@ -1604,13 +1606,15 @@
 		if (!this.demoTiming) { return; }
 
 		const currentlyPlayingDemoEffects = this.getCurrentlyPlayingDemoEffects(elapsedTicks);
-		const currentlyPlayingDemoEffect = currentlyPlayingDemoEffects[0];
-		const correction = (currentlyPlayingDemoEffect)
-			? currentlyPlayingDemoEffect.originalNode.getFullDelay() - currentlyPlayingDemoEffect.getFullDelay()
-			: 0;
 
+		// Для смещения полоски прогресса
+		const currentlyPlayingDemoEffect = currentlyPlayingDemoEffects[0]; // first in group
+		const correction = (currentlyPlayingDemoEffect)
+			? currentlyPlayingDemoEffect.originalNode.getBaseTime() - currentlyPlayingDemoEffect.getBaseTime()
+			: 0;
 		this.tmpScrollOffset = this.getNewTmpScrollOffset(elapsedTicks, correction);
 
+		// Для подсвечивания воспроизводимых эффектов
 		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
 		seqList.setCurrentlyPlaying(currentlyPlayingDemoEffects);
 
@@ -1620,17 +1624,11 @@
 	}
 	CTimeline.prototype.getCurrentlyPlayingDemoEffects = function (elapsedTicks) {
 		const demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
+		const rawDemoEffects = this.rawDemoTiming.getRootSequences()[0].getAllEffects();
 
-		const effectsToReturn = [];
-		for (let nEffect = 0; nEffect < demoEffects.length; ++nEffect) {
-			const demoEffect = demoEffects[nEffect];
-			const demoEffectStart = demoEffect.getFullDelay();
-			const demoEffectEnd = demoEffectStart + demoEffect.asc_getDuration();
-			if (demoEffectStart < elapsedTicks && elapsedTicks < demoEffectEnd) {
-				effectsToReturn.push(demoEffect);
-			}
-		}
-		return effectsToReturn;
+		// Отсюда я хочу вернуть массив из эффектов демоТайминга,
+		// которые в rawDemoTiming находятся в одной группе
+		return [];
 	};
 	CTimeline.prototype.getNewTmpScrollOffset = function (elapsedTicks, correction) {
 		const leftLimit = 0;
@@ -2636,7 +2634,7 @@
 				break;
 
 			case AscFormat.PRESET_CLASS_PATH:
-				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillPathvActive : oSkin.AnimPaneEffectBarFillPath;
+				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillPathActive : oSkin.AnimPaneEffectBarFillPath;
 				sOutlineColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarOutlinePathActive : oSkin.AnimPaneEffectBarOutlinePath;
 				break;
 		}
