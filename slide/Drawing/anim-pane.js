@@ -2644,35 +2644,42 @@
 
 		const oSkin = AscCommon.GlobalSkin;
 		let sFillColor, sOutlineColor;
-		let oFillColor, oOutlineColor;
-
 		switch (this.effect.cTn.presetClass) {
 			case AscFormat.PRESET_CLASS_ENTR:
-				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillEntranceActive : oSkin.AnimPaneEffectBarFillEntrance;
-				sOutlineColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarOutlineEntranceActive : oSkin.AnimPaneEffectBarOutlineEntrance;
+				sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
+				sOutlineColor = oSkin.AnimPaneEffectBarOutlineEntrance;
 				break;
 
 			case AscFormat.PRESET_CLASS_EMPH:
-				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillEmphasisActive : oSkin.AnimPaneEffectBarFillEmphasis;
-				sOutlineColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarOutlineEmphasisActive : oSkin.AnimPaneEffectBarOutlineEmphasis;
+				sFillColor = oSkin.AnimPaneEffectBarFillEmphasis;
+				sOutlineColor = oSkin.AnimPaneEffectBarOutlineEmphasis;
 				break;
 
 			case AscFormat.PRESET_CLASS_EXIT:
-				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillExitActive : oSkin.AnimPaneEffectBarFillExit;
-				sOutlineColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarOutlineExitActive : oSkin.AnimPaneEffectBarOutlineExit;
+				sFillColor = oSkin.AnimPaneEffectBarFillExit;
+				sOutlineColor = oSkin.AnimPaneEffectBarOutlineExit;
 				break;
 
 			case AscFormat.PRESET_CLASS_PATH:
-				sFillColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarFillPathActive : oSkin.AnimPaneEffectBarFillPath;
-				sOutlineColor = this.isCurrentlyPlaying ? oSkin.AnimPaneEffectBarOutlinePathActive : oSkin.AnimPaneEffectBarOutlinePath;
+				sFillColor = oSkin.AnimPaneEffectBarFillPath;
+				sOutlineColor = oSkin.AnimPaneEffectBarOutlinePath;
 				break;
 		}
 
-		oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
-		oOutlineColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
+		// hex to rgba
+		const oFillColorRGBA = AscCommon.RgbaHexToRGBA(sFillColor);
+		const oOutlineColorRGBA = AscCommon.RgbaHexToRGBA(sOutlineColor);
 
-		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 255);
-		graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, 255);
+		// rgba to CShapeColor
+		let oFillColor = new AscFormat.CShapeColor(oFillColorRGBA.R, oFillColorRGBA.G, oFillColorRGBA.B);
+		let oOutlineColor = new AscFormat.CShapeColor(oOutlineColorRGBA.R, oOutlineColorRGBA.G, oOutlineColorRGBA.B);
+
+		// change brightness of CShapeColor
+		oFillColor = this.isCurrentlyPlaying ? oFillColor.getColorData(-0.1) : oFillColor;
+		oOutlineColor = this.isCurrentlyPlaying ? oOutlineColor.getColorData(-0.1) : oOutlineColor;
+
+		graphics.b_color1(oFillColor.r, oFillColor.g, oFillColor.b, 255);
+		graphics.p_color(oOutlineColor.r, oOutlineColor.g, oOutlineColor.b, 255);
 
 		const bounds = this.getEffectBarBounds();
 		if (this.effect.isInstantEffect()) {
