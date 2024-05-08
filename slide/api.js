@@ -9171,7 +9171,7 @@ background-repeat: no-repeat;\
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
-	window['Asc']['asc_docs_api']                                 = asc_docs_api;
+	window['Asc']['asc_docs_api'] = window['Asc'].asc_docs_api    = asc_docs_api;
 	asc_docs_api.prototype['asc_GetFontThumbnailsPath']           = asc_docs_api.prototype.asc_GetFontThumbnailsPath;
 	asc_docs_api.prototype['pre_Save']                            = asc_docs_api.prototype.pre_Save;
 	asc_docs_api.prototype['sync_CollaborativeChanges']           = asc_docs_api.prototype.sync_CollaborativeChanges;

@@ -126,7 +126,7 @@
         this._replies.push(oReply);
     };
     CAnnotationText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc["asc_CCommentDataWord"](null);
+        let oAscCommData = new Asc.asc_CCommentDataWord(null);
         oAscCommData.asc_putText(this.GetContents());
         let sModDate = this.GetModDate();
         if (sModDate)

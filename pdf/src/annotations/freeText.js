@@ -774,7 +774,7 @@
         return false;
     };
     CAnnotationFreeText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc["asc_CCommentDataWord"](null);
+        let oAscCommData = new Asc.asc_CCommentDataWord(null);
         if (this._replies.length == 0)
             return oAscCommData;
 

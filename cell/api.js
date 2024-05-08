@@ -9161,7 +9161,7 @@ var editor;
    * -----------------------------------------------------------------------------
    */
 
-  asc["spreadsheet_api"] = spreadsheet_api;
+  asc["spreadsheet_api"] = asc.spreadsheet_api = spreadsheet_api;
   prot = spreadsheet_api.prototype;
 
   prot["asc_GetFontThumbnailsPath"] = prot.asc_GetFontThumbnailsPath;
