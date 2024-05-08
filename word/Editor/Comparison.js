@@ -1488,9 +1488,9 @@
 			if (oRevisedAnswerMap[sCommentText])
 			{
 				const nDeleteCount = oRevisedAnswerMap[sCommentText].length;
+				nDifference += Math.abs(arrMainAnswers.length - nDeleteCount);
 				arrMainAnswers.splice(0, nDeleteCount);
 				arrData = arrData.concat(arrMainAnswers);
-				nDifference += Math.abs(nDeleteCount);
 			}
 			else
 			{
@@ -1505,6 +1505,10 @@
 				nDifference += oRevisedAnswerMap[sCommentText].length;
 			}
 		}
+		arrData.sort(function (a, b)
+		{
+			return parseInt(a.m_sOOTime, 10) - parseInt(b.m_sOOTime, 10);
+		});
 		return {arrData: arrData, difference: nDifference};
 	};
 
@@ -3873,35 +3877,19 @@
 			if (!this.isChecked(sRevisedCommentId) && !bIsStart)
 			{
 				this.check(sRevisedCommentId);
-				let oMinDifference;
 				for (let j = 0; j < arrMainComments.length; j++)
 				{
 					const oMainElement = arrMainComments[j];
-					const sMainCommentId = oRevisedElement.element.GetCommentId();
+					const sMainCommentId = oMainElement.element.GetCommentId();
 					if (!this.isForDelete(sMainCommentId))
 					{
 						const oDifference = oMainElement.getDifference(oRevisedElement);
 
 						if (oDifference)
 						{
-							if (!oMinDifference)
-							{
-								oMinDifference = oDifference;
-							}
-							else
-							{
-								const nDiff = fSortedFunction(oMinDifference, oDifference);
-								if (nDiff >= 0)
-								{
-									oMinDifference = oDifference;
-								}
-							}
+							arrComparing.push(oDifference);
 						}
 					}
-				}
-				if (oMinDifference)
-				{
-					arrComparing.push(oMinDifference);
 				}
 			}
 		}
