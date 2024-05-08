@@ -9496,6 +9496,11 @@ background-repeat: no-repeat;\
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем со стилями
 	//----------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns object which contains direct text and paragraph properties of the first run in selection.
+	 * @returns {asc_CStyle}
+	 */
 	asc_docs_api.prototype.asc_GetStyleFromFormatting = function()
 	{
 		return this.WordControl.m_oLogicDocument.GetStyleFromFormatting();
