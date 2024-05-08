@@ -857,7 +857,7 @@ const arrTestObjectsInfo = [
 			[createParagraphInfo('привет привет '), createParagraphInfo('привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}}), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет', arrAnswers: ['1']}}]}})]
 		],
 		revisedDocument : [
-			[createParagraphInfo('привет '), createParagraphInfo('привет ', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}}), createParagraphInfo('привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 1}]}}), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 1, data:{text: '123', quoteText: 'привет', arrAnswers: null}}, {start: false, id: 0, data:{text: '123', quoteText: 'привет привет', arrAnswers: ['1']}}]}})]
+			[createParagraphInfo('привет '), createParagraphInfo('привет ', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}}), createParagraphInfo('привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 1}]}}), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет привет', arrAnswers: ['1']}}, {start: false, id: 1, data:{text: '123', quoteText: 'привет', arrAnswers: null}}]}})]
 		]
 	},
 	///////////////////////// -> 34<- /////////////////////////////
@@ -1476,14 +1476,14 @@ const arrAnswers = [
 				}
 			}), createParagraphInfo(' привет', undefined, undefined, undefined, {
 				comments: {
-					start: [{start: false, id: 1, data: {text: '1', quoteText: 'привет привет'}}, {
+					start: [{
 						start: false,
 						id   : 3,
 						data : {
 							text     : '1',
 							quoteText: 'привет'
 						}
-					}]
+					}, {start: false, id: 1, data: {text: '1', quoteText: 'привет привет'}}]
 				}
 			})]
 		]
@@ -1606,14 +1606,14 @@ const arrAnswers = [
 		finalDocument: [
 			[createParagraphInfo('привет '), createParagraphInfo('привет привет', undefined, undefined, undefined, {
 				comments: {
-					start: [{start: true, id: 1}, {
+					start: [{
 						start: true,
 						id   : 0
-					}]
+					}, {start: true, id: 1}]
 				}
 			}), createParagraphInfo(undefined, undefined, undefined, undefined, {
 				comments: {
-					start: [{start: false, id: 1, data: {text: '1', quoteText: 'привет привет', arrAnswers: ['123', '12', '1']}}, {
+					start: [{
 						start: false,
 						id   : 0,
 						data : {
@@ -1621,7 +1621,7 @@ const arrAnswers = [
 							quoteText : 'привет привет',
 							arrAnswers: ['123', '12', '1', '2']
 						}
-					}]
+					}, {start: false, id: 1, data: {text: '1', quoteText: 'привет привет', arrAnswers: ['123', '12', '1']}}]
 				}
 			})]
 		]
@@ -1631,14 +1631,14 @@ const arrAnswers = [
 		finalDocument: [
 			[createParagraphInfo('привет '), createParagraphInfo('привет привет', undefined, undefined, undefined, {
 				comments: {
-					start: [{
+					start: [{start: true, id: 1}, {
 						start: true,
 						id   : 0
-					}, {start: true, id: 1}]
+					}]
 				}
 			}), createParagraphInfo(undefined, undefined, undefined, undefined, {
 				comments: {
-					start: [{start: false, id: 1, data: {text: '123', quoteText: 'привет привет', arrAnswers: ['1234', '12', '13', '14']}}, {
+					start: [{
 						start: false,
 						id   : 0,
 						data : {
@@ -1646,7 +1646,7 @@ const arrAnswers = [
 							quoteText : 'привет привет',
 							arrAnswers: ['1234', '12']
 						}
-					}]
+					}, {start: false, id: 1, data: {text: '123', quoteText: 'привет привет', arrAnswers: ['1234', '12', '13', '14']}}]
 				}
 			})]
 		]
@@ -1712,10 +1712,10 @@ const arrAnswers = [
 				}]
 			}, {
 				comments: {
-					start: [{
+					start: [{start: true, id: 0}, {
 						start: true,
 						id   : 1
-					}, {start: true, id: 0} ]
+					} ]
 				}
 			}), createParagraphInfo('ри', undefined, undefined, {
 				start: [{
@@ -1834,7 +1834,7 @@ const arrAnswers = [
 				}
 			}), createParagraphInfo('иве', new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined), createParagraphInfo('т', new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
 				comments: {
-					start: [{start: false, id: 4, data: {text: '432', quoteText: 'риве', arrAnswers: null}}, {
+					start: [{
 						start: false,
 						id   : 2,
 						data : {
@@ -1842,7 +1842,9 @@ const arrAnswers = [
 							quoteText : 'ет приве',
 							arrAnswers: null
 						}
-					}]
+					},
+					{start: false, id: 4, data: {text: '432', quoteText: 'риве', arrAnswers: null}
+						}]
 				}
 			}), createParagraphInfo(' привет', new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
 				comments: {
