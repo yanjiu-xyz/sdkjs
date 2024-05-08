@@ -41,8 +41,6 @@
     //EXCLUDED_PUNCTUATION[95] = true;
     EXCLUDED_PUNCTUATION[160] = true;
     //EXCLUDED_PUNCTUATION[63] = true;
-	const CHECK_END_MEETING = 0;
-	const CHECK_START_MEETING = 1;
 
 	function insertLabelsAndContinue(oLabelChange, oTextIterator, oLabelIterator)
 	{
@@ -51,17 +49,18 @@
 		{
 			const oRun = oTextIterator.splitCurrentRun(oTextIterator.runElementIndex + oLabelChange.addingValue);
 			oTextIterator.addToCollectBack(oRun);
-			oLabelChange.forEach(function (oLabel)
+			for (let i = oLabelChange.labels.length - 1; i >= 0; i -= 1)
 			{
+				const oLabel = oLabelChange.labels[i];
 				oTextIterator.parent.AddToContent(oTextIterator.runIndex + 1, oLabel);
-			});
+			}
 			if (oLabelChange.elementIndex === 0 && oLabelChange.innerElementIndex === 0)
 			{
 				const oElement = oTextIterator.getCurrentElement();
-				const oLastLabel = oLabelChange.getLastLabel();
-				if (oLastLabel)
+				const oFirstLabel = oLabelChange.labels[0];
+				if (oFirstLabel)
 				{
-					oElement.lastSwitchElement = oLastLabel;
+					oElement.lastSwitchElement = oFirstLabel;
 				}
 				else
 				{
@@ -271,42 +270,6 @@
 		this.innerElementIndex = nInnerElementIndex;
 		this.addingValue = nAddingValue;
 	}
-	CLabelChange.prototype.forEach = function (fCallback)
-	{
-
-	};
-	function CBookmarkChange(arrLabels, nElementIndex, nInnerElementIndex, nAddingValue)
-	{
-		CLabelChange.call(this, arrLabels, nElementIndex, nInnerElementIndex, nAddingValue)
-	}
-	AscFormat.InitClassWithoutType(CBookmarkChange, CLabelChange);
-	CBookmarkChange.prototype.forEach = function (fCallback)
-	{
-		for (let i = 0; i < this.labels.length; i += 1)
-		{
-			fCallback(this.labels[i], i);
-		}
-	};
-	CBookmarkChange.prototype.getLastLabel = function ()
-	{
-		return this.labels[this.labels.length - 1];
-	};
-	function CCommentChange(arrLabels, nElementIndex, nInnerElementIndex, nAddingValue)
-	{
-		CLabelChange.call(this, arrLabels, nElementIndex, nInnerElementIndex, nAddingValue);
-	}
-	AscFormat.InitClassWithoutType(CCommentChange, CLabelChange);
-	CCommentChange.prototype.forEach = function (fCallback)
-	{
-		for (let i = this.labels.length - 1; i >= 0; i -= 1)
-		{
-			fCallback(this.labels[i], i);
-		}
-	};
-	CCommentChange.prototype.getLastLabel = function ()
-	{
-		return this.labels[0];
-	};
 
 	function CLabelBaseIterator(arrElements, oCopyPr)
 	{
@@ -349,13 +312,8 @@
 		if (oElement && this.innerLabelElementIndex < this.elementLabelIndexes.length)
 		{
 			const nInsertIndex = this.getInsertIndex();
-			const CLabelConstructor = this.getLabelConstructor();
-			this.currentLabel = new CLabelConstructor(this._getInsertElements(oElement, nInsertIndex), this.elementIndex, nInsertIndex, this.getAddingValue());
+			this.currentLabel = new CLabelChange(this._getInsertElements(oElement, nInsertIndex), this.elementIndex, nInsertIndex, this.getAddingValue());
 		}
-	}
-	CLabelBaseIterator.prototype.getLabelConstructor = function ()
-	{
-		return CLabelChange;
 	}
 	CLabelBaseIterator.prototype.getElement = function ()
 	{
@@ -396,10 +354,6 @@
 	{
 		return this.getElement().getBookmarkInsertIndexes();
 	}
-	CBookmarkChangesIterator.prototype.getLabelConstructor = function ()
-	{
-		return CBookmarkChange;
-	}
 
 	function CCommentChangesIterator(arrElements, arrMainNodes, oCommentsManager, oCopyPr)
 	{
@@ -437,10 +391,6 @@
 		const arrMainComments = this.getMainNode().element.comments[nInsertIndex];
 		this.oCommentManager.checkComments(arrMainComments, arrRevisedComments, arrRevisedComments);
 		return false;
-	}
-	CCommentChangesIterator.prototype.getLabelConstructor = function ()
-	{
-		return CCommentChange;
 	}
 	CCommentChangesIterator.prototype.getMainNode = function ()
 	{
@@ -1065,9 +1015,13 @@
             if(oChildNode)
             {
 	            let oFirstText = oChildNode.element;
-							if (oFirstText.lastSwitchElement)
+	            if (oFirstText.lastSwitchElement)
+	            {
+		            oFirstText = oFirstText.lastSwitchElement;
+	            }
+							else if (oFirstText instanceof CCommentElement)
 							{
-								oFirstText = oFirstText.lastSwitchElement;
+								oFirstText = oFirstText.element;
 							}
 
                 for(let j = 0; j < applyingParagraph.Content.length; ++j)
@@ -1494,12 +1448,9 @@
 	{
 		const arrMainAnswers = this.getAnswers();
 		const arrAnotherAnswers = oAnotherElement.getAnswers();
-		for (let i = 0; i < arrMainAnswers.length; i++)
+		const length = Math.min(arrMainAnswers.length, arrAnotherAnswers.length);
+		for (let i = 0; i < length; i++)
 		{
-			if (arrAnotherAnswers[i] === undefined)
-			{
-				break;
-			}
 			const sMainAnswer = arrMainAnswers[i].Get_Text();
 			const sAnotherAnswer = arrAnotherAnswers[i].Get_Text();
 			if (sMainAnswer !== sAnotherAnswer)
@@ -3746,7 +3697,6 @@
 		this.needUpdateBookmarks = false;
 		this.IdName = {};
 		this.bookmarkStack = [];
-		this.mapBookmarkMeeting = {};
 		this.previousNode = null;
 	}
 
@@ -3804,24 +3754,25 @@
 	CComparisonBookmarkManager.prototype.updateBookmarksStack = function (oNode)
 	{
 		const arrNextStack = [];
+		const mapCheckAdd = {};
 		const oPreviousElement = this.previousNode && this.previousNode.element;
-		for (let i = this.bookmarkStack.length - 1; i >= 0; i-= 1)
+		for (let i = 0; i < this.bookmarkStack.length; i += 1)
 		{
 			const oLabel = this.bookmarkStack[i];
-			const nBookmarkMeetingValue = this.mapBookmarkMeeting[oLabel.bookmark.GetBookmarkId()];
-			if ((oPreviousElement instanceof CTextElement) && oLabel.insertIndex === 0 && !oLabel.bookmark.IsStart() && (nBookmarkMeetingValue === CHECK_START_MEETING))
-			{
-				oPreviousElement.addBookmark(oLabel.bookmark, oPreviousElement.elements.length);
-			}
-			else if ((oLabel.insertIndex === oNode.element.elements.length) && oLabel.bookmark.IsStart() && nBookmarkMeetingValue !== CHECK_END_MEETING)
+			const oBookmark = oLabel.bookmark;
+			if (oLabel.insertIndex === oNode.element.elements.length)
 			{
 				oLabel.insertIndex = 0;
-				arrNextStack.unshift(oLabel);
+				arrNextStack.push(oLabel);
+			}
+			else if (!mapCheckAdd[oBookmark.GetBookmarkId()] && oLabel.insertIndex === 0 && (oPreviousElement instanceof CTextElement) && !oBookmark.IsStart())
+			{
+					oPreviousElement.addBookmark(oBookmark, oPreviousElement.elements.length);
 			}
 			else
 			{
-				oNode.addBookmark(oLabel.bookmark, oLabel.insertIndex);
-				this.mapBookmarkMeeting[oLabel.bookmark.GetBookmarkId()] = oLabel.bookmark.IsStart() ? CHECK_START_MEETING : CHECK_END_MEETING;
+				oNode.addBookmark(oBookmark, oLabel.insertIndex);
+				mapCheckAdd[oBookmark.GetBookmarkId()] = true;
 			}
 		}
 		this.bookmarkStack = arrNextStack;
@@ -3837,7 +3788,6 @@
 	{
 		this.comparison = comparison;
 		this.commentsStack = [];
-		this.mapCommentMeeting = {};
 		this.previousNode = null;
 		this.mapDelete = {};
 		this.mapChecked = {};
@@ -4027,25 +3977,25 @@
 	CComparisonCommentManager.prototype.updateCommentsStack = function (oNode)
 	{
 		const arrNextStack = [];
+		const mapCheckAdd = {};
 		const oPreviousElement = this.previousNode && this.previousNode.element;
-		for (let i = this.commentsStack.length - 1; i >= 0; i-= 1)
+		for (let i = 0; i < this.commentsStack.length; i += 1)
 		{
 			const oLabel = this.commentsStack[i];
 			const oParaComment = oLabel.comment.element;
-			const nBookmarkMeetingValue = this.mapCommentMeeting[oParaComment.GetCommentId()];
-			if ((oPreviousElement instanceof CTextElement) && oLabel.insertIndex === 0 && !oParaComment.IsCommentStart() && (nBookmarkMeetingValue === CHECK_START_MEETING))
-			{
-				oPreviousElement.addComment(oLabel.comment, oPreviousElement.elements.length);
-			}
-			else if ((oLabel.insertIndex === oNode.element.elements.length) && oParaComment.IsCommentStart() && nBookmarkMeetingValue !== CHECK_END_MEETING)
+			if (oLabel.insertIndex === oNode.element.elements.length)
 			{
 				oLabel.insertIndex = 0;
-				arrNextStack.unshift(oLabel);
+				arrNextStack.push(oLabel);
+			}
+			else if (!mapCheckAdd[oParaComment.GetCommentId()] && oLabel.insertIndex === 0 && (oPreviousElement instanceof CTextElement) && !oParaComment.IsCommentStart())
+			{
+				oPreviousElement.addComment(oLabel.comment, oPreviousElement.elements.length);
 			}
 			else
 			{
 				oNode.addComment(oLabel.comment, oLabel.insertIndex);
-				this.mapCommentMeeting[oParaComment.GetCommentId()] = oParaComment.IsCommentStart() ? CHECK_START_MEETING : CHECK_END_MEETING;
+				mapCheckAdd[oParaComment.GetCommentId()] = true;
 			}
 		}
 		this.commentsStack = arrNextStack;
