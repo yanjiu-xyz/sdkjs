@@ -1643,7 +1643,7 @@ CSectionPageNumType.prototype.Write_ToBinary = function(writer)
 		flags |= 2;
 	}
 	
-	let endPos = Writer.GetCurPosition();
+	let endPos = writer.GetCurPosition();
 	writer.Seek(startPos);
 	writer.WriteLong(flags);
 	writer.Seek(endPos);
