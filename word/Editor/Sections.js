@@ -579,7 +579,7 @@ CSectionPr.prototype =
 		if (chapSep === this.PageNumType.ChapSep)
 			return;
 		
-		AscCommon.History.Add(new CChangesSectionPAgeNumTypeChapSep(this, this.PageNumType.ChapSep, chapSep));
+		AscCommon.History.Add(new CChangesSectionPageNumTypeChapSep(this, this.PageNumType.ChapSep, chapSep));
 		this.PageNumType.ChapSep = chapSep;
 	},
 	
