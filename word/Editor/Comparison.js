@@ -1033,7 +1033,7 @@
                         if(oFirstText === oCurRun)
                         {
                             this.applyInsert(aContentToInsert, [], j, comparison);
-                            break;
+                            return true;
                         }
                         // иначе надо посмотреть, возможно стоит вставлять элементы не после рана, а после конкретного элемента и текущий ран из цикла нужно засплитить
                         else if(Array.isArray(oCurRun.Content) && Array.isArray(oFirstText.elements))
