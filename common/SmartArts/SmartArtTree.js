@@ -1698,11 +1698,25 @@
 			node.moveTo(offX, offY, isCalculateCoefficients, true);
 		});
 	};
-	BaseAlgorithm.prototype.setParentConnection = function(connectorAlgorithm, childNode) {
-		if (connectorAlgorithm && childNode) {
-			connectorAlgorithm.setParentAlgorithm(this);
-			connectorAlgorithm.setFirstConnectorNode(this.parentNode);
-			connectorAlgorithm.setLastConnectorNode(childNode);
+	BaseAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
+		if (connectorAlgorithm && childNode.algorithm) {
+			let srcNode;
+			let dstNode;
+			if (connectorAlgorithm.params[AscFormat.Param_type_srcNode]) {
+				srcNode = this.parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
+			} else {
+				srcNode = this.parentNode.getDefaultConnectionNode();
+			}
+			if (connectorAlgorithm.params[AscFormat.Param_type_dstNode]) {
+				dstNode = childNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
+			} else {
+				dstNode = childNode.getDefaultConnectionNode();
+			}
+			if (srcNode && dstNode) {
+				connectorAlgorithm.setParentAlgorithm(this);
+				connectorAlgorithm.setFirstConnectorNode(srcNode);
+				connectorAlgorithm.setLastConnectorNode(dstNode);
+			}
 		}
 	};
 	BaseAlgorithm.prototype.getBounds = function (isCalculateScaleCoefficients, bounds) {
@@ -1837,6 +1851,9 @@
 	BaseAlgorithm.prototype.setConnectionDistance = function (value, isStart) {
 
 	};
+	BaseAlgorithm.prototype.setStemThick = function (value) {
+
+	};
 	BaseAlgorithm.prototype.afterShape = function (smartartAlgorithm) {};
 	BaseAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createShadowShape(false, isCalculateScaleCoefficients);
@@ -1910,12 +1927,6 @@
 
 		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficient);
 		shapeContainer.applyCenterAlign(parentHeight, parentWidth, isCalculateScaleCoefficient, this);
-	};
-
-	PositionAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
-		connectorAlgorithm.setParentAlgorithm(this);
-		connectorAlgorithm.setFirstConnectorNode(this.parentNode);
-		connectorAlgorithm.setLastConnectorNode(childNode);
 	};
 	
 	PositionAlgorithm.prototype.calcScaleCoefficients = function () {
@@ -4647,6 +4658,7 @@ function HierarchyAlgorithm() {
 			begin: null,
 			end: null
 		};
+		this.stemThick = 0.6;
 		this.parentAlgorithm = null;
 		this.calcValues = {
 			edgePoints: null,
@@ -4831,6 +4843,9 @@ function HierarchyAlgorithm() {
 		} else {
 			this.connectionDistances.end = value;
 		}
+	};
+	BaseAlgorithm.prototype.setStemThick = function (value) {
+		this.stemThick = value;
 	};
 	ConnectorAlgorithm.prototype.getPointPosition = function (isStart) {
 		if (!this.calcValues.pointPositions) {
@@ -5122,7 +5137,7 @@ function HierarchyAlgorithm() {
 			const adj2 = new AscFormat.Adj();
 			adj1.setIdx(1);
 			adj2.setIdx(2);
-			adj1.setVal(0.6);
+			adj1.setVal(this.stemThick);
 			adj2.setVal(0.5);
 			customAdjLst.addToLst(0, adj1);
 			customAdjLst.addToLst(0, adj2);
@@ -5187,7 +5202,8 @@ function HierarchyAlgorithm() {
 			} else {
 				width = arrowVector.getDistance();
 			}
-			const height = this.parentNode.shape.height;
+			const constrObj = this.parentNode.getConstraints(true);
+			const height = constrObj[AscFormat.Constr_type_hArH] !== undefined ? constrObj[AscFormat.Constr_type_hArH] : this.parentNode.shape.height;
 
 			const x = cx - width / 2;
 			const y = cy - height / 2;
@@ -5550,29 +5566,6 @@ function HierarchyAlgorithm() {
 		if (this.params[AscFormat.Param_type_vertAlign] === undefined) {
 			this.params[AscFormat.Param_type_vertAlign] = AscFormat.ParameterVal_verticalAlignment_mid;
 		}
-	};
-
-	CompositeAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
-		if (connectorAlgorithm && childNode.algorithm) {
-			let srcNode;
-			let dstNode;
-			if (connectorAlgorithm.params[AscFormat.Param_type_srcNode]) {
-				srcNode = this.parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
-			} else {
-				srcNode = this.parentNode.getDefaultConnectionNode();
-			}
-			if (connectorAlgorithm.params[AscFormat.Param_type_dstNode]) {
-				dstNode = childNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
-			} else {
-				dstNode = childNode.getDefaultConnectionNode();
-			}
-			if (srcNode && dstNode) {
-				connectorAlgorithm.setParentAlgorithm(this);
-				connectorAlgorithm.setFirstConnectorNode(srcNode);
-				connectorAlgorithm.setLastConnectorNode(dstNode);
-			}
-		}
-
 	};
 
 	CompositeAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
@@ -6308,12 +6301,15 @@ PresNode.prototype.addChild = function (ch, pos) {
 		switch (constr.type) {
 			case AscFormat.Constr_type_begPad:
 			case AscFormat.Constr_type_endPad: {
-				if (constr.refType === AscFormat.Constr_type_connDist) {
 					if (this.algorithm) {
-						this.algorithm.setConnectionDistance(constr.fact, constr.type === AscFormat.Constr_type_begPad);
+						const padFactor = constr.refType === AscFormat.Constr_type_none ? constr.val : constr.fact;
+						this.algorithm.setConnectionDistance(padFactor, constr.type === AscFormat.Constr_type_begPad);
 					}
-				} else {
-					this.algorithm.setConnectionDistance(value, constr.type === AscFormat.Constr_type_begPad);
+				break;
+			}
+			case AscFormat.Constr_type_stemThick: {
+				if (this.algorithm) {
+					this.algorithm.setStemThick(constr.fact);
 				}
 				break;
 			}
