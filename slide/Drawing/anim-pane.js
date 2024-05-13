@@ -1575,10 +1575,10 @@
 
 		const previewTimings = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings;
 		this.demoTiming = previewTimings[0]; // effects are smoothed to follow each other
-		const rawDemoTiming = previewTimings[1]; // timing with only effects for preview (without smoothing)
+		this.rawDemoTiming = previewTimings[1]; // timing with only effects for preview (without smoothing)
 
 		const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
-		oPaneApi.list.Control.recalculateByTiming(previewTimings[1]);
+		oPaneApi.list.Control.recalculateByTiming(this.rawDemoTiming);
 
 		oPaneApi.header.Control.recalculateChildrenLayout();
 		oPaneApi.header.OnPaint();
@@ -1588,6 +1588,7 @@
 	}
 	CTimeline.prototype.onPreviewStop = function() {
 		this.demoTiming = null;
+		this.rawDemoTiming = null;
 		this.tmpScrollOffset = null;
 		this.setStartTime(0);
 
@@ -1601,41 +1602,79 @@
 		// this.onUpdate();
 	}
 	CTimeline.prototype.onPreview = function(elapsedTicks) {
-		if (this.tmpScrollOffset === null) { return }
-		if (!this.demoTiming) { return }
+		if (this.tmpScrollOffset === null) { return; }
+		if (!this.demoTiming) { return; }
 
-		let demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
-		let correction = 0;
-		demoEffects.forEach(function (effect) {
-			let originalEffectStart = effect.originalNode.getFullDelay();
+		const currentlyPlayingDemoEffects = this.getCurrentlyPlayingDemoEffects(elapsedTicks);
 
-			let demoEffectStart = effect.getFullDelay();
-			let demoEffectEnd = demoEffectStart + effect.asc_getDuration();
+		const currentlyPlayingDemoEffect = currentlyPlayingDemoEffects[0]; // first in group
+		const correction = (currentlyPlayingDemoEffect)
+			? currentlyPlayingDemoEffect.originalNode.getBaseTime() - currentlyPlayingDemoEffect.getBaseTime()
+			: 0;
+		this.tmpScrollOffset = this.getNewTmpScrollOffset(elapsedTicks, correction);
 
-			if (effect.getBaseTime() < elapsedTicks && elapsedTicks < demoEffectEnd) {
-				correction = originalEffectStart - demoEffectStart;
+		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
+		seqList.setCurrentlyPlaying(currentlyPlayingDemoEffects);
+
+		// this.parentControl.drawer == editor.WordControl.m_oAnimPaneApi.timeline
+		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
+		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+	}
+	CTimeline.prototype.getCurrentlyPlayingDemoEffects = function (elapsedTicks) {
+		const demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
+		const rawDemoEffects = this.rawDemoTiming.getRootSequences()[0].getAllEffects();
+		rawDemoEffects.forEach(function (effect, index) {
+			effect.originalDemoNode = demoEffects[index];
+		});
+
+		// Getting level 3 Time Node Containers
+		// Each contains either 'after'-effect or 'click'-effect with mulpiple 'with'-effects
+		const lvl3DemoTimingNodes = this.demoTiming.getRootSequences(0)[0].getChildrenTimeNodes()[0].getChildrenTimeNodes();
+
+		// Getting first active level 3 Time Node Container
+		// to get currently active demo effect
+		let activeDemoEffect = null;
+		for (let nodeIndex = 0; nodeIndex < lvl3DemoTimingNodes.length; nodeIndex++) {
+			const node = lvl3DemoTimingNodes[nodeIndex];
+			if (node.isActive()) {
+				activeDemoEffect = node.getAllAnimEffects()[0];
+				break;
 			}
-		})
+		}
+
+		// Get index of active demo effect (in array of all raw demo effects)
+		let activeDemoEffectIndex;
+		for (let nEffect = 0; nEffect < rawDemoEffects.length; nEffect++) {
+			if (rawDemoEffects[nEffect].originalNode === activeDemoEffect.originalNode) {
+				activeDemoEffectIndex = nEffect;
+				break;
+			}
+		}
+
+		// Get group of active raw demo effects and their corresponding demo effects
+		const activeRawDemoEffects = rawDemoEffects[activeDemoEffectIndex].getTimeNodeWithLvl(2).getAllAnimEffects();
+		const activeDemoEffects = activeRawDemoEffects.map(function (rawEffect) {
+			return rawEffect.originalDemoNode;
+		});
+
+		return activeDemoEffects;
+	};
+	CTimeline.prototype.getNewTmpScrollOffset = function (elapsedTicks, correction) {
+		const leftLimit = 0;
+		const rightLimit = this.getRulerEnd() - this.getZeroShift();
 
 		let newTmpScrollOffset = ms_to_mm(elapsedTicks + correction) - ms_to_mm(this.getStartTime() * 1000);
-
-		const rightLimit = this.getRulerEnd() - this.getZeroShift();
+		if (newTmpScrollOffset < leftLimit) {
+			this.setStartTime(0);
+			newTmpScrollOffset = 0;
+		}
 		if (newTmpScrollOffset > rightLimit) {
 			const rulerDur = mm_to_ms(this.getRulerEnd() - this.getRulerStart()) / 1000; // seconds
 			this.setStartTime(this.getStartTime() + rulerDur / 2);
 			newTmpScrollOffset -= ms_to_mm(rulerDur / 2);
 		}
-		const leftLimit = 0;
-		if (newTmpScrollOffset < leftLimit) {
-			this.setStartTime(0);
-			newTmpScrollOffset = 0;
-		}
 
-		this.tmpScrollOffset = newTmpScrollOffset;
-
-		// this.parentControl.drawer == editor.WordControl.m_oAnimPaneApi.timeline
-		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
-		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+		return newTmpScrollOffset;
 
 		function ms_to_mm(nMilliseconds) {
 			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
@@ -1645,7 +1684,7 @@
 			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
 			return nMillimeters / TIME_INTERVALS[index] * TIME_SCALES[index] * 1000;
 		}
-	}
+	};
 
 	CTimeline.prototype.getRulerStart = function () {
 		return this.startButton.getRight();
@@ -1980,7 +2019,20 @@
 			this.cachedCanvas = null;
 		}
 	};
+	CSeqList.prototype.setCurrentlyPlaying = function (demoEffects) {
+		if (!demoEffects) { return; }
 
+		const originalEffects = demoEffects.map(
+			function (demoEffect) {
+				return demoEffect.originalNode;
+			}
+		);
+		this.forEachAnimItem(
+			function (animItem) {
+				animItem.isCurrentlyPlaying = (originalEffects.indexOf(animItem.effect.originalNode) > -1);
+			}
+		)
+	};
 	CSeqList.prototype.forEachAnimItem = function (callback) {
 		// У счетчиков сквозная нумерация
 		let seqCounter = 0;
@@ -1996,8 +2048,7 @@
 			})
 			seqCounter++;
 		})
-	}
-
+	};
 
 
 	// mainSeq or interactiveSeq
@@ -2593,10 +2644,6 @@
 
 		const oSkin = AscCommon.GlobalSkin;
 		let sFillColor, sOutlineColor;
-		let oFillColor, oOutlineColor;
-
-		sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
-		sOutlineColor = oSkin.AnimPaneEffectBarOutlineEntrance;
 		switch (this.effect.cTn.presetClass) {
 			case AscFormat.PRESET_CLASS_ENTR:
 				sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
@@ -2619,11 +2666,20 @@
 				break;
 		}
 
-		oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
-		oOutlineColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
+		// hex to rgba
+		const oFillColorRGBA = AscCommon.RgbaHexToRGBA(sFillColor);
+		const oOutlineColorRGBA = AscCommon.RgbaHexToRGBA(sOutlineColor);
 
-		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 255);
-		graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, 255);
+		// rgba to CShapeColor
+		let oFillColor = new AscFormat.CShapeColor(oFillColorRGBA.R, oFillColorRGBA.G, oFillColorRGBA.B);
+		let oOutlineColor = new AscFormat.CShapeColor(oOutlineColorRGBA.R, oOutlineColorRGBA.G, oOutlineColorRGBA.B);
+
+		// change brightness of CShapeColor
+		oFillColor = this.isCurrentlyPlaying ? oFillColor.getColorData(-0.1) : oFillColor;
+		oOutlineColor = this.isCurrentlyPlaying ? oOutlineColor.getColorData(-0.1) : oOutlineColor;
+
+		graphics.b_color1(oFillColor.r, oFillColor.g, oFillColor.b, 255);
+		graphics.p_color(oOutlineColor.r, oOutlineColor.g, oOutlineColor.b, 255);
 
 		const bounds = this.getEffectBarBounds();
 		if (this.effect.isInstantEffect()) {
