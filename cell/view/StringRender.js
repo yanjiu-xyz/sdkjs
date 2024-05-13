@@ -920,7 +920,7 @@
 			let ppiy = this.drawingCtx.getPPIY();
 			let width = AscFonts.GetGraphemeWidth(grapheme) * ppiy / 25.4 * fontSize;
 			let bbox = AscFonts.GetGraphemeBBox(grapheme, fontSize, ppiy);
-			return width + bbox.maxX - bbox.minX + 1 - width;
+			return bbox.maxX - bbox.minX + 1 - width;
 		};
 
 		/**
