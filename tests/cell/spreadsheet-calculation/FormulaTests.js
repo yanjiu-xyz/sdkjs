@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3250,11 +3250,11 @@ $(function () {
 
 		oParser = new parserFormula("CHOOSE(2,A2,A3,A4,A5)", "A1", ws);
 		assert.ok(oParser.parse(), "CHOOSE(2,A2,A3,A4,A5)");
-		assert.strictEqual(oParser.calculate().getValue(), "2nd", "CHOOSE(2,A2,A3,A4,A5)");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "2nd", "CHOOSE(2,A2,A3,A4,A5)");
 
 		oParser = new parserFormula("CHOOSE(4,B2,B3,B4,B5)", "A1", ws);
 		assert.ok(oParser.parse(), "CHOOSE(4,B2,B3,B4,B5)");
-		assert.strictEqual(oParser.calculate().getValue(), "Bolts", "CHOOSE(4,B2,B3,B4,B5))");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "Bolts", "CHOOSE(4,B2,B3,B4,B5))");
 
 		oParser = new parserFormula('CHOOSE(3,"Wide",115,"world",8)', "A1", ws);
 		assert.ok(oParser.parse());
@@ -3288,7 +3288,7 @@ $(function () {
 
 		oParser = new parserFormula('CHOOSE(1,B2,2,3)', "A1", ws);
 		assert.ok(oParser.parse(), 'CHOOSE(1,B2,2,3)');
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of CHOOSE(1,B2,2,3)');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "#N/A", 'Result of CHOOSE(1,B2,2,3)');
 
 		oParser = new parserFormula('CHOOSE(B3,B2,2,3)', "A1", ws);
 		assert.ok(oParser.parse(), 'CHOOSE(B3,B2,2,3)');
@@ -3345,22 +3345,22 @@ $(function () {
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,0]');
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0361", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "CBT-2", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "HIS0362", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "HIS0363", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[2,1]');
 
 		bbox = ws.getRange2("G2").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula('CHOOSE({1,2},C1:C3,E1:E3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'CHOOSE({1,2},C1:C3,E1:E3)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-2", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0362", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,1]');
-
-		bbox = ws.getRange2("G3").bbox;
-		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
-		oParser = new parserFormula('CHOOSE({1,2},C1:C3,E1:E3)', cellWithFormula, ws);
-		assert.ok(oParser.parse(), 'CHOOSE({1,2},C1:C3,E1:E3)');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0363", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0361", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "CBT-2", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "HIS0362", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "HIS0363", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[2,1]');
 
 		bbox = ws.getRange2("G3").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
@@ -3368,31 +3368,157 @@ $(function () {
 		assert.ok(oParser.parse(), 'CHOOSE({"",2},C1:C3,E1:E3)');
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0363", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0361", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "HIS0362", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#VALUE!", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "HIS0363", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[2,1]');
 
 		bbox = ws.getRange2("G3").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula('CHOOSE({1,1.1},C1:C3,E1:E3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'CHOOSE({1,1.1},C1:C3,E1:E3)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,1.1},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "CBT-3", 'Result of CHOOSE({1,1.1},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,1.1},C1:C3,E1:E3)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "CBT-1", 'Result of CHOOSE({1,1.1},C1:C3,E1:E3)[0,1]');
 
 		bbox = ws.getRange2("G3").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula('CHOOSE({1,1.9},C1:C3,E1:E3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'CHOOSE({1,1.9},C1:C3,E1:E3)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,1.9},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "CBT-3", 'Result of CHOOSE({1,1.9},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,1.9},C1:C3,E1:E3)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "CBT-1", 'Result of CHOOSE({1,1.9},C1:C3,E1:E3)[0,1]');
 
 		bbox = ws.getRange2("G3").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula('CHOOSE({1,2.1},C1:C3,E1:E3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'CHOOSE({1,2.1},C1:C3,E1:E3)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,2.1},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0363", 'Result of CHOOSE({1,2.1},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,2.1},C1:C3,E1:E3)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0361", 'Result of CHOOSE({1,2.1},C1:C3,E1:E3)[0,1]');
+
+		// for bug 67639
+		let arraySize;
+		ws.getRange2("A102").setValue("23");
+		ws.getRange2("A103").setValue("45");
+		ws.getRange2("A104").setValue("12");
+		ws.getRange2("A105").setValue("10");
+		ws.getRange2("B102").setValue("1");
+		ws.getRange2("B103").setValue("2");
+		ws.getRange2("B104").setValue("3");
+		ws.getRange2("C102").setValue("2");
+		ws.getRange2("C103").setValue("1");
+		ws.getRange2("E102").setValue("ds");
+		ws.getRange2("E103").setValue("fasf");
+		ws.getRange2("E104").setValue("gas");
+		ws.getRange2("F102").setValue("123das");
+		ws.getRange2("F103").setValue("jkl");
+		ws.getRange2("F104").setValue("zcasd");
+		
+		oParser = new parserFormula('SUM(A102:CHOOSE(2,A103,A104,A105))', "A1", ws);
+		assert.ok(oParser.parse(), 'SUM(A102:CHOOSE(2,A103,A104,A105))');
+		assert.strictEqual(oParser.calculate().getValue(), 80, 'Result of SUM(A102:CHOOSE(2,A103,A104,A105))');
+
+		oParser = new parserFormula('SIN(A102:CHOOSE(2,A103,A104,A105))', "A1", ws);
+		assert.ok(oParser.parse(), 'SIN(A102:CHOOSE(2,A103,A104,A105))');
+		oParser.setArrayFormulaRef(ws.getRange2("E200:F210").bbox);
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 1, 'Array size in SIN(A102:CHOOSE(2,A103,A104,A105))');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue().toFixed(2), "-0.85", 'Result of SIN(A102:CHOOSE(2,A103,A104,A105))[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue().toFixed(2), "0.85", 'Result of SIN(A102:CHOOSE(2,A103,A104,A105))[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue().toFixed(2), "-0.54", 'Result of SIN(A102:CHOOSE(2,A103,A104,A105))[2,0]');
+
+		oParser = new parserFormula('CHOOSE({1,2},A102:A104,B102:B103)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE({1,2},A102:A104,B102:B103)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 2, 'Array size in CHOOSE({1,2},A102:A104,B102:B103');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE({1,2},A102:A104,B102:B103[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of CHOOSE({1,2},A102:A104,B102:B103[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 45, 'Result of CHOOSE({1,2},A102:A104,B102:B103[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2, 'Result of CHOOSE({1,2},A102:A104,B102:B103[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 12, 'Result of CHOOSE({1,2},A102:A104,B102:B103[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of CHOOSE({1,2},A102:A104,B102:B103[2,1]');
+
+		oParser = new parserFormula('CHOOSE(B102:C102,A102:A104,B102:B103)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE(B102:C102,A102:A104,B102:B103)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 2, 'Array size in CHOOSE(B102:C102,A102:A104,B102:B103)');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of CHOOSE({B102:C102,A102:A104,B102:B103[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 45, 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2, 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 12, 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[2,1]');
+
+		oParser = new parserFormula('CHOOSE(B102:C102,A102:B104,9)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE(B102:C102,A102:B104,9)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 2, 'Array size in CHOOSE(B102:C102,A102:B104,9)');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE(B102:C102,A102:B104,9)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 9, 'Result of CHOOSE(B102:C102,A102:B104,9)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 45, 'Result of CHOOSE(B102:C102,A102:B104,9)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 9, 'Result of CHOOSE(B102:C102,A102:B104,9)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 12, 'Result of CHOOSE(B102:C102,A102:B104,9)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 9, 'Result of CHOOSE(B102:C102,A102:B104,9)[2,1]');
+
+		oParser = new parserFormula('CHOOSE(B102:C102,9,A102:B104)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE(B102:C102,9,A102:B104)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 2, 'Array size in CHOOSE(B102:C102,9,A102:B104)');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of CHOOSE(B102:C102,9,A102:B104)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of CHOOSE(B102:C102,9,A102:B104)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 9, 'Result of CHOOSE(B102:C102,9,A102:B104)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2, 'Result of CHOOSE(B102:C102,9,A102:B104)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 9, 'Result of CHOOSE(B102:C102,9,A102:B104)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 3, 'Result of CHOOSE(B102:C102,9,A102:B104)[2,1]');
+
+		oParser = new parserFormula('CHOOSE(B102:B103,A102:A105,E102:F104)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE(B102:B103,A102:A105,E102:F104)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 4 && arraySize.col === 2, 'Array size in CHOOSE(B102:B103,A102:A105,E102:F104)');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 23, 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "fasf", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "jkl", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[3,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#N/A", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[3,1]');
+
+		oParser = new parserFormula('CHOOSE({1;2},A102:A105,E102:F104)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE({1;2},A102:A105,E102:F104)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 4 && arraySize.col === 2, 'Array size in CHOOSE({1;2},A102:A105,E102:F104');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE({1;2},A102:A105,E102:F104)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 23, 'Result of CHOOSE({1;2},A102:A105,E102:F104)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "fasf", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "jkl", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[3,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#N/A", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[3,1]');
+
+		oParser = new parserFormula('CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 4 && arraySize.col === 2, 'Array size in CHOOSE({1;2},A102:A105,E102:F104');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "ds", 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "123das", 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 45, 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 45, 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 12, 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 12, 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[3,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#N/A", 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[3,1]');
 
 		//функция возвращает ref
 		//testArrayFormula2(assert, "CHOOSE", 2, 9);
@@ -10598,6 +10724,153 @@ $(function () {
 		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,12)');
 		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of WORKDAY.INTL(1,1,12)');
 
+		ws.getRange2("A10").setValue("1");
+		ws.getRange2("A11").setValue("2");
+		ws.getRange2("A12").setValue("3");
+		ws.getRange2("B10").setValue("2");
+		ws.getRange2("B11").setValue("2");
+		ws.getRange2("B12").setValue("2");
+		ws.getRange2("C10").setValue("3");
+		ws.getRange2("C11").setValue("3");
+		ws.getRange2("C12").setValue("3");
+
+		// first argument
+		oParser = new parserFormula('WORKDAY.INTL(A10:A12,1)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(A10:A12,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WORKDAY.INTL(A10:A12,1)');
+
+		oParser = new parserFormula('WORKDAY.INTL({1;2;3},1)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL({1;2;3},1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL({1;2;3},1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, "Result of WORKDAY.INTL({1;2;3},1)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 4, "Result of WORKDAY.INTL({1;2;3},1)[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WORKDAY.INTL({1;2;3},1)[3,0]");
+
+		oParser = new parserFormula('WORKDAY.INTL(A10:C10,1)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(A10:C10,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WORKDAY.INTL(A10:C10,1)');
+
+		oParser = new parserFormula('WORKDAY.INTL({1,2,3},1)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL({1,2,3},1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL({1,2,3},1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Result of WORKDAY.INTL({1,2,3},1)[1,0]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 4, "Result of WORKDAY.INTL({1,2,3},1)[2,0]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", "Result of WORKDAY.INTL({1,2,3},1)[3,0]");
+
+		// second argument
+		oParser = new parserFormula('WORKDAY.INTL(1,A10:A12)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,A10:A12)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WORKDAY.INTL(1,A10:A12)');
+
+		oParser = new parserFormula('WORKDAY.INTL(1,{1;2;3})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,{1;2;3})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL(1,{1;2;3})[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, "Result of WORKDAY.INTL(1,{1;2;3})[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 4, "Result of WORKDAY.INTL(1,{1;2;3})[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WORKDAY.INTL(1,{1;2;3})[3,0]");
+
+		oParser = new parserFormula('WORKDAY.INTL(1,A10:C10)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,A10:C10)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WORKDAY.INTL(1,A10:C10)');
+
+		oParser = new parserFormula('WORKDAY.INTL(1,{1,2,3})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,{1,2,3})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL(1,{1,2,3})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Result of WORKDAY.INTL(1,{1,2,3})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 4, "Result of WORKDAY.INTL(1,{1,2,3})[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", "Result of WORKDAY.INTL(1,{1,2,3})[0,3]");
+
+		// third arugument
+		oParser = new parserFormula('WORKDAY.INTL(1,1,A10:A12)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,A10:A12)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL(1,1,A10:A12)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, "Result of WORKDAY.INTL(1,1,A10:A12)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 4, "Result of WORKDAY.INTL(1,1,A10:A12)[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WORKDAY.INTL(1,1,A10:A12)[3,0]");
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,{1;2;3})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,{1;2;3})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL(1,1,{1;2;3})[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, "Result of WORKDAY.INTL(1,1,{1;2;3})[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 4, "Result of WORKDAY.INTL(1,1,{1;2;3})[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WORKDAY.INTL(1,1,{1;2;3})[3,0]");
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,A10:C10)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,A10:C10)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL(1,1,A10:C10)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Result of WORKDAY.INTL(1,1,A10:C10)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 4, "Result of WORKDAY.INTL(1,1,A10:C10)[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", "Result of WORKDAY.INTL(1,1,A10:C10)[0,3]");
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,{1,2,3})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,{1,2,3})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL(1,1,{1,2,3})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Result of WORKDAY.INTL(1,1,{1,2,3})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 4, "Result of WORKDAY.INTL(1,1,{1,2,3})[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", "Result of WORKDAY.INTL(1,1,{1,2,3})[0,3]");
+
+		// fourth argument
+		oParser = new parserFormula('WORKDAY.INTL(1,1,1,A10:A12)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,1,A10:A12)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of WORKDAY.INTL(1,1,1,A10:A12)');
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,1,{1;2;3})', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,1,{1;2;3})');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of WORKDAY.INTL(1,1,1,{1;2;3})');
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,1,A10:C10)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,1,A10:C10)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of WORKDAY.INTL(1,1,1,A10:C10)');
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,1,{1,2,3})', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,1,{1,2,3})');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of WORKDAY.INTL(1,1,1,{1,2,3})');
+
+		
+		oParser = new parserFormula('WORKDAY.INTL(A10:C11,A10:C11,A10:C11)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(A10:C11,A10:C11,A10:C11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:C11)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:C11)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#VALUE!", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:C11)[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:C11)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:C11)[1,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#VALUE!", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:C11)[1,2]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:C11)[2,0]");
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:C11)[2,1]");
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:C11)[2,2]");
+
+		oParser = new parserFormula('WORKDAY.INTL(A10:C11,A10:C11,A10:A10)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E10:E12").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(A10:C11,A10:C11,A10:A10)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", "Result of WORKDAY.INTL(A10:C11,A10:C11,A10:A10)[0,0]");
+
 	});
 
 	QUnit.test("Test: \"TIME\"", function (assert) {
@@ -13408,6 +13681,95 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0, "RANDBETWEEN(-0.1,-0.00000000005)");
 
+		// for bug 67684
+		wb.dependencyFormulas.unlockRecal();
+		ws.getRange2("A100:D1002").cleanAll();
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102:A1002").setValue("=RANDBETWEEN(A100,A101)");		// [1,2]
+		ws.getRange2("B101").setValue("3");
+		ws.getRange2("B102:B1002").setValue("=RANDBETWEEN(A100,B101)");		// [1,3]
+		ws.getRange2("C101").setValue("4");	
+		ws.getRange2("C102:C1002").setValue("=RANDBETWEEN(A100,C101)");		// [1,4]
+		ws.getRange2("D101").setValue("5");	
+		ws.getRange2("D102:D1002").setValue("=RANDBETWEEN(A100,D101)");		// [1,5]
+
+		// spreading percentages for range [1,2]
+		oParser = new parserFormula("COUNTIF(A102:A1002,1)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 4 && res <= 5, "Spreading percentages for number 1 in COUNTIF(A102:A1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(A102:A1002,2)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 4 && res <= 5, "Spreading percentages for number 2 in COUNTIF(A102:A1002,2)/1000");
+
+		// spreading percentages for range [1,3]
+		oParser = new parserFormula("COUNTIF(B102:B1002,1)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 3 && res <= 3, "Spreading percentages for number 1 in COUNTIF(B102:B1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(B102:B1002,2)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 3 && res <= 3, "Spreading percentages for number 2 in COUNTIF(B102:B1002,2)/1000");
+
+		oParser = new parserFormula("COUNTIF(B102:B1002,3)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 3 && res <= 3, "Spreading percentages for number 3 in COUNTIF(B102:B1002,3)/1000");
+
+		// spreading percentages for range [1,4]
+		oParser = new parserFormula("COUNTIF(C102:C1002,1)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 1 in COUNTIF(C102:C1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(C102:C1002,2)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		console.log(res);
+		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 2 in COUNTIF(C102:C1002,2)/1000");
+
+		oParser = new parserFormula("COUNTIF(C102:C1002,3)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 3 in COUNTIF(C102:C1002,3)/1000");
+
+		oParser = new parserFormula("COUNTIF(C102:C1002,4)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 4 in COUNTIF(C102:C1002,4)/1000");
+
+		// spreading percentages for range [1,5]
+		oParser = new parserFormula("COUNTIF(D102:D1002,1)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 1 in COUNTIF(D102:D1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(D102:D1002,2)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 2 in COUNTIF(D102:D1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(D102:D1002,3)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 3 in COUNTIF(D102:D1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(D102:D1002,4)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 4 in COUNTIF(D102:D1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(D102:D1002,5)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 5 in COUNTIF(D102:D1002,1)/1000");
+
+		ws.getRange2("A100:D1002").cleanAll();
 	});
 
 	QUnit.test("Test: \"RANDARRAY\"", function (assert) {
@@ -19348,6 +19710,7 @@ $(function () {
     */
 	QUnit.test("Test: \"HLOOKUP\"", function (assert) {
 
+		let array;
 		ws.getRange2("A401").setValue("Axles");
 		ws.getRange2("B401").setValue("Bearings");
 		ws.getRange2("C401").setValue("Bolts");
@@ -19382,38 +19745,53 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "c");
 
-
-		/*oParser = new parserFormula( "HLOOKUP(1,{1,2,3;2,3,4},2)", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), 2 );
+		
+		oParser = new parserFormula( "HLOOKUP(1,{1,2,3;2,3,4},2)", "A2", ws );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(1,{1,2,3;2,3,4},2)");
+		assert.strictEqual( oParser.calculate().getValue(), 2 , "Result of HLOOKUP(1,{1,2,3;2,3,4},2)");
 
 		oParser = new parserFormula( "HLOOKUP(1,{1,2,3;2,3,4},3,1)", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), "#REF!" );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(1,{1,2,3;2,3,4},3,1)");
+		assert.strictEqual( oParser.calculate().getValue(), "#REF!" , "Result of HLOOKUP(1,{1,2,3;2,3,4},3,1)");
 
 		oParser = new parserFormula( "HLOOKUP(1,{1,2,3;2,3,4},3,0)", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), "#REF!" );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(1,{1,2,3;2,3,4},3,0)");
+		assert.strictEqual( oParser.calculate().getValue(), "#REF!" , "Result of HLOOKUP(1,{1,2,3;2,3,4},3,0)");
 
 		oParser = new parserFormula( "HLOOKUP({2,3,4},{1,2,3;2,3,4},2)", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), 3 );
+		assert.ok( oParser.parse() , "Parse HLOOKUP({2,3,4},{1,2,3;2,3,4},2)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 3, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4},2)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4},2)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 4, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4},2)[0,2]");
 
 		oParser = new parserFormula( "HLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), "#REF!" );
+		assert.ok( oParser.parse() , "Parse HLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#REF!", "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "#REF!", "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), "#REF!", "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})[0,2]");
 
 		oParser = new parserFormula( "HLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), 2 );
+		assert.ok( oParser.parse() , "Parse HLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 3, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})[0,2]");
 
 		oParser = new parserFormula( "HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), 2 );
+		assert.ok( oParser.parse() , "Parse HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 3, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,2]");
 
 		oParser = new parserFormula( "HLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), 3 );
+		assert.ok( oParser.parse() , "Parse HLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 3, "Result of HLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3, "Result of HLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 3, "Result of HLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,2]");
 
 		oParser = new parserFormula( "HLOOKUP(4,{1,2,3;2,3,4;6,7,8},2)", "A2", ws );
 		assert.ok( oParser.parse() );
@@ -19428,13 +19806,88 @@ $(function () {
 		assert.strictEqual( oParser.calculate().getValue(), "#REF!" );
 
 		oParser = new parserFormula( "HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), 2 );*/
+		assert.ok( oParser.parse() , "Parse HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 3, "Result of HLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)[0,2]");
 
+		ws.getRange2("A100").setValue("2");
+		ws.getRange2("B100").setValue("4");
+		ws.getRange2("C100").setValue("40");
+		ws.getRange2("A101").setValue("1");
+		ws.getRange2("B101").setValue("2");
+		ws.getRange2("C101").setValue("3");
+
+		ws.getRange2("E100").setValue("1");
+		ws.getRange2("E101").setValue("1");
+		ws.getRange2("E102").setValue("1");
+		ws.getRange2("F100").setValue("2");
+		ws.getRange2("F101").setValue("1");
+		ws.getRange2("G100").setValue("3");
+		ws.getRange2("G101").setValue("1");
+		
+		oParser = new parserFormula( "HLOOKUP(A100:C100,A100:C100,1)", "A2", ws );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C100,A100:C100,1)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of HLOOKUP(A100:C100,A100:C100,1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of HLOOKUP(A100:C100,A100:C100,1)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 40, "Result of HLOOKUP(A100:C100,A100:C100,1)[0,2]");
+
+		oParser = new parserFormula("HLOOKUP(5,A100:C100,E100:G100)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse HLOOKUP(5,A100:C100,E100:G100)");
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!", "Result of HLOOKUP(5,A100:C100,E100:G100)");
+
+		oParser = new parserFormula( "HLOOKUP(5,A100:C100,E101:G101)", "A2", ws );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(5,A100:C100,E101:G101)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E101:G101)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E101:G101)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E101:G101)[0,2]");
+
+		oParser = new parserFormula( "HLOOKUP(5,A100:C100,E100:E102)", "A2", ws );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(5,A100:C100,E100:E102)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E100:E102)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E100:E102)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E100:E102)[2,0]");
+
+		oParser = new parserFormula( "HLOOKUP(A100:C100,A100:C100,F100)", "A2", ws );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C100,A100:C100,F100)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#REF!", "Result of HLOOKUP(A100:C100,A100:C100,F100)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "#REF!", "Result of HLOOKUP(A100:C100,A100:C100,F100)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), "#REF!", "Result of HLOOKUP(A100:C100,A100:C100,F100)[0,2]");
+
+		oParser = new parserFormula( "HLOOKUP(A100:C100+{0,1},A100:C100,E100:G102,FALSE)", "A2", ws );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C100+{0,1},A100:C100,E100:G101,FALSE)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of HLOOKUP(A100:C100+{0,1},A100:C100,E100:G101,FALSE)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "#N/A", "Result of HLOOKUP(A100:C100+{0,1},A100:C100,E100:G101,FALSE)[0,1]");
+		
+		oParser = new parserFormula( "HLOOKUP(A100:C100,A100:C101,2)", "A2", ws );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C100,A100:C101,2)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of HLOOKUP(A100:C100,A100:C101,2)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 2, "Result of HLOOKUP(A100:C100,A100:C101,2)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 3, "Result of HLOOKUP(A100:C100,A100:C101,2)[0,2]");
+
+		oParser = new parserFormula( "HLOOKUP(A100:C101,A100:C100,E100)", "A2", ws );
+		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C101,A100:C100,E100)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of HLOOKUP(A100:C101,A100:C100,E100)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of HLOOKUP(A100:C101,A100:C100,E100)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 40, "Result of HLOOKUP(A100:C101,A100:C100,E100)[0,2]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "#N/A", "Result of HLOOKUP(A100:C101,A100:C100,E100)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 2, "Result of HLOOKUP(A100:C101,A100:C100,E100)[1,1]");
+		assert.strictEqual(array.getElementRowCol(1,2).getValue(), 2, "Result of HLOOKUP(A100:C101,A100:C100,E100)[1,2]");
+
+	
 	});
 
 	QUnit.test("Test: \"VLOOKUP\"", function (assert) {
 
+		let array;
 		ws.getRange2("A501").setValue("Density");
 		ws.getRange2("B501").setValue("Bearings");
 		ws.getRange2("C501").setValue("Bolts");
@@ -19494,24 +19947,46 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 3);
 
 		oParser = new parserFormula("VLOOKUP({2,3,4},{1,2,3;2,3,4},2)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 3);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2,3,4},{1,2,3;2,3,4},2)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 3, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},2)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},2)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 3, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},2)[0,2]");
+
+		oParser = new parserFormula("VLOOKUP({2,3,4},{1,2,3;2,3,4},2,FALSE)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2,3,4},{1,2,3;2,3,4},2,FALSE)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 3, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},2,FALSE)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "#N/A", "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},2,FALSE)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), "#N/A", "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},2,FALSE)[0,2]");
 
 		oParser = new parserFormula("VLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#REF!");
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#REF!", "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "#REF!", "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), "#REF!", "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})[0,2]");
 
 		oParser = new parserFormula("VLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 2, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 2, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4},{1,5,6})[0,2]");
 
 		oParser = new parserFormula("VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 2, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 2, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,2]");
 
 		oParser = new parserFormula("VLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 2, "Result of VLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 2, "Result of VLOOKUP({5,3,4},{1,2,3;2,3,4;6,7,8},{1,5,6})[0,2]");
 
 		oParser = new parserFormula("VLOOKUP(4,{1,2,3;2,3,4;6,7,8},2)", "A2", ws);
 		assert.ok(oParser.parse());
@@ -19526,8 +20001,124 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#REF!");
 
 		oParser = new parserFormula("VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 2, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 2, "Result of VLOOKUP({2,3,4},{1,2,3;2,3,4;6,7,8},1)[0,2]");
+
+		// arg0 and arg2 array|range tests
+		ws.getRange2("A100").setValue("2");
+		ws.getRange2("A101").setValue("4");
+		ws.getRange2("A102").setValue("40");
+		ws.getRange2("B100").setValue("1");
+		ws.getRange2("B101").setValue("2");
+		ws.getRange2("B102").setValue("3");
+		ws.getRange2("E100").setValue("1");
+		ws.getRange2("E101").setValue("1");
+		ws.getRange2("F100").setValue("2");
+		ws.getRange2("F101").setValue("1");
+		ws.getRange2("G100").setValue("3");
+		ws.getRange2("G101").setValue("1");
+
+		oParser = new parserFormula("VLOOKUP(5,A100:B102,E100:G100)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(5,A100:B102,E100:G100)");
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!", "Result of VLOOKUP(5,A1:B3,E1:G1)");
+
+		oParser = new parserFormula("VLOOKUP(5,A100:B102,{1,2,3})", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(5,A100:B102,{1,2,3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!", "Result of VLOOKUP(5,A1:B3,{1,2,3})");
+		
+
+		oParser = new parserFormula("VLOOKUP(5,A100:B102,E101:G101)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(5,A100:B102,E101:G101)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 4, "Result of VLOOKUP(5,A100:B102,E101:G101)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of VLOOKUP(5,A100:B102,E101:G101)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 4, "Result of VLOOKUP(5,A100:B102,E101:G101)[0,2]");
+
+		oParser = new parserFormula("VLOOKUP(5,A100:B102,{1,1,1})", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(5,A100:B102,{1,1,1})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 4, "Result of VLOOKUP(5,A100:B102,{1,1,1})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of VLOOKUP(5,A100:B102,{1,1,1})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 4, "Result of VLOOKUP(5,A100:B102,{1,1,1})[0,2]");
+
+
+		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,E100)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,E100)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP(A100:A102,A100:B102,E100)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of VLOOKUP(A100:A102,A100:B102,E100)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 40, "Result of VLOOKUP(A100:A102,A100:B102,E100)[2,0]");
+
+		oParser = new parserFormula("VLOOKUP({2;4;40},A100:B102,E100)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2;4;40},A100:B102,E100)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP({2;4;40},A100:B102,E100)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of VLOOKUP({2;4;40},A100:B102,E100)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 40, "Result of VLOOKUP({2;4;40},A100:B102,E100)[2,0]");
+
+
+		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,F100)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,F100)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of VLOOKUP(A100:A102,A100:B102,F100)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, "Result of VLOOKUP(A100:A102,A100:B102,F100)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 3, "Result of VLOOKUP(A100:A102,A100:B102,F100)[2,0]");
+
+		oParser = new parserFormula("VLOOKUP({2;4;40},A100:B102,F100)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2;4;40},A100:B102,F100)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of VLOOKUP({2;4;40},A100:B102,F100)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, "Result of VLOOKUP({2;4;40},A100:B102,F100)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 3, "Result of VLOOKUP({2;4;40},A100:B102,F100)[2,0]");
+
+
+		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,E100:G100)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,E100:G100)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP(A100:A102,A100:B102,E100:G100)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of VLOOKUP(A100:A102,A100:B102,E100:G100)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 40, "Result of VLOOKUP(A100:A102,A100:B102,E100:G100)[2,0]");
+
+		oParser = new parserFormula("VLOOKUP({2;4;40},A100:B102,{1,2,3})", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2;4;40},A100:B102,{1,2,3})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP({2;4;40},A100:B102,{1,2,3})[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of VLOOKUP({2;4;40},A100:B102,{1,2,3})[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 40, "Result of VLOOKUP({2;4;40},A100:B102,{1,2,3})[2,0]");
+
+
+		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,E100:G101)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,E100:G101)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP(A100:A102,A100:B102,E100:G101)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of VLOOKUP(A100:A102,A100:B102,E100:G101)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 40, "Result of VLOOKUP(A100:A102,A100:B102,E100:G101)[2,0]");
+
+		oParser = new parserFormula("VLOOKUP({2;4;40},A100:B102,{1,2,3;1,1,1})", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP({2;4;40},A100:B102,{1,2,3;1,1,1})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP({2;4;40},A100:B102,{1,2,3;1,1,1})[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of VLOOKUP({2;4;40},A100:B102,{1,2,3;1,1,1})[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 40, "Result of VLOOKUP({2;4;40},A100:B102,{1,2,3;1,1,1})[2,0]");
+
+
+		oParser = new parserFormula("VLOOKUP(A100:A101,A100:B102,F100:G101)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A101,A100:B102,F100:G101)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of VLOOKUP(A100:A101,A100:B102,F100:G101)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, "Result of VLOOKUP(A100:A101,A100:B102,F100:G101)[1,0]");
+
+
+		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,G100:G101)", "A2", ws);
+		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,G100:G101)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#REF!", "Result of VLOOKUP(A100:A102,A100:B102,G100:G101)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "#REF!", "Result of VLOOKUP(A100:A102,A100:B102,G100:G101)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "#REF!", "Result of VLOOKUP(A100:A102,A100:B102,G100:G101)[2,0]");
+
 
 		oParser = new parserFormula('VLOOKUP(,A502:C510,2)', "A2", ws);
 		assert.ok(oParser.parse());

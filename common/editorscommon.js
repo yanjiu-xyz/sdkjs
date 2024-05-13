@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -53,6 +53,12 @@
 	var availableIdeographLanguages = window['Asc'].availableIdeographLanguages;
 	var availableBidiLanguages = window['Asc'].availableBidiLanguages;
 	const fontslot_ASCII    = 0x01;
+
+	let scriptDirectory = "";
+	if (document.currentScript) {
+		scriptDirectory = document.currentScript.src;
+		scriptDirectory = scriptDirectory.substring(0,scriptDirectory.replace(/[?#].*/,"").lastIndexOf("/") + 1);
+	}
 
 	Number.isInteger = Number.isInteger || function(value) {
 		return typeof value === 'number' && Number.isFinite(value) && !(value % 1);
@@ -10412,7 +10418,11 @@
 		}
 		else
 		{
-			loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+			if (scriptDirectory) {
+				loadScript(scriptDirectory + 'sdk-all.js', onSuccess, onError);
+			} else {
+				loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+			}
 		}
 	}
 
