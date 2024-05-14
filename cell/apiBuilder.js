@@ -265,7 +265,7 @@
 	 */
 
 	/**
-	 * The cell references type.
+	 * The cell reference type.
 	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
 	 * */
 
@@ -1121,10 +1121,11 @@
 	});
 
 	/**
-	 * Returns the cell references style.
+	 * Returns the cell reference style.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @returns {ReferenceStyle}
+	 * @returns {ReferenceStyle} - The cell reference style.
+	 * @since 8.1.0
 	 * */
 	Api.prototype.GetReferenceStyle = function () {
 		let bReferenceStyle = this.asc_getR1C1Mode();
@@ -1132,10 +1133,11 @@
 	};
 
 	/**
-	 * Sets the cell references style.
+	 * Sets the cell reference style.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {ReferenceStyle} sReferenceStyle - Type of reference style
+	 * @param {ReferenceStyle} sReferenceStyle - The cell reference style.
+	 * @since 8.1.0
 	 */
 	Api.prototype.SetReferenceStyle = function (sReferenceStyle) {
 		let bReferenceMode = null;
@@ -2269,10 +2271,10 @@
 	});
 
 	/**
-	 * Pastes the contents of the Clipboard onto the sheet.
-	 * @memberof ApiRange
+	 * Pastes the contents of the clipboard to the current sheet.
+	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange?} [destination] - Object that specifies where the Clipboard contents should be pasted. If this argument is omitted, the current selection is used.
+	 * @param {ApiRange?} [destination] - The cell range where the clipboard contents should be pasted. If this argument is omitted, the current selection is used.
 	 * @since 8.1.0
 	 */
 	ApiWorksheet.prototype.Paste = function (destination) {
@@ -3737,10 +3739,10 @@
 	});
 
 	/**
-	 * Copies the range to the specified range or to the Clipboard.
+	 * Copies the range to the specified range or to the clipboard.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, the range is copied to the clipboard.
 	 */
 	ApiRange.prototype.Copy = function (destination) {
 		var oApi = Asc["editor"];
