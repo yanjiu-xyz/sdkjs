@@ -260,7 +260,12 @@
         image.requestHeight = requestH;
         return image;
     };
-
+    CFile.prototype.getPageWidth = function(nPage) {
+        return this.pages[nPage].W;
+    };
+    CFile.prototype.getPageHeight = function(nPage) {
+        return this.pages[nPage].H;
+    };
     CFile.prototype.getLinks = function(pageIndex)
     {
         return this.nativeFile ? this.nativeFile["getLinks"](pageIndex) : [];
@@ -542,6 +547,10 @@ void main() {\n\
 
     CFile.prototype.onMouseDown = function(pageIndex, x, y)
     {
+        if (this.pages[pageIndex].isConvertedToShapes) {
+            return;
+        }
+        
         let oDoc = this.viewer.getPDFDoc();
         var ret = this.getNearestPos(pageIndex, x, y);
         var sel = this.Selection;
@@ -558,6 +567,24 @@ void main() {\n\
 
         this.onUpdateSelection();
         this.onUpdateOverlay();
+    };
+    CFile.prototype.removeSelection = function() {
+        this.Selection = {
+			Page1 : 0,
+			Line1 : 0,
+			Glyph1 : 0,
+
+			Page2 : 0,
+			Line2 : 0,
+			Glyph2 : 0,
+
+			IsSelection : false
+		}
+
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
+    };
+    CFile.prototype.getSelection = function() {
+        return this.Selection;
     };
 
     CFile.prototype.onMouseMove = function(pageIndex, x, y)
@@ -577,6 +604,7 @@ void main() {\n\
 
     CFile.prototype.onMouseUp = function()
     {
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
         this.Selection.IsSelection = false;
         this.onUpdateSelection();
         this.onUpdateOverlay();

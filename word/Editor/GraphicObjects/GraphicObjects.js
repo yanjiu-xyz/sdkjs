@@ -126,6 +126,10 @@ CGraphicObjects.prototype =
     canEditGeometry: DrawingObjectsController.prototype.canEditGeometry,
     startEditGeometry: DrawingObjectsController.prototype.startEditGeometry,
     haveTrackedObjects: DrawingObjectsController.prototype.haveTrackedObjects,
+    checkShowMediaControlOnSelect: function () {
+    },
+    checkShowMediaControlOnHover: function (oDrawing) {
+    },
 
     checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects, bNoCheckLock)
     {
@@ -3061,6 +3065,7 @@ CGraphicObjects.prototype =
                 aPos = arrCenterPos[i];
                 var aDrawings = [];
                 var drawing;
+                this.document.Recalculate(true);
                 for(j = 0; j < sp_tree.length; ++j)
                 {
                     sp = sp_tree[j];

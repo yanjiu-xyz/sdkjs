@@ -105,8 +105,11 @@ var CPresentation = CPresentation || function(){};
         this.widgetsParents = []; // все родительские поля
 
         this.maxApIdx               = -1;
+        this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
+        this.CollaborativeEditing.m_oLogicDocument = this;
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.AnnotTextPrTrackHandler= new AscPDF.CAnnotTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
+        this.TextSelectTrackHandler = new AscPDF.CTextSelectTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.SearchEngine           = new AscPDF.CPdfSearch(this);
 
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
@@ -142,11 +145,6 @@ var CPresentation = CPresentation || function(){};
         this.activeDrawing    = null;
         this.mouseDownField     = null;
         this.mouseDownAnnot     = null;
-
-        this.editMode = {
-            text: false,
-            forms: false
-        }
 
         this._id = AscCommon.g_oIdCounter.Get_NewId();
 		
@@ -908,17 +906,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        this.Viewer.file.Selection = {
-			Page1 : 0,
-			Line1 : 0,
-			Glyph1 : 0,
-
-			Page2 : 0,
-			Line2 : 0,
-			Glyph2 : 0,
-
-			IsSelection : false
-		}
+        this.Viewer.file.removeSelection();
         
         if (!oObject) {
             this.BlurActiveObject();
@@ -983,24 +971,6 @@ var CPresentation = CPresentation || function(){};
         return false;
     };
     
-    CPDFDoc.prototype.SetTextEditMode = function(bEdit) {
-        this.editMode.text = bEdit;
-        this.editMode.forms = false;
-
-        this.BlurActiveObject();
-    };
-    CPDFDoc.prototype.IsTextEditMode = function() {
-        return this.editMode.text;
-    };
-    CPDFDoc.prototype.SetFormsEditMode = function(bEdit) {
-        this.editMode.text = false;
-        this.editMode.forms = bEdit;
-
-        this.BlurActiveObject();
-    };
-    CPDFDoc.prototype.IsFormsEditMode = function() {
-        return this.editMode.forms;
-    };
     CPDFDoc.prototype.EraseInk = function(oInk) {
         this.CreateNewHistoryPoint();
         this.RemoveAnnot(oInk.GetId());
@@ -1012,6 +982,8 @@ var CPresentation = CPresentation || function(){};
         if (!oViewer.canInteract()) {
             return;
         }
+
+        this.Api.sync_MouseMoveStartCallback();
 
         let oController     = this.GetController();
         let oDrDoc          = this.GetDrawingDocument();
@@ -1105,6 +1077,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
+        this.Api.sync_MouseMoveEndCallback();
         this.UpdateCursorType(x, y, e);
     };
     CPDFDoc.prototype.UpdateCursorType = function(x, y, e) {
@@ -1227,7 +1200,7 @@ var CPresentation = CPresentation || function(){};
         let oMouseUpLink        = oViewer.getPageLinkByMouse();
         let oMouseUpField       = oViewer.getPageFieldByMouse();
         let oMouseUpAnnot       = oViewer.getPageAnnotByMouse();
-        let oMouseUpDrawing   = oViewer.getPageDrawingByMouse();
+        let oMouseUpDrawing     = oViewer.getPageDrawingByMouse();
 
         // координаты клика на странице в MM
         let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
@@ -1613,6 +1586,8 @@ var CPresentation = CPresentation || function(){};
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
 
         this.History.Add(new CChangesPDFDocumentAddPage(this, nPos, [oPage]));
+
+        oViewer.thumbnails._addPage(nPos);
     };
 
     /**
@@ -1633,6 +1608,8 @@ var CPresentation = CPresentation || function(){};
         if (!AscCommon.isNumber(nPos) || nPos < 0)
             nPos = 0;
 
+        oFile.removeSelection();
+        
         // сначала удаляем все объекты со страницы
         if (oViewer.pagesInfo.pages[nPos].fields) {
             oViewer.pagesInfo.pages[nPos].fields.slice().forEach(function(field) {
@@ -1683,6 +1660,8 @@ var CPresentation = CPresentation || function(){};
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
 
         this.History.Add(new CChangesPDFDocumentRemovePage(this, nPos, aPages));
+
+        oViewer.thumbnails._deletePage(nPos);
     };
 
     /**
@@ -1773,6 +1752,7 @@ var CPresentation = CPresentation || function(){};
         
         let oAnnot;
         AscFormat.ExecuteNoHistory(function () {
+            AscCommon.g_oTableId.TurnOn();
             oAnnot = AscPDF.CreateAnnotByProps(oProps, this);
         }, this);
 
@@ -1794,6 +1774,7 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetApIdx(oProps.apIdx);
 
         oAnnot.AddToRedraw();
+
         return oAnnot;
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
@@ -1886,6 +1867,9 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.UpdateAnnotTrackPos = function() {
         this.AnnotTextPrTrackHandler.OnChangePosition();
+    };
+    CPDFDoc.prototype.UpdateSelectionTrackPos = function() {
+        this.TextSelectTrackHandler.OnChangePosition();
     };
     CPDFDoc.prototype.ConvertMathView = function (isToLinear, isAll) {
         let oController = this.GetController();
@@ -2673,6 +2657,7 @@ var CPresentation = CPresentation || function(){};
         this.UpdateCommentPos();
         this.UpdateMathTrackPos();
         this.UpdateAnnotTrackPos();
+        this.UpdateSelectionTrackPos();
         this.UpdateCopyCutState();
         this.UpdateParagraphProps();
         this.UpdateTextProps();
@@ -2684,6 +2669,67 @@ var CPresentation = CPresentation || function(){};
         
         Asc.editor.CheckChangedDocument();
     };
+
+    //-----------------------------------------------------------------------------------
+    // Функции для работы с гиперссылками
+    //-----------------------------------------------------------------------------------
+    CPDFDoc.prototype.AddHyperlink = function (HyperProps) {
+        let oController     = this.GetController();
+        let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+
+        let aObjects = [];
+        Object.values(oObjectsByType).forEach(function(arr) {
+            arr.forEach(function(drawing) {
+                aObjects.push(drawing);
+            })
+        });
+
+        this.CreateNewHistoryPoint({objects: aObjects});
+        oController.checkSelectedObjectsAndCallback(oController.hyperlinkAdd, [HyperProps], false, AscDFH.historydescription_Presentation_HyperlinkAdd);
+        aObjects.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
+
+        this.TurnOffHistory();
+    };
+    CPDFDoc.prototype.ModifyHyperlink = function (HyperProps) {
+        let oController     = this.GetController();
+        let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+
+        let aObjects = [];
+        Object.values(oObjectsByType).forEach(function(arr) {
+            arr.forEach(function(drawing) {
+                aObjects.push(drawing);
+            })
+        });
+
+        this.CreateNewHistoryPoint({objects: aObjects});
+        oController.checkSelectedObjectsAndCallback(oController.hyperlinkModify, [HyperProps], false, AscDFH.historydescription_Presentation_HyperlinkModify);
+        aObjects.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
+
+        this.TurnOffHistory();
+    };
+    CPDFDoc.prototype.RemoveHyperlink = function () {
+        let oController     = this.GetController();
+        let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+
+        let aObjects = [];
+        Object.values(oObjectsByType).forEach(function(arr) {
+            arr.forEach(function(drawing) {
+                aObjects.push(drawing);
+            })
+        });
+
+        this.CreateNewHistoryPoint({objects: aObjects});
+        oController.checkSelectedObjectsAndCallback(oController.hyperlinkRemove, [], false, AscDFH.historydescription_Presentation_HyperlinkRemove);
+        aObjects.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
+
+        this.TurnOffHistory();
+    };
     CPDFDoc.prototype.UpdateCanAddHyperlinkState = function() {
         this.Api.sync_CanAddHyperlinkCallback(this.CanAddHyperlink(false));
     };
@@ -2691,6 +2737,8 @@ var CPresentation = CPresentation || function(){};
         let oController = this.GetController();
         return oController.hyperlinkCanAdd(bCheckInHyperlink);
     };
+    //-----------------------------------------------------------------------------------
+
     CPDFDoc.prototype.UpdateUndoRedo = function() {
 		Asc.editor.sync_CanUndoCallback(this.History.Can_Undo() || this.LocalHistory.Can_Undo());
 		Asc.editor.sync_CanRedoCallback(this.History.Can_Redo() || this.LocalHistory.Can_Redo());
@@ -3095,15 +3143,26 @@ var CPresentation = CPresentation || function(){};
                 oController.resetTrackState();
 
 				oMathShape = oController.createTextArt(0, false, null, "");
+                oMathShape.SetDocument(this);
+                oMathShape.SetPage(nCurPage);
+                oMathShape.Recalculate();
 
                 let oXfrm   = oMathShape.getXfrm();
-                let nPosX   = (nPageW - oXfrm.extX) / 2;
-                let nPosY   = nPageH / 5;
+                let nScale      = this.Viewer.drawingPages[nCurPage].H * g_dKoef_pix_to_mm / nPageH;
+                let oViewRect   = this.Viewer.getViewingRect(nCurPage);
+
+                let nExtX   = oXfrm.extX;
+                let nExtY   = oXfrm.extY;
+                let nPosX   = (g_dKoef_pix_to_mm * (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) / nScale) - nExtX / 2;
+                let nPosY   = (g_dKoef_pix_to_mm * (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) / nScale) - nExtY / 2;
+                nPosX = Math.max(nPosX > nPageW - nExtX ? nPageW - nExtX - 5 : Math.max(nPosX, 5));
+                nPosY = Math.max(nPosY > nPageH - nExtY ? nPageH - nExtY - 5 : Math.max(nPosY, 5));
                 
                 oXfrm.setOffX(nPosX);
                 oXfrm.setOffY(nPosY);
 
 				this.AddDrawing(oMathShape, nCurPage);
+                oMathShape.SetNeedRecalc(true);
 				oMathShape.select(oController, nCurPage);
                 oMathShape.SetInTextBox(true);
                 this.SetMouseDownObject(oMathShape);
@@ -3611,6 +3670,8 @@ var CPresentation = CPresentation || function(){};
         });
 
         this.TurnOffHistory();
+
+        this.Viewer.file.removeSelection();
     };
     CPDFDoc.prototype.AddDrawing = function(oDrawing, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
@@ -3637,20 +3698,31 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo.pages[nPage])
             return;
 
-        let oDrDoc      = this.GetDrawingDocument();
         let oController = this.GetController();
+        let oDrDoc      = this.GetDrawingDocument();
         let oPageInfo   = oDrDoc.m_arrPages[nPage];
 
-        let oTextArt    = this.GetController().createTextArt(nStyle, false);
-        let oXfrm       = oTextArt.getXfrm();
-
-        let nExtX   = oXfrm.extX;
-        let nExtY   = oXfrm.extY;
         let nPageW  = oPageInfo.width_mm;
         let nPageH  = oPageInfo.height_mm;
 
-        oXfrm.setOffX((nPageW - nExtX) / 2);
-        oXfrm.setOffY((nPageH / 2 - nExtY) / 2);
+        let oTextArt    = this.GetController().createTextArt(nStyle, false);
+        oTextArt.SetDocument(this);
+        oTextArt.SetPage(nPage);
+        oTextArt.Recalculate();
+
+        let oXfrm       = oTextArt.getXfrm();
+        let nScale      = this.Viewer.drawingPages[nPage].H * g_dKoef_pix_to_mm / nPageH;
+        let oViewRect   = this.Viewer.getViewingRect(nPage);
+
+        let nExtX   = oXfrm.extX;
+        let nExtY   = oXfrm.extY;
+        let nPosX   = (g_dKoef_pix_to_mm * (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) / nScale) - nExtX / 2;
+        let nPosY   = (g_dKoef_pix_to_mm * (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) / nScale) - nExtY / 2;
+        nPosX = Math.max(nPosX > nPageW - nExtX ? nPageW - nExtX - 5 : Math.max(nPosX, 5));
+        nPosY = Math.max(nPosY > nPageH - nExtY ? nPageH - nExtY - 5 : Math.max(nPosY, 5));
+
+        oXfrm.setOffX(nPosX);
+        oXfrm.setOffY(nPosY);
 
         this.drawings.push(oTextArt);
         if (oPagesInfo.pages[nPage].drawings == null) {
@@ -3658,12 +3730,9 @@ var CPresentation = CPresentation || function(){};
         }
         oPagesInfo.pages[nPage].drawings.push(oTextArt);
 
-        oTextArt.SetDocument(this);
-        oTextArt.SetPage(nPage);
-
         this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oTextArt]));
 
-        oTextArt.AddToRedraw();
+        oTextArt.SetNeedRecalc(true);
         
         this.SetMouseDownObject(oTextArt);
 
@@ -3684,10 +3753,14 @@ var CPresentation = CPresentation || function(){};
         let nPageW  = oPageInfo.width_mm;
         let nPageH  = oPageInfo.height_mm;
 
+        let oViewRect   = this.Viewer.getViewingRect(nPage);
+
         let nExtX   = nPageW * 2 /3;
         let nExtY   = nPageH / 5;
-        let nPosX   = (nPageW - nExtX) / 2;
-        let nPosY   = nPageH / 5;
+        let nPosX   = g_dKoef_pix_to_mm * (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) - nExtX / 2;
+        let nPosY   = g_dKoef_pix_to_mm * (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) - nExtY / 2;
+        nPosX = Math.max(nPosX > nPageW - nExtX ? nPageW - nExtX - 5 : Math.max(nPosX, 5));
+        nPosY = Math.max(nPosY > nPageH - nExtY ? nPageH - nExtY - 5 : Math.max(nPosY, 5));
 
         let oController = this.GetController();
         let oSmartArt   = new AscPDF.CPdfSmartArt();
@@ -3801,31 +3874,34 @@ var CPresentation = CPresentation || function(){};
         let nPageW  = oPageInfo.width_mm;
         let nPageH  = oPageInfo.height_mm;
 
-        let W;
-        if (AscFormat.isRealNumber(Width)) {
-            W = Width;
-        } else {
-            W = nPageW * 2 / 3;
+        if (false == AscFormat.isRealNumber(Width)) {
+            Width = nPageW * 2 / 3;
         }
+
+        let Grid = [];
+    
+        for (let Index = 0; Index < Cols; Index++)
+            Grid[Index] = Width / Cols;
+    
+        let RowHeight = AscFormat.isRealNumber(Height) ? Height / Rows : 7.478268771701388;
+
         let X, Y;
         if (AscFormat.isRealNumber(PosX) && AscFormat.isRealNumber(PosY)) {
             X = PosX;
             Y = PosY;
         } else {
-            X = (nPageW - W) / 2;
-            Y = nPageH / 5;
+            let nScale      = this.Viewer.drawingPages[nPage].H * g_dKoef_pix_to_mm / nPageH;
+            let oViewRect   = this.Viewer.getViewingRect(nPage);
+
+            let nExtX   = Width;
+            let nExtY   = RowHeight * Rows;
+
+            X = (g_dKoef_pix_to_mm * (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) / nScale) - nExtX / 2;
+            Y = (g_dKoef_pix_to_mm * (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) / nScale) - nExtY / 2;
+            X = Math.max(X > nPageW - nExtX ? nPageW - nExtX - 5 : Math.max(X, 5));
+            Y = Math.max(Y > nPageH - nExtY ? nPageH - nExtY - 5 : Math.max(Y, 5));
         }
         
-        let Grid = [];
-    
-        for (let Index = 0; Index < Cols; Index++)
-            Grid[Index] = W / Cols;
-    
-        let RowHeight;
-        if (AscFormat.isRealNumber(Height)) {
-            RowHeight = Height / Rows;
-        }
-    
         let Inline = false;
         if (AscFormat.isRealBool(bInline)) {
             Inline = bInline;
@@ -3838,12 +3914,12 @@ var CPresentation = CPresentation || function(){};
         graphic_frame.spPr.xfrm.setParent(graphic_frame.spPr);
         graphic_frame.spPr.xfrm.setOffX(X);
         graphic_frame.spPr.xfrm.setOffY(Y);
-        graphic_frame.spPr.xfrm.setExtX(W);
-        graphic_frame.spPr.xfrm.setExtY(7.478268771701388 * Rows);
+        graphic_frame.spPr.xfrm.setExtX(Width);
+        graphic_frame.spPr.xfrm.setExtY(RowHeight * Rows);
         graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
     
         let table = new CTable(this.GetDrawingDocument(), graphic_frame, Inline, Rows, Cols, Grid, true);
-        table.Reset(Inline ? X : 0, Inline ? Y : 0, W, 100000, 0, 0, 1, 0);
+        table.Reset(Inline ? X : 0, Inline ? Y : 0, Width, 100000, 0, 0, 1, 0);
         if (!Inline) {
             table.Set_PositionH(Asc.c_oAscHAnchor.Page, false, 0);
             table.Set_PositionV(Asc.c_oAscVAnchor.Page, false, 0);
@@ -3869,16 +3945,27 @@ var CPresentation = CPresentation || function(){};
         let oFile       = this.Viewer.file;
         let oNativePage = oFile.pages[nPage];
         let nPageW      = oNativePage.W;
-        let nPageH      = oNativePage.W;
+        let nPageH      = oNativePage.H;
         let oUser       = Asc.editor.User;
 
         let nWidth  = 200;
         let nHeight = 85;
 
+        let nScale      = this.Viewer.drawingPages[nPage].H / nPageH;
+        let oViewRect   = this.Viewer.getViewingRect(nPage);
+
+        let nYOffset    = (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) / nScale - nHeight / 2;
+        let nXOffset    = (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) / nScale - nWidth / 2;
+
+        let nX1Pos = Math.max(nXOffset > nPageW - nWidth ? nPageW - nWidth - 20 : Math.max(nXOffset, 20));
+        let nY1Pos = Math.max(nYOffset > nPageH - nHeight ? nPageH - nHeight - 20 : Math.max(nYOffset, 20));
+        let nX2Pos = nX1Pos + nWidth;
+        let nY2Pos = nY1Pos + nHeight;
+
         let nCurTime = new Date().getTime();
 
         let oProps = {
-            rect:           [(nPageW - nWidth) / 2, nPageH / 10, (nPageW - nWidth) / 2 + nWidth, nPageH / 10 + nHeight],
+            rect:           [nX1Pos, nY1Pos, nX2Pos, nY2Pos],
             page:           nPage,
             name:           AscCommon.CreateGUID(),
             type:           AscPDF.ANNOTATIONS_TYPES.FreeText,
@@ -3919,8 +4006,8 @@ var CPresentation = CPresentation || function(){};
                     let oTxBoxRect = oFreeText.GetTextBoxRect();
                     
                     // дефолтный callout
-                    let x1 = (nPageW - nWidth) / 2;
-                    let y1 = nPageH / 10;
+                    let x1 = nX1Pos;
+                    let y1 = nY1Pos;
                     let x2 = oTxBoxRect[0] - oFreeText.defaultPerpLength;
                     let y2 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
                     let x3 = oTxBoxRect[0];
@@ -3969,6 +4056,9 @@ var CPresentation = CPresentation || function(){};
         oObjectsByType.shapes.forEach(function(drawing) {
             drawing.SetNeedRecalc(true);
         });
+        oObjectsByType.images.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
 
         this.TurnOffHistory();
     };
@@ -3980,6 +4070,9 @@ var CPresentation = CPresentation || function(){};
         oController.checkSelectedObjectsAndCallback(oController.applyDrawingProps, [{type: sShapeType}], false, AscDFH.historydescription_Presentation_ChangeShapeType);
 
         oObjectsByType.shapes.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
+        oObjectsByType.images.forEach(function(drawing) {
             drawing.SetNeedRecalc(true);
         });
 
@@ -4379,6 +4472,12 @@ var CPresentation = CPresentation || function(){};
     
         return false;
     };
+    CPDFDoc.prototype.GetCurPage = function() {
+        return this.Viewer.currentPage;
+    };
+    CPDFDoc.prototype.GetPagesCount = function() {
+        return this.Viewer.file.pages.length;
+    };
     CPDFDoc.prototype.GetSelectionState = function() {
         const oSelectionState = {};
 
@@ -4395,13 +4494,16 @@ var CPresentation = CPresentation || function(){};
         let oController = this.GetController();
 
         this.SetMouseDownObject(oState.activeObject);
-        oController.setSelectionState(oState.drawingSelection);
+        if (false == this.Api.isRestrictionView()) {
+            oController.setSelectionState(oState.drawingSelection);
+        }
 
         if (oState.CurPage != -1 && oState.CurPage != this.Viewer.currentPage)
 	        this.Viewer.navigateToPage(oState.CurPage);
     };
     CPDFDoc.prototype.IsSelectionLocked = function() {};
     
+    CPDFDoc.prototype.Document_UpdateUndoRedoState = function() {};
     CPDFDoc.prototype.SetHighlightRequiredFields = function() {};
     CPDFDoc.prototype.SetLocalTrackRevisions = function() {};
     CPDFDoc.prototype.Document_UpdateUndoRedoState = function() {
@@ -4416,8 +4518,22 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Viewer_OnChangePosition = function() {};
     CPDFDoc.prototype.Document_CreateFontMap = function() { return {}};
     CPDFDoc.prototype.TurnOffSpellCheck = function() {};
-    CPDFDoc.prototype.RefreshDocumentPositions = function() {};
-    CPDFDoc.prototype.TrackDocumentPositions = function() {};
+    CPDFDoc.prototype.TrackDocumentPositions = function (arrPositions) {
+        this.CollaborativeEditing.Clear_DocumentPositions();
+    
+        for (var nIndex = 0, nCount = arrPositions.length; nIndex < nCount; ++nIndex) {
+            this.CollaborativeEditing.Add_DocumentPosition(arrPositions[nIndex]);
+        }
+    };
+    /**
+     * Обновляем отслеживаемые позиции
+     * @param arrPositions
+     */
+    CPDFDoc.prototype.RefreshDocumentPositions = function (arrPositions) {
+        for (var nIndex = 0, nCount = arrPositions.length; nIndex < nCount; ++nIndex) {
+            this.CollaborativeEditing.Update_DocumentPosition(arrPositions[nIndex]);
+        }
+    };
     CPDFDoc.prototype.RemoveSelection = function() {};
     CPDFDoc.prototype.Set_TargetPos = function() {};
     CPDFDoc.prototype.GetSelectedDrawingObjectsCount = function () {
@@ -4428,9 +4544,6 @@ var CPresentation = CPresentation || function(){};
         }).length;
     };
     CPDFDoc.prototype.isShapeChild = function() {};
-    CPDFDoc.prototype.IsShowTableAdjustments = function() {
-        return true;
-    };
     CPDFDoc.prototype.Document_Is_SelectionLocked = function() {
         return false;
     };
@@ -4560,6 +4673,18 @@ var CPresentation = CPresentation || function(){};
 
         return oNativePage.H * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
     };
+    CPDFDoc.prototype.GetPageWidth = function(nPage) {
+        nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+        let oNativePage = this.Viewer.file.pages[nPage];
+
+        return oNativePage.W * (96 / oNativePage.Dpi);
+    };
+    CPDFDoc.prototype.GetPageHeight = function(nPage) {
+        nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+        let oNativePage = this.Viewer.file.pages[nPage];
+        
+        return oNativePage.H * (96 / oNativePage.Dpi);
+    };
     CPDFDoc.prototype.GetPageWidthMM = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
         let oNativePage = this.Viewer.file.pages[nPage];
@@ -4576,9 +4701,18 @@ var CPresentation = CPresentation || function(){};
 		return editor;
 	};
 	CPDFDoc.prototype.CanEdit = function() {
-		return true;
+		return this.Api.canEdit();
 	};
-	CPDFDoc.prototype.IsFillingFormMode = function() {
+    CPDFDoc.prototype.IsShowShapeAdjustments = function() {
+        return this.Api.canEdit();
+    };
+    CPDFDoc.prototype.IsShowTableAdjustments = function() {
+        return this.Api.canEdit();;
+    };
+    CPDFDoc.prototype.IsViewerObject = function(oObject) {
+        return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.group && oObject.group.IsAnnot()));
+    };
+    CPDFDoc.prototype.IsFillingFormMode = function() {
 		return false;
 	};
 	CPDFDoc.prototype.getDrawingObjects = function() {
@@ -4699,6 +4833,10 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.Get_PageFields = function(nPage) {
         return this.Get_PageLimits(nPage);
+    };
+
+    CPDFDoc.prototype.GetAllSignatures = function() {
+        return [];
     };
     
 	

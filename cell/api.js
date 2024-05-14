@@ -156,9 +156,11 @@ var editor;
   spreadsheet_api.prototype._loadSdkImages = function () {
     var aImages = AscCommonExcel.getIconsForLoad();
     aImages.push(AscCommonExcel.sFrozenImageUrl, AscCommonExcel.sFrozenImageRotUrl);
-    this.ImageLoader.bIsAsyncLoadDocumentImages = false;
-    this.ImageLoader.LoadDocumentImages(aImages);
-    this.ImageLoader.bIsAsyncLoadDocumentImages = true;
+	  this.ImageLoader.LoadImagesWithCallback(aImages, function() {
+		  if(this.wbModel && this.wb) {
+			  this.asc_showWorksheet(this.asc_getActiveWorksheetIndex());
+		  }
+	  }, []);
   };
 
   spreadsheet_api.prototype.asc_CheckGuiControlColors = function() {
@@ -4196,6 +4198,10 @@ var editor;
 			this.wb._onUpdateSelectionName(true);
 			this.wb.NeedUpdateTargetForCollaboration = trueNeedUpdateTarget;
         }
+	};
+
+	spreadsheet_api.prototype.asc_getR1C1Mode = function (value) {
+		return AscCommonExcel.g_R1C1Mode;
 	};
 
 	spreadsheet_api.prototype.asc_SetAutoCorrectHyperlinks = function (value) {
@@ -9159,7 +9165,7 @@ var editor;
    * -----------------------------------------------------------------------------
    */
 
-  asc["spreadsheet_api"] = spreadsheet_api;
+  asc["spreadsheet_api"] = asc.spreadsheet_api = spreadsheet_api;
   prot = spreadsheet_api.prototype;
 
   prot["asc_GetFontThumbnailsPath"] = prot.asc_GetFontThumbnailsPath;
@@ -9287,6 +9293,7 @@ var editor;
   prot["asc_setWorksheetRange"] = prot.asc_setWorksheetRange;
 
   prot["asc_setR1C1Mode"] = prot.asc_setR1C1Mode;
+  prot["asc_getR1C1Mode"] = prot.asc_getR1C1Mode;
   prot["asc_setIncludeNewRowColTable"] = prot.asc_setIncludeNewRowColTable;
 
   prot["asc_setShowZeroCellValues"] = prot.asc_setShowZeroCellValues;

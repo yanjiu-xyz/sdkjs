@@ -749,6 +749,7 @@
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetIsPhoto] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetUserDrawn] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetPh] = CChangesDrawingsObject;
+		AscDFH.changesFactory[AscDFH.historyitem_NvPr_AddExt] = CChangesDrawingsContentNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetUniMedia] = CChangesDrawingsObjectNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_Ph_SetHasCustomPrompt] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_Ph_SetIdx] = CChangesDrawingsString;
@@ -894,6 +895,15 @@
 			return b === true || b === false;
 		}
 
+		// Own realization of Object.groupBy for IE11 compatibility
+		function groupBy(arr, callback) {
+			return arr.reduce(function (storage, item) {
+				let group = callback(item);
+				storage[group] = storage[group] || [];
+				storage[group].splice(0, 0, item);
+				return storage;
+			}, {});
+		}
 
 		function writeLong(w, val) {
 			w.WriteBool(isRealNumber(val));
@@ -6761,6 +6771,8 @@
 			this.userDrawn = null;
 			this.ph = null;
 			this.unimedia = null;
+
+			this.extLst = [];
 		}
 
 		InitClass(NvPr, CBaseFormatObject, AscDFH.historyitem_type_NvPr);
@@ -6775,6 +6787,10 @@
 		NvPr.prototype.setPh = function (ph) {
 			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_NvPr_SetPh, this.ph, ph));
 			this.ph = ph;
+		};
+		NvPr.prototype.addExt = function (ext) {
+			History.Add(new CChangesDrawingsContentNoId(this, AscDFH.historyitem_NvPr_AddExt, this.extLst.length, [ext], true));
+			this.extLst.push(ext);
 		};
 		NvPr.prototype.setUniMedia = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NvPr_SetUniMedia, this.unimedia, pr));
@@ -8352,6 +8368,7 @@
 		};
 
 		drawingConstructorsMap[AscDFH.historyitem_ExtraClrScheme_SetClrScheme] = ClrScheme;
+		drawingConstructorsMap[AscDFH.historyitem_NvPr_AddExt] = CExtP;
 
 		function FontCollection(fontScheme) {
 			CBaseNoIdObject.call(this);
@@ -13683,6 +13700,38 @@
 		InitClass(IdEntry, CBaseNoIdObject, undefined);
 
 
+		function CExtP() {
+			this.st = null;
+			this.end = null;
+		}
+		InitClass(CExtP, CBaseNoIdObject, undefined);
+
+		CExtP.prototype.readAttribute = function (nType, pReader) {
+			switch (nType) {
+				case 0: {
+					// id. embed / link
+					pReader.stream.Skip2(4);
+					break;
+				}
+				case 1: {
+					this.st = pReader.stream.GetDouble();
+					break;
+				}
+				case 2: {
+					this.end = pReader.stream.GetDouble();
+					break;
+				}
+			}
+		};
+		CExtP.prototype.Write_ToBinary = function (w) {
+			writeDouble(w, this.st);
+			writeDouble(w, this.end);
+		};
+		CExtP.prototype.Read_FromBinary = function (r) {
+			this.st = readDouble(r);
+			this.end = readDouble(r);
+		};
+
 		function CreateSchemeUnicolorWithMods(id, aMods) {
 			let oColor = new CUniColor();
 			oColor.color = new CSchemeColor();
@@ -17804,12 +17853,36 @@
 		}
 
 		const OBJECT_MORPH_MARKER = "!!";
+
+		function IsEqualObjects(obj1, obj2) {
+			let iO = AscCommon.isRealObject;
+			let iN = AscFormat.isRealNumber;
+			let iEN = AscFormat.fApproxEqual;
+			if(!iO(obj1) && iO(obj2) || iO(obj1) && !iO(obj2)) return false;
+			for(let sKey in obj1) {
+				if(obj1.hasOwnProperty(sKey)) {
+					let pr1 = obj1[sKey];
+					let pr2 = obj2[sKey];
+					if(iO(pr1)) {
+						if(!IsEqualObjects(pr1, pr2)) return false;
+					}
+					else if(iN(pr1)) {
+						if(!iEN(pr1, pr2)) return false;
+					}
+					else {
+						if(pr1 !== pr2) return false;
+					}
+				}
+			}
+			return true;
+		}
 //----------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CreateFontRef = CreateFontRef;
 		window['AscFormat'].CreatePresetColor = CreatePresetColor;
 		window['AscFormat'].isRealNumber = isRealNumber;
 		window['AscFormat'].isRealBool = isRealBool;
+		window['AscFormat'].groupBy = groupBy;
 		window['AscFormat'].writeLong = writeLong;
 		window['AscFormat'].readLong = readLong;
 		window['AscFormat'].writeDouble = writeDouble;
@@ -18123,6 +18196,7 @@
 		window['AscFormat'].CVariantVStream = CVariantVStream;
 		window['AscFormat'].fRGBAToHexString = fRGBAToHexString;
 		window['AscFormat'].RefreshContentAllFields = RefreshContentAllFields;
+		window['AscFormat'].IsEqualObjects = IsEqualObjects;
 		window['AscFormat'].szPh_full = szPh_full;
 		window['AscFormat'].szPh_half = szPh_half;
 		window['AscFormat'].szPh_quarter = szPh_quarter;

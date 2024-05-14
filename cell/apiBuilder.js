@@ -52,6 +52,7 @@
 	 * @property {ApiComment[]} Comments - Returns all comments related to the whole workbook.
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
+	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -262,6 +263,11 @@
 	 * "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
 	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
 	 */
+
+	/**
+	 * The cell references type.
+	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
+	 * */
 
 	/**
 	 * Class representing a base class for the color types.
@@ -1073,7 +1079,7 @@
 				this.asc_freezePane(type);
 
 		} else {
-			logError(new Error('Invalid parametr "FreezePaneType".'));
+			logError(new Error('Invalid parameter "FreezePaneType".'));
 		}
 	};
 
@@ -1113,6 +1119,51 @@
 			this.SetFreezePanesType(FreezePaneType);
 		}
 	});
+
+	/**
+	 * Returns the cell references style.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ReferenceStyle}
+	 * */
+	Api.prototype.GetReferenceStyle = function () {
+		let bReferenceStyle = this.asc_getR1C1Mode();
+		return bReferenceStyle ? "xlR1C1" : "xlA1";
+	};
+
+	/**
+	 * Sets the cell references style.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {ReferenceStyle} sReferenceStyle - Type of reference style
+	 */
+	Api.prototype.SetReferenceStyle = function (sReferenceStyle) {
+		let bReferenceMode = null;
+		switch (sReferenceStyle) {
+			case "xlA1":
+				bReferenceMode = false;
+				break;
+			case "xlR1C1":
+				bReferenceMode = true;
+				break;
+		}
+
+		if (bReferenceMode !== null) {
+			this.asc_setR1C1Mode(bReferenceMode);
+		} else {
+			logError(new Error('Invalid parameter "ReferenceStyle"'));
+		}
+	};
+
+	Object.defineProperty(Api.prototype, "ReferenceStyle", {
+		get: function () {
+			return this.GetReferenceStyle();
+		},
+		set: function (ReferenceStyle) {
+			this.SetReferenceStyle(ReferenceStyle);
+		}
+	});
+
 
 	/**
 	 * Returns the state of sheet visibility.
@@ -2216,6 +2267,34 @@
 			return this.GetAllProtectedRanges();
 		}
 	});
+
+	/**
+	 * Pastes the contents of the Clipboard onto the sheet.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange?} [destination] - Object that specifies where the Clipboard contents should be pasted. If this argument is omitted, the current selection is used.
+	 * @since 8.1.0
+	 */
+	ApiWorksheet.prototype.Paste = function (destination) {
+		var oApi = Asc["editor"];
+		if (destination) {
+			if (destination instanceof ApiRange) {
+				AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+				let ws =  destination.range.worksheet;
+				private_executeOtherActiveSheet(ws, destination.range, function () {
+					oApi && oApi.asc_Paste();
+				});
+			} else {
+				logError(new Error('Invalid destination'));
+			}
+		} else {
+			AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+			let ws = this.worksheet;
+			private_executeOtherActiveSheet(ws, null, function () {
+				oApi && oApi.asc_Paste();
+			});
+		}
+	};
 
 
 
@@ -3658,21 +3737,31 @@
 	});
 
 	/**
-	 * Copies a range to the specified range.
+	 * Copies the range to the specified range or to the Clipboard.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} destination - Specifies a new range to which the specified range will be copied.
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
 	 */
 	ApiRange.prototype.Copy = function (destination) {
-		if (destination && destination instanceof ApiRange) {
-			let bboxFrom = this.range.bbox;
-			let cols = bboxFrom.c2 - bboxFrom.c1;
-			let rows = bboxFrom.r2 - bboxFrom.r1;
-			let bbox = destination.range.bbox;
-			let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
-			this.range.move(range.bbox, true, destination.range.worksheet);
+		var oApi = Asc["editor"];
+		if (destination) {
+			if (destination instanceof ApiRange) {
+				let bboxFrom = this.range.bbox;
+				let cols = bboxFrom.c2 - bboxFrom.c1;
+				let rows = bboxFrom.r2 - bboxFrom.r1;
+				let bbox = destination.range.bbox;
+				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+				this.range.move(range.bbox, true, destination.range.worksheet);
+				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+			} else {
+				logError(new Error('Invalid destination'));
+			}
 		} else {
-			logError(new Error('Invalid destination'));
+			let ws =  this.range.worksheet;
+			private_executeOtherActiveSheet(ws, this.range, function () {
+				oApi && oApi.asc_Copy();
+			});
+			oApi && oApi.wb.cleanCopyData();
 		}
 	};
 
@@ -7109,7 +7198,7 @@
 	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
 	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
 
-	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
+	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
 	ApiRange.prototype["GetCol"] = ApiRange.prototype.GetCol;
 	ApiRange.prototype["Clear"] = ApiRange.prototype.Clear;
@@ -7527,6 +7616,28 @@
 		if (!console.error)
 			logError(err);
 		throw err;
+	};
+	function private_executeOtherActiveSheet(ws, range, func) {
+		let oldActiveSheet = ws && ws.workbook && ws.workbook.getActive();
+		let isChangedActiveSheet;
+		if (oldActiveSheet != null && ws && oldActiveSheet !== ws.index) {
+			ws.workbook.setActive(ws.index);
+			isChangedActiveSheet = true;
+		}
+
+		let oldSelection;
+		if (range) {
+			oldSelection = ws.selectionRange.clone();
+			let newSelection = new AscCommonExcel.SelectionRange(ws);
+			let bbox = range.bbox;
+			newSelection.assign2(bbox);
+			newSelection.Select(true);
+		}
+
+		func();
+
+		isChangedActiveSheet && ws.workbook.setActive(oldActiveSheet);
+		oldSelection && oldSelection.Select(true);
 	};
 
 }(window, null));

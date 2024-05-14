@@ -1802,6 +1802,13 @@ function (window, undefined) {
 		return (new asc_CColor(this.r, this.g, this.b)).asc_getName();
 	};
 
+	CColor.prototype.getAscColor = function () {
+		return (new asc_CColor(this.r, this.g, this.b));
+	};
+	CColor.prototype.fromAscColor = function (oAscColor) {
+		return new CColor(oAscColor.r, oAscColor.g, oAscColor.b);
+	};
+
 	/** @constructor */
 	function asc_CColor() {
 		this.type = c_oAscColor.COLOR_TYPE_SRGB;
@@ -5085,8 +5092,8 @@ function (window, undefined) {
 				}
 				switch (oApi.getEditorId()) {
 					case AscCommon.c_oEditorId.Word: {
-						oShape.setWordShape(true);
-						bWord = true;
+						bWord = true && !oApi.isPdfEditor();
+						oShape.setWordShape(bWord);
 						break;
 					}
 					case AscCommon.c_oEditorId.Presentation: {
@@ -5102,9 +5109,11 @@ function (window, undefined) {
 				}
 
 				let _oldTrackRevision = false;
-				if (oApi.getEditorId() == AscCommon.c_oEditorId.Word && oApi.WordControl && oApi.WordControl.m_oLogicDocument) _oldTrackRevision = oApi.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
+				if (oApi.getEditorId() === AscCommon.c_oEditorId.Word && oApi.WordControl && !oApi.isPdfEditor())
+					_oldTrackRevision = oApi.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
 
-				if (false !== _oldTrackRevision) oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
+				if (false !== _oldTrackRevision)
+					oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
 
 				let bRemoveDocument = false;
 				if (oApi.WordControl && !oApi.WordControl.m_oLogicDocument) {
@@ -5312,9 +5321,11 @@ function (window, undefined) {
 					oApi.ShowParaMarks = oldShowParaMarks;
 				}
 
-				if (false !== _oldTrackRevision) oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(_oldTrackRevision);
+				if (false !== _oldTrackRevision)
+					oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(_oldTrackRevision);
 
-				if (this.imageBackground) delete oApi.ImageLoader.map_image_index[this.imageBackgroundUrl];
+				if (this.imageBackground)
+					delete oApi.ImageLoader.map_image_index[this.imageBackgroundUrl];
 
 			}, this, [obj]);
 
@@ -5434,6 +5445,26 @@ function (window, undefined) {
 	PluginType["PanelRight"] = PluginType.PanelRight;
 	PluginType["Unvisible"] = PluginType.Unvisible;
 
+	PluginType["getType"] = PluginType.getType = function(type) {
+		if (undefined === type)
+			return undefined;
+
+		if (typeof type !== "string")
+			return type;
+
+		switch (type) {
+			case "system" : return this.System;
+			case "background" : return this.Background;
+			case "window" : return this.Window;
+			case "panel" : return this.Panel;
+			case "panelRight" : return this.PanelRight;
+			case "invisible" : return this.Invisible;
+			default: break;
+		}
+
+		return this.Background;
+	};
+
 	function CPluginVariation() {
 		this.description = "";
 		this.url = "";
@@ -5540,31 +5571,7 @@ function (window, undefined) {
 		_object["isDisplayedInViewer"] = this.isDisplayedInViewer;
 		_object["EditorsSupport"] = this.EditorsSupport;
 
-		switch (this.type) {
-			case PluginType.System:
-				_object["type"] = "system";
-				break;
-
-			case PluginType.Window:
-				_object["type"] = "window";
-				break;
-
-			case PluginType.Panel:
-				_object["type"] = "panel";
-				break;
-
-			case PluginType.PanelRight:
-				_object["type"] = "panelRight";
-				break;
-
-			case PluginType.Invisible:
-				_object["type"] = "invisible";
-				break;
-		
-			default:
-				_object["type"] = "background";
-				break;
-		}
+		_object["type"] = this.type;
 
 		_object["isCustomWindow"] = this.isCustomWindow;
 		_object["isModal"] = this.isModal;
@@ -5599,13 +5606,9 @@ function (window, undefined) {
 		// default: background
 		this.type = PluginType.Background;
 
-		let _type = _object["type"];
+		let _type = PluginType.getType(_object["type"]);
 		if (undefined !== _type) {
-			if ("system" === _type) this.type = PluginType.System;
-			if ("window" === _type) this.type = PluginType.Window;
-			if ("panel" === _type) this.type = PluginType.Panel;
-			if ("panelRight" === _type) this.type = PluginType.PanelRight;
-			if ("invisible" === _type) this.type = PluginType.Invisible;
+			this.type = _type;
 		}
 		else {
 			// old version: not support background plugins

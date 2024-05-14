@@ -217,6 +217,8 @@
 		this._useDisplayValue   = true;
 		let _t                  = this;
 
+        AscFonts.FontPickerByCharacter.getFontsByString(displayValue);
+
         if (isOnOpen == true) {
             if (_t._displayValue !== displayValue)
 				return;
@@ -321,7 +323,7 @@
         oContentToDraw.Draw(0, oGraphicsWord);
 
         oGraphicsWord.RemoveLastClip();
-        this.DrawBorders(oGraphicsPDF);
+        this.DrawBorders(oGraphicsPDF, oGraphicsWord);
         // redraw target cursor if field is selected
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsCanEditText())
             oContentToDraw.RecalculateCurPos();

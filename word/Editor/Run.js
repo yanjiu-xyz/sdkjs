@@ -529,13 +529,16 @@ ParaRun.prototype.GetText = function(oText)
 	return oText.Text;
 };
 
-ParaRun.prototype.GetTextOfElement = function(isLaTeX)
+ParaRun.prototype.GetTextOfElement = function(isLaTeX, isSelected)
 {
 	let str = "";
 	let strCurrentStyleGroup = "";
 	let strCurrentTemp = "";
+	
+	let startPos = isSelected ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0;
+	let endPos   = isSelected ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length;
 
-	for (let i = 0; i < this.Content.length; i++)
+	for (let i = startPos; i < endPos; i++)
 	{
 		if (this.Content[i])
 		{
@@ -1496,7 +1499,7 @@ ParaRun.prototype.Remove = function(Direction, bOnAddText)
 					this.SetRStyle(undefined);
 
 				let oItem = this.Content[CurPos];
-				if (oItem.IsText())
+				if (oItem.IsText() || oItem.IsMathText())
 				{
 					let oInfo = this.RemoveTextCluster(CurPos);
 					oInfo.SetDocumentPositionHere();
@@ -1536,7 +1539,7 @@ ParaRun.prototype.RemoveTextCluster = function(nPos)
 	let oParagraph     = this.GetParagraph();
 	let oLogicDocument = this.GetLogicDocument();
 	let isTrack        = oLogicDocument && oLogicDocument.IsTrackRevisions() && !this.CanDeleteInReviewMode();
-	if (!oParagraph || nPos >= this.Content.length || !this.Content[nPos].IsText())
+	if (!oParagraph || nPos >= this.Content.length || (!this.Content[nPos].IsText() && !this.Content[nPos].IsMathText()))
 		return new CRunWithPosition(this, nPos);
 
 	let oCurRun = this;
@@ -1557,7 +1560,7 @@ ParaRun.prototype.RemoveTextCluster = function(nPos)
 
 	let oNextInfo = oCurRun.GetNextRunElementEx(nPos);
 	let oNext     = oNextInfo ? oNextInfo.Element : null;
-	if (!oNext || !oNext.IsText() || !oNext.IsCombiningMark())
+	if (!oNext || (!oNext.IsText() && !oNext.IsMathText()) || !oNext.IsCombiningMark())
 		return new CRunWithPosition(oCurRun, nPos);
 
 	let oContentPos = oNextInfo.Pos;
@@ -2895,7 +2898,7 @@ ParaRun.prototype.GetNextRunElements = function(oRunElements, isUseContentPos, n
 
 	for (var nCurPos = nStartPos, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
 	{
-		if (oRunElements.IsEnoughElements())
+		if (oRunElements.IsEnoughElements() || this.IsEmpty())
 			return;
 
 		oRunElements.UpdatePos(nCurPos, nDepth);
@@ -2911,7 +2914,7 @@ ParaRun.prototype.GetPrevRunElements = function(oRunElements, isUseContentPos, n
 
 	for (var nCurPos = nStartPos; nCurPos >= 0; --nCurPos)
 	{
-		if (oRunElements.IsEnoughElements())
+		if (oRunElements.IsEnoughElements() || this.IsEmpty())
 			return;
 
 		oRunElements.UpdatePos(nCurPos, nDepth);
@@ -4340,10 +4343,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     }
                     else if (para_PageNum === ItemType)
                     {
-                        var LogicDocument = Para.LogicDocument;
-                        var SectionPage   = LogicDocument.Get_SectionPageNumInfo2(Para.Get_AbsolutePage(PRS.Page)).CurPage;
-
-                        Item.Set_Page(SectionPage);
+						let logicDocument = Para.LogicDocument;
+						let sectInfo  = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
+						let sectPr    = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+                        Item.SetValue(sectInfo.CurPage, sectPr.GetPageNumFormat());
                     }
 
                     // Если до этого было слово, тогда не надо проверять убирается ли оно, но если стояли пробелы,
@@ -4634,14 +4637,20 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								{
 									oHdrFtr.Add_PageCountElement(Item);
 
-									if (!Item.IsNumValue() && Para.LogicDocument && Para.LogicDocument.IsDocumentEditor())
-										Item.SetNumValue(Para.LogicDocument.Pages.length);
+									let logicDocument = Para.LogicDocument;
+									if (!Item.IsNumValue() && logicDocument && logicDocument.IsDocumentEditor())
+									{
+										let numFormat = oInstruction.haveNumericFormat() ? oInstruction.getNumericFormat() : Asc.c_oAscNumberingFormat.Decimal;
+										Item.SetNumValue(logicDocument.Pages.length, numFormat);
+									}
 								}
 								else if (AscWord.fieldtype_PAGE === oInstruction.GetType())
 								{
-									var LogicDocument = Para.LogicDocument;
-									var SectionPage   = LogicDocument.Get_SectionPageNumInfo2(Para.Get_AbsolutePage(PRS.Page)).CurPage;
-									Item.SetNumValue(SectionPage);
+									let logicDocument = Para.LogicDocument;
+									let sectInfo  = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
+									let sectPr    = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+									let numFormat = oInstruction.haveNumericFormat() ? oInstruction.getNumericFormat() : sectPr.GetPageNumFormat();
+									Item.SetNumValue(sectInfo.CurPage, numFormat);
 								}
 								else
 								{
@@ -6419,6 +6428,20 @@ ParaRun.prototype.Cursor_Is_End = function()
         return true;
 
     return false;
+};
+ParaRun.prototype.IsStartPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	return 0 === contentPos.Get(depth);
+};
+ParaRun.prototype.IsEndPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	return contentPos.Get(depth) >= this.Content.length;
 };
 /**
  * Проверяем находится ли курсор в начале рана
@@ -11975,6 +11998,7 @@ ParaRun.prototype.GetNextRunElementEx = function(nPos)
 
 	let oContentPos  = this.GetParagraphContentPosFromObject(this.Content.length);
 	let oRunElements = new CParagraphRunElements(oContentPos, 1, null, true);
+	oRunElements.SkipMath = false;
 	oRunElements.SetSaveContentPositions(true);
 	oParagraph.GetNextRunElements(oRunElements);
 

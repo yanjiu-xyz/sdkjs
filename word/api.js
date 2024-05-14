@@ -128,6 +128,7 @@
 			this.LinkToPrevious   = (undefined != obj.LinkToPrevious) ? obj.LinkToPrevious : null;
 			this.Locked           = (undefined != obj.Locked) ? obj.Locked : false;
 			this.StartPageNumber  = (undefined != obj.StartPageNumber) ? obj.StartPageNumber : -1;
+			this.NumFormat        = (undefined !== obj.NumFormat) ? obj.NumFormat : -1;
 		}
 		else
 		{
@@ -138,6 +139,7 @@
 			this.LinkToPrevious   = null;
 			this.Locked           = false;
 			this.StartPageNumber  = -1;
+			this.NumFormat        = (undefined !== obj.NumFormat) ? obj.NumFormat : -1;
 		}
 	}
 
@@ -188,6 +190,14 @@
 	CHeaderProp.prototype.put_StartPageNumber = function(nStartPage)
 	{
 		this.StartPageNumber = nStartPage;
+	};
+	CHeaderProp.prototype.get_NumFormat = function()
+	{
+		return this.NumFormat;
+	};
+	CHeaderProp.prototype.put_NumFormat = function(format)
+	{
+		this.NumFormat = format;
 	};
 
 	var DocumentPageSize = new function()
@@ -3570,7 +3580,7 @@ background-repeat: no-repeat;\
 			
 			getNewValue : function(stylePr)
 			{
-				let val = 12 * g_dKoef_pt_to_mm;
+				let val = 12 * AscCommonWord.g_dKoef_pt_to_mm;
 				if (stylePr.Spacing.Before > 0.001)
 					val = stylePr.Spacing.Before;
 				
@@ -3603,7 +3613,7 @@ background-repeat: no-repeat;\
 			
 			getNewValue : function(stylePr)
 			{
-				let val = 12 * g_dKoef_pt_to_mm;
+				let val = 12 * AscCommonWord.g_dKoef_pt_to_mm;
 				if (stylePr.Spacing.After > 0.001)
 					val = stylePr.Spacing.After;
 				
@@ -5445,6 +5455,29 @@ background-repeat: no-repeat;\
 			oLogicDocument.FinalizeAction();
 		}
 	};
+	asc_docs_api.prototype.asc_SetSectionPageNumFormat = function(format)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		return new Promise(function(resolve)
+		{
+			let symbols = AscWord.GetNumberingSymbolsByFormat(format);
+			if (symbols && symbols.length)
+				AscFonts.FontPickerByCharacter.checkText(symbols, this, resolve);
+			else
+				resolve();
+		}).then(function()
+		{
+			if (logicDocument.IsSelectionLocked(AscCommon.changestype_HdrFtr))
+				return;
+			
+			logicDocument.StartAction(AscDFH.historydescription_Document_SectionPageNumFormat);
+			logicDocument.SetSectionPageNumFormat(format);
+			logicDocument.FinalizeAction();
+		});
+	};
 
 	/*структура для передачи настроек колонтитулов
 	 {
@@ -7126,6 +7159,60 @@ background-repeat: no-repeat;\
 	asc_CCommentDataWord.prototype.asc_putUserData = function(v)
 	{
 		this.m_sUserData = v;
+	};
+	asc_CCommentDataWord.prototype.fromCValue = function (value) {
+		if (!value) {
+			return value;
+		}
+		let pr = new AscWord.CSdtPictureFormPr();
+		pr.asc_putText(value["Text"]);
+		pr.asc_putTime(value["Time"]);
+		pr.asc_putOnlyOfficeTime(value["OnlyOfficeTime"]);
+		pr.asc_putUserId(value["UserId"]);
+		pr.asc_putProviderId(value["ProviderId"]);
+		pr.asc_putUserName(value["UserName"]);
+		pr.asc_putInitials(value["Initials"]);
+		pr.asc_putGuid(value["Guid"]);
+		pr.asc_putTimeZoneBias(value["TimeZoneBias"]);
+		pr.asc_putQuoteText(value["QuoteText"]);
+		pr.asc_putSolved(value["Solved"]);
+
+		if (Array.isArray(value["asc_getReplies"])) {
+			for (let nIdx = 0; nIdx < value["asc_getReplies"].length; ++nIdx) {
+				let reply = Asc.asc_CCommentData.prototype.fromCValue(value["asc_getReplies"][nIdx]);
+				if (reply) {
+					this.asc_addReply(reply);
+				}
+			}
+		}
+		pr.asc_putDocumentFlag(value["DocumentFlag"]);
+		pr.asc_putUserData(value["UserData"]);
+		return pr;
+	};
+	asc_CCommentDataWord.prototype.toCValue = function () {
+		let value = {};
+		value["Text"] = this.asc_getText();
+		value["Time"] = this.asc_getTime();
+		value["OnlyOfficeTime"] = this.asc_getOnlyOfficeTime();
+		value["UserId"] = this.asc_getUserId();
+		value["ProviderId"] = this.asc_getProviderId();
+		value["UserName"] = this.asc_getUserName();
+		value["Initials"] = this.asc_getInitials();
+		value["Guid"] = this.asc_getGuid();
+		value["TimeZoneBias"] = this.asc_getTimeZoneBias();
+		value["QuoteText"] = this.asc_getQuoteText();
+		value["Solved"] = this.asc_getSolved();
+		value["asc_getReplies"] = [];
+		let Count = this.m_aReplies.length;
+		for (let nIdx = 0; nIdx < Count; nIdx++) {
+			let val = this.m_aReplies[nIdx].toCValue();
+			if (val) {
+				value["asc_getReplies"].push(val);
+			}
+		}
+		value["DocumentFlag"] = this.asc_getDocumentFlag();
+		value["UserData"] = this.asc_getUserData();
+		return value;
 	};
 
 	asc_docs_api.prototype.asc_showComments = function(isShowSolved)
@@ -9409,6 +9496,11 @@ background-repeat: no-repeat;\
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем со стилями
 	//----------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns object which contains direct text and paragraph properties of the first run in selection.
+	 * @returns {asc_CStyle}
+	 */
 	asc_docs_api.prototype.asc_GetStyleFromFormatting = function()
 	{
 		return this.WordControl.m_oLogicDocument.GetStyleFromFormatting();
@@ -13583,19 +13675,19 @@ background-repeat: no-repeat;\
 		
 		return menuInfo;
 	};
-
-	asc_docs_api.prototype.asc_getDocumentProtection = function () {
-		let oDocument = this.private_GetLogicDocument();
-		if (!oDocument) {
-			return;
-		}
-
-		var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
-		if (docProtection) {
-			return docProtection.Copy();
-		}
+	
+	asc_docs_api.prototype.asc_getDocumentProtection = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return null;
+		
+		let docProtection = logicDocument.GetDocumentSettings().DocumentProtection;
+		if (!docProtection)
+			return null;
+		
+		return docProtection.getAscDocProtect();
 	};
-
 	asc_docs_api.prototype.asc_setDocumentProtection = function (props) {
 		//props -> CDocProtect
 
@@ -13854,6 +13946,7 @@ background-repeat: no-repeat;\
 	CAscSection.prototype['get_MarginRight']                            = CAscSection.prototype.get_MarginRight;
 	CAscSection.prototype['get_MarginTop']                              = CAscSection.prototype.get_MarginTop;
 	CAscSection.prototype['get_MarginBottom']                           = CAscSection.prototype.get_MarginBottom;
+	Asc.CHeaderProp = CHeaderProp;
 	CHeaderProp.prototype['get_Type']                                   = CHeaderProp.prototype.get_Type;
 	CHeaderProp.prototype['put_Type']                                   = CHeaderProp.prototype.put_Type;
 	CHeaderProp.prototype['get_Position']                               = CHeaderProp.prototype.get_Position;
@@ -13866,6 +13959,8 @@ background-repeat: no-repeat;\
 	CHeaderProp.prototype['get_Locked']                                 = CHeaderProp.prototype.get_Locked;
 	CHeaderProp.prototype['get_StartPageNumber']                        = CHeaderProp.prototype.get_StartPageNumber;
 	CHeaderProp.prototype['put_StartPageNumber']                        = CHeaderProp.prototype.put_StartPageNumber;
+	CHeaderProp.prototype['get_NumFormat']                              = CHeaderProp.prototype.get_NumFormat;
+	CHeaderProp.prototype['put_NumFormat']                              = CHeaderProp.prototype.put_NumFormat;
 	window['Asc']['CMailMergeSendData'] = window['Asc'].CMailMergeSendData = CMailMergeSendData;
 	CMailMergeSendData.prototype['get_From']                            = CMailMergeSendData.prototype.get_From;
 	CMailMergeSendData.prototype['put_From']                            = CMailMergeSendData.prototype.put_From;
@@ -13896,7 +13991,7 @@ background-repeat: no-repeat;\
 	CAscFootnotePr.prototype['put_NumFormat']                           = CAscFootnotePr.prototype.put_NumFormat;
 	CAscFootnotePr.prototype['get_NumRestart']                          = CAscFootnotePr.prototype.get_NumRestart;
 	CAscFootnotePr.prototype['put_NumRestart']                          = CAscFootnotePr.prototype.put_NumRestart;
-	window['Asc']['asc_docs_api']                                       = asc_docs_api;
+	window['Asc']['asc_docs_api'] = window['Asc'].asc_docs_api          = asc_docs_api;
 	asc_docs_api.prototype['SetCollaborativeMarksShowType']             = asc_docs_api.prototype.SetCollaborativeMarksShowType;
 	asc_docs_api.prototype['GetCollaborativeMarksShowType']             = asc_docs_api.prototype.GetCollaborativeMarksShowType;
 	asc_docs_api.prototype['Clear_CollaborativeMarks']                  = asc_docs_api.prototype.Clear_CollaborativeMarks;
@@ -14143,6 +14238,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['HeadersAndFooters_DifferentOddandEvenPage'] = asc_docs_api.prototype.HeadersAndFooters_DifferentOddandEvenPage;
 	asc_docs_api.prototype['HeadersAndFooters_LinkToPrevious']          = asc_docs_api.prototype.HeadersAndFooters_LinkToPrevious;
 	asc_docs_api.prototype['asc_SetSectionStartPage']                   = asc_docs_api.prototype.asc_SetSectionStartPage;
+	asc_docs_api.prototype['asc_SetSectionPageNumFormat']               = asc_docs_api.prototype.asc_SetSectionPageNumFormat;
 	asc_docs_api.prototype['sync_DocSizeCallback']                      = asc_docs_api.prototype.sync_DocSizeCallback;
 	asc_docs_api.prototype['sync_PageOrientCallback']                   = asc_docs_api.prototype.sync_PageOrientCallback;
 	asc_docs_api.prototype['sync_HeadersAndFootersPropCallback']        = asc_docs_api.prototype.sync_HeadersAndFootersPropCallback;
@@ -14661,7 +14757,7 @@ background-repeat: no-repeat;\
 	CContextMenuData.prototype['get_Y']       = CContextMenuData.prototype.get_Y;
 	CContextMenuData.prototype['get_PageNum'] = CContextMenuData.prototype.get_PageNum;
 	CContextMenuData.prototype['is_Header']   = CContextMenuData.prototype.is_Header;
-	window['Asc']['asc_CCommentDataWord']                 = asc_CCommentDataWord;
+	window['Asc']['asc_CCommentDataWord'] = window['Asc'].asc_CCommentDataWord = asc_CCommentDataWord;
 	asc_CCommentDataWord.prototype['asc_getText']         = asc_CCommentDataWord.prototype.asc_getText;
 	asc_CCommentDataWord.prototype['asc_putText']         = asc_CCommentDataWord.prototype.asc_putText;
 	asc_CCommentDataWord.prototype['asc_getTime']         = asc_CCommentDataWord.prototype.asc_getTime;

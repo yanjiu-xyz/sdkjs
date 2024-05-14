@@ -65,6 +65,10 @@
 
 		return this.toSymbols[name];
 	};
+	LexerLiterals.prototype.IsInUnicode = function(strName)
+	{
+		return this.fromSymbols[strName] !== undefined;
+	}
 	LexerLiterals.prototype.private_Add = function (name, data)
 	{
 		this.private_AddToSymbols(name, data);
@@ -3277,8 +3281,14 @@
 		let strCorrection = ConvertWord(str, IsLaTeX);
 		if (strCorrection)
 		{
+			if (MathLiterals.accent.IsInUnicode(strCorrection))
+				strCorrection = String.fromCharCode(160) + strCorrection; //add nbsp before accent, like word
+
 			let oRun = RemoveCountFormMathContent(oCMathContent,isLastOperator ? oContent.counter - 1 : oContent.counter, isLastOperator);
 			let nPos = isLastOperator ? oRun.Content.length - 1 : oRun.Content.length;
+
+			if (MathLiterals.accent.IsInUnicode(strCorrection))
+				strCorrection = String.fromCharCode(160) + strCorrection; //add nbsp before accent, like word
 
 			for (let i = 0; i < strCorrection.length; i++)
 			{
