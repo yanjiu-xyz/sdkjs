@@ -3641,10 +3641,19 @@ var CPresentation = CPresentation || function(){};
                 let oDrawing;
                 oXmlReader.rels = {
                     getRelationship : function(rId) {
-                        return {
-                            targetMode : "InternalBase64",
-                            base64 : _t.Viewer.file.nativeFile["getImageBase64"](parseInt(rId.substring(3))),
-                            drawing: oDrawing
+                        let url =  _t.Viewer.file.nativeFile["getImageBase64"](parseInt(rId.substring(3)));
+                        if ("data:" === url.substring(0, 5)) {
+                            return {
+                                targetMode : "InternalBase64",
+                                base64 : url,
+                                drawing: oDrawing
+                            }
+                        } else {
+                            return {
+                                targetMode: "Internal",
+                                targetFullName: url,
+                                drawing: oDrawing
+                            }
                         }
                     }
                 };
@@ -3708,6 +3717,11 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
                 Asc.editor.ImageLoader.LoadImagesWithCallback(aLoadUrls, fEndCallback, []);
+
+                let _file = _t.Viewer.file;
+                for (url in aUrls) {
+                    _file.nativeFile["changeImageUrl"](aUrls[url], oImageMap[url]);
+                }
             });
         }
         else {
