@@ -3638,16 +3638,17 @@ var CPresentation = CPresentation || function(){};
                 oXmlReader.parseNode(0);
 
                 let _t = this;
+                let oDrawing;
                 oXmlReader.rels = {
                     getRelationship : function(rId) {
                         return {
-                            targetMode : "Internal",
-                            base64 : _t.Viewer.file.nativeFile["getImageBase64"](parseInt(rId.substring(3)))
+                            targetMode : "InternalBase64",
+                            base64 : _t.Viewer.file.nativeFile["getImageBase64"](parseInt(rId.substring(3))),
+                            drawing: oDrawing
                         }
                     }
                 };
 
-                let oDrawing;
                 switch (oXmlReader.GetName()) {
                     case 'p:sp': {
                         oDrawing = new AscPDF.CPdfShape();
@@ -3673,15 +3674,45 @@ var CPresentation = CPresentation || function(){};
         }, this, this);
 
         let _t = this;
-        aPageDrawings.forEach(function(drawing) {
-            drawing.SetFromScan(true);
-            _t.AddDrawing(drawing, nPage);
-            drawing.SetNeedRecalc(true);
-        });
+        let oImageMap = oParserContext.imageMap;
+        let aUrls = [];
+        let aBase64Img = []
+        for(let sImg in oImageMap) {
+            if(oImageMap.hasOwnProperty(sImg)) {
+                aUrls.push(sImg);
+                let aImg = oImageMap[sImg];
+                for(let nIdx = 0; nIdx < aImg.length; ++nIdx) {
+                    let oImg = aImg[nIdx];
+                    aBase64Img.push(new AscCommon.CBuilderImages(oImg.blipFill, sImg, oImg.drawing, null, null));
+                }
+            }
+        }
 
-        this.TurnOffHistory();
-
-        this.Viewer.file.removeSelection();
+        let fEndCallback = function () {
+            aPageDrawings.forEach(function(drawing) {
+                drawing.SetFromScan(true);
+                _t.AddDrawing(drawing, nPage);
+                drawing.SetNeedRecalc(true);
+            });
+            _t.TurnOffHistory();
+            _t.Viewer.file.removeSelection();
+        };
+        if(aUrls.length > 0) {
+            AscCommon.sendImgUrls(Asc.editor, aUrls, function (data) {
+                let oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aBase64Img);
+                AscCommon.ResetNewUrls(data, aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+                let aLoadUrls = [];
+                for(let nIdx = 0; nIdx < data.length; ++nIdx) {
+                    if(data[nIdx].url) {
+                        aLoadUrls.push(data[nIdx].url);
+                    }
+                }
+                Asc.editor.ImageLoader.LoadImagesWithCallback(aLoadUrls, fEndCallback, []);
+            });
+        }
+        else {
+            fEndCallback();
+        }
     };
     CPDFDoc.prototype.AddDrawing = function(oDrawing, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
