@@ -3650,7 +3650,7 @@ var CPresentation = CPresentation || function(){};
                             }
                         } else {
                             return {
-                                targetMode: "Internal",
+                                targetMode: "InternalLoaded",
                                 targetFullName: url,
                                 drawing: oDrawing
                             }
