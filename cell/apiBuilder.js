@@ -269,6 +269,21 @@
 	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
 	 * */
 
+	//TODO not support "xlPasteAllMergingConditionalFormats" / "xlPasteAllUsingSourceTheme" / "xlPasteValidation"
+	/**
+	 * Specifies the part of the range to be pasted.
+	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders" |
+	 *  | "xlPasteColumnWidths" | "xlPasteComments"
+	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
+	 * | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
+	 * */
+
+	/**
+	 * Specifies how numeric data will be calculated with the destinations cells on the worksheet.
+	 * @typedef {("xlPasteSpecialOperationAdd" | "xlPasteSpecialOperationDivide" | "xlPasteSpecialOperationMultiply"|
+	 * "xlPasteSpecialOperationNone" | "xlPasteSpecialOperationSubtract" )} PasteSpecialOperation
+	 * */
+
 	/**
 	 * Class representing a base class for the color types.
 	 * @constructor
@@ -3766,6 +3781,37 @@
 	};
 
 	/**
+	 * Cuts the range to the specified range or to the Clipboard.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be cuted. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
+	 */
+	ApiRange.prototype.Cut = function (destination) {
+		var oApi = Asc["editor"];
+		if (destination) {
+			if (destination instanceof ApiRange) {
+				let bboxFrom = this.range.bbox;
+				let cols = bboxFrom.c2 - bboxFrom.c1;
+				let rows = bboxFrom.r2 - bboxFrom.r1;
+				let bbox = destination.range.bbox;
+				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+				this.range.move(range.bbox, false, destination.range.worksheet);
+				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+			} else {
+				logError(new Error('Invalid destination'));
+			}
+		} else {
+			let ws =  this.range.worksheet;
+			private_executeOtherActiveSheet(ws, this.range, function () {
+				AscCommon.g_clipboardBase.forceCutSelection = true;
+				oApi && oApi.asc_Cut();
+				AscCommon.g_clipboardBase.forceCutSelection = false;
+			});
+			oApi && oApi.wb.cleanCutData();
+		}
+	};
+
+	/**
 	 * Pastes the Range object to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -3782,6 +3828,108 @@
 		} else {
 			logError(new Error('Invalid range'));
 		}
+	};
+
+	/**
+	 * Pastes the Range object to the specified range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {PasteType} [sPasteType="xlPasteAll"]  - Type of special paste
+	 * @param {PasteSpecialOperation} [sPasteSpecialOperation="xlPasteSpecialOperationNone"] - Operation of special paste
+	 * @param {boolean} bSkipBlanks [bSkipBlanks=false] - Case sensitive or not. The default value is "false".
+	 * @param {boolean} bTranspose [bTranspose=false] - Case sensitive or not. The default value is "false".
+	 */
+	ApiRange.prototype.PasteSpecial = function (sPasteType, sPasteSpecialOperation, bSkipBlanks, bTranspose) {
+		if (sPasteType && typeof sPasteType !== 'string') {
+			logError(new Error('Invalid type of parameter "sPasteType".'));
+			return;
+		}
+		if (sPasteSpecialOperation && typeof sPasteSpecialOperation !== 'string') {
+			logError(new Error('Invalid type of parameter "sPasteSpecialOperation".'));
+			return;
+		}
+
+
+		let nPasteType = null;
+		if (sPasteType) {
+			switch (sPasteType) {
+				// case "xlPasteAllMergingConditionalFormats":
+				// 	break;
+				case "xlPasteAll":
+					break;
+				case "xlPasteAllExceptBorders":
+					nPasteType = Asc.c_oSpecialPasteProps.formulaWithoutBorders;
+					break;
+				//case "xlPasteAllUsingSourceTheme":
+				//	break;
+				case "xlPasteColumnWidths":
+					nPasteType = Asc.c_oSpecialPasteProps.formulaColumnWidth;
+					break;
+				case "xlPasteComments":
+					nPasteType = Asc.c_oSpecialPasteProps.comments;
+					break;
+				case "xlPasteFormats":
+					nPasteType = Asc.c_oSpecialPasteProps.pasteOnlyFormating;
+					break;
+				case "xlPasteFormulas":
+					nPasteType = Asc.c_oSpecialPasteProps.pasteOnlyFormula;
+					break;
+				case "xlPasteFormulasAndNumberFormats":
+					nPasteType = Asc.c_oSpecialPasteProps.formulaNumberFormat;
+					break;
+				// case "xlPasteValidation":
+				// 	nPasteType = Asc.c_oSpecialPasteProps.formulaColumnWidth;
+				// 	break;
+				case "xlPasteValues":
+					nPasteType = Asc.c_oSpecialPasteProps.pasteOnlyValues;
+					break;
+				case "xlPasteValuesAndNumberFormats":
+					nPasteType = Asc.c_oSpecialPasteProps.valueNumberFormat;
+					break;
+			}
+		}
+
+		let nPasteSpecialOperation = null;
+		if (sPasteSpecialOperation) {
+			switch (sPasteSpecialOperation) {
+				case "xlPasteSpecialOperationAdd":
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.add;
+					break;
+				case "xlPasteSpecialOperationDivide":
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.divide;
+					break;
+				case "xlPasteSpecialOperationMultiply":
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.multiply;
+					break;
+				case "xlPasteSpecialOperationNone":
+					break;
+				case "xlPasteSpecialOperationSubtract":
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.subtract;
+					break;
+			}
+		}
+
+		let specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
+		if (!specialPasteHelper.specialPasteProps) {
+			specialPasteHelper.specialPasteProps = new Asc.SpecialPasteProps();
+		}
+		let specialPasteProps = specialPasteHelper.specialPasteProps;
+
+		if (nPasteType != null) {
+			specialPasteProps.asc_setProps(nPasteType);
+		}
+		if (nPasteSpecialOperation != null) {
+			specialPasteProps.asc_setOperation(nPasteSpecialOperation);
+		}
+		specialPasteProps.asc_setSkipBlanks(!!bSkipBlanks);
+		specialPasteProps.asc_setTranspose(!!bTranspose);
+
+		let oApi = Asc["editor"];
+		AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+		let ws =  this.range.worksheet;
+		private_executeOtherActiveSheet(ws, this.range, function () {
+			oApi && oApi.asc_Paste();
+		});
 	};
 
 	/**
@@ -7141,6 +7289,9 @@
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
+
+	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
+	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;
 	
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -7197,6 +7348,7 @@
 	ApiWorksheet.prototype["AddProtectedRange"] = ApiWorksheet.prototype.AddProtectedRange;
 	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
 	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
+	ApiWorksheet.prototype["Paste"] = ApiWorksheet.prototype.Paste;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -7253,12 +7405,14 @@
 	ApiRange.prototype["AutoFit"] = ApiRange.prototype.AutoFit;
 	ApiRange.prototype["GetAreas"] = ApiRange.prototype.GetAreas;
 	ApiRange.prototype["Copy"] = ApiRange.prototype.Copy;
+	ApiRange.prototype["Cut"] = ApiRange.prototype.Cut;
 	ApiRange.prototype["Paste"] = ApiRange.prototype.Paste;
 	ApiRange.prototype["Find"] = ApiRange.prototype.Find;
 	ApiRange.prototype["FindNext"] = ApiRange.prototype.FindNext;
 	ApiRange.prototype["FindPrevious"] = ApiRange.prototype.FindPrevious;
 	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 	ApiRange.prototype["GetCharacters"] = ApiRange.prototype.GetCharacters;
+	ApiRange.prototype["PasteSpecial"] = ApiRange.prototype.PasteSpecial;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
