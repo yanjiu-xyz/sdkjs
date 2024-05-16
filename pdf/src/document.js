@@ -3719,7 +3719,7 @@ var CPresentation = CPresentation || function(){};
                 Asc.editor.ImageLoader.LoadImagesWithCallback(aLoadUrls, fEndCallback, []);
 
                 let _file = _t.Viewer.file;
-                for (url in aUrls) {
+                for (let url in aUrls) {
                     _file.nativeFile["changeImageUrl"](aUrls[url], oImageMap[url]);
                 }
             });
