@@ -271,15 +271,15 @@
 
 	//TODO not support "xlPasteAllMergingConditionalFormats" / "xlPasteAllUsingSourceTheme" / "xlPasteValidation"
 	/**
-	 * Specifies the part of the range to be pasted.
-	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders" |
-	 *  | "xlPasteColumnWidths" | "xlPasteComments"
+	 * Paste options.
+	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders"
+	 * | "xlPasteColumnWidths" | "xlPasteComments"
 	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
 	 * | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
 	 * */
 
 	/**
-	 * Specifies how numeric data will be calculated with the destinations cells on the worksheet.
+	 * The mathematical operation which will be applied to the copied data.
 	 * @typedef {("xlPasteSpecialOperationAdd" | "xlPasteSpecialOperationDivide" | "xlPasteSpecialOperationMultiply"|
 	 * "xlPasteSpecialOperationNone" | "xlPasteSpecialOperationSubtract" )} PasteSpecialOperation
 	 * */
@@ -3757,7 +3757,7 @@
 	 * Copies the range to the specified range or to the clipboard.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, the range is copied to the clipboard.
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, the range will be copied to the clipboard.
 	 */
 	ApiRange.prototype.Copy = function (destination) {
 		var oApi = Asc["editor"];
@@ -3783,10 +3783,11 @@
 	};
 
 	/**
-	 * Cuts the range to the specified range or to the Clipboard.
+	 * Cuts the range and save it to the clipboard or paste it to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be cuted. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the cut range will be pasted. If this argument is omitted, the range will be copied to the clipboard.
+	 * @since 8.1.0
 	 */
 	ApiRange.prototype.Cut = function (destination) {
 		var oApi = Asc["editor"];
@@ -3833,13 +3834,14 @@
 	};
 
 	/**
-	 * Pastes the Range object to the specified range.
+	 * Pastes the Range object to the specified range using the special paste options.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {PasteType} [sPasteType="xlPasteAll"]  - Type of special paste
-	 * @param {PasteSpecialOperation} [sPasteSpecialOperation="xlPasteSpecialOperationNone"] - Operation of special paste
-	 * @param {boolean} bSkipBlanks [bSkipBlanks=false] - Case sensitive or not. The default value is "false".
-	 * @param {boolean} bTranspose [bTranspose=false] - Case sensitive or not. The default value is "false".
+	 * @param {PasteType} [sPasteType="xlPasteAll"]  - Paste option.
+	 * @param {PasteSpecialOperation} [sPasteSpecialOperation="xlPasteSpecialOperationNone"] - The mathematical operation which will be applied to the copied data.
+	 * @param {boolean} bSkipBlanks [bSkipBlanks=false] - Specifies whether to avoid replacing values in the paste area when blank cells occur in the copy area.
+	 * @param {boolean} bTranspose [bTranspose=false] - Specifies whether the pasted data will be transposed from rows to columns.
+	 * @since 8.1.0
 	 */
 	ApiRange.prototype.PasteSpecial = function (sPasteType, sPasteSpecialOperation, bSkipBlanks, bTranspose) {
 		if (sPasteType && typeof sPasteType !== 'string') {
