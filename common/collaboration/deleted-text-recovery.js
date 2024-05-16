@@ -54,6 +54,168 @@
 		this.userId					= undefined;
 		this.userName				= undefined;
 		this.userTime				= undefined;
+
+		this.oCollaborativeMarksData = {};
+		this.oCollabColor = {};
+		this.oRunSplits = {};
+		this.oClasses = {};
+		this.oCollaborativeMarksDataDefault	= {}
+		this.oDefaultChangedClasses = AscCommon.CollaborativeEditing.m_aChangedClasses;
+	}
+	DeletedTextRecovery.prototype.GetDataForProceedMarks = function (isDefault)
+	{
+		let oMarksClasses = AscCommon.CollaborativeEditing.m_aChangedClasses;
+		let arrKeys = Object.keys(oMarksClasses);
+
+		for (let nKey = 0; nKey < arrKeys.length; nKey++)
+		{
+			let strCurrentKey = arrKeys[nKey];
+			let oCurrentRun = oMarksClasses[strCurrentKey];
+
+			if (!oCurrentRun instanceof ParaRun)
+				continue;
+
+			let oCurrentMarks = oCurrentRun.CollaborativeMarks;
+			let arrContentRun = oCurrentRun.Content;
+
+			if (!oCurrentMarks)
+				continue;
+
+			let arrRanges = oCurrentMarks.Ranges;
+			let arrContent = [];
+			let arrColor = [];
+
+			for (let i = 0; i < arrRanges.length; i++)
+			{
+				let oCurrentRange = arrRanges[i];
+				let nStart = oCurrentRange.PosS;
+				let nEnd = oCurrentRange.PosE;
+				let oColor = oCurrentRange.Color;
+				arrColor.push(oColor);
+
+				for (let nContent = nStart; nContent < nEnd; nContent++)
+				{
+					let oCurrentEl = arrContentRun[nContent];
+					arrContent.push(oCurrentEl);
+				}
+			}
+
+			this.oCollaborativeMarksData[strCurrentKey]		= arrContent;
+
+			if (isDefault)
+				this.oCollaborativeMarksDataDefault[strCurrentKey] = arrContent;
+
+			this.oCollabColor[strCurrentKey]				= arrColor;
+		}
+	}
+	DeletedTextRecovery.prototype.GetPositionsOfCollaborativeMarks = function (isDefault)
+	{
+		let oOutput = {}
+		let oMarksClasses = this.oDefaultChangedClasses;
+		let arrKeys = Object.keys(oMarksClasses);
+		for (let nKey = 0; nKey < arrKeys.length; nKey++)
+		{
+			let strCurrentKey = arrKeys[nKey];
+			let oCurrentRun = oMarksClasses[strCurrentKey];
+
+			if (!oCurrentRun instanceof ParaRun)
+				continue;
+
+			let arrCollaborativeData = isDefault ? this.oCollaborativeMarksDataDefault[strCurrentKey] : this.oCollaborativeMarksData[strCurrentKey];
+
+			if (!arrCollaborativeData)
+				continue
+			let arrPositions = [];
+
+			for (let i = 0; i < arrCollaborativeData.length; i++)
+			{
+				let oCurrentEl = arrCollaborativeData[i];
+				let nPos = this.FindPosInTextClass(oCurrentRun, oCurrentEl);
+
+				if (nPos || nPos === 0)
+					arrPositions.push(nPos);
+			}
+
+			if (arrPositions.length === 0)
+			{
+				let oNewRun = this.oRunSplits[oCurrentRun.Id];
+				if (!oNewRun)
+				{
+					oCurrentRun.CollaborativeMarks.Clear();
+					continue;
+				}
+
+				let strNewCurrentKey = oNewRun.Id;
+				this.oCollaborativeMarksData[oNewRun.Id] = oNewRun;
+
+				for (let i = 0; i < arrCollaborativeData.length; i++)
+				{
+					let oCurrentEl = arrCollaborativeData[i];
+					let nPos = this.FindPosInTextClass(oNewRun, oCurrentEl);
+
+					if (nPos || nPos === 0)
+						arrPositions.push(nPos);
+				}
+
+				if (arrPositions > 0)
+				{
+					this.oCollabColor[oNewRun.Id] = this.oCollabColor[oCurrentRun.Id];
+					oCurrentRun = oNewRun;
+
+					oOutput[strNewCurrentKey] = arrPositions;
+					this.oClasses[strNewCurrentKey] = oNewRun;
+				}
+
+				continue;
+			}
+			oOutput[strCurrentKey] = arrPositions;
+			this.oClasses[strCurrentKey] = oCurrentRun;
+		}
+		return oOutput;
+	}
+	DeletedTextRecovery.prototype.CollaborativeMarksCollapsePositions = function (arr)
+	{
+		let oMarks = CollapsePositions(arr);
+	}
+	DeletedTextRecovery.prototype.ApplyCollaborativeMarks = function (isDefault)
+	{
+		let oCollaborative = this.GetPositionsOfCollaborativeMarks(isDefault);
+		AscCommon.CollaborativeEditing.Clear_CollaborativeMarks(true);
+		let oCollaborativeMarks = CollapsePositions(oCollaborative);
+		let arrKeys = Object.keys(oCollaborativeMarks);
+
+		for (let nKey = 0; nKey < arrKeys.length; nKey++)
+		{
+			let strCurrentKey = arrKeys[nKey];
+			let arrCurrentRules = oCollaborativeMarks[strCurrentKey];
+
+			for (let i = 0; i < arrCurrentRules.length; i++)
+			{
+				let oCurrentRule = arrCurrentRules[i];
+				let oColor = this.oCollabColor[strCurrentKey][i];
+				oCurrentRule.Color = oColor;
+			}
+		}
+
+		for (let strId in oCollaborativeMarks)
+		{
+			let arrRules = oCollaborativeMarks[strId];
+			let oRun = this.oClasses[strId];
+			oRun.CollaborativeMarks.Ranges.length = 0;
+
+			for (let nCount = 0; nCount < arrRules.length; nCount++)
+			{
+				let oCurrentRule = arrRules[nCount];
+				let nStart = oCurrentRule.nStart;
+				let nEnd = oCurrentRule.nEnd + 1;
+				let oColor = oCurrentRule.Color;
+
+				if (!oColor)
+					continue;
+
+				oRun.CollaborativeMarks.Add(nStart, nEnd, oColor);
+			}
+		}
 	}
 	/**
 	 * Инициализация и создание промежуточных данных для отображения удаленного текста в текущей ревизии
@@ -87,6 +249,18 @@
 			}
 
 			if (oCurrentChange instanceof CChangesRunRemoveItem || oCurrentChange instanceof CChangesParagraphRemoveItem || oCurrentChange instanceof CChangesDocumentRemoveItem)
+			{
+				if (arrDelChanges.length > 0)
+				{
+					let oLast = arrDelChanges[arrDelChanges.length - 1];
+					oLast.push(oCurrentChange);
+				}
+				else
+				{
+					arrDelChanges.push([oCurrentChange]);
+				}
+			}
+			else if (oCurrentChange instanceof CChangesRunAddItem || oCurrentChange instanceof CChangesParagraphAddItem || oCurrentChange instanceof CChangesDocumentAddItem)
 			{
 				if (arrDelChanges.length > 0)
 				{
@@ -144,6 +318,256 @@
 
 		return arrInput;
 	};
+
+	function AddTextPositions()
+	{
+		this.data = {};
+		this.wait = {};
+		this.GetByClass = function (strClassId)
+		{
+			return this.data[strClassId]
+		}
+		this.Check = function (oCurChange, oRemove)
+		{
+			if (oCurChange.Class)
+			{
+				let strCurrentId = oCurChange.Class.Id;
+				let arrRemData = oRemove.data[strCurrentId];
+
+				if (!arrRemData)
+					return true;
+
+				let addItem = oCurChange.Items[0];
+
+				for (let i = 0; i < arrRemData.length; i++)
+				{
+					let oCurrentRemItem = arrRemData[i];
+
+					if (oCurChange.PosArray[0] === oCurrentRemItem.pos && addItem.Value === oCurrentRemItem.item.Value)
+					{
+						arrRemData.splice(i, 1);
+
+						if (this.data[strCurrentId])
+						{
+							let currentArr = this.data[strCurrentId];
+							for (let i = 0; i < currentArr.length; i++)
+							{
+								let oCur = currentArr[i];
+								if (oCur.pos === oCurChange.PosArray[0])
+								{
+									currentArr.splice(i, 1);
+									currentArr[currentArr.length] = oCur;
+								}
+							}
+							//this.wait[strCurrentId].push({pos: oCurChange.PosArray[0], nCount: this.data[strCurrentId].length});
+						}
+						return false
+					};
+				}
+
+			}
+
+			return true;
+		}
+		this.AddChange = function (oChange)
+		{
+			let strCurrentId = oChange.Class.Id;
+
+			if (strCurrentId)
+			{
+				if (!this.data[strCurrentId])
+					this.data[strCurrentId] = []
+
+				let oWait;
+
+				if (this.wait[strCurrentId])
+					oWait = this.wait[strCurrentId].filter( function (oItem) { return oItem.pos === oChange.pos});
+				if (oWait)
+				{
+					this.data[strCurrentId][oWait.nCount] = {change: oChange, pos: oChange.PosArray[0]}
+				}
+				else
+					this.data[strCurrentId].push({change: oChange, pos: oChange.PosArray[0]});
+			}
+		}
+		this.getData = function ()
+		{
+			let arrKeys = Object.keys(this.data);
+			let arrOutput = [];
+
+			for (let nKey = 0; nKey < arrKeys.length; nKey++)
+			{
+				let strCurrentKey = arrKeys[nKey];
+				let arrCurrentRunData = this.data[strCurrentKey];
+
+				let arrTemp = [];
+				for (let j = 0; j < arrCurrentRunData.length; j++)
+				{
+					arrTemp.push(arrCurrentRunData[j].change);
+				}
+
+				arrOutput.push(arrTemp);
+				arrTemp = [];
+			}
+
+			return arrOutput;
+		}
+	}
+	function RemoveTextPositions()
+	{
+		this.data = {};
+		this.oClasses = {};
+		this.arrClasses = [];
+		this.GetByClass = function (strClassId)
+		{
+			return this.data[strClassId]
+		}
+		this.AddToClass = function (oClass, oItem, Pos)
+		{
+			if (!this.data[oClass.Id])
+				this.data[oClass.Id] = [];
+
+			this.data[oClass.Id].push({item: oItem, pos: Pos});
+		}
+		this.GetData = function ()
+		{
+			let outputData = {};
+			let arrKeys = Object.keys(this.data);
+
+			for (let nKey = 0; nKey < arrKeys.length; nKey++)
+			{
+				let strCurrentKey = arrKeys[nKey];
+				let arrCurrentRunData = this.data[strCurrentKey];
+
+				outputData[strCurrentKey] = [];
+
+				for (let i = 0; i < arrCurrentRunData.length; i++)
+				{
+					outputData[strCurrentKey].push(arrCurrentRunData[i].item);
+				}
+			}
+
+			return outputData;
+		}
+		this.ProceedChange = function (oChange)
+		{
+			if (oChange.Class && !this.oClasses[oChange.Class.Id])
+			{
+				this.oClasses[oChange.Class.Id] = oChange.Class;
+				if (-1 === this.arrClasses.indexOf(oChange.Class.Id))
+				{
+					this.arrClasses.push(oChange.Class.Id);
+				}
+			}
+		}
+		this.FindInParent = function (oClass, oItem)
+		{
+			let arrParentContent	= oClass.Content;
+
+			for (let nPos = 0; nPos < arrParentContent.length; nPos++)
+			{
+				if (arrParentContent[nPos] === oItem.item)
+					return nPos;
+			}
+		}
+		this.ProceedPositions = function ()
+		{
+			for (let nKey = 0; nKey < this.arrClasses.length; nKey++)
+			{
+				let strCurrentKey			= this.arrClasses[nKey];
+				let arrCurrentRunData		= this.data[strCurrentKey];
+				if (!arrCurrentRunData)
+					continue;
+				let oClass					= this.oClasses[strCurrentKey];
+				let newArrCurrentRunData	= [];
+
+				for (let i = 0; i < arrCurrentRunData.length; i++)
+				{
+					let oItem = arrCurrentRunData[i];
+
+					let nPos = this.FindInParent(oClass, oItem);
+					newArrCurrentRunData.push(nPos);
+				}
+
+				let nCurrentPos;
+				let nPrevPos;
+				let nTempPrevPos;
+
+				for (let nPos = 1; nPos < newArrCurrentRunData.length; nPos++)
+				{
+					nPrevPos = newArrCurrentRunData[nPos - 1];
+					nCurrentPos = newArrCurrentRunData[nPos];
+
+					if (nTempPrevPos === nCurrentPos || nCurrentPos === nPrevPos)
+					{
+						if (nTempPrevPos)
+						{
+							nTempPrevPos = undefined;
+							newArrCurrentRunData[nPos] = nPrevPos + 1;
+							nTempPrevPos = nCurrentPos;
+						}
+						else
+						{
+							newArrCurrentRunData[nPos] = nCurrentPos + 1;
+							nTempPrevPos = nCurrentPos;
+						}
+					}
+				}
+				this.data[strCurrentKey] = newArrCurrentRunData;
+			}
+			const transformedObject = CollapsePositions(this.data);
+			return transformedObject
+		}
+	}
+	function CollapsePositions (oInput)
+	{
+		const transformedObject = {};
+		for (const key in oInput)
+		{
+			if (oInput.hasOwnProperty(key))
+			{
+				const values = oInput[key];
+				const pairs = [];
+				let nStart = null;
+				let nEnd = null;
+				let decreasingSequence = false;
+
+				for (let i = 0; i < values.length; i++)
+				{
+					const value = values[i];
+
+					if (nStart === null)
+					{
+						nStart = value;
+						nEnd = value;
+					}
+					else if (value === nEnd + 1)
+					{
+						nEnd = value;
+						decreasingSequence = false;
+					}
+					else if (value === nEnd - 1)
+					{
+						nStart = value;
+						decreasingSequence = true;
+					}
+					else
+					{
+						pairs.push({ nStart, nEnd });
+						nStart = value;
+						nEnd = value;
+						decreasingSequence = false;
+					}
+				}
+
+				if (nStart !== null && nEnd !== null)
+					pairs.push({ nStart, nEnd });
+
+				transformedObject[key] = pairs;
+			}
+		}
+		return transformedObject;
+	}
 	/**
 	 * Отменяем заданные изменения
 	 * @param arrInputChanges
@@ -153,15 +577,78 @@
 	DeletedTextRecovery.prototype.RedoUndoChanges = function (arrInputChanges)
 	{
 		let arrCurrentPoint = [];
-		for (let nCounter = arrInputChanges.length - 1; nCounter >= 0; nCounter--)
+		let arrData = new AddTextPositions();
+		let oRemoveText = new RemoveTextPositions();
+		arrInputChanges = arrInputChanges.reverse();
+
+		// написать тесты
+
+		for (let i = 0; i < arrInputChanges.length; i++)
 		{
-			let arrCurrentDel = arrInputChanges[nCounter];
-			for (let nIndex = arrCurrentDel.length - 1; nIndex >= 0; nIndex--)
+			let oCurChanges = arrInputChanges[i].reverse();
+			for (let y = 0; y < oCurChanges.length; y++)
 			{
-				this.RedoUndoChange(arrCurrentDel[nIndex], false, arrCurrentPoint);
+				let oCurChange = oCurChanges[y];
+				oRemoveText.ProceedChange(oCurChange)
+
+				if (oCurChange instanceof CChangesRunAddItem)
+				{
+					if (arrData.Check(oCurChange, oRemoveText))
+						arrData.AddChange(oCurChange)
+				}
+				else if (oCurChange instanceof CChangesRunRemoveItem
+				|| oCurChange instanceof CChangesDocumentRemoveItem
+				|| oCurChange instanceof CChangesParagraphRemoveItem)
+				{
+					if (oCurChange instanceof CChangesRunRemoveItem || oCurChange instanceof CChangesDocumentRemoveItem || oCurChange instanceof CChangesParagraphRemoveItem)
+					{
+						for (let h = 0; h < oCurChange.PosArray.length; h++)
+						{
+							oRemoveText.AddToClass(oCurChange.Class, oCurChange.Items[h], oCurChange.PosArray[h]);
+						}
+					}
+
+					let oCurrentRun = oCurChange.Class;
+					if (oCurrentRun.CollaborativeMarks)
+					{
+						let arrMarks = oCurrentRun.CollaborativeMarks.Ranges;
+						for (let p = 0; p < arrMarks.length; p++)
+						{
+							let oCurrentMark = arrMarks[p];
+							if (oCurrentMark.PosS >= oCurChange.PosArray[0])
+							{
+								oCurrentMark.PosS++;
+								oCurrentMark.PosE++;
+							}
+						}
+					}
+				}
+
+				if (oCurChange instanceof CChangesRunAddItem
+				|| oCurChange instanceof CChangesDocumentAddItem
+				|| oCurChange instanceof CChangesParagraphAddItem)
+					this.RedoUndoChange(oCurChange, false, []);
+				else
+					this.RedoUndoChange(oCurChange, false, arrCurrentPoint);
 			}
 		}
-		return arrCurrentPoint;
+
+		let arr = arrData.getData();
+		for (let i = 0; i < arr.length; i++)
+		{
+			let arrCurrent = arr[i];
+			for (let j = arrCurrent.length - 1; j >= 0; j--)
+			{
+				this.RedoUndoChange(arrCurrent[j], true, []);
+			}
+		}
+
+		let result = {
+			data: oRemoveText.ProceedPositions(this) ,
+			classes: oRemoveText.oClasses
+		};
+
+		return [arrCurrentPoint, result];
 	};
 	/**
 	 * Создаем точку в истории для сбора данных об отображении удаленного текста
@@ -200,161 +687,118 @@
 
 		// отменяем изменения до нужного места (необходимо для перемещения по истории)
 		let arrCurrentPoint		= this.RedoUndoChanges(arrInput);
-		oLogicDocument.RecalculateByChanges(arrCurrentPoint);
+		let arrChanges = arrCurrentPoint[0];
+		let arrResult = arrCurrentPoint[1];
 
-		// обрабатываем полученные изменения
-		let arrContentForSlice	= this.ConvertArray(arrInput);
-		this.SortArrChanges(arrContentForSlice);
-
-		// применяем изменения с удаленным текстом
-		this.ProceedDelTextInDocument(arrContentForSlice);
-		// проверяем окрашивание ранов
-		this.Check();
+		this.Split(arrResult);
 
 		this.ShowDelTextPoint	= AscCommon.History.Points[0];
-		this.ShowDelLettersChanges = arrCurrentPoint;
-
+		this.ShowDelLettersChanges = arrChanges;
 		this.RecalculatePointFromHistory();
+		this.ApplyCollaborativeMarks(true);
 
 		return true;
 	};
-	DeletedTextRecovery.prototype.ProceedDelTextInDocument = function (arrContentForSlice)
+	DeletedTextRecovery.prototype.Split = function (arrInput)
 	{
-		let arrSplits			= [];
+		let data	= arrInput.data;
+		let classes	= arrInput.classes;
+		let arrKeys	= Object.keys(data);
 
-		for (let i = 0; i < arrContentForSlice.length; i++)
+		for (let nKey = 0; nKey < arrKeys.length; nKey++)
 		{
-			let oNextRun		= null;
-			let CurrentDel		= arrContentForSlice[i];
-			let nCurrentPos		= CurrentDel.nStartPos;
-			let nCurrentLen		= CurrentDel.nLength;
-			let oCurrentRun		= CurrentDel.class;
+			let strCurrentKey		= arrKeys[nKey];
+			let arrCurrentRunData	= data[strCurrentKey];
+			let oCurrentRun			= classes[strCurrentKey];
 
-			if (oCurrentRun instanceof CDocument)
+			if (oCurrentRun.GetText)
+				console.log(oCurrentRun.GetText())
+
+			arrCurrentRunData.sort(function (a, b) { return a.nStart - b.nStart })
+
+			for (let j = arrCurrentRunData.length - 1; j >= 0; j--)
 			{
-				let oContent	= CurrentDel.content[0];
-				let CurrentPos	= oContent.PosArray[0];
-				let CurrentLen	= oContent.Items.length;
-				let arrContent	= oContent.Class.Content;
+				let oCurrentRule = arrCurrentRunData[j];
+				let nStart = oCurrentRule.nStart;
+				let nEnd = oCurrentRule.nEnd;
 
-				for (let j = CurrentPos; j < CurrentPos + CurrentLen; j++)
+				if (oCurrentRun instanceof CDocument)
 				{
-					let oCurrentParagraph = arrContent[j];
-					if (oCurrentParagraph)
-						this.SetReviewInfo(oCurrentParagraph);
-				}
-			}
-			else if (oCurrentRun instanceof Paragraph)
-			{
-				let oContent	= CurrentDel.content[0];
-				let arrContent	= oContent.Items;
+					let arrContent	= oCurrentRun.Content;
 
-				if (arrContent.length === oContent.Class.Content.length)
-				{
-					this.SetReviewInfo(oContent.Class);
-				}
-				else
-				{
-					for (let i = 0; i < arrContent.length; i++)
+					for (let j = nStart; j <= nEnd; j++)
 					{
-						this.SetReviewInfo(arrContent[i]);
+						let oCurrentParagraph = arrContent[j];
+						if (oCurrentParagraph)
+							this.SetReviewInfo(oCurrentParagraph);
 					}
 				}
-			}
-			else if (oCurrentRun instanceof ParaRun)
-			{
-				if (nCurrentPos === 0 && nCurrentLen >= oCurrentRun.Content.length)
+				else if (oCurrentRun instanceof Paragraph)
 				{
-					if (oCurrentRun.Parent.Content.length === 2)
-						this.SetReviewInfo(oCurrentRun.Parent);
-					else
-						this.SetReviewInfo(oCurrentRun);
-				}
-				else if (nCurrentLen === 1)
-				{
-					let oParent		= oCurrentRun.GetParent();
-					let RunPos		= this.FindPosInParent(oCurrentRun)
-					let RightRun	= oCurrentRun.Split2AndSpreadCollaborativeMark(arrSplits, nCurrentPos);
+					let arrContent	= oCurrentRun.Content;
 
-					oParent.Add_ToContent(RunPos + 1, RightRun);
-					let oNewer		= RightRun.Split2AndSpreadCollaborativeMark(arrSplits, 1);
-					oParent.Add_ToContent(RunPos + 2, oNewer);
-					oNextRun		= oNewer;
-					this.SetReviewInfo(RightRun);
+					if (nStart === 0 && arrContent.length === nEnd)
+					{
+						this.SetReviewInfo(oCurrentRun);
+					}
+					else
+					{
+						for (let i = 0; i < arrContent.length; i++)
+						{
+							this.SetReviewInfo(arrContent[i]);
+						}
+					}
 				}
-				else
+				else if (oCurrentRun instanceof ParaRun)
 				{
+					let newCollab = [];
+
+					if (oCurrentRun.Content.length === 0)
+					{
+						this.SetReviewInfo(oCurrentRun);
+						continue;
+					}
+
+					for (let i = 0; i < oCurrentRun.CollaborativeMarks.Ranges.length; i++)
+					{
+						newCollab[i] = oCurrentRun.CollaborativeMarks.Ranges[i];
+					}
 					let oParent		= oCurrentRun.GetParent();
 					let RunPos		= this.FindPosInParent(oCurrentRun);
-					let RightRun	= oCurrentRun.Split2AndSpreadCollaborativeMark(arrSplits, nCurrentPos);
+					let RightRun	= oCurrentRun.SplitForSpreadCollaborativeMark(nStart);
+
+					let nNewStartPos
+					let nCount, oColor;
 
 					oParent.Add_ToContent(RunPos + 1, RightRun);
-					oNextRun		= RightRun;
+					let oNewer = RightRun.SplitForSpreadCollaborativeMark(nEnd - nStart + 1);
 
-					if (RightRun.Content.length > 1 && RightRun.Content.length > nCurrentLen) {
-						let oNewer	= RightRun.Split2AndSpreadCollaborativeMark(arrSplits, nCurrentLen);
-						oParent.Add_ToContent(RunPos + 2, oNewer);
-						oNextRun	= oNewer;
-					}
+					this.oRunSplits[oCurrentRun.Id] = oNewer;
+
+					oParent.Add_ToContent(RunPos + 2, oNewer);
 					this.SetReviewInfo(RightRun);
+
+					for (let i = 0; i < newCollab.length; i++)
+					{
+						let oCurCollaborativeMark = newCollab[i];
+						let nStartPos = oCurCollaborativeMark.PosS;
+						let nEndPos = oCurCollaborativeMark.PosE;
+						oColor = oCurCollaborativeMark.Color;
+						let nCurrentCount = oCurrentRun.Content.length;
+						let nDelCount = RightRun.Content.length;
+
+						if (nEndPos > nCurrentCount)
+						{
+							// Вычислите новые позиции относительно oNewer
+							nNewStartPos = nStartPos - nCurrentCount - nDelCount;
+							nCount = nEndPos - nCurrentCount - nDelCount;
+							oNewer.CollaborativeMarks.Add(nNewStartPos, nCount, oColor);
+						}
+					}
 				}
 			}
 		}
-
-		for (let nSplit = 0; nSplit < arrSplits.length; nSplit++)
-		{
-			let oCurrentElement = arrSplits[nSplit];
-			if (oCurrentElement instanceof ParaRun)
-				this.ProceedParaRun(oCurrentElement);
-		}
-	};
-	DeletedTextRecovery.prototype.SortArrChanges = function (arrInputChanges)
-	{
-		let arrParagraph	= [];
-		let arrDocument		= [];
-		// let arrMark = [];
-		for (let i = 0; i < arrInputChanges.length; i++)
-		{
-			let oCurrent	= arrInputChanges[i];
-			if (oCurrent.class instanceof Paragraph)
-			{
-				arrParagraph.push(oCurrent);
-				arrInputChanges.splice(i, 1);
-				i--;
-			}
-			else if (oCurrent.class instanceof CDocument)
-			{
-				arrDocument.push(oCurrent);
-				arrInputChanges.splice(i, 1);
-				i--;
-			}
-			// else if (oCurrent.class instanceof ParaRun && oCurrent.content.length === 1)
-			// {
-			// 	let cont = oCurrent.content[0];
-			// 	if (cont.Items.length === 1 && cont.Items[0] instanceof AscWord.CRunParagraphMark)
-			// 	{
-			// 		arrMark.push(oCurrent);
-			// 		array.splice(i, 1);
-			// 		i--;
-			// 	}
-			// }
-		}
-
-		// for (let i = 0; i < arrMark.length; i++)
-		// {
-		// 	array.push(arrMark[i]);
-		// }
-
-		for (let i = 0; i < arrDocument.length; i++)
-		{
-			arrInputChanges.push(arrDocument[i]);
-		}
-
-		for (let i = 0; i < arrParagraph.length; i++)
-		{
-			arrInputChanges.push(arrParagraph[i]);
-		}
-	};
+	}
 	DeletedTextRecovery.prototype.SetReviewInfo = function (oReviewInfoParent)
 	{
 		if (!oReviewInfoParent === undefined)
@@ -393,150 +837,6 @@
 			oReviewInfoParent.SetReviewTypeWithInfo(1, oCurrentReviewType, false);
 		}
 	};
-	/**
-	 * Формируем изменения для отображения удаленного текста
-	 * @param inputArray
-	 * @return {*[]}
-	 * @constructor
-	 */
-	DeletedTextRecovery.prototype.ConvertArray = function (inputArray)
-	{
-		inputArray.reverse();
-
-		let arrChangesTemp					= [];
-		let nCurrentIndex					= null;
-		let nClose							= null;
-		let oCurrentContentProceed			= new RemoveChangesProcessor();
-		let arrResult						= [];
-
-		let isTable							= false;
-		let nLastPos						= null;
-		let oLastClass						= null;
-
-		for (let nCount = 0; nCount < inputArray.length; nCount++)
-		{
-			let oCurrentChange = inputArray[nCount];
-			if (oCurrentChange.length > 0)
-			{
-				for (let j = 0; j < oCurrentChange.length; j++)
-				{
-					arrChangesTemp.push(oCurrentChange[j]);
-				}
-			}
-			else if (!Array.isArray(arrChangesTemp[arrChangesTemp.length - 1]))
-			{
-				arrChangesTemp.push([]);
-			}
-		}
-
-		for (let nCount = 0; nCount < arrChangesTemp.length; nCount++)
-		{
-			let oChange = arrChangesTemp[nCount];
-
-			if (Array.isArray(oChange))
-			{
-				if (oCurrentContentProceed.IsHastContent())
-				{
-					arrResult.push(oCurrentContentProceed);
-					oCurrentContentProceed  = new RemoveChangesProcessor();
-				}
-				isTable = false;
-			}
-			else if (oChange instanceof CChangesParagraphRemoveItem || oChange instanceof CChangesDocumentRemoveItem)
-			{
-				if (oCurrentContentProceed.IsHastContent())
-				{
-					arrResult.push(oCurrentContentProceed);
-					oCurrentContentProceed  = new RemoveChangesProcessor();
-				}
-
-				oCurrentContentProceed.AddContent(oChange);
-
-				if (oCurrentContentProceed.IsHastContent())
-				{
-					arrResult.push(oCurrentContentProceed);
-					oCurrentContentProceed  = new RemoveChangesProcessor();
-				}
-			}
-			else if (oChange instanceof AscCommon.CChangesTableIdDescription)
-			{
-				if (isTable === false)
-				{
-					oCurrentContentProceed.SetIsFromEnd(oChange.StartPoint === oChange.LastPoint);
-					nCurrentIndex	= oChange.StartPoint;
-					nClose			= oChange.LastPoint;
-					isTable			= true;
-				}
-			}
-			else
-			{
-				if (nLastPos === null)
-				{
-					oCurrentContentProceed.AddContent(oChange);
-					nLastPos	= oChange.PosArray[0];
-					oLastClass	= oChange.Class;
-				}
-				else if ((oChange.PosArray[0] === nLastPos
-							|| oChange.PosArray[0] + 1 === nLastPos
-							|| oChange.PosArray[0] - 1 === nLastPos) && oLastClass === oChange.Class)
-				{
-					oCurrentContentProceed.AddContent(oChange);
-					nLastPos = oChange.PosArray[0];
-				}
-				else
-				{
-					arrResult.push(oCurrentContentProceed);
-
-					oCurrentContentProceed	= new RemoveChangesProcessor();
-					let oTempChange			= arrChangesTemp[nCount - 1];
-					let isFromEnd			= oTempChange.StartPoint === oTempChange.LastPoint;
-
-					oCurrentContentProceed.SetIsFromEnd(isFromEnd);
-
-					nCurrentIndex			= oTempChange.StartPoint;
-					nClose					= oTempChange.LastPoint;
-					isTable					= true;
-
-					oCurrentContentProceed.AddContent(oChange);
-					nLastPos				= oChange.PosArray[0];
-					oLastClass				= oChange.Class;
-				}
-			}
-		}
-
-		if (oCurrentContentProceed.IsHastContent())
-			arrResult.push(oCurrentContentProceed);
-
-		for (let nCount = 0; nCount < arrResult.length; nCount++)
-		{
-			let oTempCurrentChange = arrResult[nCount];
-			for (let j = nCount + 1; j < arrResult.length; j++)
-			{
-				let oTempNextChange = arrResult[j];
-				if (oTempCurrentChange.class === oTempNextChange.class && oTempCurrentChange.nStartPos > oTempNextChange.nStartPos)
-					oTempCurrentChange.nStartPos += oTempNextChange.nLength;
-			}
-		}
-
-		arrResult.reverse();
-
-		return arrResult.sort(
-			function (a, b)
-			{
-				if (a.nStartPos > b.nStartPos) return -1;
-				else if (a.nStartPos < b.nStartPos) return 1;
-				return 0;
-			}
-		);
-	};
-	DeletedTextRecovery.prototype.ProceedParaRun = function (oParaRun)
-	{
-		let CurrentRanges		= oParaRun.CollaborativeMarks.Ranges;
-		let oFirstRange			= CurrentRanges[0];
-
-		if (oFirstRange)
-			oFirstRange.PosE	= oParaRun.Content.length;
-	};
 	DeletedTextRecovery.prototype.FindPosInParent = function(oClass)
 	{
 		let oParent				= oClass.GetParent();
@@ -548,23 +848,20 @@
 				return i;
 		}
 	};
-	// проверяем правильность окрашивания ранов
-	DeletedTextRecovery.prototype.Check = function ()
+	DeletedTextRecovery.prototype.FindPosInTextClass = function (oClass, oItem)
 	{
-		let oChanged	= AscCommon.CollaborativeEditing.m_aChangedClasses;
-		let arrKeys		= Object.keys(oChanged);
+		let arrParentContent	= oClass.Content;
 
-		for (let i = 0; i < arrKeys.length; i++)
+		for (let nPos = 0; nPos < arrParentContent.length; nPos++)
 		{
-			let oCurrentEl = oChanged[arrKeys[i]];
-			if (oCurrentEl instanceof ParaRun)
-			{
-				let oCollaborativeMarks = oCurrentEl.CollaborativeMarks;
-				let arrRanges			= oCollaborativeMarks.Ranges;
-				let oRange				= arrRanges[0];
-				oRange.PosE				= oCurrentEl.Content.length;
-			}
+			if (arrParentContent[nPos] === oItem)
+				return nPos;
 		}
+	}
+	// проверяем правильность окрашивания ранов
+	DeletedTextRecovery.prototype.Check = function (isDefault)
+	{
+		this.ApplyCollaborativeMarks(isDefault);
 	};
 	DeletedTextRecovery.prototype.RedoUndoChange = function (oChange, isRedo, arrToSave)
 	{
@@ -581,6 +878,8 @@
 					arrSimpleChanges[simpleIndex].Redo();
 				else
 					arrSimpleChanges[simpleIndex].Undo();
+
+				//console.log(isRedo ? "Повторить" : "Отменить", oChange.Class.GetText ? oChange.Class.GetText() : oChange.Class, String.fromCharCode(oChange.Items[0].Value));
 
 				arrToSave.push(arrSimpleChanges[simpleIndex]);
 			}
@@ -615,8 +914,9 @@
 
 		return arr;
 	};
-	DeletedTextRecovery.prototype.UndoShowDelText = function ()
+	DeletedTextRecovery.prototype.UndoShowDelText = function (isNotApply)
 	{
+
 		if (this.ShowDelTextPoint)
 		{
 			let oHistoryPoint	= this.ShowDelTextPoint;
@@ -628,7 +928,11 @@
 
 			this.UndoArray(this.ShowDelLettersChanges.reverse());
 			this.ShowDelLettersChanges = [];
-			this.Check();
+
+			if (!isNotApply)
+				this.ApplyCollaborativeMarks();
+
+			this.Check(true);
 
 			return true;
 		}
@@ -678,73 +982,6 @@
 		}
 		return false;
 	};
-	function RemoveChangesProcessor()
-	{
-		this.content		= [];
-		this.isFromEnd		= false;
-		this.nStartPos		= null;
-		this.nEnd			= null;
-		this.nStart			= null;
-		this.nLength		= 0;
-		this.counter		= 0;
-		this.class			= null;
-
-		this.AddContent = function (oChange)
-		{
-			if (oChange instanceof CChangesParagraphRemoveItem)
-			{
-				this.content.push(oChange);
-				this.class = this.content[0].Class;
-				this.nStartPos = oChange.PosArray[0];
-				this.nLength++;
-			}
-			else if (oChange instanceof CChangesDocumentRemoveItem)
-			{
-				this.content.push(oChange);
-				this.class = this.content[0].Class;
-				this.nStartPos = oChange.PosArray[0];
-				this.nLength++;
-			}
-			else if (oChange instanceof CChangesRunRemoveItem)
-			{
-				if (this.class === oChange.Class || this.class === null)
-				{
-					if (!isNaN(oChange.Pos) && (this.nStartPos === null || oChange.Pos < this.nStartPos))
-					{
-						this.nStartPos = oChange.Pos
-					}
-					else if (oChange.PosArray[0] < this.nStartPos || this.nStartPos === null)
-					{
-						this.nStartPos = oChange.PosArray[0];
-					}
-					this.content.push(oChange);
-					this.nLength += oChange.Items.length;
-					this.counter++;
-				}
-				else
-				{
-					return false;
-				}
-
-				if (this.counter === 1)
-				{
-					this.class = this.content[0].Class;
-				}
-			}
-		};
-		this.SetIsFromEnd = function (isFromEnd)
-		{
-			this.isFromEnd = isFromEnd;
-		};
-		this.IsHastContent = function ()
-		{
-			return this.content.length > 0;
-		};
-		this.IsAdd = function (arr)
-		{
-			return arr[1].Class === this.class;
-		};
-	}
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.DeletedTextRecovery = DeletedTextRecovery;

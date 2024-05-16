@@ -125,7 +125,10 @@
 
 		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
 		AscCommon.History.Remove_LastPoint();
-		AscCommon.DeletedTextRecoveryCheckRunsColor();
+
+		this.textRecovery.oRunSplits = {}
+		this.textRecovery.Check();
+
 
 		return true;
 	};
@@ -327,7 +330,7 @@
 	 */
 	CCollaborativeHistory.prototype.MoveToPoint = function(nPos)
 	{
-		this.UndoDeletedTextRecovery();
+		this.UndoDeletedTextRecovery(true);
 		return this.NavigationRevisionHistoryByStep(nPos);
 	};
 	CCollaborativeHistory.prototype.InitTextRecover = function ()
@@ -348,13 +351,17 @@
 	 * Отменить отображение удаленного текста в данной точке истории ревизии
 	 * @return {boolean}
 	 */
-	CCollaborativeHistory.prototype.UndoDeletedTextRecovery = function()
+	CCollaborativeHistory.prototype.UndoDeletedTextRecovery = function(isNotCollab)
 	{
 		if (this.textRecovery)
-			return this.textRecovery.UndoShowDelText();
+			return this.textRecovery.UndoShowDelText(isNotCollab);
 
 		return false;
 	};
+	CCollaborativeHistory.prototype.GetCollaborativeMarks = function ()
+	{
+		return this.CoEditing.Get_CollaborativeMarks();
+	}
 	/**
 	 * Отменяем собственные последние действия, прокатывая их через чужие
 	 * @returns {[]} возвращаем массив новых действий

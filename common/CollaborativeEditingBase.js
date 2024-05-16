@@ -378,6 +378,9 @@
 			if (fEndCallBack)
 				fEndCallBack();
 		}
+
+		AscCommon.CollaborativeEditing.CoHistory.InitTextRecover();
+		AscCommon.CollaborativeEditing.CoHistory.textRecovery.GetDataForProceedMarks(true);
     };
     CCollaborativeEditingBase.prototype.Apply_OtherChanges = function()
     {
@@ -907,6 +910,10 @@
             }
         }
     };
+    CCollaborativeEditingBase.prototype.Get_CollaborativeMarks = function ()
+	{
+		return this.m_aChangedClasses;
+	}
     //----------------------------------------------------------------------------------------------------------------------
     // Функции для работы с обновлением курсоров после принятия изменений
     //----------------------------------------------------------------------------------------------------------------------
