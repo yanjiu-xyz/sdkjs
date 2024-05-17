@@ -6820,6 +6820,9 @@ PresNode.prototype.addChild = function (ch, pos) {
 				const childs = this.parent.childs;
 				for (let i = 0; i < childs.length; i++) {
 					const child = childs[i];
+					if (this.node !== child.node) {
+						continue;
+					}
 					const spaceShape = child.getShape(true);
 					const spaceBounds = spaceShape.getBounds(true);
 					const spaceWidth = spaceBounds.r - spaceBounds.l;
