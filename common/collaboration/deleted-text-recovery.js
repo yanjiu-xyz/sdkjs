@@ -333,17 +333,16 @@
 			{
 				let strCurrentId = oCurChange.Class.Id;
 				let arrRemData = oRemove.data[strCurrentId];
-
 				if (!arrRemData)
 					return true;
-
 				let addItem = oCurChange.Items[0];
 
 				for (let i = 0; i < arrRemData.length; i++)
 				{
 					let oCurrentRemItem = arrRemData[i];
 
-					if (oCurChange.PosArray[0] === oCurrentRemItem.pos && addItem.Value === oCurrentRemItem.item.Value)
+					if ((oCurChange.PosArray[0] === oCurrentRemItem.pos && addItem.Value === oCurrentRemItem.item.Value)
+					|| (oCurChange.Pos === oCurrentRemItem.pos && addItem.Value === oCurrentRemItem.item.Value))
 					{
 						arrRemData.splice(i, 1);
 
@@ -353,18 +352,16 @@
 							for (let i = 0; i < currentArr.length; i++)
 							{
 								let oCur = currentArr[i];
-								if (oCur.pos === oCurChange.PosArray[0])
+								if (oCur.pos === oCurChange.PosArray[0] || oCur.pos === oCurChange.Pos)
 								{
 									currentArr.splice(i, 1);
 									currentArr[currentArr.length] = oCur;
 								}
 							}
-							//this.wait[strCurrentId].push({pos: oCurChange.PosArray[0], nCount: this.data[strCurrentId].length});
 						}
 						return false
 					};
 				}
-
 			}
 
 			return true;
@@ -382,12 +379,15 @@
 
 				if (this.wait[strCurrentId])
 					oWait = this.wait[strCurrentId].filter( function (oItem) { return oItem.pos === oChange.pos});
+
+				let nChange = oChange.PosArray ? oChange.PosArray[0] : oChange.Pos;
+
+				// repeat for PosArray array
+
 				if (oWait)
-				{
-					this.data[strCurrentId][oWait.nCount] = {change: oChange, pos: oChange.PosArray[0]}
-				}
+					this.data[strCurrentId][oWait.nCount] = {change: oChange, pos: nChange}
 				else
-					this.data[strCurrentId].push({change: oChange, pos: oChange.PosArray[0]});
+					this.data[strCurrentId].push({change: oChange, pos: nChange});
 			}
 		}
 		this.getData = function ()
@@ -581,8 +581,6 @@
 		let oRemoveText = new RemoveTextPositions();
 		arrInputChanges = arrInputChanges.reverse();
 
-		// написать тесты
-
 		for (let i = 0; i < arrInputChanges.length; i++)
 		{
 			let oCurChanges = arrInputChanges[i].reverse();
@@ -591,22 +589,20 @@
 				let oCurChange = oCurChanges[y];
 				oRemoveText.ProceedChange(oCurChange)
 
-				if (oCurChange instanceof CChangesRunAddItem)
+				if (oCurChange instanceof CChangesRunAddItem || oCurChange instanceof CChangesParagraphAddItem || oCurChange instanceof CChangesDocumentAddItem)
 				{
 					if (arrData.Check(oCurChange, oRemoveText))
 						arrData.AddChange(oCurChange)
 				}
-				else if (oCurChange instanceof CChangesRunRemoveItem
-				|| oCurChange instanceof CChangesDocumentRemoveItem
-				|| oCurChange instanceof CChangesParagraphRemoveItem)
+				else if (oCurChange instanceof CChangesRunRemoveItem || oCurChange instanceof CChangesParagraphRemoveItem || oCurChange instanceof CChangesDocumentRemoveItem)
 				{
-					if (oCurChange instanceof CChangesRunRemoveItem || oCurChange instanceof CChangesDocumentRemoveItem || oCurChange instanceof CChangesParagraphRemoveItem)
+					for (let h = 0; h < oCurChange.PosArray.length; h++)
 					{
-						for (let h = 0; h < oCurChange.PosArray.length; h++)
-						{
-							oRemoveText.AddToClass(oCurChange.Class, oCurChange.Items[h], oCurChange.PosArray[h]);
-						}
+						oRemoveText.AddToClass(oCurChange.Class, oCurChange.Items[h], oCurChange.PosArray[h]);
 					}
+
+					if (oCurChange.Pos !== undefined)
+						oRemoveText.AddToClass(oCurChange.Class, oCurChange.Items[0], oCurChange.Pos);
 
 					let oCurrentRun = oCurChange.Class;
 					if (oCurrentRun.CollaborativeMarks)
@@ -624,9 +620,7 @@
 					}
 				}
 
-				if (oCurChange instanceof CChangesRunAddItem
-				|| oCurChange instanceof CChangesDocumentAddItem
-				|| oCurChange instanceof CChangesParagraphAddItem)
+				if (oCurChange instanceof CChangesRunAddItem || oCurChange instanceof CChangesParagraphAddItem || oCurChange instanceof CChangesDocumentAddItem)
 					this.RedoUndoChange(oCurChange, false, []);
 				else
 					this.RedoUndoChange(oCurChange, false, arrCurrentPoint);
@@ -697,6 +691,7 @@
 		this.RecalculatePointFromHistory();
 		this.ApplyCollaborativeMarks(true);
 
+		//editor.WordControl.m_oLogicDocument.Recalculate_Page()
 		return true;
 	};
 	DeletedTextRecovery.prototype.Split = function (arrInput)
@@ -743,7 +738,7 @@
 					}
 					else
 					{
-						for (let i = 0; i < arrContent.length; i++)
+						for (let i = nStart; i <= nEnd; i++)
 						{
 							this.SetReviewInfo(arrContent[i]);
 						}
@@ -753,7 +748,7 @@
 				{
 					let newCollab = [];
 
-					if (oCurrentRun.Content.length === 0)
+					if (oCurrentRun.Content.length === 0 || (nEnd + 1 - nStart) === oCurrentRun.Content.length)
 					{
 						this.SetReviewInfo(oCurrentRun);
 						continue;

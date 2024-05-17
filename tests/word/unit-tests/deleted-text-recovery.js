@@ -62,7 +62,7 @@ $(function () {
 	function Init()
 	{
 		UpdateChanges();
-		logicDocument.CollaborativeEditing.CoHistory.initTextRecover();
+		logicDocument.CollaborativeEditing.CoHistory.InitTextRecover();
 		oCurDelRecover = AscCommon.CollaborativeEditing.CoHistory.textRecovery;
 	}
 
@@ -86,12 +86,12 @@ $(function () {
 
 	function Prev()
 	{
-		oCurDelRecover.NavigationRevisionHistoryByStep(oCurDelRecover.GetCurrentIndexNavigationPoint() - 1, true);
+		oCurDelRecover.NavigationRevisionHistoryByStep(oCurDelRecover.GetGlobalPointIndex() - 1);
 	}
 
 	function Next()
 	{
-		oCurDelRecover.NavigationRevisionHistoryByStep(oCurDelRecover.GetCurrentIndexNavigationPoint() + 1, true);
+		oCurDelRecover.NavigationRevisionHistoryByStep(oCurDelRecover.GetGlobalPointIndex() + 1);
 	}
 
 	function CheckRuns(assert, paragraph, arr)
@@ -273,24 +273,34 @@ $(function () {
 	QUnit.test("Delete paragraph", function (assert)
 	{
 		let strOne = "One";
+		let strTwo = "Two";
 		let p = AddParagraph(0);
+		let p2 = AddParagraph(1);
 		let run = CreateRun(strOne);
+		let run2 = CreateRun(strTwo);
 		p.AddToContentToEnd(run);
+		p2.AddToContentToEnd(run2);
 
-		DelLast(5);
-		assert.ok(true, "Delete 'One'");
+		AscTest.MoveCursorToParagraph(p2, false);
 
-		let strDeletedText = AscTest.GetParagraphText(p);
+		DelLast(4);
+		assert.ok(true, "Delete 'Two'");
+
+		let strDeletedText = AscTest.GetParagraphText(p2);
 		assert.strictEqual(strDeletedText, "", "Text in document is ''");
 
 		Init();
 		ShowDelText()
 		assert.ok(true, "Recover deleted text");
-		let strResultText = AscTest.GetParagraphText(p);
-		assert.strictEqual(strResultText, "One", "Text in run is 'One'");
+		let strResultText = AscTest.GetParagraphText(p2);
+		assert.strictEqual(strResultText, "Two", "Text in run is 'One'");
 
 		CheckRuns(assert, p, [
-			["One", reviewtype_Remove],
+			["One", reviewtype_Common],
+		]);
+
+		CheckRuns(assert, p2, [
+			["Two", reviewtype_Remove],
 		]);
 	});
 
