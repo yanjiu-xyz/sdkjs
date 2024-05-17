@@ -4357,7 +4357,9 @@ function HierarchyAlgorithm() {
 		const stepAngle = this.calcValues.stepAngle;
 		const container = this.getShapeContainer();
 		let startIndex = 0;
+		let incAngleDivider = childs.length;
 		if (this.calcValues.centerNodeIndex !== null) {
+			incAngleDivider -= 1;
 			const centerNode = this.getCenterNode();
 			const shape = centerNode && centerNode.getShape(false);
 			if  (shape) {
@@ -4367,8 +4369,8 @@ function HierarchyAlgorithm() {
 			startIndex = this.calcValues.centerNodeIndex + 1;
 		}
 		let incAngle = 0;
-		if (this.calcValues.mainElements.length) {
-			incAngle = Math.PI / this.calcValues.mainElements.length;
+		if (incAngleDivider > 0) {
+			incAngle = 2 * Math.PI / incAngleDivider;
 		}
 
 		for (let i = startIndex; i < childs.length; i++) {
