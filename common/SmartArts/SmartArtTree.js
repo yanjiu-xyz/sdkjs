@@ -53,7 +53,15 @@
 	const degToRad = Math.PI / 180;
 	const radToDeg = 1 / degToRad;
 	const algDelta = 1e-10;
+	const intDelta = 1e-2;
 	const bulletFontSizeCoefficient = 51 / 65;
+
+	function isClockwisePoints(centerPoint, edgePoint1, edgePoint2) {
+		const rectSum = (edgePoint2.x - edgePoint1.x) * (edgePoint2.y + edgePoint1.y) +
+			(centerPoint.x - edgePoint2.x) * (centerPoint.y + edgePoint2.y) +
+			(edgePoint1.x - centerPoint.x) * (edgePoint1.y + centerPoint.y);
+		return rectSum < 0;
+	}
 
 	function checkPositionBounds(position, bounds) {
 		if (position.x < bounds.l) {
@@ -88,6 +96,9 @@
 
 	function fAlgDeltaEqual(a, b) {
 		return AscFormat.fApproxEqual(a, b, algDelta);
+	}
+	function fIntervalDeltaEqual(a, b) {
+		return AscFormat.fApproxEqual(a, b, intDelta);
 	}
 
 	function CCoordPoint(x, y) {
@@ -129,6 +140,22 @@
 		return null;
 	};
 
+	CVector.prototype.getAngleBetween = function (vector, isAntiClockwise) {
+		let currentAngle = this.getAngle();
+		let anotherAngle = vector.getAngle();
+
+		if (isAntiClockwise) {
+			if (currentAngle < anotherAngle) {
+				currentAngle += Math.PI * 2;
+			}
+			return currentAngle - anotherAngle;
+		} else {
+			if (anotherAngle < currentAngle || fAlgDeltaEqual(anotherAngle, currentAngle)) {
+				anotherAngle += Math.PI * 2;
+			}
+			return anotherAngle - currentAngle;
+		}
+	};
 
 	function createPresNode(presName, styleLbl, contentNode) {
 		presName = presName || "";
@@ -511,22 +538,21 @@
 			if (prSet) {
 				let offX = 0;
 				let offY = 0;
-				if (shape.radialVector) {
+				const radialInfo = shape.getCustomRadialInfo();
+				if (radialInfo) {
 					const custScaleRadius = prSet.custRadScaleRad === null ? 1 : prSet.custRadScaleRad;
 					const custScaleAngle = prSet.custRadScaleInc === null ? 0 : prSet.custRadScaleInc;
 					if (custScaleRadius !== 1 || custScaleAngle !== 0) {
-
-						const defaultRadius = shape.radialVector.getDistance();
-						const defaultAngle = shape.radialVector.getAngle();
 						const shapeCenterPoint = new CCoordPoint(shape.x + shape.width / 2, shape.y + shape.height / 2);
 						const centerPoint = new CCoordPoint(shapeCenterPoint.x - shape.radialVector.x, shapeCenterPoint.y - shape.radialVector.y);
-						const customRadius = defaultRadius * custScaleRadius;
-						const custAngle = AscFormat.normalizeRotate(defaultAngle + custScaleAngle * shape.incAngle);
+						const customRadius = radialInfo.radius;
+						const custAngle = radialInfo.angle;
 						const custVector = CVector.getVectorByAngle(custAngle);
 						custVector.multiply(customRadius);
 						const custCenterPoint = new CCoordPoint(custVector.x + centerPoint.x, custVector.y + centerPoint.y);
 						offX = custCenterPoint.x - shape.width / 2 - shape.x;
 						offY = custCenterPoint.y - shape.height / 2 - shape.y;
+						shape.custCenterPoint = centerPoint;
 					}
 				} else {
 					if (prSet.custLinFactNeighborX) {
@@ -1329,6 +1355,23 @@
 		this.radialVector = null;
 	}
 	AscFormat.InitClassWithoutType(ShadowShape, Position);
+	ShadowShape.prototype.getCustomRadialInfo = function () {
+		if (this.radialVector && AscFormat.isRealNumber(this.incAngle)) {
+			const prSet = this.node.getPrSet();
+			if (prSet) {
+				const custScaleRadius = prSet.custRadScaleRad === null ? 1 : prSet.custRadScaleRad;
+				const custScaleAngle = prSet.custRadScaleInc === null ? 0 : prSet.custRadScaleInc;
+				const defaultRadius = this.radialVector.getDistance();
+				const defaultAngle = this.radialVector.getAngle();
+				if (custScaleRadius !== 1 || custScaleAngle !== 0) {
+					const customRadius = defaultRadius * custScaleRadius;
+					const custAngle = AscFormat.normalizeRotate(defaultAngle + custScaleAngle * this.incAngle);
+					return {radius: customRadius, angle: custAngle};
+				}
+				return {radius: defaultRadius, angle: defaultAngle};
+			}
+		}
+	};
 	ShadowShape.prototype.moveTo = function (dX, dY) {
 		this.node.moveTo(dX, dY, false);
 	};
@@ -1385,7 +1428,7 @@
 		for (let i = 0; i < this.customGeom.length; i += 1) {
 			const custCommand = this.customGeom[i];
 			for (let j = 1; j < custCommand.length; j++) {
-				custCommand[j] = String(custCommand[j] * 36000 >> 0);
+				custCommand[j] = String(custCommand[j] >> 0);
 			}
 			geometry.AddPathCommand.apply(geometry, custCommand);
 		}
@@ -1614,7 +1657,9 @@
 		this._isHideLastChild = null;
 		this.constraintSizes = null;
 	}
-
+	BaseAlgorithm.prototype.isClockwise = function () {
+		return true;
+	};
 	BaseAlgorithm.prototype.getChildAlgorithmAlignBounds = function (isCalculateCoefficients, skipRotate) {
 		const childShape = this.parentNode.getShape(isCalculateCoefficients);
 		return childShape.getBounds(false, skipRotate);
@@ -1769,13 +1814,20 @@
 	BaseAlgorithm.prototype.setSibConnection = function (startNode, endNode, connectorAlgorithm) {
 		let srcNode;
 		let dstNode;
+		const parentNode = this.parentNode;
 		if (connectorAlgorithm.params[AscFormat.Param_type_srcNode]) {
 			srcNode = startNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
+			if (!srcNode) {
+				srcNode = parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
+			}
 		} else {
 			srcNode = startNode.getDefaultConnectionNode();
 		}
 		if (connectorAlgorithm.params[AscFormat.Param_type_dstNode]) {
 			dstNode = endNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
+			if (!dstNode) {
+				dstNode = parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
+			}
 		} else {
 			dstNode = endNode.getDefaultConnectionNode();
 		}
@@ -3999,20 +4051,37 @@ function HierarchyAlgorithm() {
 		return this.calcValues.mainElements.indexOf(shape);
 	};
 	CycleAlgorithm.prototype.getRadialConnectionInfo = function (node) {
-		const parentHeight = this.getParentNodeHeight(true);
-		const parentWidth = this.getParentNodeWidth(true);
-
-		const nodeIndex = this.getShapeIndex(node);
-		if (nodeIndex === -1) {
-			return null;
+		const shape = node.getShape();
+		const shapeCenterPoint = new CCoordPoint(shape.x + shape.width / 2, shape.y + shape.height / 2);
+		let radius;
+		let angle;
+		let custVector;
+		if (shape.custCenterPoint) {
+			custVector = shape.custCenterPoint.getVector(shapeCenterPoint);
+			radius = custVector.getDistance();
+			angle = custVector.getAngle();
+			return {
+				point: shape.custCenterPoint,
+				radius: radius,
+				angle: angle,
+				isClockwise: this.isClockwise()
+			}
+		} else {
+			const custRadialMoveInfo = shape.getCustomRadialInfo();
+			if (!custRadialMoveInfo) {
+				return null;
+			}
+			radius = custRadialMoveInfo.radius;
+			angle = custRadialMoveInfo.angle;
+			custVector = CVector.getVectorByAngle(angle);
+			custVector.multiply(radius);
+			return {
+				point: new CCoordPoint(shapeCenterPoint.x - custVector.x, shapeCenterPoint.y - custVector.y),
+				radius: radius,
+				angle: angle,
+				isClockwise: this.isClockwise()
+			};
 		}
-		const result = {};
-		result.point = this.calcValues.centerPoint;
-		result.radius = this.calcValues.radius;
-		// todo: add custom radial info
-		result.angle = AscFormat.normalizeRotate(this.calcValues.startAngle + this.calcValues.stepAngle * nodeIndex);
-		result.isClockwise = this.isClockwise();
-		return result;
 	};
 	CycleAlgorithm.prototype.initParams = function (params) {
 		PositionAlgorithm.prototype.initParams.call(this, params);
@@ -4322,14 +4391,6 @@ function HierarchyAlgorithm() {
 					container.push(shape);
 				}
 		}
-		this.calculateCenterPoint();
-	};
-	CycleAlgorithm.prototype.calculateCenterPoint = function () {
-		const width = this.getParentNodeWidth(true);
-		const height = this.getParentNodeHeight(true);
-		const shapeContainer = this.getShapeContainer();
-		const bounds = shapeContainer.getBounds();
-		this.calcValues.centerPoint = new CCoordPoint(width / 2 - (bounds.l + (bounds.r - bounds.l) / 2), height / 2 - (bounds.t + (bounds.b - bounds.t) / 2));
 	};
 	CycleAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createShadowShape(true, isCalculateScaleCoefficients);
@@ -4662,11 +4723,15 @@ function HierarchyAlgorithm() {
 		this.parentAlgorithm = null;
 		this.calcValues = {
 			edgePoints: null,
+			radiusCenterPoint: null,
 			connectionPoints: null,
 			pointPositions: null
 		}
 	}
 	AscFormat.InitClassWithoutType(ConnectorAlgorithm, BaseAlgorithm);
+	ConnectorAlgorithm.prototype.isClockwise = function () {
+		return this.parentAlgorithm.isClockwise();
+	};
 	ConnectorAlgorithm.prototype.initParams = function (params) {
 		BaseAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_dim] === undefined) {
@@ -4709,29 +4774,11 @@ function HierarchyAlgorithm() {
 				}
 				return isBegin ? this.connectionDistances.begin : this.connectionDistances.end;
 			default:
-				break;
+				return isBegin ? this.connectionDistances.begin : this.connectionDistances.end;
 		}
 	}
 	ConnectorAlgorithm.prototype.getEdgePoints = function () {
 		if (!this.calcValues.edgePoints) {
-			const startEdgePoints = this.getAvailableEdgePoints(true);
-			const endEdgePoints = this.getAvailableEdgePoints();
-
-			let minDistance = null;
-			let calcStartEdgePoint;
-			let calcEndEdgePoint;
-			for (let i = 0; i < startEdgePoints.length; i += 1) {
-				const startEdgePoint = startEdgePoints[i].point;
-				for (let j = 0; j < endEdgePoints.length; j += 1) {
-					const endEdgePoint = endEdgePoints[j].point;
-					const distance = startEdgePoint.getVector(endEdgePoint).getDistance();
-					if (minDistance === null || minDistance > distance) {
-						minDistance = distance;
-						calcStartEdgePoint = startEdgePoints[i];
-						calcEndEdgePoint = endEdgePoints[j];
-					}
-				}
-			}
 			this.calcValues.edgePoints = {
 				start: null,
 				end: null
@@ -4740,11 +4787,47 @@ function HierarchyAlgorithm() {
 				start: AscFormat.ParameterVal_connectorPoint_auto,
 				end: AscFormat.ParameterVal_connectorPoint_auto
 			};
-			if (calcStartEdgePoint && calcEndEdgePoint) {
-				this.calcValues.edgePoints.start = calcStartEdgePoint.point;
-				this.calcValues.pointPositions.start = calcStartEdgePoint.type;
-				this.calcValues.edgePoints.end = calcEndEdgePoint.point;
-				this.calcValues.pointPositions.end = calcEndEdgePoint.type;
+
+			let calcStartEdgePoint;
+			let calcEndEdgePoint;
+			if (this.isRadialConnection()) {
+				const edgePoints = this.getRadialEdgePoints();
+				if (edgePoints.start && edgePoints.end) {
+					this.calcValues.pointPositions = {
+						start: AscFormat.ParameterVal_connectorPoint_radial,
+						end: AscFormat.ParameterVal_connectorPoint_radial
+					};
+
+					this.calcValues.edgePoints = {
+						start: edgePoints.start,
+						end: edgePoints.end
+					};
+
+					this.calcValues.radiusCenterPoint = edgePoints.radiusCenterPoint;
+				}
+			} else {
+				const startEdgePoints = this.getAvailableEdgePoints(true);
+				const endEdgePoints = this.getAvailableEdgePoints();
+				let minDistance = null;
+				for (let i = 0; i < startEdgePoints.length; i += 1) {
+					const startEdgePoint = startEdgePoints[i].point;
+					for (let j = 0; j < endEdgePoints.length; j += 1) {
+						const endEdgePoint = endEdgePoints[j].point;
+						const distance = startEdgePoint.getVector(endEdgePoint).getDistance();
+						if (minDistance === null || minDistance > distance) {
+							minDistance = distance;
+							calcStartEdgePoint = startEdgePoints[i];
+							calcEndEdgePoint = endEdgePoints[j];
+						}
+					}
+				}
+
+				if (calcStartEdgePoint && calcEndEdgePoint) {
+					this.calcValues.edgePoints.start = calcStartEdgePoint.point;
+					this.calcValues.pointPositions.start = calcStartEdgePoint.type;
+					this.calcValues.edgePoints.end = calcEndEdgePoint.point;
+					this.calcValues.pointPositions.end = calcEndEdgePoint.type;
+				}
 			}
 		}
 		if (this.calcValues.edgePoints.start && this.calcValues.edgePoints.end) {
@@ -4752,16 +4835,11 @@ function HierarchyAlgorithm() {
 		}
 		return null;
 	};
-	ConnectorAlgorithm.prototype.getBendConnectionPoints = function () {
-		const edgePoints = this.getEdgePoints();
-		if (edgePoints) {
-			const startPoint = edgePoints.start;
-			const endPoint = edgePoints.end;
+	ConnectorAlgorithm.prototype.getBendConnectionPoints = function (startPoint, endPoint) {
 			const vector = startPoint.getVector(endPoint);
 			const startConnectionPoint = this.getBendConnectionPoint(startPoint, startPoint, vector, true);
 			const endConnectionPoint = this.getBendConnectionPoint(endPoint, startPoint, vector, false);
 			return {start: startConnectionPoint, end: endConnectionPoint};
-		}
 	};
 
 	ConnectorAlgorithm.prototype.getBendConnectionPoint = function (point, startPoint, vector, isStart) {
@@ -4792,8 +4870,33 @@ function HierarchyAlgorithm() {
 
 		return {start: startConnectionPoint, end: endConnectionPoint};
 	};
-	ConnectorAlgorithm.prototype.getCurveConnectionPoints = function () {
-		return {};
+	ConnectorAlgorithm.prototype.getCurveConnectionPoints = function (startPoint, endPoint) {
+		const result = {start: null, end: null};
+		const centerPoint = this.calcValues.radiusCenterPoint;
+		if (centerPoint) {
+			const startCoefficient = this.getConnectionDistCoefficient(true);
+			const endCoefficient = this.getConnectionDistCoefficient(false);
+
+			const startVector = centerPoint.getVector(startPoint);
+			const radius = startVector.getDistance();
+			const endVector = centerPoint.getVector(endPoint);
+			const angle = startVector.getAngleBetween(endVector, !this.isClockwise());
+			const startAngle = startVector.getAngle();
+			const endAngle = endVector.getAngle();
+
+			let startConnectionVector;
+			let endConnectionVector;
+			if (this.isClockwise()) {
+				startConnectionVector = CVector.getVectorByAngle(startAngle + angle * startCoefficient);
+				endConnectionVector = CVector.getVectorByAngle(endAngle - angle * endCoefficient);
+			} else {
+				startConnectionVector = CVector.getVectorByAngle(startAngle - angle * startCoefficient);
+				endConnectionVector = CVector.getVectorByAngle(endAngle + angle * endCoefficient);
+			}
+			result.start = new CCoordPoint(centerPoint.x + startConnectionVector.x * radius, centerPoint.y + startConnectionVector.y * radius);
+			result.end = new CCoordPoint(centerPoint.x + endConnectionVector.x * radius, centerPoint.y + endConnectionVector.y * radius);
+		}
+		return result;
 	};
 	ConnectorAlgorithm.prototype.getLongCurveConnectionPoints = function () {
 		return {};
@@ -4872,6 +4975,9 @@ function HierarchyAlgorithm() {
 		} else {
 			guideVector = new CVector(startPoint.x - endPoint.x, startPoint.y - endPoint.y);
 		}
+		if (fAlgDeltaEqual(guideVector.getDistance(), 0)) {
+			return null;
+		}
 		const bounds = isStart ? startBounds : endBounds;
 		return getMinShapeEdgePoint(bounds, guideVector);
 	};
@@ -4899,10 +5005,71 @@ function HierarchyAlgorithm() {
 
 		return new CCoordPoint(Math.cos(angle) * radius + centerPoint.x, Math.sin(angle) * radius + centerPoint.y);
 	};
+	ConnectorAlgorithm.prototype.isPointOnInterval = function (point, startSegment, endSegment) {
+		if (startSegment.x === endSegment.x) {
+			return (point.y > startSegment.y) && (point.y < endSegment.y) && !(fIntervalDeltaEqual(point.y, startSegment.y) || fIntervalDeltaEqual(point.y, endSegment.y));
+		} else {
+			return (point.x > startSegment.x) && (point.x < endSegment.x) && !(fIntervalDeltaEqual(point.x, startSegment.x) || fIntervalDeltaEqual(point.x, endSegment.x));
+		}
+	};
 	ConnectorAlgorithm.prototype.isPointOnSegment = function (point, startSegment, endSegment) {
-		return (point.x > startSegment.x || fAlgDeltaEqual(point.x, startSegment.x)) && (point.x < endSegment.x || fAlgDeltaEqual(point.x, endSegment.x)) &&
-			(point.y > startSegment.y || fAlgDeltaEqual(point.y, startSegment.y)) && (point.y < endSegment.y || fAlgDeltaEqual(point.y, endSegment.y));
+		if (startSegment.x === endSegment.x) {
+			return (point.y > startSegment.y || fIntervalDeltaEqual(point.y, startSegment.y)) && (point.y < endSegment.y || fIntervalDeltaEqual(point.y, endSegment.y));
+		} else {
+			return (point.x > startSegment.x || fIntervalDeltaEqual(point.x, startSegment.x)) && (point.x < endSegment.x || fIntervalDeltaEqual(point.x, endSegment.x));
+		}
 	}
+	ConnectorAlgorithm.prototype.getCycleRadius = function () {
+		if (this.parentAlgorithm instanceof CycleAlgorithm) {
+			return this.parentAlgorithm.calcValues.radius;
+		}
+		const constrObject = this.parentNode.getConstraints(true);
+		if (constrObject[AscFormat.Constr_type_diam] !== undefined) {
+			return constrObject[AscFormat.Constr_type_diam];
+		}
+	};
+
+	ConnectorAlgorithm.prototype.getRadialEdgePoints = function () {
+		const result = {
+			start: null,
+			end: null,
+			radiusCenterPoint: null
+		};
+		const cycleRadius = this.getCycleRadius();
+		const isClockwise = this.parentAlgorithm.isClockwise();
+		let startPoint = this.getRadialEdgePoint(true);
+		let endPoint = this.getRadialEdgePoint();
+		if (!(startPoint && endPoint)) {
+			startPoint = this.getAutoEdgePoint(true);
+			endPoint = this.getAutoEdgePoint();
+		}
+		if (!(startPoint && endPoint)) {
+			const startShape = this.getStartShape();
+			const endShape = this.getEndShape();
+			const startBounds = startShape.getBounds();
+			const endBounds = endShape.getBounds();
+			startPoint = getShapePoint(startBounds);
+			endPoint = getShapePoint(endBounds);
+		}
+		if (startPoint && endPoint) {
+			const lineVector = startPoint.getVector(endPoint);
+			result.start = startPoint;
+			result.end = endPoint;
+			const circlesIntersectionPoints = AscFormat.circlesIntersection(startPoint.x, startPoint.y, cycleRadius, endPoint.x, endPoint.y, cycleRadius);
+			if (circlesIntersectionPoints.length) {
+				const firstEllipsePoint = new CCoordPoint(circlesIntersectionPoints[0].x, circlesIntersectionPoints[0].y);
+				const secondEllipsePoint = new CCoordPoint(circlesIntersectionPoints[1].x, circlesIntersectionPoints[1].y);
+				if (isClockwisePoints(firstEllipsePoint, startPoint, endPoint)) {
+					result.radiusCenterPoint = isClockwise ? firstEllipsePoint : secondEllipsePoint;
+				} else {
+					result.radiusCenterPoint = isClockwise ? secondEllipsePoint : firstEllipsePoint;
+				}
+			} else {
+				result.radiusCenterPoint = new CCoordPoint(startPoint.x + lineVector.x / 2, startPoint.y + lineVector.y / 2);
+			}
+		}
+		return result;
+	};
 	ConnectorAlgorithm.prototype.getRectRadialEdgePoint = function (radialInfo, bounds, isStart) {
 		const centerPoint = radialInfo.point;
 		const radius = radialInfo.radius;
@@ -4931,51 +5098,22 @@ function HierarchyAlgorithm() {
 				const point1 = new CCoordPoint(paramLine.x + paramLine.ax * answer.x1, paramLine.y + paramLine.ay * answer.x1);
 				const point2 = new CCoordPoint(paramLine.x + paramLine.ax * answer.x2, paramLine.y + paramLine.ay * answer.x2);
 
-				if (this.isPointOnSegment(point1, coords[0], coords[1])) {
+				if (this.isPointOnInterval(point1, coords[0], coords[1]) && this.isPointOnInterval(point2, coords[0], coords[1])) {
+					continue;
+				} else if (this.isPointOnSegment(point1, coords[0], coords[1])) {
 					point = point1;
 				} else if (this.isPointOnSegment(point2, coords[0], coords[1])) {
 					point = point2;
 				} else {
 					continue;
 				}
-				const diffVector = new CVector(point.x - centerPoint.x, point.y - centerPoint.y);
-				const diffAngle = diffVector.getAngle();
 				if (isStart && isClockwise || !isStart && !isClockwise) {
-					if (diffAngle >= 0 && diffAngle < Math.PI / 2) {
-						if (point.y > rectCenterPoint.y && point.x < rectCenterPoint.x) {
-							return point;
-						}
-					} else if (diffAngle >= Math.PI / 2 && diffAngle < Math.PI) {
-						if (point.y < rectCenterPoint.y && point.x < rectCenterPoint.x) {
-							return point;
-						}
-					} else if (diffAngle >= Math.PI && diffAngle < 3 * Math.PI / 2) {
-						if (point.y < rectCenterPoint.y && point.x > rectCenterPoint.x) {
-							return point;
-						}
-					} else {
-						if (point.y > rectCenterPoint.y && point.x > rectCenterPoint.x) {
-							return point;
-						}
+					if (isClockwisePoints(centerPoint, rectCenterPoint, point)) {
+						return point;
 					}
-
 				} else {
-					if (diffAngle >= 0 && diffAngle < Math.PI / 2) {
-						if (point.y < rectCenterPoint.y && point.x > rectCenterPoint.x) {
-							return point;
-						}
-					} else if (diffAngle >= Math.PI / 2 && diffAngle < Math.PI) {
-						if (point.y > rectCenterPoint.y && point.x > rectCenterPoint.x) {
-							return point;
-						}
-					} else if (diffAngle >= Math.PI && diffAngle < 3 * Math.PI / 2) {
-						if (point.y > rectCenterPoint.y && point.x < rectCenterPoint.x) {
-							return point;
-						}
-					} else {
-						if (point.y < rectCenterPoint.y && point.x < rectCenterPoint.x) {
-							return point;
-						}
+					if (isClockwisePoints(centerPoint, point, rectCenterPoint)) {
+						return point;
 					}
 				}
 			}
@@ -5000,6 +5138,14 @@ function HierarchyAlgorithm() {
 		return parameters || [AscFormat.ParameterVal_connectorPoint_auto];
 
 	}
+	ConnectorAlgorithm.prototype.isRadialConnection = function () {
+		const begPts = this.params[AscFormat.Param_type_begPts];
+		const endPts = this.params[AscFormat.Param_type_endPts];
+		if (begPts && endPts && begPts.length === 1 && endPts.length === 1) {
+			return begPts[0] === AscFormat.ParameterVal_connectorPoint_radial && endPts[0] === AscFormat.ParameterVal_connectorPoint_radial;
+		}
+		return false;
+	};
 	ConnectorAlgorithm.prototype.getAvailableEdgePoints = function (isStart) {
 		const result = [];
 		const pointPositions = this.getAvailablePointPositions(isStart);
@@ -5243,6 +5389,9 @@ function HierarchyAlgorithm() {
 					case AscFormat.ParameterVal_connectorRouting_bend:
 						this.createBendLineConnector(points.start, points.end);
 						break;
+					case AscFormat.ParameterVal_connectorRouting_curve:
+						this.createCurveLineConnector(points.start, points.end);
+						break;
 					default:
 						break;
 				}
@@ -5458,18 +5607,50 @@ function HierarchyAlgorithm() {
 		const localStartPoint = new CCoordPoint(startPoint.x - connectorShape.x, startPoint.y - connectorShape.y);
 		if (bendPoints) {
 			connectorShape.customGeom.push([0]);
-				connectorShape.customGeom.push([1, localStartPoint.x, localStartPoint.y]);
+				connectorShape.customGeom.push([1, localStartPoint.x * 36000, localStartPoint.y * 36000]);
 				for (let i = 0; i < bendPoints.length; i++) {
 					const bendPoint = bendPoints[i];
 					const localBendPoint = new CCoordPoint(bendPoint.x - connectorShape.x, bendPoint.y - connectorShape.y);
-					connectorShape.customGeom.push([2, localBendPoint.x, localBendPoint.y]);
+					connectorShape.customGeom.push([2, localBendPoint.x * 36000, localBendPoint.y * 36000]);
 				}
-				connectorShape.customGeom.push([2, localEndPoint.x, localEndPoint.y]);
+				connectorShape.customGeom.push([2, localEndPoint.x * 36000, localEndPoint.y * 36000]);
 
 		} else {
 			connectorShape.customGeom.push([0]);
-			connectorShape.customGeom.push([1, localStartPoint.x, localStartPoint.y]);
-			connectorShape.customGeom.push([2, localEndPoint.x, localEndPoint.y]);
+			connectorShape.customGeom.push([1, localStartPoint.x * 36000, localStartPoint.y * 36000]);
+			connectorShape.customGeom.push([2, localEndPoint.x * 36000, localEndPoint.y * 36000]);
+		}
+	};
+	ConnectorAlgorithm.prototype.createCurveLineConnector = function (startPoint, endPoint) {
+		const centerPoint = this.calcValues.radiusCenterPoint;
+		if (centerPoint) {
+			const shape = this.parentNode.getShape();
+			const prSet = this.parentNode.getPrSet();
+			if (!prSet.getPresStyleLbl()) {
+				prSet.setPresStyleLbl("sibTrans1D1");
+			}
+			const startVector = centerPoint.getVector(startPoint);
+			const endVector = centerPoint.getVector(endPoint);
+
+			const radius = startVector.getDistance();
+			const side = radius * 2;
+
+			const isClockwise = this.isClockwise();
+			const swAngle = isClockwise ? startVector.getAngleBetween(endVector) : -startVector.getAngleBetween(endVector, true);
+
+			const connectorShape = this.getTemplateConnectorLine();
+			connectorShape.width = side;
+			connectorShape.height = side;
+			connectorShape.x = centerPoint.x - radius;
+			connectorShape.y = centerPoint.y - radius;
+
+			shape.connectorShape = connectorShape;
+
+
+			connectorShape.customGeom.push([0]);
+			connectorShape.customGeom.push([1, (startPoint.x - connectorShape.x) * 36000, (startPoint.y - connectorShape.y) * 36000]);
+			const startAngle = startVector.getAngle();
+			connectorShape.customGeom.push([3, radius * 36000, radius * 36000, startAngle * radToDeg * 60000, swAngle * radToDeg * 60000]);
 		}
 	};
 	ConnectorAlgorithm.prototype.createStraightLineConnector = function (startPoint, endPoint) {
@@ -5496,7 +5677,7 @@ function HierarchyAlgorithm() {
 
 		connectorShape.customGeom.push([0]);
 		connectorShape.customGeom.push([1, 0, 0]);
-		connectorShape.customGeom.push([2, connectorShape.width, 0]);
+		connectorShape.customGeom.push([2, connectorShape.width * 36000, 0]);
 		connectorShape.customGeom.push([6]);
 	};
 	ConnectorAlgorithm.prototype.getTemplateConnectorLine = function () {
