@@ -5797,8 +5797,19 @@ function PresNode(presPoint, contentNode) {
 		heightConstr: null,
 		heightRef: null
 	}
-	this.equalRelations = [];
-	this.adaptEqualRelations = [];
+	this.equationRelations = {
+		adapt: {},
+		nonAdapt: {}
+	};
+
+	this.equationRelations.nonAdapt[AscFormat.Constr_op_equ] = {};
+	this.equationRelations.nonAdapt[AscFormat.Constr_op_gte] = {};
+	this.equationRelations.nonAdapt[AscFormat.Constr_op_lte] = {};
+	this.equationRelations.nonAdapt[AscFormat.Constr_op_none] = {};
+	this.equationRelations.adapt[AscFormat.Constr_op_equ] = {};
+	this.equationRelations.adapt[AscFormat.Constr_op_gte] = {};
+	this.equationRelations.adapt[AscFormat.Constr_op_lte] = {};
+	this.equationRelations.adapt[AscFormat.Constr_op_none] = {};
 	this.parentScale = {};
 	this.moveWith = null;
 	this._isTxXfrm = null;
@@ -5995,6 +6006,17 @@ PresNode.prototype.getNamedNode = function (name) {
 		});
 		shapes.push.apply(shapes, tempShapes);
 	};
+	PresNode.prototype.getZOrderOff = function () {
+		let zOrderOff = this.layoutInfo.shape.zOrderOff;
+/*		if (zOrderOff === 0 && (this.algorithm instanceof SpaceAlgorithm)) {
+			let child = this.childs[0];
+			while (child && child.algorithm instanceof SpaceAlgorithm) {
+				zOrderOff += child.layoutInfo.shape.zOrderOff;
+				child = child.childs[0];
+			}
+		}*/
+		return zOrderOff;
+	};
 	PresNode.prototype.getShadowShapesByZOrder = function () {
 		const shapes = [];
 		const elements = [this];
@@ -6013,14 +6035,8 @@ PresNode.prototype.getNamedNode = function (name) {
 					tempElements.push(child);
 				}
 				tempElements.sort(function (a, b) {
-					let aIndex = 0;
-					let bIndex = 0;
-					if (a.shape) {
-						aIndex = a.shape.shape.zOrderOff;
-					}
-					if (b.shape) {
-						bIndex = b.shape.shape.zOrderOff;
-					}
+					const aIndex = a.getZOrderOff();
+					const bIndex = b.getZOrderOff();
 					return aIndex - bIndex;
 				});
 				elements.push.apply(elements, tempElements);
@@ -6327,9 +6343,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.setConstraintByNode = function (constr, refNode, calcValue, isAdapt) {
 		const constrNode = this.getConstraintNode(constr.forName, constr.ptType.getVal());
 		if (constrNode) {
-			if (constr.op === AscFormat.Constr_op_equ) {
-				constrNode.addEqualRelation(refNode, constr, isAdapt);
-			}
+			constrNode.addEqualRelation(refNode, constr, isAdapt);
 			const isSettingConstraint = constrNode.setConstraint(constr, calcValue, isAdapt);
 			constrNode.setParamConstraint(constr, refNode);
 			if (isSettingConstraint) {
@@ -6350,16 +6364,14 @@ PresNode.prototype.addChild = function (ch, pos) {
 	}
 
 	PresNode.prototype.addEqualRelation = function (refNode, constr, isAdapt) {
-		if (isAdapt) {
-			this.adaptEqualRelations.push({constr: constr, ref: refNode});
-		} else {
-			this.equalRelations.push({constr: constr, ref: refNode});
-		}
+		const relations = isAdapt ? this.equationRelations.adapt : this.equationRelations.nonAdapt;
+		relations[constr.op][constr.type] = {constr: constr, ref: refNode};
 	};
 	PresNode.prototype.applyEqualRelations = function (isAdapt) {
-		const relations = isAdapt ? this.adaptEqualRelations : this.equalRelations;
-		for (let i = 0; i < relations.length; i += 1) {
-			const rel = relations[i];
+		const relations = isAdapt ? this.equationRelations.adapt : this.equationRelations.nonAdapt;
+		const equRelations = relations[AscFormat.Constr_op_equ];
+		for (let constrType in equRelations) {
+			const rel = equRelations[constrType];
 			const constr = rel.constr;
 			const refNode = rel.ref;
 
@@ -6372,7 +6384,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			}
 			if (refConstrObject[constr.refType]) {
 				if ( refNode === this && refConstrObject[constr.refType] * factor !== curConstrObject[constr.type]) {
-					refConstrObject[constr.refType] = curConstrObject[constr.type]
+					refConstrObject[constr.refType] = curConstrObject[constr.type];
 				} else {
 					curConstrObject[constr.type] = refConstrObject[constr.refType] * factor;
 				}
