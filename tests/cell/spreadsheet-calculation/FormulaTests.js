@@ -24352,6 +24352,26 @@ $(function () {
 		assert.ok(oParser.parse(), "ACCRINT(DATE(2000,9,1),DATE(2014,3,1),DATE(2014,2,1),0.05,100,2,1,FALSE)");
 		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 2.07, "Result of ACCRINT(DATE(2000,9,1),DATE(2014,3,1),DATE(2014,2,1),0.05,100,2,1,FALSE)");
 
+		oParser = new parserFormula("ACCRINT(DATE(2008,4,5),DATE(2008,8,31),DATE(2008,5,1),0.1,1000,2,0,TRUE)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2008,4,5),DATE(2008,8,31),DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 7.22, "Result of ACCRINT(DATE(2008,4,5),DATE(2008,8,31),DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+
+		oParser = new parserFormula("ACCRINT(DATE(2008,4,5),1,DATE(2008,5,1),0.1,1000,2,0,TRUE)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2008,4,5),1,DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 7.22, "Result of ACCRINT(DATE(2008,4,5),1,DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+
+		oParser = new parserFormula("ACCRINT(DATE(2008,4,5),500,DATE(2008,5,1),0.1,1000,2,0,TRUE)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2008,4,5),500,DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 7.22, "Result of ACCRINT(DATE(2008,4,5),500,DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+
+		oParser = new parserFormula("ACCRINT(DATE(2008,4,5),50000,DATE(2008,5,1),0.1,1000,2,0,TRUE)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2008,4,5),50000,DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 7.22, "Result of ACCRINT(DATE(2008,4,5),50000,DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+
+		oParser = new parserFormula("ACCRINT(DATE(2008,4,5),DATE(9999,12,31)+1,DATE(2008,5,1),0.1,1000,2,0,TRUE)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2008,4,5),DATE(9999,12,31)+1,DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(DATE(2008,4,5),DATE(9999,12,31)+1,DATE(2008,5,1),0.1,1000,2,0,TRUE)");
+
 		testArrayFormula2(assert, "ACCRINT", 6, 8, true);
 	});
 
