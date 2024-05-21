@@ -2567,13 +2567,15 @@
 		this.sharedStrings = wb.sharedStrings;
 		this.workbookFormulas = wb.workbookFormulas;
 	};
-	Workbook.prototype.forEach = function (callback, isCopyPaste) {
+	Workbook.prototype.forEach = function (callback, isCopyPaste, writeTabSelected) {
 		//if copy/paste - use only actve ws
-		if (isCopyPaste || isCopyPaste === false) {
+		if ((isCopyPaste || isCopyPaste === false) && !writeTabSelected) {
 			callback(this.getActiveWs(), this.getActive());
 		} else {
 			for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
-				callback(this.aWorksheets[i], i);
+				if (!writeTabSelected || (writeTabSelected && this.aWorksheets[i].isSelectedTab())) {
+					callback(this.aWorksheets[i], i);
+				}
 			}
 		}
 	};
@@ -13105,6 +13107,14 @@
 				}
 			}
 		}
+	};
+	Worksheet.prototype.isSelectedTab = function () {
+		for (let i = 0; i < this.sheetViews.length; i++) {
+			if (this.sheetViews[i].tabSelected) {
+				return true;
+			}
+		}
+		return false;
 	};
 	
 //-------------------------------------------------------------------------------------------------

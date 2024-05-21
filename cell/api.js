@@ -3285,6 +3285,9 @@ var editor;
 			this.handlers.trigger("asc_onNeedUpdateExternalReferenceOnOpen");
 		}
 		//this.asc_Resize(); // Убрал, т.к. сверху приходит resize (http://bugzilla.onlyoffice.com/show_bug.cgi?id=14680)
+
+		this.initBroadcastChannel();
+		this.initBroadcastChannelListeners();
 	};
 
 	// Переход на диапазон в листе
@@ -3818,8 +3821,19 @@ var editor;
     return true;
   };
 
-  spreadsheet_api.prototype.asc_moveWorksheet = function (where, arrSheets) {
-    // Проверка глобального лока
+  spreadsheet_api.prototype.asc_moveWorksheet = function (where, arrSheets, arrNames, arrBooks) {
+  	if (arrBooks) {
+      if (arrBooks.length) {
+        this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
+        this.asc_deleteWorksheet(arrSheets.slice());
+      } else if (window["AscDesktopEditor"]) {
+		  this.copyToNewWorkbook(arrSheets);
+      }
+	  this.removeDocumentInfoEvent();
+      return;
+	}
+
+  	// Проверка глобального лока
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
@@ -3876,8 +3890,19 @@ var editor;
     return true;
   };
 
-  spreadsheet_api.prototype.asc_copyWorksheet = function (where, arrNames, arrSheets) {
-    // Проверка глобального лока
+  spreadsheet_api.prototype.asc_copyWorksheet = function (where, arrNames, arrSheets, arrBooks) {
+
+    if (arrBooks) {
+		if (arrBooks.length) {
+			this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
+		} else if (window["AscDesktopEditor"]) {
+			this.copyToNewWorkbook(arrSheets);
+		}
+		this.removeDocumentInfoEvent();
+		return;
+	}
+
+	  // Проверка глобального лока
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
@@ -3930,6 +3955,55 @@ var editor;
     this.collaborativeEditing.lock(arrLocks, copyWorksheet);
   };
 
+  spreadsheet_api.prototype.asc_cancelMoveCopyWorksheet = function () {
+	this.removeDocumentInfoEvent();
+  };
+
+  spreadsheet_api.prototype.copyToNewWorkbook = function (arrSheets) {
+	  let aBinaryWorkbook = null;
+	  let wb = this.wb;
+	  let wbModel = this.wbModel;
+	  wb.executeWithCurrentTopLeftCell(function () {
+		 let mapSheets = {};
+		 for (let i = 0; i < arrSheets.length; i++) {
+			 mapSheets[arrSheets[i]] = 1;
+		 }
+		 let trueTabSelected = [];
+		  wbModel.forEach(function (sheet, index) {
+			if (mapSheets[index]) {
+				for (let i in sheet.sheetViews) {
+					if (!trueTabSelected[index]) {
+						trueTabSelected[index] = [];
+					}
+					trueTabSelected[index][i] = sheet.sheetViews[i].tabSelected;
+					sheet.sheetViews[i].tabSelected = true;
+				}
+			}
+		  })
+
+		  let oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(wbModel);
+		  oBinaryFileWriter.InitSaveManager.writeOnlySelectedTabs = true;
+		  aBinaryWorkbook = oBinaryFileWriter.Write(true);
+
+		  wbModel.forEach(function (sheet, index) {
+			  if (mapSheets[index]) {
+				  for (let i in sheet.sheetViews) {
+					  sheet.sheetViews[i].tabSelected = trueTabSelected[index][i];
+				  }
+			  }
+		  })
+	  });
+
+	  if (aBinaryWorkbook) {
+		  window["AscDesktopEditor"]["OpenWorkbook"](aBinaryWorkbook);
+	  }
+  };
+
+  spreadsheet_api.prototype.removeDocumentInfoEvent = function () {
+	this.broadcastChannel.removeEventListener("message", window.fBroadcastChannelDocumentInfo);
+	window.fBroadcastChannelDocumentInfo = null;
+  };
+
   spreadsheet_api.prototype.asc_StartMoveSheet = function (arrSheets) {
 	  // Проверка глобального лока
 	  // Лок каждого листа необходимо проверять в интерфейсе. если что-то залочено - не переносим
@@ -3941,18 +4015,7 @@ var editor;
 		  return false;
 	  }
 
-	  //если выделены все - не перенесим(проверка в интерфейсе)
-	  var sheet, sBinarySheet, res = [];
-      var activeIndex = this.wbModel.nActive;
-	  for (var i = 0; i < arrSheets.length; ++i) {
-		  sheet = this.wbModel.getWorksheet(arrSheets[i]);
-		  this.wbModel.nActive = sheet.getIndex();
-		  sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(sheet, null, null, true, true);
-          res.push(sBinarySheet);
-	  }
-	  this.wbModel.nActive = activeIndex;
-
-      return res;
+	  return this.getBinaryContentSheets(arrSheets);
   };
 
   spreadsheet_api.prototype.asc_EndMoveSheet = function(where, arrNames, arrSheets) {
@@ -4018,6 +4081,21 @@ var editor;
 	  addWorksheet(true);
 	  //this.collaborativeEditing.lock([], addWorksheet);
   };
+
+	spreadsheet_api.prototype.getBinaryContentSheets = function (arrSheets) {
+		//если выделены все - не перенесим(проверка в интерфейсе)
+		var sheet, sBinarySheet, res = [];
+		var activeIndex = this.wbModel.nActive;
+		for (var i = 0; i < arrSheets.length; ++i) {
+			sheet = this.wbModel.getWorksheet(arrSheets[i]);
+			this.wbModel.nActive = sheet.getIndex();
+			sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(sheet, null, null, true, true);
+			res.push(sBinarySheet);
+		}
+		this.wbModel.nActive = activeIndex;
+
+		return res;
+	};
 
   spreadsheet_api.prototype.asc_cleanSelection = function() {
     this.wb.getWorksheet().cleanSelection();
@@ -9172,6 +9250,107 @@ var editor;
 		return wb.customFunctionEngine && wb.customFunctionEngine.getFunc(sName, !bIgnoreLocal);
 	};
 
+
+	spreadsheet_api.prototype.asc_getOpeningDocumentsList = function(callback) {
+		let docInfo = this.DocInfo;
+		let addedMapDocs = {};
+		if (!window.fBroadcastChannelDocumentInfo) {
+			window.fBroadcastChannelDocumentInfo = function (event) {
+				if (event && event.data && event.data.info && event.data.info.id) {
+					let docId = docInfo.Id + "_" + AscCommon.g_oIdCounter.m_sUserId;
+					let lastIndexSeparator = event.data.info.id.lastIndexOf("_");
+					let sentDocId;
+					if (lastIndexSeparator !== -1) {
+						sentDocId = event.data.info.id.substring(0, lastIndexSeparator);
+					}
+					if ("DocumentInfo" === event.data.type && event.data.info.id !== docId && (!sentDocId || !addedMapDocs[sentDocId])) {
+						let val = new AscCommonExcel.CWorkbookInfo(event.data.info.name, event.data.info.id);
+						for (let i in event.data.info.sheets) {
+							val.addSheet(event.data.info.sheets[i].name, event.data.info.sheets[i].index);
+						}
+						addedMapDocs[sentDocId] = 1;
+						callback([val]);
+					}
+				}
+			};
+
+			this.broadcastChannel.addEventListener("message", window.fBroadcastChannelDocumentInfo);
+		}
+
+		this.broadcastChannel.postMessage({
+			type: "GetOpenedDocuments"
+		})
+	};
+	spreadsheet_api.prototype.sendSheetsToOtherBooks = function(where, arrNames, arrSheets, arrBooks) {
+		let arrBinary = this.getBinaryContentSheets(arrSheets);
+		if (arrBinary) {
+			this.broadcastChannel.postMessage({
+				type: "InsertSheets",
+				info: {
+					aBooks: arrBooks,
+					aSheets: arrBinary,
+					aNames: arrNames,
+					where: where
+				}
+			})
+		}
+	};
+	spreadsheet_api.prototype.initBroadcastChannel = function() {
+		if (!this.broadcastChannel) {
+			this.broadcastChannel = new BroadcastChannel("onlyofficeChannel");
+		}
+	};
+	spreadsheet_api.prototype.closeBroadcastChannel = function() {
+		if (this.broadcastChannel) {
+			this.broadcastChannel.close();
+			this.broadcastChannel = null;
+		}
+	};
+	spreadsheet_api.prototype.initBroadcastChannelListeners = function() {
+		let oThis = this;
+		let docInfo = this.DocInfo;
+		let wb = oThis.wbModel;
+		let broadcastChannel = this.broadcastChannel;
+		if (broadcastChannel) {
+			broadcastChannel.onmessage = function(event) {
+				if ("GetOpenedDocuments" === event.data.type) {
+					let sheets = [];
+					if (wb) {
+						wb.forEach(function (_ws, _index) {
+							sheets.push({name: _ws.sName, index: _index});
+						});
+					}
+					broadcastChannel.postMessage({
+						type: "DocumentInfo",
+						info: {
+							id: docInfo.Id + "_" + AscCommon.g_oIdCounter.m_sUserId,
+							name: docInfo.Title,
+							sheets: sheets
+						}
+					});
+				}
+				else if ("InsertSheets" === event.data.type) {
+					if (wb) {
+						let docId = docInfo.Id + "_" + AscCommon.g_oIdCounter.m_sUserId;
+						for (let i in event.data.info.aBooks) {
+							if (event.data.info.aBooks[i] === docId) {
+								let where = event.data.info.where != null ? event.data.info.where : (wb.aWorksheets && wb.aWorksheets.length);
+								oThis.handlers.trigger("asc_generateNewSheetNames", event.data.info.aNames, function (_aNames) {
+									oThis.asc_EndMoveSheet(where, _aNames, event.data.info.aSheets);
+								});
+							}
+						}
+					}
+				}
+			}
+		}
+	};
+
+
+
+
+
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -9759,6 +9938,10 @@ var editor;
   prot["asc_CancelFillCells"]= prot.asc_CancelFillCells;
 
   prot["asc_getCustomFunctionInfo"]= prot.asc_getCustomFunctionInfo;
+
+  prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
+
+
 
 
 })(window);
