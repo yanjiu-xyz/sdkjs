@@ -4172,6 +4172,9 @@
 					if (!oChartSpace || !oProps) {
 						return;
 					}
+					if(oChartSpace.isChartEx()) {
+						return;
+					}
 					var oApi = this.getEditorApi();
 					oChartSpace.resetSelection(true);
 					if (this.selection && this.selection.chartSelection === oChartSpace) {
