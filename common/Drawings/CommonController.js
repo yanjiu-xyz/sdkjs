@@ -4172,6 +4172,9 @@
 					if (!oChartSpace || !oProps) {
 						return;
 					}
+					if(oChartSpace.isChartEx()) {
+						return;
+					}
 					var oApi = this.getEditorApi();
 					oChartSpace.resetSelection(true);
 					if (this.selection && this.selection.chartSelection === oChartSpace) {
@@ -4438,7 +4441,12 @@
 					var aPositions = chart_space.getPossibleDLblsPosition();
 					var nDefaultDatalabelsPos;
 					nDefaultDatalabelsPos = aPositions[0];
-					var oFirstChart = plot_area.charts[0];
+					var oFirstChart;
+					if (plot_area.isChartEx()) {
+						oFirstChart = plot_area.plotAreaRegion
+					} else {
+						oFirstChart = plot_area.charts[0];
+					}
 					var aSeries = oFirstChart.series;
 					var nSer, oSeries;
 					var oFirstSeries = aSeries[0];
