@@ -6874,16 +6874,14 @@ BinaryChartWriter.prototype.WriteCT_StringLevel = function (oVal) {
             oThis.memory.WriteLong(oVal.ptCount);
         });
     }
-    if(oVal.pt !== null) {
-        for (var i = 0, length = oVal.pt.length; i < length; ++i) {
-            var oCurVal = oVal.pt[i];
-            if (null != oCurVal) {
-                this.bs.WriteItem(c_oserct_chartExDataLevelPT, function () {
-                    oThis.WriteCT_StringValue(oCurVal);
-                });
-            }
-        }
-    }
+	for (var i = 0, length = oVal.pts.length; i < length; ++i) {
+		var oCurVal = oVal.pts[i];
+		if (null != oCurVal) {
+			this.bs.WriteItem(c_oserct_chartExDataLevelPT, function () {
+				oThis.WriteCT_StringValue(oCurVal);
+			});
+		}
+	}
 };
 BinaryChartWriter.prototype.WriteCT_NumericLevel = function (oVal) {
     var oThis = this;
@@ -6897,16 +6895,15 @@ BinaryChartWriter.prototype.WriteCT_NumericLevel = function (oVal) {
             oThis.memory.WriteLong(oVal.ptCount);
         });
     }
-    if(oVal.pt !== null) {
-        for (var i = 0, length = oVal.pt.length; i < length; ++i) {
-            var oCurVal = oVal.pt[i];
-            if (null != oCurVal) {
-                this.bs.WriteItem(c_oserct_chartExDataLevelPT, function () {
-                    oThis.WriteCT_NumericValue(oCurVal);
-                });
-            }
-        }
-    }
+
+	for (var i = 0, length = oVal.pts.length; i < length; ++i) {
+		var oCurVal = oVal.pts[i];
+		if (null != oCurVal) {
+			this.bs.WriteItem(c_oserct_chartExDataLevelPT, function () {
+				oThis.WriteCT_NumericValue(oCurVal);
+			});
+		}
+	}
     if(oVal.formatCode !== null) {
         this.bs.WriteItem(c_oserct_chartExDataLevelFORMATCODE, function() {
             oThis.memory.WriteString3(oVal.formatCode);
