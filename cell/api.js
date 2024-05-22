@@ -7111,14 +7111,15 @@ var editor;
 
 		callback(wsModel);
 
-		let changeRes = {changed: undefined, ranges: undefined, error: c_oAscError.ID.No, warning: c_oAscError.ID.No, updateRes: undefined};
-		changeRes.changed = pivot.getAndCleanChanged();
-		if (changeRes.changed.data) {
-			changeRes.updateRes = pivot.updateAfterEdit();
+		let pivotChanged = pivot.getAndCleanChanged();
+		let updateRes;
+		if (pivotChanged.data) {
+			updateRes = pivot.updateAfterEdit();
 		}
-		let dataRow = changeRes.updateRes && changeRes.updateRes.dataRow;
-		changeRes.ranges = wsModel.updatePivotTable(pivot, changeRes.changed, dataRow, false);
-		pivot.autoFitColumnsWidth(changeRes.ranges, needUpdateView);
+		let dataRow = updateRes && updateRes.dataRow;
+		let ranges = wsModel.updatePivotTable(pivot, pivotChanged, dataRow, false);
+		pivot.autoFitColumnsWidth(ranges, needUpdateView);
+		let changeRes = new AscCommonExcel.PivotChangeResult(c_oAscError.ID.No, c_oAscError.ID.No, pivotChanged, ranges, updateRes);
 		this.updateWorksheetByPivotTable(pivot, changeRes, needUpdateView);
 	};
 	spreadsheet_api.prototype.updatePivotTables = function() {
@@ -7126,11 +7127,11 @@ var editor;
 		this.wbModel.forEach(function(wsModel) {
 			for (var i = 0; i < wsModel.pivotTables.length; ++i) {
 				var pivot = wsModel.pivotTables[i];
-				let changed = pivot.getAndCleanChanged();
-				var ranges = wsModel.updatePivotTable(pivot, changed, undefined, true);
+				let pivotChanged = pivot.getAndCleanChanged();
+				var ranges = wsModel.updatePivotTable(pivot, pivotChanged, undefined, true);
 				let needUpdateView = false;
 				pivot.autoFitColumnsWidth(ranges, needUpdateView);
-				let changeRes = {changed: changed, ranges: ranges, error: c_oAscError.ID.No, warning: c_oAscError.ID.No, updateRes: undefined};
+				let changeRes = new AscCommonExcel.PivotChangeResult(c_oAscError.ID.No, c_oAscError.ID.No, pivotChanged, ranges, undefined);
 				t.updateWorksheetByPivotTable(pivot, changeRes, needUpdateView);
 			}
 		});
@@ -7138,14 +7139,16 @@ var editor;
 	spreadsheet_api.prototype.updateWorksheetByPivotTable = function(pivot, changeRes, needUpdateView, updateSelection) {
 		let wsModel = pivot.GetWS();
 		let ws = this.wb.getWorksheet(wsModel.getIndex());
-		let changed = changeRes.changed;
+		let changedPivots = changeRes.changedPivots;
 		var ranges = changeRes.ranges;
 		if (updateSelection) {
 			pivot.updateSelection(ws);
 		}
 		if (needUpdateView) {
-			if (changed.oldRanges) {
-				ws.updateRanges(changed.oldRanges);
+			if (changedPivots) {
+				changedPivots.forEach(function(changedPivot) {
+					ws.updateRanges(changedPivot.oldRanges);
+				});
 			}
 			if (ranges) {
 				ws.updateRanges(ranges);
@@ -7535,7 +7538,7 @@ var editor;
 	};
 	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, fitColumnsWidth, onAction, doNotCheckUnderlyingData) {
 		if (!doNotCheckUnderlyingData && !pivot.checkPivotUnderlyingData()) {
-			return {error: c_oAscError.ID.PivotWithoutUnderlyingData, warning: c_oAscError.ID.No, updateRes: undefined};
+			return new AscCommonExcel.PivotChangeResult(c_oAscError.ID.PivotWithoutUnderlyingData, c_oAscError.ID.No);
 		}
 		var wsModel = pivot.GetWS();
 		pivot.stashCurReportRange();
@@ -7567,7 +7570,7 @@ var editor;
 		} else {
 			pivot.stashEmptyReportRange();//to prevent clearTableStyle while undo
 		}
-		return {changed: pivotChanged, ranges: ranges, error: error, warning: warning, updateRes: updateRes};
+		return new AscCommonExcel.PivotChangeResult(error, warning, pivotChanged, ranges, updateRes);
 	};
 	spreadsheet_api.prototype._changePivotRevert = function () {
 		History.Undo();
