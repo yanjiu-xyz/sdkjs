@@ -10475,7 +10475,7 @@
 		for(var i = 0; i <  AscCommon.g_oUserColorScheme.length; ++i)
 		{
 			var tmp = AscCommon.g_oUserColorScheme[i];
-			if(tmp && tmp.name === sName)
+			if(tmp && tmp.get_name() === sName)
 			{
 				return getColorSchemeByIdx(i);
 			}

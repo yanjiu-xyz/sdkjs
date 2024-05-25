@@ -78,6 +78,7 @@
 			"word/Editor/History.js",
 
 			"common/Shapes/EditorSettings.js",
+			"common/Shapes/ColorSchemes.js",
 			"common/Shapes/Serialize.js",
 			"common/Shapes/SerializeWriter.js",
 
