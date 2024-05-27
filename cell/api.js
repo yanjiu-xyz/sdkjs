@@ -3995,7 +3995,7 @@ var editor;
 	  });
 
 	  if (aBinaryWorkbook) {
-		  window["AscDesktopEditor"]["OpenWorkbook"](aBinaryWorkbook);
+		  window["AscDesktopEditor"]["OpenWorkbook"](AscCommon.Base64.encode(aBinaryWorkbook));
 	  }
   };
 
