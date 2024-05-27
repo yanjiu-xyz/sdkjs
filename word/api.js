@@ -9029,7 +9029,11 @@ background-repeat: no-repeat;\
 		if ('savefromorigin' === oAdditionalData["c"])
 		{
 			oAdditionalData["format"] = this.documentFormat;
-			dataContainer.data = options.pdfChanges;
+			if (options.pdfChanges) {
+				dataContainer.data = options.pdfChanges;
+			} else if (this.isUseNativeViewer && this.isDocumentRenderer()) {
+				dataContainer.data = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
+			}
 		}
 		else if ((c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) &&
 			null == options.oDocumentMailMerge && (options.isPdfPrint || !(this.DocInfo && this.DocInfo.isFormatWithForms())))
