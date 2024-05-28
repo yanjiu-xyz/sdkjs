@@ -8437,6 +8437,11 @@ function RangeDataManagerElem(bbox, data)
 			this.TableColumns[i].getAllFormulas(formulas);
 		}
 	};
+	TablePart.prototype.forEachFormula = function (callback) {
+		for (let i = 0; i < this.TableColumns.length; ++i) {
+			this.TableColumns[i].forEachFormula(callback);
+		}
+	};
 	TablePart.prototype.moveRef = function (col, row) {
 		let ref = this.Ref.clone();
 		ref.setOffset(new AscCommon.CellBase(row || 0, col || 0));
@@ -9901,6 +9906,11 @@ function RangeDataManagerElem(bbox, data)
 			formulas.push(this.TotalsRowFormula);
 		}
 	};
+	TableColumn.prototype.forEachFormula = function (callback) {
+		if (this.TotalsRowFormula) {
+			callback(this.TotalsRowFormula);
+		}
+	};
 	TableColumn.prototype.clone = function () {
 		var res = new TableColumn();
 		res.Name = this.Name;
@@ -11122,6 +11132,12 @@ function RangeDataManagerElem(bbox, data)
 		var isDigitValue = !isNaN(val);
 		if (!isDigitValue) {
 			val = val.toLowerCase();
+		} else {
+			let isQuotePrefix = cell && cell.getQuotePrefix();
+			if (isQuotePrefix) {
+				isDigitValue = false;
+				val = val.toLowerCase();
+			}
 		}
 
 		var checkComplexSymbols = null, filterVal;
@@ -14975,6 +14991,9 @@ function RangeDataManagerElem(bbox, data)
 			if (this.worksheets[null]) {
 				this.changeSheetName(null, sheetName);
 			}
+			if (!this.worksheets[sheetName]) {
+				this.addSheetName(sheetName, true, true);
+			}
 			if (this.worksheets && this.worksheets[sheetName]) {
 				let wsTo = this.worksheets[sheetName];
 				//меняем лист
@@ -15089,12 +15108,21 @@ function RangeDataManagerElem(bbox, data)
 		return this.Id.match(p);
 	};
 
-	ExternalReference.prototype.addSheetName = function (name, generateDefaultStructure) {
+	ExternalReference.prototype.addSheetName = function (name, generateDefaultStructure, addSheetObj) {
 		this.SheetNames.push(name);
 		if (generateDefaultStructure) {
 			var externalSheetDataSet = new ExternalSheetDataSet();
 			externalSheetDataSet.SheetId = this.SheetNames.length - 1;
 			this.SheetDataSet.push(externalSheetDataSet);
+		}
+		if (addSheetObj) {
+			let wb = this.getWb();
+			if (!wb) {
+				wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
+			}
+			let ws = new AscCommonExcel.Worksheet(wb);
+			ws.sName = name;
+			this.worksheets[name] = ws;
 		}
 	};
 
@@ -17036,6 +17064,8 @@ function RangeDataManagerElem(bbox, data)
 
 		this.prefixName = "";
 		this.activeLocale = null;
+
+		this.needRecalculate = null;
 	}
 	CCustomFunctionEngine.prototype.add = function (func, options) {
 		//options ->
@@ -17061,6 +17091,7 @@ function RangeDataManagerElem(bbox, data)
 		*/
 
 		this._add(func, options);
+		this.needRecalculate = true;
 	};
 
 	CCustomFunctionEngine.prototype._add = function (func, options) {
@@ -17175,6 +17206,33 @@ function RangeDataManagerElem(bbox, data)
 		this.addToFunctionsList(newFunc, options);
 	};
 
+	CCustomFunctionEngine.prototype.remove = function (sName) {
+		sName = sName.toUpperCase();
+
+		let isFound = false;
+		if (AscCommonExcel.cFormulaFunctionGroup["Custom"]) {
+			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
+			for (let i in aCustomFunc) {
+				if (aCustomFunc[i] && aCustomFunc[i].prototype && aCustomFunc[i].prototype.name === sName) {
+					aCustomFunc.splice(i - 0, 1);
+					isFound = true;
+					break;
+				}
+			}
+		}
+
+		if (isFound) {
+			AscCommonExcel.removeCustomFunction(sName);
+			this.wb.initFormulasList && this.wb.initFormulasList();
+			if (this.wb && this.wb.Api) {
+				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+			}
+			this.wb.handlers && this.wb.handlers.trigger("asc_onRemoveCustomFunction");
+			return true;
+		}
+		return false;
+	};
+
 	CCustomFunctionEngine.prototype.setActiveLocale = function (sLocale) {
 		this.activeLocale = sLocale;
 	};
@@ -17221,6 +17279,7 @@ function RangeDataManagerElem(bbox, data)
 
 		let translations = params.nameLocale;
 		let description = params.description;
+		let args = params.params;
 
 		let funcName = newFunc.prototype.name;
 
@@ -17241,6 +17300,7 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName] = new CCustomFunctionInfo(funcName);
 			this.pushTranslations(funcName, translations);
 			this.funcsMapInfo[funcName].description = description;
+			this.funcsMapInfo[funcName].args = args;
 			isNewFunc = true;
 		}
 
@@ -17607,10 +17667,52 @@ function RangeDataManagerElem(bbox, data)
 		this.name = name;
 		this.description = null;
 
+		this.args = null;
+
 		this.addLocalization = null;
 	}
 	CCustomFunctionInfo.prototype.asc_getDescription = function () {
 		return this.description;
+	};
+	CCustomFunctionInfo.prototype.asc_getArgName = function (num) {
+		if (this.args && this.args[num]) {
+			return this.args[num].name
+		}
+		return null;
+	};
+
+	function CWorkbookInfo(name, id) {
+		this.name = name;
+		this.id = id;
+
+		this.sheets = null;
+	}
+	CWorkbookInfo.prototype.addSheet = function (name, index) {
+		if (!this.sheets) {
+			this.sheets = [];
+		}
+		let newObj = new CWorksheetInfo(name, index);
+		this.sheets.push(newObj);
+	};
+	CWorkbookInfo.prototype.asc_getName = function () {
+		return this.name;
+	};
+	CWorkbookInfo.prototype.asc_getId = function () {
+		return this.id;
+	};
+	CWorkbookInfo.prototype.asc_getSheets = function () {
+		return this.sheets;
+	};
+
+	function CWorksheetInfo(name, index) {
+		this.name = name;
+		this.index = index;
+	}
+	CWorksheetInfo.prototype.asc_getName = function () {
+		return this.name;
+	};
+	CWorksheetInfo.prototype.asc_getIndex = function () {
+		return this.index;
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -18132,6 +18234,19 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CCustomFunctionInfo = CCustomFunctionInfo;
 	prot = CCustomFunctionInfo.prototype;
 	prot["asc_getDescription"] = prot.asc_getDescription;
+	prot["asc_getArgName"] = prot.asc_getArgName;
+	
+	window["AscCommonExcel"].CWorkbookInfo = CWorkbookInfo;
+	prot = CWorkbookInfo.prototype;
+	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_getId"] = prot.asc_getId;
+	prot["asc_getSheets"] = prot.asc_getSheets;
+
+	window["AscCommonExcel"].CWorksheetInfo = CWorksheetInfo;
+	prot = CWorksheetInfo.prototype;
+	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_getIndex"] = prot.asc_getIndex;
+
 
 
 })(window);

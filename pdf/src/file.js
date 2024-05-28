@@ -583,6 +583,9 @@ void main() {\n\
 
         this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
     };
+    CFile.prototype.isSelectionUse = function() {
+        return !(this.Selection.Page1 == this.Selection.Page2 && this.Selection.Glyph1 == this.Selection.Glyph2 && this.Selection.Line1 == this.Selection.Line2);
+    };
     CFile.prototype.getSelection = function() {
         return this.Selection;
     };
@@ -1412,7 +1415,7 @@ void main() {\n\
         
         return aInfo;
     };
-    CFile.prototype.drawSelection = function(pageIndex, overlay, x, y, width, height)
+    CFile.prototype.drawSelection = function(pageIndex, overlay, x, y)
     {
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
@@ -1519,6 +1522,9 @@ void main() {\n\
         var _arrayGlyphOffsets = [];
 
         var _numLine = -1;
+
+        let width = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].W, true) >> 0;
+        let height = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].H, true) >> 0;
 
         var dKoefX = width / this.pages[pageIndex].W;
         var dKoefY = height / this.pages[pageIndex].H;
@@ -1657,15 +1663,8 @@ void main() {\n\
                         var _y = (y + dKoefY * (_lineY - _lineAscent)) >> 0;
                         var _b = (y + dKoefY * (_lineY + _lineDescent)) >> 0;
 
-                        if (_x < overlay.min_x)
-                            overlay.min_x = _x;
-                        if (_r > overlay.max_x)
-                            overlay.max_x = _r;
-
-                        if (_y < overlay.min_y)
-                            overlay.min_y = _y;
-                        if (_b > overlay.max_y)
-                            overlay.max_y = _b;
+                        overlay.CheckPoint(_x, _y);
+                        overlay.CheckPoint(_r, _b);
 
                         overlay.m_oContext.rect(_x,_y,_r-_x,_b-_y);
                     }
@@ -2818,10 +2817,12 @@ void main() {\n\
             for (var i = 0, len = file.pages.length; i < len; i++)
             {
                 var page = file.pages[i];
-                page.W = page["W"];
-                page.H = page["H"];
-                page.Dpi = page["Dpi"];
-                page.originIndex = page["originIndex"]; // исходный индекс в файле
+                
+                page.W              = page["W"];
+                page.H              = page["H"];
+                page.Dpi            = page["Dpi"];
+                page.originIndex    = page["originIndex"]; // исходный индекс в файле
+                page.originRotate   = page["Rotate"];
             }
             file.originalPagesCount = file.pages.length;
 

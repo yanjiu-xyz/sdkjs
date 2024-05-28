@@ -4535,6 +4535,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		cFormulaFunction[f.asc_getName()] = func;
 		cAllFormulaFunction[a.name] = func;
 	}
+	function removeCustomFunction(sName) {
+		if (!sName) {
+			return;
+		}
+		delete cFormulaFunction[sName];
+		delete cAllFormulaFunction[sName];
+	}
 	function getRangeByRef(ref, ws, onlyRanges, checkMultiSelection, checkFormula) {
 		var activeCell = ws.getSelection().activeCell;
 		var bbox = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
@@ -5765,6 +5772,9 @@ function parserFormula( formula, parent, _ws ) {
 
 	this.ref = null;
 
+	//mark function, when need reparse and recalculate on custom function change change
+	this.bUnknownOrCustomFunction = null;
+
 	if (AscFonts.IsCheckSymbols) {
 		AscFonts.FontPickerByCharacter.getFontsByString(this.Formula);
 	}
@@ -6969,6 +6979,14 @@ function parserFormula( formula, parent, _ws ) {
 					//_xlws only together with _xlfn
 					found_operator.isXLFN = (ph.operand_str.indexOf(xlfnFrefix) === 0);
 					found_operator.isXLWS = found_operator.isXLFN && xlfnFrefix.length === ph.operand_str.indexOf(xlwsFrefix);
+
+					t.bUnknownOrCustomFunction = true;
+				}
+
+				//mark function, when need reparse and recalculate on custom function change change
+				let wb = Asc["editor"] && Asc["editor"].wb;
+				if (wb && wb.customFunctionEngine && wb.customFunctionEngine.getFunc(operandStr)) {
+					t.bUnknownOrCustomFunction = true;
 				}
 
 				if (found_operator !== null) {
@@ -9128,6 +9146,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].getFormulasInfo = getFormulasInfo;
 	window['AscCommonExcel'].getRangeByRef = getRangeByRef;
 	window['AscCommonExcel'].addNewFunction = addNewFunction;
+	window['AscCommonExcel'].removeCustomFunction = removeCustomFunction;
 
 	window['AscCommonExcel']._func = _func;
 

@@ -177,47 +177,7 @@
         return this._borderEffectStyle;
     };
 
-    CAnnotationBase.prototype.DrawSelected = function(overlay) {
-        let rPR         = AscCommon.AscBrowser.retinaPixelRatio;
-        let style_blue  = "#939393";
-        let indent      = 0.5 * Math.round(rPR);
-
-        let nPage       = this.GetPage();
-        let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[nPage].Dpi);
-        let aOrigRect   = this.GetOrigRect();
-
-        let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-		{
-			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-		}
-		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[nPage];
-        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-        
-        let x1 = Math.round(indLeft + aOrigRect[0] * nScale);
-        let y1 = Math.round(indTop + aOrigRect[1] * nScale);
-        let x2 = Math.round(indLeft + aOrigRect[2] * nScale + 0.5);
-        let y2 = Math.round(indTop + aOrigRect[3] * nScale + 0.5);
-
-        overlay.m_oContext.lineWidth    = Math.round(rPR);
-        overlay.m_oContext.globalAlpha  = 1;
-        overlay.m_oContext.strokeStyle  = style_blue;
-        overlay.m_oContext.beginPath();
-
-        overlay.CheckPoint1(x1, y1);
-        overlay.CheckPoint1(x2, y2);
-        overlay.CheckPoint2(x1, y1);
-        overlay.CheckPoint2(x2, y2);
-        
-        overlay.m_oContext.rect(x1 + indent, y1 + indent, x2 - x1, y2 - y1);
-        overlay.m_oContext.stroke();
-    };
+    CAnnotationBase.prototype.DrawSelected = function() {};
     CAnnotationBase.prototype.GetName = function() {
         return this._name;
     };
@@ -604,8 +564,10 @@
     CAnnotationBase.prototype.GetDisplay = function() {
         return this._display;
     };
-    CAnnotationBase.prototype.onMouseUp = function() {
-        this.GetDocument().ShowComment([this.GetId()]);
+    CAnnotationBase.prototype.onMouseUp = function(e) {
+        if (e.button != 2) {
+            this.GetDocument().ShowComment([this.GetId()]);
+        }
     };
     CAnnotationBase.prototype._AddReplyOnOpen = function(oReplyInfo) {
         let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
@@ -916,15 +878,17 @@
     };
 
     CAnnotationBase.prototype.onMouseDown = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
@@ -998,7 +962,7 @@
         let sContents       = this.GetContents();
         let BES             = this.GetBorderEffectStyle();
         let BEI             = this.GetBorderEffectIntensity();
-        let aStrokeColor    = this.IsFreeText() || this.IsComment() ? this.GetFillColor() : this.GetStrokeColor();
+        let aStrokeColor    = this.GetStrokeColor();
         let nBorder         = this.GetBorder();
         let nBorderW        = this.GetWidth();
         let sModDate        = this.GetModDate(true);
@@ -1072,7 +1036,7 @@
             let nPopupIdx       = this.GetPopupIdx();
             let sAuthor         = this.GetAuthor();
             let nOpacity        = this.GetOpacity();
-            let sRC             = this.GetRichContents();
+            let aRC             = this.GetRichContents();
             let CrDate          = this.GetCreationDate(true);
             let oRefTo          = this.GetReplyTo();
             let nRefToReason    = this.GetRefType();
@@ -1093,9 +1057,51 @@
                 memory.WriteDouble(nOpacity);
             }
                 
-            if (sRC != null) {
+            if (aRC != null) {
                 memory.annotFlags |= (1 << 3);
-                memory.WriteString(sRC);
+                memory.WriteLong(aRC.length);
+
+                for (let i = 0; i < aRC.length; i++) {
+                    memory.WriteByte(aRC[i]["alignment"]);
+                    let nFontStylePos = memory.GetCurPosition();
+                    memory.Skip(4);
+
+                    // font style
+                    let nStyle = 0;
+                    if (aRC[i]["bold"]) {
+                        nStyle |= (1 << 0);
+                    }
+                    if (aRC[i]["italic"]) {
+                        nStyle |= (1 << 1);
+                    }
+                    if (aRC[i]["strikethrough"]) {
+                        nStyle |= (1 << 3);
+                    }
+                    if (aRC[i]["underlined"]) {
+                        nStyle |= (1 << 4);
+                    }
+                    if (aRC[i]["vertical"]) {
+                        nStyle |= (1 << 5);
+                        memory.WriteDouble(aRC[i]["vertical"]);
+                    }
+                    if (aRC[i]["actual"]) {
+                        nStyle |= (1 << 6);
+                        memory.WriteString(aRC[i]["actual"]);
+                    }
+                    // запись флагов настроек шрифта
+                    let nEndPos = memory.GetCurPosition();
+                    memory.Seek(nFontStylePos);
+                    memory.WriteLong(nStyle);
+                    memory.Seek(nEndPos);
+
+                    memory.WriteDouble(aRC[i]["size"]);
+                    aRC[i]["color"].forEach(function(component) {
+                        memory.WriteDouble(component);
+                    });
+
+                    memory.WriteString(aRC[i]["name"]);
+                    memory.WriteString(aRC[i]["text"]);
+                }
             }
 
             if (CrDate != null) {
@@ -1118,6 +1124,24 @@
                 memory.WriteString(sSubject);
             }
         }
+    };
+    CAnnotationBase.prototype.WriteRenderToBinary = function(memory) {
+        // пока только для основанных на фигурах
+        if (false == this.IsShapeBased()) {
+            return;
+        }
+
+        // тут будет длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.draw(memory.AnnotsRenderer); // для каждой страницы инициализируется свой renderer
+
+        // запись длины комманд
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
     };
 
     function ConvertPt2Px(pt) {
@@ -1168,6 +1192,9 @@
 
     // переопределение методов cshape
     CAnnotationBase.prototype.canRotate = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.canEditText = function () {
         return false;
     };
 
