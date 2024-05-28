@@ -17279,6 +17279,7 @@ function RangeDataManagerElem(bbox, data)
 
 		let translations = params.nameLocale;
 		let description = params.description;
+		let args = params.params;
 
 		let funcName = newFunc.prototype.name;
 
@@ -17299,6 +17300,7 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName] = new CCustomFunctionInfo(funcName);
 			this.pushTranslations(funcName, translations);
 			this.funcsMapInfo[funcName].description = description;
+			this.funcsMapInfo[funcName].args = args;
 			isNewFunc = true;
 		}
 
@@ -17665,10 +17667,18 @@ function RangeDataManagerElem(bbox, data)
 		this.name = name;
 		this.description = null;
 
+		this.args = null;
+
 		this.addLocalization = null;
 	}
 	CCustomFunctionInfo.prototype.asc_getDescription = function () {
 		return this.description;
+	};
+	CCustomFunctionInfo.prototype.asc_getArgName = function (num) {
+		if (this.args && this.args[num]) {
+			return this.args[num].name
+		}
+		return null;
 	};
 
 	function CWorkbookInfo(name, id) {
@@ -18224,7 +18234,8 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CCustomFunctionInfo = CCustomFunctionInfo;
 	prot = CCustomFunctionInfo.prototype;
 	prot["asc_getDescription"] = prot.asc_getDescription;
-
+	prot["asc_getArgName"] = prot.asc_getArgName;
+	
 	window["AscCommonExcel"].CWorkbookInfo = CWorkbookInfo;
 	prot = CWorkbookInfo.prototype;
 	prot["asc_getName"] = prot.asc_getName;
