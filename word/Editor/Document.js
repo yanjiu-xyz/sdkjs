@@ -1847,6 +1847,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.Content[0] = new AscWord.Paragraph(this);
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
+	
+	this.Background = null;
 
     this.CurPos  =
     {
@@ -5598,10 +5600,9 @@ CDocument.prototype.Draw                                     = function(nPageInd
     // Определим секцию
     var Page_StartPos = this.Pages[nPageIndex].Pos;
     var SectPr        = this.SectionsInfo.Get_SectPr(Page_StartPos).SectPr;
-
-	if (docpostype_HdrFtr !== this.CurPos.Type && !this.IsViewMode())
-		pGraphics.Start_GlobalAlpha();
-
+	
+	this.drawBackground(pGraphics, SectPr);
+	
 	// Рисуем границы вокруг страницы (если границы надо рисовать под текстом)
 	if (section_borders_ZOrderBack === SectPr.Get_Borders_ZOrder())
 		this.DrawPageBorders(pGraphics, SectPr, nPageIndex);
@@ -5613,7 +5614,7 @@ CDocument.prototype.Draw                                     = function(nPageInd
 		pGraphics.put_GlobalAlpha(true, 0.4);
 	else if (!this.IsViewMode())
 		pGraphics.End_GlobalAlpha();
-
+	
     this.DrawingObjects.drawBehindDoc(nPageIndex, pGraphics);
 
     this.Footnotes.Draw(nPageIndex, pGraphics);
@@ -5883,6 +5884,39 @@ CDocument.prototype.DrawPageBorders = function(Graphics, oSectPr, nPageIndex)
 	//       2. Различные типы обычных границ. Причем, если пересакающиеся границы имеют одинаковый тип и размер,
 	//          тогда надо специально отрисовывать места соединения данных линий.
 
+};
+CDocument.prototype.getBackgroundColor = function()
+{
+	if (!this.Background)
+		return null;
+	
+	let color = null;
+	if (this.Background.Unifill)
+	{
+		this.Background.Unifill.check(this.GetTheme(), this.GetColorMap());
+		let RGBA = this.Background.Unifill.getRGBAColor();
+		color = new AscWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
+	}
+	else if (this.Background.Color)
+	{
+		color = this.Background.Color;
+	}
+	
+	return color;
+};
+CDocument.prototype.drawBackground = function(graphics, sectPr)
+{
+	let color = this.getBackgroundColor();
+	if (!color)
+		return;
+	
+	graphics.setEndGlobalAlphaColor(color.r, color.g, color.b);
+	graphics.b_color1(color.r, color.g, color.b, 255);
+	
+	let h = sectPr.GetPageHeight();
+	let w = sectPr.GetPageWidth();
+	graphics.rect(0, 0, w, h);
+	graphics.df();
 };
 /**
  *

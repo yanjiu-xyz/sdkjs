@@ -245,6 +245,7 @@
 
 		var oldDarkMode = this.isDarkMode;
 		this.isDarkMode = false;
+		
 		if (!this.endGlobalAlphaColor)
 			this.b_color1(255, 255, 255, 140);
 		else
