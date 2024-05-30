@@ -3519,7 +3519,14 @@ function CBinaryFileWriter()
             }
             case AscDFH.historyitem_type_ChartSpace:
             {
-                oThis.WriteRecord2(3, grObj, oThis.WriteChart2);
+                if(grObj.isChartEx())
+                {
+                    oThis.WriteRecord2(7, grObj, oThis.WriteChart2);
+                }
+                else
+                {
+                    oThis.WriteRecord2(3, grObj, oThis.WriteChart2);
+                }
                 break;
             }
             case AscDFH.historyitem_type_SlicerView:
@@ -3560,7 +3567,11 @@ function CBinaryFileWriter()
         oThis.UseContinueWriter++;
 
         var oBinaryChartWriter = new AscCommon.BinaryChartWriter(_memory);
-        oBinaryChartWriter.WriteCT_ChartSpace(grObj);
+        if (grObj.isChartEx()) {
+            oBinaryChartWriter.WriteCT_ChartExSpace(grObj);
+        } else {
+            oBinaryChartWriter.WriteCT_ChartSpace(grObj);
+        }
 
         oThis.data = _memory.data;
         oThis.len = _memory.len;

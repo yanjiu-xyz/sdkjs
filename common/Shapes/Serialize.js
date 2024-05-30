@@ -7105,6 +7105,33 @@ function BinaryPPTYLoader()
                     }
                     break;
                 }
+                case 7: // chartEx
+                {
+                    var _length = s.GetLong();
+                    var _pos = s.cur;
+
+                    if(typeof AscFormat.CChartSpace !== "undefined" && _length)
+                    {
+                        var _stream = new AscCommon.FT_Stream2();
+                        _stream.data = s.data;
+                        _stream.pos = s.pos;
+                        _stream.cur = s.cur;
+                        _stream.size = s.size;
+                        _chart = new AscFormat.CChartSpace();
+                        _chart.setBDeleted(false);
+                        AscCommon.pptx_content_loader.ImageMapChecker = this.ImageMapChecker;
+                        AscCommon.pptx_content_loader.Reader.ImageMapChecker = this.ImageMapChecker;
+                        var oBinaryChartReader = new AscCommon.BinaryChartReader(_stream);
+                        oBinaryChartReader.ExternalReadCT_ChartExSpace(_length, _chart, this.presentation);
+                        if(!_chart.hasCharts())
+                        {
+                            _chart = null;
+                        }
+                    }
+
+                    s.Seek2(_pos + _length);
+                    break;
+                }
                 case 8://smartArt
                 {
                     _smartArt = this.ReadSmartArt();
