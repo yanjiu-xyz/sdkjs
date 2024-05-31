@@ -635,6 +635,90 @@
 		return false;
 	};
 
+
+
+	function CTextPrChange(isStart, elementIndex, innerElementIndex, textPr) {
+		this.isStart = !!isStart;
+		this.elementIndex = elementIndex;
+		this.innerElementIndex = innerElementIndex;
+		this.textPr = textPr;
+		this.partner = null;
+		this.collectRuns = [];
+	}
+	CTextPrChange.prototype.setPartner = function (partner) {
+		this.partner = partner;
+	};
+
+	function CTextPrChangeCollector(arrElements) {
+		this.elements = arrElements;
+		this.elementIndex = 0;
+		this.innerElementIndex = 0;
+	}
+	CTextPrChangeCollector.prototype.getNextRun = function () {
+
+	};
+	CTextPrChangeCollector.prototype.getTextPrChanges = function () {
+		const arrResult = [];
+		const lastElement = this.elements[this.elements.length - 1];
+		const firstElement = this.elements[0];
+		const lastRun = lastElement.lastRun;
+		const firstRun = firstElement.firstRun;
+		const oParent = firstRun.Paragraph;
+		const oContent = oParent.Content;
+		let lastRunIndex;
+
+		let elementIndex = this.elements.length - 1;
+		let innerElementIndex = this.elements[elementIndex].elements.length - 1;
+		for (let i = oContent.length - 1; i >= 0; i -= 1) {
+			if (oContent[i] === lastRun) {
+				lastRunIndex = i;
+				break;
+			}
+		}
+
+		let prChange;
+
+		for (let i = lastRunIndex; i >= 0; i -= 1) {
+			const currentRun = oContent[i];
+			let elementsCount = currentRun.Content.length;
+			const currentTextPr = currentRun.Pr;
+			if (elementsCount !== 0) {
+				if (!prChange) {
+					prChange = new CTextPrChange(false, elementIndex, innerElementIndex + 1, currentTextPr);
+				} else if (!currentTextPr.Is_Equal(prChange.textPr)) {
+					const oStartPrChange = new CTextPrChange(true, elementIndex, innerElementIndex);
+					oStartPrChange.setPartner(prChange);
+					prChange.setPartner(oStartPrChange);
+					arrResult.push(prChange);
+					arrResult.push(oStartPrChange);
+					prChange = new CTextPrChange(false, elementIndex, innerElementIndex, currentTextPr);
+				}
+			}
+			while (elementsCount !== 0) {
+				if (innerElementIndex + 1 > elementsCount) {
+					innerElementIndex -= elementsCount;
+					elementsCount = 0;
+				} else {
+					elementsCount -= innerElementIndex + 1;
+					elementIndex -= 1;
+					if (this.elements[elementIndex]) {
+						innerElementIndex = this.elements[elementIndex].elements.length - 1;
+					}
+				}
+
+				if (currentRun === firstRun && elementIndex < 0) {
+					return arrResult;
+				}
+			}
+		}
+		return arrResult;
+	};
+	function getTextPrChanges(arrMainElements, arrRevisedElements) {
+		const changeCollector = new CTextPrChangeCollector(arrRevisedElements);
+		const arrChanges = changeCollector.getTextPrChanges();
+		debugger;
+	}
+
     function CNode(oElement, oParent)
     {
         this.element = oElement;
@@ -662,6 +746,7 @@
 
 				let oChangesIterator;
 				let oReviewChange;
+				getTextPrChanges([oOriginalTextElement], [oRevisedTextElement]);
 				if (comparison.needCheckReview)
 				{
 					oChangesIterator = new CReviewChangesIterator([oOriginalTextElement], [oRevisedTextElement]);
