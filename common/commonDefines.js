@@ -4243,6 +4243,44 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm",
 		"HH:mm:ss"
 	];
+	c_oAscDateTimeFormat[lcid_srCyrlRS]     = [
+		"dd.MM.yyyy.",
+		"dddd, d. MMMM yyyy.",
+		"d. MMMM yyyy.",
+		"dd.MM.yy.",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"dd/MM/yyyy",
+		"d. MMM. yy.",
+		"dd/MM/yy",
+		"MMMM yy",
+		"MMM-yy",
+		"dd.MM.yyyy. H:mm",
+		"dd.MM.yyyy. H:mm:ss",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
+	c_oAscDateTimeFormat[lcid_srLatnRS]     = [
+		"d.M.yyyy.",
+		"dddd, dd. MMMM yyyy.",
+		"dd. MMMM yyyy.",
+		"d.M.yy.",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"d/M/yyyy",
+		"dd. MMM. yy.",
+		"d/M/yy",
+		"MMMM yy",
+		"MMM-yy",
+		"d.M.yyyy. HH:mm",
+		"d.M.yyyy. HH:mm:ss",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
 	c_oAscDateTimeFormat[lcid_skSK]     = [
 		"d. M. yyyy",
 		"dddd d. MMMM yyyy",
