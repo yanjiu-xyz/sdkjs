@@ -9095,20 +9095,20 @@ PasteProcessor.prototype =
 			}*/
 		}
 
-		var computedStyle = this._getComputedStyle(tableBodyNode);
+		var computedStyle = this._getComputedStyle(tableNode);
 		if (align_Left === table.Get_TableAlign()) {
-			var margin_left = this._getStyle(tableBodyNode, computedStyle, "margin-left");
+			var margin_left = this._getStyle(tableNode, computedStyle, "margin-left");
 			//todo возможно надо еще учесть ширину таблицы
 			if (margin_left && null != (margin_left = AscCommon.valueToMm(margin_left)) && margin_left < Page_Width - X_Left_Margin)
 				table.Set_TableInd(margin_left);
 		}
-		var background_color = this._getStyle(tableBodyNode, computedStyle, "background-color");
+		var background_color = this._getStyle(tableNode, computedStyle, "background-color");
 		if (null != background_color && (background_color = this._ParseColor(background_color)))
 			table.Set_TableShd(c_oAscShdClear, background_color.r, background_color.g, background_color.b);
-		var oLeftBorder = this._ExecuteBorder(computedStyle, tableBodyNode, "left", "Left", bPresentation);
+		var oLeftBorder = this._ExecuteBorder(computedStyle, tableNode, "left", "Left", bPresentation);
 		if (null != oLeftBorder)
 			table.Set_TableBorder_Left(oLeftBorder);
-		var oTopBorder = this._ExecuteBorder(computedStyle, tableBodyNode, "top", "Top", bPresentation);
+		var oTopBorder = this._ExecuteBorder(computedStyle, tableNode, "top", "Top", bPresentation);
 		if (null != oTopBorder)
 			table.Set_TableBorder_Top(oTopBorder);
 		var oRightBorder = this._ExecuteBorder(computedStyle, tableBodyNode, "right", "Right", bPresentation);
@@ -9307,16 +9307,16 @@ PasteProcessor.prototype =
 			cell.Set_Shd(Shd);
 		}
 		var border = this._ExecuteBorder(computedStyle, node, "left", "Left", bAddIfNull);
-		if (null != border)
+		if (null != border && border.Value !== border_None)
 			cell.Set_Border(border, 3);
 		border = this._ExecuteBorder(computedStyle, node, "top", "Top", bAddIfNull);
-		if (null != border)
+		if (null != border && border.Value !== border_None)
 			cell.Set_Border(border, 0);
 		border = this._ExecuteBorder(computedStyle, node, "right", "Right", bAddIfNull);
-		if (null != border)
+		if (null != border && border.Value !== border_None)
 			cell.Set_Border(border, 1);
 		border = this._ExecuteBorder(computedStyle, node, "bottom", "Bottom", bAddIfNull);
-		if (null != border)
+		if (null != border && border.Value !== border_None)
 			cell.Set_Border(border, 2);
 
 		var top = this._getStyle(node, computedStyle, "padding-top");
