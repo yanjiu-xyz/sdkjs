@@ -1180,8 +1180,8 @@ CChartsDrawer.prototype =
 				curBetween = (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN || isChartEx) ? diffPoints / 2 :  0;
 				// for reversed cases, start and end indexes are reversed!
 				const isReversed = horizontalAxis.isReversed();
-				const startIndex = (!isReversed || isChartEX) ? 0 : horizontalAxis.xPoints.length - 1;
-				const endIndex = (!isReversed || isChartEX) ? horizontalAxis.xPoints.length - 1 : 0;
+				const startIndex = (!isReversed || isChartEx) ? 0 : horizontalAxis.xPoints.length - 1;
+				const endIndex = (!isReversed || isChartEx) ? horizontalAxis.xPoints.length - 1 : 0;
 				calculateLeft = horizontalAxis.xPoints[startIndex].pos - curBetween;
 				calculateRight = this.calcProp.widthCanvas / pxToMM - (horizontalAxis.xPoints[endIndex].pos + curBetween);
 			}
