@@ -6298,7 +6298,8 @@ StyleManager.prototype =
 			null == this.CustomWidth && 0 === this.outlineLevel && false == this.collapsed;
 	};
 	Col.prototype.isUpdateScroll = function () {
-		return null !== this.hd || null !== this.xfs || 0 !== this.outlineLevel || false !== this.collapsed;
+		//TODO temporary added check on CustomWidth -> nColsCount common for scroll/draw. need separate nColsCount for draw and for scroll
+		return null !== this.hd || null !== this.xfs || 0 !== this.outlineLevel || false !== this.collapsed || true === this.CustomWidth;
 	};
 	Col.prototype.clone = function (oNewWs) {
 		if (!oNewWs) {
@@ -17300,7 +17301,15 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName] = new CCustomFunctionInfo(funcName);
 			this.pushTranslations(funcName, translations);
 			this.funcsMapInfo[funcName].description = description;
-			this.funcsMapInfo[funcName].args = args;
+
+			if (args) {
+				for (let i = 0; i < args.length; i++) {
+					if (!this.funcsMapInfo[funcName].args) {
+						this.funcsMapInfo[funcName].args = [];
+					}
+					this.funcsMapInfo[funcName].args.push(new CCustomFunctionArgInfo(args[i].name, args[i].isOptional));
+				}
+			}
 			isNewFunc = true;
 		}
 
@@ -17674,11 +17683,25 @@ function RangeDataManagerElem(bbox, data)
 	CCustomFunctionInfo.prototype.asc_getDescription = function () {
 		return this.description;
 	};
-	CCustomFunctionInfo.prototype.asc_getArgName = function (num) {
+	CCustomFunctionInfo.prototype.asc_getArg = function (num) {
+		if (num == null) {
+			return this.args;
+		}
 		if (this.args && this.args[num]) {
-			return this.args[num].name
+			return this.args[num];
 		}
 		return null;
+	};
+
+	function CCustomFunctionArgInfo(sName, bOptional) {
+		this.sName = sName;
+		this.bOptional = bOptional;
+	}
+	CCustomFunctionArgInfo.prototype.asc_getName = function () {
+		return this.sName;
+	};
+	CCustomFunctionArgInfo.prototype.asc_getIsOptional = function () {
+		return this.bOptional;
 	};
 
 	function CWorkbookInfo(name, id) {
@@ -18234,8 +18257,14 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CCustomFunctionInfo = CCustomFunctionInfo;
 	prot = CCustomFunctionInfo.prototype;
 	prot["asc_getDescription"] = prot.asc_getDescription;
-	prot["asc_getArgName"] = prot.asc_getArgName;
-	
+	prot["asc_getArg"] = prot.asc_getArg;
+
+	window["AscCommonExcel"].CCustomFunctionArgInfo = CCustomFunctionArgInfo;
+	prot = CCustomFunctionArgInfo.prototype;
+	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_getIsOptional"] = prot.asc_getIsOptional;
+
+
 	window["AscCommonExcel"].CWorkbookInfo = CWorkbookInfo;
 	prot = CWorkbookInfo.prototype;
 	prot["asc_getName"] = prot.asc_getName;

@@ -278,11 +278,14 @@
 	 * @constructor
     */
     CAnnotationFreeText.prototype.CheckInnerShapesProps = function() {
-        let oStrokeColor = this.GetStrokeColor();
+        let nOpacity = this.GetOpacity();
+
+        let oStrokeColor = this.GetStrokeColor() || [0, 0, 0];
         if (oStrokeColor) {
             let oRGB    = this.GetRGBColor(oStrokeColor);
             let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-
+            oFill.transparent = nOpacity * 100 * 2.55;
+            
             let oTxBoxShape = this.GetTextBoxShape();
             let oLine = oTxBoxShape.spPr.ln;
             if (this.GetWidth() == 0) {
@@ -298,10 +301,11 @@
             }
         }
         
-        let oFillColor = this.GetFillColor();
+        let oFillColor = this.GetFillColor() || [1, 1, 1];
         if (oFillColor) {
             let oRGB    = this.GetRGBColor(oFillColor);
             let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            oFill.transparent = nOpacity * 100 * 2.55;
             for (let i = 0; i < this.spTree.length; i++) {
                 this.spTree[i].setFill(oFill);
             }
@@ -312,6 +316,7 @@
         for (let i = 0; i < this.spTree.length; i++) {
             let oLine = this.spTree[i].spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+            oLine.Fill.transparent = nOpacity * 100 * 2.55;
         }
 
         let nLineEndType = this.GetLineEnd();
@@ -374,6 +379,21 @@
         for (let i = 1; i < this.spTree.length; i++) {
             let oLine = this.spTree[i].spPr.ln;
             oLine.setFill(oFill);
+        }
+    };
+    CAnnotationFreeText.prototype.SetOpacity = function(value) {
+        this._opacity = value;
+        this.SetWasChanged(true);
+
+        for (let i = 1; i < this.spTree.length; i++) {
+            let oLine = this.spTree[i].spPr.ln;
+            oLine.Fill.transparent = value * 100 * 2.55;
+
+            let oFill = this.spPr.Fill;
+            oFill.transparent = value * 100 * 2.55;
+
+            this.spTree[i].handleUpdateLn();
+            this.spTree[i].handleUpdateFill();
         }
     };
     CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
@@ -456,7 +476,9 @@
         // this.copy2(oFreeText);
         // oFreeText.recalculate();
 
-        oFreeText.pen = new AscFormat.CLn();
+        let aStrokeColor = this.GetStrokeColor();
+        let aFillColor = this.GetFillColor();
+
         oFreeText._apIdx = this._apIdx;
         oFreeText._originView = this._originView;
         oFreeText.SetOriginPage(this.GetOriginPage());
@@ -464,11 +486,11 @@
         oFreeText.SetModDate(this.GetModDate());
         oFreeText.SetCreationDate(this.GetCreationDate());
         oFreeText.SetWidth(this.GetWidth());
-        oFreeText.SetStrokeColor(this.GetStrokeColor().slice());
         oFreeText.SetContents(this.GetContents());
-        oFreeText.SetFillColor(this.GetFillColor());
+        oFreeText.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
+        oFreeText.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oFreeText.SetLineEnd(this.GetLineEnd());
-        oFreeText.recalcInfo.recalculatePen = false;
+        oFreeText.SetOpacity(this.GetOpacity());
         oFreeText.recalcInfo.recalculateGeometry = false;
         oFreeText._callout = this._callout ? this._callout.slice() : undefined;
         oFreeText._rectDiff = this._rectDiff ? this._rectDiff.slice() : undefined;

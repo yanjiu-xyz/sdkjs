@@ -1405,7 +1405,9 @@
 						if (oAnnotInfo["BE"]["S"] != null)
 							oAnnot.SetBorderEffectStyle(oAnnotInfo["BE"]["S"]);
 					}
-						
+					
+					oAnnot.SetStrokeColor(oAnnotInfo["C"]);
+					
 					if (oAnnotInfo["CA"] != null) {
 						oAnnot.SetOpacity(oAnnotInfo["CA"]);
 					}
@@ -1416,8 +1418,6 @@
 						oAnnot.SetWidth(1);
 					}
 
-					oAnnot.SetStrokeColor(oAnnotInfo["C"]);
-					
 					if (oAnnotInfo["QuadPoints"] != null) {
 						let aSepQuads = [];
 						for (let i = 0; i < oAnnotInfo["QuadPoints"].length; i+=8)
@@ -3021,8 +3021,7 @@
 				if (!pageCoords)
 					continue;
 
-				if (x >= pageCoords.x / AscCommon.AscBrowser.retinaPixelRatio && x <= (pageCoords.x + pageCoords.w) / AscCommon.AscBrowser.retinaPixelRatio &&
-					y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
+				if (y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
 				{
 					let _x = oDoc.pagesTransform[pageCoords.num].normal.TransformPointX(x, y);
 					let _y = oDoc.pagesTransform[pageCoords.num].normal.TransformPointY(x, y);
@@ -3061,8 +3060,7 @@
 			for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
 			{
 				pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
-				if (x >= pageCoords.x / AscCommon.AscBrowser.retinaPixelRatio && x <= (pageCoords.x + pageCoords.w) / AscCommon.AscBrowser.retinaPixelRatio &&
-					y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
+				if (y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
 					break;
 			}
 			if (pageIndex > this.endVisiblePage)
@@ -3298,7 +3296,7 @@
 			{
 				window.event.preventDefault();
 				let oActiveObj = oDoc.GetActiveObject();
-				if (oActiveObj.IsDrawing()) {
+				if (oActiveObj && oActiveObj.IsDrawing()) {
 					oDoc.AddToParagraph(new AscWord.CRunTab());
 				}
 				else {
@@ -4159,8 +4157,10 @@
 			this.clearZoomCoord();
 
 		this.UpdateDrDocDrawingPages();
-		this._paint();
-		this.onUpdateOverlay();
+		if (true !== isDisablePaint) {
+			this._paint();
+			this.onUpdateOverlay();	
+		}
 	};
 	CHtmlPage.prototype.repaintFormsOnPage = function(pageIndex)
 	{
@@ -4331,9 +4331,11 @@
 					let oDrawing = oPageInfo.drawings[nDr];
 
 					if (oDrawing.IsGraphicFrame()) {
-						let sTableStyle = oDrawing.graphicObject.GetTableStyle();
-						if (sTableStyle != undefined) {
-							oMemory.context.tableStylesIdToGuid[sTableStyle] = sTableStyle;
+						let sTableStyleId	= oDrawing.graphicObject.GetTableStyle();
+						let sStyleGUID		= oDoc.globalTableStyles.Get(sTableStyleId).GetStyleId();
+						
+						if (sTableStyleId != undefined) {
+							oMemory.context.tableStylesIdToGuid[sTableStyleId] = sStyleGUID;
 						}
 					}
 				}

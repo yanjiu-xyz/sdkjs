@@ -11220,11 +11220,11 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				return oThis.ReadSdt(t,l, oSdt, 0);
 			});
 			Content.push(oSdt);
-		// } else if ( c_oSerParType.Background === type ) {
-			// oThis.Document.Background = {Color: null, Unifill: null, shape: null};
-			// res = this.bcr.Read2(length, function(t, l){
-				// return oThis.ReadBackground(t,l, oThis.Document.Background);
-			// });
+		} else if ( c_oSerParType.Background === type ) {
+			oThis.Document.Background = {Color: null, Unifill: null, shape: null};
+			res = this.bcr.Read2(length, function(t, l){
+				return oThis.ReadBackground(t,l, oThis.Document.Background);
+			});
 		} else if (c_oSerParType.BookmarkStart === type) {
 			res = readBookmarkStart(length, this.bcr, this.oReadResult, null);
 		} else if (c_oSerParType.BookmarkEnd === type) {
