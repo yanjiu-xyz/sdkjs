@@ -80,16 +80,47 @@
 		const bRet = oTextIterator.skipTo(oReviewChange.elementIndex, oReviewChange.innerElementIndex - 1);
 		if (bRet)
 		{
-			oTextIterator.startCollectRuns();
+			oTextIterator.setCollectReviewRuns(oReviewChange);
 			oTextIterator.addToCollectCurrentRun();
 			oTextIterator.splitCurrentRun(oTextIterator.runElementIndex + 1);
 		}
 	}
+	function applyEndTextPrChange(oChange, oTextIterator) {
+		const bRet = oTextIterator.skipTo(oReviewChange.elementIndex, oReviewChange.innerElementIndex - 1);
+		if (bRet)
+		{
+			oTextIterator.setCollectTextPrRuns(oChange);
+			oTextIterator.addToCollectCurrentRun();
+			oTextIterator.splitCurrentRun(oTextIterator.runElementIndex + 1);
+		}
+	}
+
 	function changeFirstTextElement(oTextIterator, oRun)
 	{
 		const oElement = oTextIterator.getCurrentElement();
 		oElement.elements[0] = oRun.Content[0];
 		oElement.firstRun = oRun;
+	}
+	function applyStartTextPrChange(oChange, oTextIterator, oComparison) {
+		const bRet = oTextIterator.skipTo(oChange.elementIndex, oChange.innerElementIndex);
+		if (bRet) {
+			const oRun = oTextIterator.splitCurrentRun();
+			oTextIterator.dropLastCollect();
+			oTextIterator.addToCollectBack(oRun);
+
+			const oPartner = oChange.partner;
+			const arrRuns = oPartner.collectRuns;
+			const oNewTextPr = oPartner.textPr;
+
+			for (let i = 0; i < arrRuns.length; i += 1) {
+				const oRun = arrRuns[i];
+				const oCopyTextPr = oNewTextPr.Copy();
+				const oOldTextPr = oRun.GetTextPr();
+				const reviewInfo = new CReviewInfo();
+				oComparison.setReviewInfo(reviewInfo);
+				oCopyTextPr.SetPrChange(oOldTextPr, reviewInfo);
+			}
+		}
 	}
 	function applyStartChangeReview(oReviewChange, oTextIterator, comparison, oNeedReviewWithUser)
 	{
@@ -105,7 +136,8 @@
 			}
 
 
-			const arrRuns = oTextIterator.endCollectRuns();
+			oTextIterator.setCollectTextPrRuns(null);
+			const arrRuns = oReviewChange.partner.collectRuns;
 
 			const nPriorityReviewType = oReviewChange.reviewType;
 			const nPriorityMoveReviewType = oReviewChange.moveReviewType;
@@ -303,148 +335,176 @@
 		return this.labels[0];
 	};
 
-	function CLabelBaseIterator(arrElements, oCopyPr)
-	{
+	function CBookmarkChangesCollector(arrElements, copyPr) {
 		this.elements = arrElements;
-		this.currentLabel = null;
-		this.elementIndex = arrElements.length - 1;
-		this.elementLabelIndexes = this.getInsertIndexes();
-		this.innerLabelElementIndex = -1;
-		this.copyPr = oCopyPr;
-		this.next();
+		this.copyPr = copyPr;
 	}
-	CLabelBaseIterator.prototype.check = function ()
-	{
-		return !!this.currentLabel;
-	}
-	CLabelBaseIterator.prototype.value = function ()
-	{
-		return this.currentLabel;
-	}
-	CLabelBaseIterator.prototype.getInsertIndex = function ()
-	{
-		return this.elementLabelIndexes[this.innerLabelElementIndex];
-	}
-	CLabelBaseIterator.prototype.getAddingValue = function ()
-	{
-		const nInsertIndex = this.getInsertIndex();
-		return nInsertIndex === 0 ? 0 : 1;
-	}
-	CLabelBaseIterator.prototype.next = function ()
-	{
-		this.currentLabel = null;
-		this.innerLabelElementIndex += 1;
-		while (this.innerLabelElementIndex === this.elementLabelIndexes.length && this.elementIndex > 0)
-		{
-			this.elementIndex -= 1;
-			this.elementLabelIndexes = this.getInsertIndexes();
-			this.innerLabelElementIndex = 0;
-		}
-		const oElement = this.getElement();
-		if (oElement && this.innerLabelElementIndex < this.elementLabelIndexes.length)
-		{
-			const nInsertIndex = this.getInsertIndex();
-			const CLabelConstructor = this.getLabelConstructor();
-			this.currentLabel = new CLabelConstructor(this._getInsertElements(oElement, nInsertIndex), this.elementIndex, nInsertIndex, this.getAddingValue());
-		}
-	}
-	CLabelBaseIterator.prototype.getLabelConstructor = function ()
-	{
-		return CLabelChange;
-	}
-	CLabelBaseIterator.prototype.getElement = function ()
-	{
-		return this.elements[this.elementIndex];
-	}
-	CLabelBaseIterator.prototype.getInsertElements = function ()
-	{
-
-	}
-	CLabelBaseIterator.prototype._getInsertElements = function (oElement, nInsertIndex)
-	{
-		const arrInsertElements = this.getInsertElements(oElement, nInsertIndex);
-		if (this.copyPr)
-		{
-			const arrResult = [];
-			for (let i = 0; i < arrInsertElements.length; i += 1)
-			{
-				arrResult.push(arrInsertElements[i].Copy(false, this.copyPr))
+	CBookmarkChangesCollector.prototype.getBookmarkChanges = function () {
+		const arrResult = [];
+		for (let i = this.elements.length - 1; i >= 0; i -= 1) {
+			const oElement = this.elements[i];
+			const arrInsertIndexes = oElement.getBookmarkInsertIndexes();
+			for (let j = 0; j < arrInsertIndexes.length; j += 1) {
+				const nInsertIndex = arrInsertIndexes[j];
+				const elements = this.getBookmarkElements(oElement, nInsertIndex);
+				arrResult.push(new CBookmarkChange(elements, i, nInsertIndex));
 			}
-			return arrResult;
 		}
-		return arrInsertElements;
+		return arrResult;
+	}
+	CBookmarkChangesCollector.prototype.getBookmarkElements = function (oTextElement, nInsertIndex) {
+		const elements = oTextElement.bookmarks[nInsertIndex].slice();
+		if (this.copyPr) {
+			for (let i = 0; i < elements.length; i += 1) {
+				elements[i] = elements[i].Copy(false, this.copyPr);
+			}
+		}
+		return elements;
 	};
-	CLabelBaseIterator.prototype.getInsertIndexes = function ()
-	{
 
+	function CCommentChangesCollector(arrMainElements, arrRevisedElements, copyPr, oCommentManager) {
+		this.mainElements = arrMainElements;
+		this.revisedElements = arrRevisedElements;
+		this.commentManager = oCommentManager;
+		this.copyPr = copyPr;
 	}
-	function CBookmarkChangesIterator(arrElements, oCopyPr)
-	{
-		CLabelBaseIterator.call(this, arrElements, oCopyPr);
+	CCommentChangesCollector.prototype.getCommentChanges = function () {
+		const arrResult = [];
+		for (let i = this.mainElements.length - 1; i >= 0; i -= 1) {
+			const oMainElement = this.mainElements[i];
+			const oRevisedElement = this.revisedElements[i];
+			const arrInsertIndexes = oRevisedElement.getCommentInsertIndexes();
+			for (let j = 0; j < arrInsertIndexes.length; j += 1) {
+				const nInsertIndex = arrInsertIndexes[j];
+				const arrCommentElements = this.getCommentElements(oMainElement, oRevisedElement, nInsertIndex);
+				arrResult.push(new CCommentChange(arrCommentElements, i, nInsertIndex));
+			}
+		}
+		return arrResult;
 	}
-	AscFormat.InitClassWithoutType(CBookmarkChangesIterator, CLabelBaseIterator);
-	CBookmarkChangesIterator.prototype.getInsertElements = function (oElement, nInsertIndex)
-	{
-		return oElement.bookmarks[nInsertIndex];
-	};
-	CBookmarkChangesIterator.prototype.getInsertIndexes = function ()
-	{
-		return this.getElement().getBookmarkInsertIndexes();
-	}
-	CBookmarkChangesIterator.prototype.getLabelConstructor = function ()
-	{
-		return CBookmarkChange;
-	}
-
-	function CCommentChangesIterator(arrElements, arrMainNodes, oCommentsManager, oCopyPr)
-	{
-		this.mainNodes = arrMainNodes;
-		this.oCommentManager = oCommentsManager;
-		CLabelBaseIterator.call(this, arrElements, oCopyPr);
-	}
-	AscFormat.InitClassWithoutType(CCommentChangesIterator, CLabelBaseIterator);
-	CCommentChangesIterator.prototype.getInsertElements = function (oElement, nInsertIndex)
-	{
-		this.checkComment();
+	CCommentChangesCollector.prototype.getCommentElements = function (oMainElement, oRevisedElement, nInsertIndex) {
+		this.checkComments(oMainElement, oRevisedElement, nInsertIndex);
 		const arrElements = [];
-		for (let i = 0; i < oElement.comments[nInsertIndex].length; i += 1)
+		for (let i = 0; i < oRevisedElement.comments[nInsertIndex].length; i += 1)
 		{
-			const oParaComment = oElement.comments[nInsertIndex][i].element;
+			const oParaComment = oRevisedElement.comments[nInsertIndex][i].element;
 			arrElements.push(oParaComment);
 			if (oParaComment.IsCommentStart())
 			{
 				const sCommentId = oParaComment.GetCommentId();
-				const arrLaterMerge = this.oCommentManager.getMergeLater(sCommentId);
+				const arrLaterMerge = this.commentManager.getMergeLater(sCommentId);
 				if (arrLaterMerge)
 				{
 					arrElements.push.apply(arrElements, arrLaterMerge);
 				}
 			}
 		}
+		
+		if (this.copyPr) {
+			for (let i = 0; i < arrElements.length; i += 1) {
+				arrElements[i] = arrElements[i].Copy(false, this.copyPr);
+			}
+		}
 		return arrElements;
 	};
-	CCommentChangesIterator.prototype.checkComment = function ()
-	{
-		const nInsertIndex = this.getInsertIndex();
-		const oRevisedElement = this.getElement();
+	
+	CCommentChangesCollector.prototype.checkComments = function (oMainElement, oRevisedElement, nInsertIndex) {
 		const arrRevisedComments = oRevisedElement.comments[nInsertIndex];
+		const arrMainComments = oMainElement.comments[nInsertIndex];
+		this.commentManager.checkComments(arrMainComments, arrRevisedComments, arrRevisedComments);
+	};
 
-		const arrMainComments = this.getMainNode().element.comments[nInsertIndex];
-		this.oCommentManager.checkComments(arrMainComments, arrRevisedComments, arrRevisedComments);
-		return false;
+	function CCReviewChangeCollector(arrMainElements, arrRevisedElements) {
+		this.mainElements = arrMainElements;
+		this.revisedElements = arrRevisedElements;
 	}
-	CCommentChangesIterator.prototype.getLabelConstructor = function ()
-	{
-		return CCommentChange;
-	}
-	CCommentChangesIterator.prototype.getMainNode = function ()
-	{
-		return this.mainNodes[this.elementIndex];
-	}
-	CCommentChangesIterator.prototype.getInsertIndexes = function ()
-	{
-		return this.getElement().getCommentInsertIndexes();
-	}
+	CCReviewChangeCollector.prototype.getReviewChanges = function () {
+		const arrResult = [];
+		const lastRevisedElement = this.revisedElements[this.revisedElements.length - 1];
+		const firstRevisedElement = this.revisedElements[0];
+		const firstMainElement = this.mainElements[0];
+		const lastMainElement = this.mainElements[this.mainElements.length - 1];
+		const firstMainRun = firstMainElement.firstRun;
+		const lastMainRun = lastMainElement.lastRun;
+		const lastRevisedRun = lastRevisedElement.lastRun;
+		const firstRevisedRun = firstRevisedElement.firstRun;
+
+		let elementIndex = this.revisedElements.length - 1;
+		let innerElementIndex = this.revisedElements[elementIndex].revisedElements.length - 1;
+
+		const oRevisedContent = firstRevisedRun.Paragraph.Content;
+		const oMainContent = firstMainRun.Paragraph.Content;
+
+		const lastRevisedRunInfo = this.getRevisedLastRunIndex();
+		const lastMainRunInfo = this.getMainLastRunIndex();
+		if (!lastMainRunInfo || !lastRevisedRunInfo) {
+			return arrResult;
+		}
+
+		let revisedRunIndex = lastRevisedRunInfo.runIndex;
+		let mainRunIndex = lastMainRunInfo.runIndex;
+
+		while (revisedRunIndex >= 0 && mainRunIndex >= 0) {
+			const oRevisedRun = oRevisedContent[revisedRunIndex];
+			const oMainRun = oMainContent[mainRunIndex];
+			const oMainTextPr = oMainRun.Pr;
+			const oRevisedTextPr = oRevisedRun.Pr;
+
+			let revisedElementsCount = oRevisedRun === lastRevisedRun ? lastRevisedRunInfo.elementIndex + 1 : oRevisedRun.Content.length;
+			let mainElementsCount = oMainRun === lastMainRun ? lastMainRunInfo.elementIndex + 1 : oMainRun.Content.length;
+			if (mainElementsCount !== 0 && revisedElementsCount !== 0) {
+				const lastPrChange = arrResult[arrResult.length - 1];
+				// const oPriorityChange
+				if (oMainTextPr.Is_Equal(oRevisedTextPr)) {
+					if (lastPrChange && !lastPrChange.isStart) {
+						arrResult.push(new CTextPrChange(true, elementIndex, innerElementIndex + 1));
+					}
+				} else {
+					if (lastPrChange) {
+						if (lastPrChange.isStart) {
+							arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex, oRevisedTextPr));
+						} else if (!lastPrChange.textPr.Is_Equal(oRevisedTextPr)) {
+							arrResult.push(new CTextPrChange(true, elementIndex, innerElementIndex + 1));
+							arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex, oRevisedTextPr));
+						}
+					} else {
+						arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex, oRevisedTextPr));
+					}
+				}
+			}
+
+			while (revisedElementsCount !== 0 && mainElementsCount !== 0) {
+				const minCount = Math.min(revisedElementsCount, mainElementsCount);
+				if (innerElementIndex + 1 > minCount) {
+					innerElementIndex -= minCount;
+					revisedElementsCount -= minCount;
+					mainElementsCount -= minCount;
+				} else {
+					revisedElementsCount -= innerElementIndex + 1;
+					mainElementsCount -= innerElementIndex + 1;
+					elementIndex -= 1;
+					if (this.revisedElements[elementIndex] && this.mainElements[elementIndex]) {
+						innerElementIndex = this.revisedElements[elementIndex].revisedElements.length - 1;
+					}
+				}
+				if (elementIndex < 0) {
+					const lastPrChange = arrResult[arrResult.length - 1];
+					if (lastPrChange && !lastPrChange.isStart) {
+						arrResult.push(new CTextPrChange(true, 0, 0));
+					}
+					return arrResult;
+				}
+			}
+			if (revisedElementsCount === 0) {
+				revisedRunIndex -= 1;
+			}
+			if (mainElementsCount === 0) {
+				mainRunIndex -= 1;
+			}
+		}
+		return arrResult;
+	};
+	CCReviewChangeCollector.prototype.get
 
 	function CReviewChangesIterator(arrMainElements, arrRevisedElements)
 	{
@@ -787,23 +847,30 @@
 			const arrChanges = textPrChanges.concat(reviewChanges, labelChanges);
 			return arrChanges.sort(function (a, b) {
 				if (a.elementIndex === b.elementIndex) {
+					if (b.innerElementIndex === a.innerElementIndex) {
+						return !b.isStart - !a.isStart;
+					}
 					return b.innerElementIndex - a.innerElementIndex;
 				}
 				return b.elementIndex - a.elementIndex;
 			});
 		}
-		function applyReviewChange(change, textIterator) {
+		function applyReviewChange(change, textIterator, comparison, oNeedReviewWithUser) {
 		if (change.isStart) {
-			applyStartChangeReview();
+			applyStartChangeReview(change, textIterator, comparison, oNeedReviewWithUser);
 		} else {
-			applyEndChangeReview();
+			applyEndChangeReview(change, textIterator);
 		}
 		}
 		function applyLabelChange(change, textIterator) {
 			insertLabelsAndContinue(change, textIterator);
 		}
 		function applyTextPrChange(change, textIterator) {
-
+			if (change.isStart) {
+				applyStartTextPrChange();
+			} else {
+				applyEndTextPrChange();
+			}
 		}
 	CNode.prototype.resolveTypesWithPartner = function (comparison, bNeedCopyLabel)
 	{
@@ -4208,7 +4275,7 @@
 		this.insertIndex = nInsertIndex;
 	}
 
-	function CTextElementRunIterator(arrTextElements, bStartCollect)
+	function CTextElementRunIterator(arrTextElements)
 	{
 		this.textElements = arrTextElements;
 		this.textElementIndex = arrTextElements.length - 1;
@@ -4218,39 +4285,48 @@
 		this.runIndex = this.currentRun.GetPosInParent(this.parent);
 		this.runElementIndex = this.currentRun.GetElementPosition(this.getRunTextElement());
 		this.bNext = this.innerElementIndex !== -1;
-		this.isCollectRuns = !!bStartCollect;
-		this.collectRuns = this.isCollectRuns ? [this.currentRun] : [];
+
+		this.collectTextPrChange = null;
+		this.collectReviewChange = null;
 	}
 
-	CTextElementRunIterator.prototype.startCollectRuns = function ()
-	{
-		this.isCollectRuns = true;
-	};
 	CTextElementRunIterator.prototype.addToCollectCurrentRun = function ()
 	{
-		if (this.isCollectRuns)
-		{
-			this.addToCollect(this.currentRun);
-		}
+		this.addToCollect(this.currentRun);
 	};
 	CTextElementRunIterator.prototype.dropLastCollect = function ()
 	{
-		return this.collectRuns.pop();
+		if (this.collectTextPrChange) {
+			this.collectTextPrChange.collectRuns.pop();
+		}
+		if (this.collectReviewChange) {
+			this.collectReviewChange.collectRuns.pop();
+		}
 	};
+	CTextElementRunIterator.prototype.setCollectTextPrRuns = function (oChange) {
+		this.collectTextPrChange = oChange;
+	};
+	CTextElementRunIterator.prototype.setCollectReviewRuns = function (oChange) {
+		this.collectReviewChange = oChange;
+	}
 	CTextElementRunIterator.prototype.addToCollect = function (oRun)
 	{
-		this.collectRuns.push(oRun);
+		if (this.collectTextPrChange) {
+			this.collectTextPrChange.collectRuns.push(oRun);
+		}
+		if (this.collectReviewChange) {
+			this.collectReviewChange.collectRuns.push(oRun);
+		}
+
 	};
 	CTextElementRunIterator.prototype.addToCollectBack = function (oRun)
 	{
-		this.collectRuns.unshift(oRun);
-	};
-	CTextElementRunIterator.prototype.endCollectRuns = function ()
-	{
-		this.isCollectRuns = false;
-		const arrRet = this.collectRuns;
-		this.collectRuns = [];
-		return arrRet;
+		if (this.collectTextPrChange) {
+			this.collectTextPrChange.collectRuns.unshift(oRun);
+		}
+		if (this.collectReviewChange) {
+			this.collectReviewChange.collectRuns.unshift(oRun);
+		}
 	};
 	CTextElementRunIterator.prototype.getCurrentElement = function ()
 	{
