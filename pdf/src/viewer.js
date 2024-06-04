@@ -4014,11 +4014,12 @@
 	};
 	CHtmlPage.prototype.resize = function(isDisablePaint)
 	{
+		AscCommon.AscBrowser.checkZoom();
+
 		let oThis		= this;
 		let oEditorPage	= this.Api.WordControl;
 
 		this.isFocusOnThumbnails = false;
-		
 
 		oEditorPage.checkBodySize();
 		oEditorPage.m_oBody.Resize(oEditorPage.Width * g_dKoef_pix_to_mm, oEditorPage.Height * g_dKoef_pix_to_mm, this);

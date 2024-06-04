@@ -2314,6 +2314,14 @@ function CDrawingDocument()
 		if (this.m_oWordControl.m_oLogicDocument && pageIndex >= this.m_arrPages.length)
 			return;
 
+		if (this.m_oWordControl.m_oApi.isPdfEditor())
+		{
+			this.m_dTargetX = x;
+			this.m_dTargetY = y;
+			this.m_lTargetPage = pageIndex;
+			this.CheckTargetDraw(x, y);
+		}
+
 		var bIsPageChanged = false;
 		if (this.m_lCurrentPage != pageIndex)
 		{
