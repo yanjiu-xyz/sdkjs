@@ -42,6 +42,9 @@
     CGraphicObjects.prototype.constructor = CGraphicObjects;
     CGraphicObjects.prototype = Object.create(AscCommonWord.CGraphicObjects.prototype);
 
+	CGraphicObjects.prototype.createShape = function() {
+		return new AscPDF.CPdfShape();
+	};
     CGraphicObjects.prototype.updateSelectionState = function(bNoCheck) {
         let text_object, drawingDocument = this.drawingDocument;
         if (this.selection.textSelection) {

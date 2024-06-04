@@ -668,6 +668,9 @@
 
 		DrawingObjectsController.prototype =
 			{
+				createShape : function() {
+					return new AscFormat.CShape();
+				},
 
 				checkDrawingHyperlinkAndMacro: function (drawing, e, hit_in_text_rect, x, y, pageIndex) {
 					var oApi = this.getEditorApi();
