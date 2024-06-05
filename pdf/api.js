@@ -245,30 +245,9 @@
 		if (!this.DocumentRenderer)
 			return;
 		
-		let oDoc			= this.DocumentRenderer.getPDFDoc();
-		let oField			= oDoc.activeForm;
-		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveDrawing	= oDoc.activeDrawing;
-
-		if (oField && oField.IsCanEditText()) {
-			if (oField.content.IsSelectionUse()) {
-				oField.Remove(-1);
-				oDoc.UpdateCopyCutState();
-			}
-		}
-		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			let oContent = oActiveAnnot.GetDocContent();
-			if (oContent.IsSelectionUse()) {
-				oActiveAnnot.Remove(-1);
-				oDoc.UpdateCopyCutState();
-			}
-		}
-		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			let oContent = oActiveDrawing.GetDocContent();
-			if (oContent.IsSelectionUse()) {
-				oActiveDrawing.Remove(-1);
-				oDoc.UpdateCopyCutState();
-			}
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		if (oDoc.CanCopyCut().cut) {
+			oDoc.Remove(1);
 		}
 	};
 	PDFEditorApi.prototype.onUpdateRestrictions = function() {
@@ -315,7 +294,7 @@
 		let oActiveDrawing	= oDoc.activeDrawing;
 
 		// пока что копирование бинарником только внутри drawings или самих drawings
-		if (_format !== AscCommon.c_oAscClipboardDataFormat.Text && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
+		if (_format == AscCommon.c_oAscClipboardDataFormat.Internal && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
 			return;

@@ -2901,7 +2901,7 @@
 		"≈" : "\\approx",
 		"≅" : "\\cong",
 		"≢" : "\\nequiv",
-		"≄" : "\\nsimeq",
+		//"≄" : "\\nsimeq",
 		"≉" : "\\napprox",
 		"≇" : "\\ncong",
 		"≪" : "\\ll",

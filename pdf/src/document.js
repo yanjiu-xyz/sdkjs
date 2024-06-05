@@ -852,7 +852,10 @@ var CPresentation = CPresentation || function(){};
         }
         // если добавление шейпа
         else if (IsOnAddAddShape) {
-            oController.startAddShape(this.Api.addShapePreset);
+            if (!oController.isPolylineAddition()) {
+                oController.startAddShape(this.Api.addShapePreset);
+            }
+            
             oController.OnMouseDown(e, X, Y, pageObject.index);
             return;
         }
@@ -1488,6 +1491,11 @@ var CPresentation = CPresentation || function(){};
         }
         else
         {
+            if (IsOnAddAddShape && oController.isPolylineAddition()) {
+                oController.OnMouseMove(e, X, Y, pageObject.index);
+                return;
+            }
+
             // рисование и ластик работает только при зажатой мышке
             if (IsOnDrawer || IsOnEraser || IsOnAddAddShape || IsPageHighlight)
                 return;
@@ -1647,6 +1655,7 @@ var CPresentation = CPresentation || function(){};
         // если рисование или добавление шейпа то просто заканчиваем его
         else if (IsOnDrawer || IsOnAddAddShape) {
             oController.OnMouseUp(e, X, Y, pageObject.index);
+            e.IsLocked = false;
             return;
         }
 
@@ -1726,7 +1735,10 @@ var CPresentation = CPresentation || function(){};
             let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
             if (oTextConvert) {
-                this.Viewer.file.pages[oTextConvert.page].isConvertedToShapes = false;
+                let oThis = this;
+                this.Viewer.paint(function() {
+                    oThis.Viewer.thumbnails._repaintPage(oTextConvert.page);
+                });
                 this.isUndoRedoInProgress = false;
                 return;
             }
@@ -1798,7 +1810,11 @@ var CPresentation = CPresentation || function(){};
             let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
             if (oTextConvert) {
-                this.Viewer.file.pages[oTextConvert.page].isConvertedToShapes = true;
+                let oThis = this;
+                this.Viewer.paint(function() {
+                    oThis.Viewer.thumbnails._repaintPage(oTextConvert.page);
+                });
+
                 this.isUndoRedoInProgress = false;
                 return;
             }
@@ -3244,6 +3260,10 @@ var CPresentation = CPresentation || function(){};
         }
         else if (oActiveDrawing) {
             oContent = oActiveDrawing.GetDocContent();
+            if (!oActiveDrawing.IsInTextBox()) {
+                isCanCopy = true;
+                isCanCut = true;
+            }
         }
 
         if (oContent && oContent.IsSelectionUse() && !oContent.IsSelectionEmpty()) {
@@ -3490,7 +3510,7 @@ var CPresentation = CPresentation || function(){};
                 {
                     this.Viewer.fullTextMessageCallbackArgs = [];
                     this.Viewer.fullTextMessageCallback = function() {
-                        this.Viewer.file.selectAll();
+                        this.selectAll();
                     };
                     this.Viewer.showTextMessage();
                 }
@@ -4102,6 +4122,8 @@ var CPresentation = CPresentation || function(){};
         oFile.pages[nPage].isConvertedToShapes = true;
 
         this.CreateNewHistoryPoint({textConvert: {page: nPage}});
+        this.History.Add(new CChangesPDFDocumentRecognizePage(this, [nPage, false], [nPage, true]));
+
         let oDrDoc = this.GetDrawingDocument();
 
         let aSpsXmls        = oFile.nativeFile["scanPage"](nOriginIndex, 1);
@@ -4189,6 +4211,9 @@ var CPresentation = CPresentation || function(){};
             });
             _t.TurnOffHistory();
             _t.Viewer.file.removeSelection();
+            _t.Viewer.paint(function() {
+                _t.Viewer.thumbnails._repaintPage(nPage);
+            });
         };
         if(aUrls.length > 0) {
             AscCommon.sendImgUrls(Asc.editor, aUrls, function (data) {
@@ -4229,13 +4254,27 @@ var CPresentation = CPresentation || function(){};
             if (oSelContent.Drawings.length != 0) {
                 this.BlurActiveObject();
 
-                oSelContent.Drawings.forEach(function(drawing) {
-                    oThis.AddDrawing(drawing.Drawing, oThis.GetCurPage());
-                    if (drawing.Drawing.IsGraphicFrame()) {
-                        oController.Check_GraphicFrameRowHeight(drawing.Drawing);
+                let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
+                    return pasteObj.Drawing;
+                });
+
+                // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
+                let nShift = oController.getDrawingsPasteShift(aDrToPaste);
+
+                aDrToPaste.forEach(function(drawing) {
+                    if (nShift > 0) {
+                        let oXfrm = drawing.getXfrm();
+                        if (oXfrm) {
+                            oXfrm.shift(nShift, nShift);
+                        }
                     }
-                    drawing.Drawing.select(oController, nCurPage);
-                    oThis.SetMouseDownObject(drawing.Drawing);
+
+                    oThis.AddDrawing(drawing, oThis.GetCurPage());
+                    if (drawing.IsGraphicFrame()) {
+                        oController.Check_GraphicFrameRowHeight(drawing);
+                    }
+                    drawing.select(oController, nCurPage);
+                    oThis.SetMouseDownObject(drawing);
                 });
             }
             else if (oSelContent.DocContent) {

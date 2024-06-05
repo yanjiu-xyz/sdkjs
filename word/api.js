@@ -6949,6 +6949,23 @@ background-repeat: no-repeat;\
 			return window["asc_current_keyboard_layout"];
 		return -1;
 	};
+	
+	asc_docs_api.prototype.asc_getInputLanguage = function()
+	{
+		let keyboardLang = this.asc_getKeyboardLanguage();
+		if (-1 !== keyboardLang)
+			return keyboardLang;
+		
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return lcid_enUS;
+		
+		let run = logicDocument.GetCurrentRun();
+		if (!run)
+			return lcid_enUS;
+		
+		return run.Get_CompiledPr(false).Lang.Val;
+	};
 
 	asc_docs_api.prototype.asc_setSpellCheck = function(isOn)
 	{
@@ -14370,6 +14387,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_setDefaultLanguage']                    = asc_docs_api.prototype.asc_setDefaultLanguage;
 	asc_docs_api.prototype['asc_getDefaultLanguage']                    = asc_docs_api.prototype.asc_getDefaultLanguage;
 	asc_docs_api.prototype['asc_getKeyboardLanguage']                   = asc_docs_api.prototype.asc_getKeyboardLanguage;
+	asc_docs_api.prototype['asc_getInputLanguage']                      = asc_docs_api.prototype.asc_getInputLanguage;
 	asc_docs_api.prototype['asc_setSpellCheckSettings']                 = asc_docs_api.prototype.asc_setSpellCheckSettings;
 	asc_docs_api.prototype['asc_getSpellCheckSettings']                 = asc_docs_api.prototype.asc_getSpellCheckSettings;
 	asc_docs_api.prototype['asc_setSpellCheck']                         = asc_docs_api.prototype.asc_setSpellCheck;

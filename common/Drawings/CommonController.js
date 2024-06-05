@@ -9457,6 +9457,18 @@
 						this.loadDocumentStateAfterLoadChanges(oStateBeforeLoadChanges);
 						this.startRecalculate();
 					}, [], false, 0);
+				},
+
+				getInputLanguage: function () {
+					let oContent = this.getTargetDocContent();
+					if(!oContent) {
+						return lcid_enUS;
+					}
+					let oRun = oContent.GetCurrentRun();
+					if(!oRun) {
+						return lcid_enUS;
+					}
+					return oRun.Get_CompiledPr(false).Lang.Val;
 				}
 			};
 

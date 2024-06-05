@@ -2102,7 +2102,7 @@
 
 			let oDoc = oThis.getPDFDoc();
 			AscCommon.check_MouseMoveEvent(e);
-			e.IsLocked = true;
+			e.IsLocked = oThis.isMouseDown;
 
 			if (e && e.preventDefault)
 				e.preventDefault();
@@ -3322,12 +3322,23 @@
 					this.Api.sendEvent("asc_onMarkerFormatChanged", this.Api.curMarkerType, false);
 					this.Api.SetMarkerFormat(this.Api.curMarkerType, false);
 				}
-				
-				const oController = oDoc.GetController();
-				oController.resetSelection();
+				else if (this.Api.isStartAddShape)
+				{
+					this.Api.sync_StartAddShapeCallback(false);
+					this.Api.sync_EndAddShape();
+					this.DrawingObjects.endTrackNewShape();
+				}
+				else {
+					const oController = oDoc.GetController();
+					oController.resetSelection();
+					this.onUpdateOverlay();
+				oDoc.EscapeForm();
 				oDoc.EscapeForm();
 				
-				editor.sync_HideComment();
+					oDoc.EscapeForm();
+				
+					editor.sync_HideComment();
+				}
 			}
 			else if (e.KeyCode === 32) // Space
 			{
@@ -4014,11 +4025,12 @@
 	};
 	CHtmlPage.prototype.resize = function(isDisablePaint)
 	{
+		AscCommon.AscBrowser.checkZoom();
+
 		let oThis		= this;
 		let oEditorPage	= this.Api.WordControl;
 
 		this.isFocusOnThumbnails = false;
-		
 
 		oEditorPage.checkBodySize();
 		oEditorPage.m_oBody.Resize(oEditorPage.Width * g_dKoef_pix_to_mm, oEditorPage.Height * g_dKoef_pix_to_mm, this);
