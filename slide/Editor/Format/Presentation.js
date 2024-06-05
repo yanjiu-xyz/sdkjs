@@ -2133,6 +2133,14 @@ CPresentation.prototype.GetCurrentController = function () {
 	}
 	return null;
 };
+CPresentation.prototype.GetInputLanguage = function () {
+	var oController = this.GetCurrentController();
+	if (oController) {
+		return oController.getInputLanguage();
+	}
+	return lcid_enUS;
+
+};
 CPresentation.prototype.IsEmpty = function() {
 	return this.GetSlidesCount() === 0;
 };
