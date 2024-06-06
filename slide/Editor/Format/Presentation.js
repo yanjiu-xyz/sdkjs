@@ -2200,6 +2200,15 @@ CPresentation.prototype.GetSlideNumber = function (nIdx) {
 	}
 	return null;
 };
+CPresentation.prototype.CorrectCurSlideIdx = function () {
+	let aAllSlides = this.GetAllSlides();
+	if(this.CurPage >= aAllSlides.length) {
+		this.Set_CurPage(aAllSlides.length - 1);
+	}
+	if(this.CurPage < 0 && aAllSlides.length > 0) {
+		this.Set_CurPage(0);
+	}
+};
 CPresentation.prototype.GetCurrentSlide = function () {
 	return this.GetAllSlides()[this.CurPage];
 };
@@ -7168,6 +7177,7 @@ CPresentation.prototype.Set_FastCollaborativeEditing = function (isOn) {
 
 CPresentation.prototype.GetSelectionState = function () {
 	const oSelectionState = {};
+	oSelectionState.mode = Asc.editor.presentationViewMode;
 	oSelectionState.CurPage = this.CurPage;
 	oSelectionState.FocusOnNotes = this.FocusOnNotes;
 	oSelectionState.SelectedSlides = this.GetSelectedSlides();
@@ -7182,6 +7192,9 @@ CPresentation.prototype.GetSelectionState = function () {
 
 CPresentation.prototype.SetSelectionState = function (State) {
 	if (State.CurPage > -1) {
+		if(State.mode !== null && State.mode !== undefined && State.mode !== Asc.editor.presentationViewMode) {
+			Asc.editor.asc_changePresentationViewMode(State.mode);
+		}
 		var oSlide = this.GetSlide(State.CurPage);
 		if (oSlide) {
 			if (State.FocusOnNotes) {
