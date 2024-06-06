@@ -9018,9 +9018,9 @@ CPresentation.prototype.deleteSlides = function (array) {
 			}
 		}
 		if (array[array.length - 1] != oldLen - 1) {
-			this.DrawingDocument.m_oWordControl.GoToPage(array[array.length - 1] + 1 - array.length, undefined, true);
+			this.DrawingDocument.m_oWordControl.GoToPage(array[array.length - 1] + 1 - array.length, undefined, undefined, true);
 		} else {
-			this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlidesCount() - 1, undefined, true);
+			this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlidesCount() - 1, undefined, undefined, true);
 		}
 		this.Api.sync_HideComment();
 		this.Document_UpdateUndoRedoState();

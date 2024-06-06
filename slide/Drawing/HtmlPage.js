@@ -738,7 +738,7 @@ function CEditorPage(api)
 				_elem.innerHTML = _text;
 
 				//window.editor.WordControl.Thumbnails.SelectPage(_current - 1);
-				window.editor.WordControl.GoToPage(slideNum, false, false, true);
+				window.editor.WordControl.GoToPage(slideNum, false, false, false, true);
 
 				window.editor.WordControl.OnResizeReporter();
 			});
@@ -2744,7 +2744,7 @@ function CEditorPage(api)
 							this.IsGoToPageMAXPosition = false;
 					}
 
-					this.GoToPage(lNumSlide);
+					this.GoToPage(lNumSlide, false, true);
 					return;
 				}
 				else if (this.SlideScrollMAX < scrollPositionY)
@@ -2753,7 +2753,7 @@ function CEditorPage(api)
 						return;
 
 					this.IsGoToPageMAXPosition = false;
-					this.GoToPage(this.m_oDrawingDocument.SlideCurrent + 1);
+					this.GoToPage(this.m_oDrawingDocument.SlideCurrent + 1, false, true);
 					return;
 				}
 			}
@@ -2762,7 +2762,7 @@ function CEditorPage(api)
 				if (!this.verticalScrollCheckChangeSlide())
 					return;
 
-				this.GoToPage(this.ZoomFreePageNum);
+				this.GoToPage(this.ZoomFreePageNum, false, true);
 			}
 		}
 		else
@@ -2795,7 +2795,7 @@ function CEditorPage(api)
 		}
 
 		if (this.VerticalScrollOnMouseUp.SlideNum != this.m_oDrawingDocument.SlideCurrent)
-			this.GoToPage(this.VerticalScrollOnMouseUp.SlideNum);
+			this.GoToPage(this.VerticalScrollOnMouseUp.SlideNum, false, true);
 		else
 		{
 			this.StartVerticalScroll = false;
@@ -4520,7 +4520,7 @@ function CEditorPage(api)
 		return this.m_oDrawingDocument.GetSlidesCount();
 	};
 
-	this.GoToPage = function(lPageNum, isFromZoom, bIsAttack, isReporterUpdateSlide)
+	this.GoToPage = function(lPageNum, isFromZoom, isScroll, bIsAttack, isReporterUpdateSlide)
 	{
 		if (this.m_oApi.isReporterMode)
 		{
@@ -4538,7 +4538,12 @@ function CEditorPage(api)
 			//return;
 		}
 
-		if (this.DemonstrationManager.Mode && !isReporterUpdateSlide && !isFromZoom)
+		if(this.DemonstrationManager.Mode && (isFromZoom || isScroll))
+		{
+			return;
+		}
+
+		if (this.DemonstrationManager.Mode && !isReporterUpdateSlide)
 		{
 			return this.m_oApi.DemonstrationGoToSlide(lPageNum);
 		}
