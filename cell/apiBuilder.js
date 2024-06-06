@@ -273,8 +273,8 @@
 	//TODO not support "xlPasteAllMergingConditionalFormats" / "xlPasteAllUsingSourceTheme" / "xlPasteValidation"
 	/**
 	 * Specifies the part of the range to be pasted.
-	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders" |
-	 *  | "xlPasteColumnWidths" | "xlPasteComments"
+	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders"
+	 * | "xlPasteColumnWidths" | "xlPasteComments"
 	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
 	 * | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
 	 * */
