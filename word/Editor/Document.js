@@ -17240,6 +17240,8 @@ CDocument.prototype.Get_MailMergedDocument = function(_nStartIndex, _nEndIndex)
 
 	LogicDocument.theme = this.theme.createDuplicate();
 	LogicDocument.clrSchemeMap   = this.clrSchemeMap.createDuplicate();
+	
+	LogicDocument.Background = this.Background.copy();
 
 	var FieldsManager = this.FieldsManager;
 
