@@ -46,10 +46,10 @@
 
 	function insertLabelsAndContinue(oLabelChange, oTextIterator, oLabelIterator)
 	{
-		const bRet = oTextIterator.skipTo(oLabelChange.elementIndex, oLabelChange.innerElementIndex - oLabelChange.addingValue);
+		const bRet = oTextIterator.skipTo(oLabelChange.elementIndex, oLabelChange.isLast ? oLabelChange.innerElementIndex - 1 : oLabelChange.innerElementIndex);
 		if (bRet)
 		{
-			const oRun = oTextIterator.splitCurrentRun(oTextIterator.runElementIndex + oLabelChange.addingValue);
+			const oRun = oTextIterator.splitCurrentRun(oLabelChange.isLast ? oLabelChange.innerElementIndex + 1 : oLabelChange.innerElementIndex);
 			oTextIterator.addToCollectBack(oRun);
 			oLabelChange.forEach(function (oLabel)
 			{
@@ -67,11 +67,6 @@
 				{
 					changeFirstTextElement(oTextIterator, oRun);
 				}
-			}
-			oLabelIterator.next();
-			if (oLabelIterator.check())
-			{
-				return oLabelIterator.value();
 			}
 		}
 	}
@@ -228,20 +223,20 @@
 		this.reviewType = nReviewType;
 	}
 
-	function CLabelChange(arrLabels, nElementIndex, nInnerElementIndex, nAddingValue)
+	function CLabelChange(arrLabels, nElementIndex, nInnerElementIndex, isLast)
 	{
 		this.labels = arrLabels;
 		this.elementIndex = nElementIndex;
 		this.innerElementIndex = nInnerElementIndex;
-		this.addingValue = nAddingValue;
+		this.isLast = isLast;
 	}
 	CLabelChange.prototype.forEach = function (fCallback)
 	{
 
 	};
-	function CBookmarkChange(arrLabels, nElementIndex, nInnerElementIndex, nAddingValue)
+	function CBookmarkChange(arrLabels, nElementIndex, nInnerElementIndex, isLast)
 	{
-		CLabelChange.call(this, arrLabels, nElementIndex, nInnerElementIndex, nAddingValue)
+		CLabelChange.call(this, arrLabels, nElementIndex, nInnerElementIndex, isLast)
 	}
 	AscFormat.InitClassWithoutType(CBookmarkChange, CLabelChange);
 	CBookmarkChange.prototype.forEach = function (fCallback)
@@ -255,9 +250,9 @@
 	{
 		return this.labels[this.labels.length - 1];
 	};
-	function CCommentChange(arrLabels, nElementIndex, nInnerElementIndex, nAddingValue)
+	function CCommentChange(arrLabels, nElementIndex, nInnerElementIndex, isLast)
 	{
-		CLabelChange.call(this, arrLabels, nElementIndex, nInnerElementIndex, nAddingValue);
+		CLabelChange.call(this, arrLabels, nElementIndex, nInnerElementIndex, isLast);
 	}
 	AscFormat.InitClassWithoutType(CCommentChange, CLabelChange);
 	CCommentChange.prototype.forEach = function (fCallback)
@@ -281,10 +276,11 @@
 		for (let i = this.elements.length - 1; i >= 0; i -= 1) {
 			const oElement = this.elements[i];
 			const arrInsertIndexes = oElement.getBookmarkInsertIndexes();
+			const elementlength = oElement.elements.length;
 			for (let j = 0; j < arrInsertIndexes.length; j += 1) {
 				const nInsertIndex = arrInsertIndexes[j];
 				const elements = this.getBookmarkElements(oElement, nInsertIndex);
-				arrResult.push(new CBookmarkChange(elements, i, nInsertIndex));
+				arrResult.push(new CBookmarkChange(elements, i, nInsertIndex, elementlength === nInsertIndex));
 			}
 		}
 		return arrResult;
@@ -311,10 +307,11 @@
 			const oMainElement = this.mainElements[i];
 			const oRevisedElement = this.revisedElements[i];
 			const arrInsertIndexes = oRevisedElement.getCommentInsertIndexes();
+			const elementLength = oMainElement.elements.length;
 			for (let j = 0; j < arrInsertIndexes.length; j += 1) {
 				const nInsertIndex = arrInsertIndexes[j];
 				const arrCommentElements = this.getCommentElements(oMainElement, oRevisedElement, nInsertIndex);
-				arrResult.push(new CCommentChange(arrCommentElements, i, nInsertIndex));
+				arrResult.push(new CCommentChange(arrCommentElements, i, nInsertIndex, elementLength === nInsertIndex));
 			}
 		}
 		return arrResult;
@@ -412,7 +409,7 @@
 		return this.getLastRunIndex(lastRun, lastElement.elements[lastElement.elements.length - 1]);
 	};
 	CReviewChangeCollector.prototype.getLastRunIndex = function (run, element) {
-		const oParent = run.Parent;
+		const oParent = run.Paragraph;
 		const oContent = oParent.Content;
 		for (let i = oContent.length - 1; i >= 0; i -= 1) {
 			if (oContent[i] === run) {
@@ -438,7 +435,7 @@
 		const firstRevisedRun = firstRevisedElement.firstRun;
 
 		let elementIndex = this.revisedElements.length - 1;
-		let innerElementIndex = this.revisedElements[elementIndex].revisedElements.length - 1;
+		let innerElementIndex = this.revisedElements[elementIndex].elements.length - 1;
 
 		const oRevisedContent = firstRevisedRun.Paragraph.Content;
 		const oMainContent = firstMainRun.Paragraph.Content;
@@ -516,10 +513,14 @@
 				}
 			}
 			if (revisedElementsCount === 0) {
-				revisedRunIndex -= 1;
+				do {
+					revisedRunIndex -= 1;
+				} while (!(oRevisedContent[revisedRunIndex] instanceof AscCommonWord.ParaRun) && revisedRunIndex >= 0)
 			}
 			if (mainElementsCount === 0) {
-				mainRunIndex -= 1;
+				do {
+					mainRunIndex -= 1;
+				} while (!(oMainContent[mainRunIndex] instanceof AscCommonWord.ParaRun) && mainRunIndex >= 0)
 			}
 		}
 		return arrResult;
@@ -552,7 +553,7 @@
 		return this.getLastRunIndex(lastRun, lastElement.elements[lastElement.elements.length - 1]);
 	};
 	CTextPrChangeCollector.prototype.getLastRunIndex = function (run, element) {
-		const oParent = run.Parent;
+		const oParent = run.Paragraph;
 		const oContent = oParent.Content;
 		for (let i = oContent.length - 1; i >= 0; i -= 1) {
 			if (oContent[i] === run) {
@@ -649,10 +650,14 @@
 				}
 			}
 			if (revisedElementsCount === 0) {
-				revisedRunIndex -= 1;
+				do {
+					revisedRunIndex -= 1;
+				} while (!(oRevisedContent[revisedRunIndex] instanceof AscCommonWord.ParaRun) && revisedRunIndex >= 0)
 			}
 			if (mainElementsCount === 0) {
-				mainRunIndex -= 1;
+				do {
+					mainRunIndex -= 1;
+				} while (!(oMainContent[mainRunIndex] instanceof AscCommonWord.ParaRun) && mainRunIndex >= 0)
 			}
 		}
 		return arrResult;
@@ -716,11 +721,11 @@
 		function applyLabelChange(change, textIterator) {
 			insertLabelsAndContinue(change, textIterator);
 		}
-		function applyTextPrChange(change, textIterator) {
+		function applyTextPrChange(change, textIterator, comparison) {
 			if (change.isStart) {
-				applyStartTextPrChange();
+				applyStartTextPrChange(change, textIterator, comparison);
 			} else {
-				applyEndTextPrChange();
+				applyEndTextPrChange(change, textIterator, comparison);
 			}
 		}
 		function resolveTypesWithPartner(arrNodes, comparison) {
@@ -745,7 +750,7 @@
 				if (oChange instanceof CReviewChange) {
 					applyReviewChange(oChange, oTextIterator, comparison, oNeedReviewWithUser);
 				} else if (oChange instanceof CTextPrChange) {
-					applyTextPrChange(oChange, oTextIterator);
+					applyTextPrChange(oChange, oTextIterator, comparison);
 				} else {
 					applyLabelChange(oChange, oTextIterator);
 				}
@@ -753,7 +758,9 @@
 			comparison.applyResolveTypes(oNeedReviewWithUser);
 		}
 	CNode.prototype.resolveTypesWithPartner = function (comparison) {
-			resolveTypesWithPartner([this], comparison);
+			if (this.partner && this.element instanceof CTextElement) {
+				resolveTypesWithPartner([this], comparison);
+			}
 	};
     CNode.prototype.getElement = function()
     {
