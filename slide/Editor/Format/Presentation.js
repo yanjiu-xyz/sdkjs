@@ -9047,10 +9047,10 @@ CPresentation.prototype.GetCurrentTheme = function() {
 				return oCurSlide.Layout.Master;
 			}
 			case AscDFH.historyitem_type_SlideLayout: {
-				return oSlide.Master;
+				return oCurSlide.Master;
 			}
 			case AscDFH.historyitem_type_SlideMaster: {
-				return oSlide;
+				return oCurSlide;
 			}
 		}
 	}
