@@ -11221,7 +11221,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 			Content.push(oSdt);
 		} else if ( c_oSerParType.Background === type ) {
-			oThis.Document.Background = {Color: null, Unifill: null, shape: null};
 			res = this.bcr.Read2(length, function(t, l){
 				return oThis.ReadBackground(t,l, oThis.Document.Background);
 			});
