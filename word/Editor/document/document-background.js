@@ -56,6 +56,8 @@
 		
 		let h = sectPr.GetPageHeight();
 		let w = sectPr.GetPageWidth();
+
+		graphics.StartDrawShape();
 		
 		let shapeDrawer = new AscCommon.CShapeDrawer();
 		brush.check(theme, colorMap);
@@ -67,6 +69,8 @@
 			graphics.setEndGlobalAlphaColor(RGBA.R, RGBA.G, RGBA.B);
 		}
 		shapeDrawer.draw(null);
+
+		graphics.EndDrawShape();
 	};
 	DocumentBackground.prototype._getBrush = function()
 	{
