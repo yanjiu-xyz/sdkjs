@@ -1311,7 +1311,7 @@ function CLayoutThumbnailDrawer()
         g.m_oFontManager = AscCommon.g_fontManager;
 
         g.transform(1,0,0,1,0,0);
-
+        g.isSupportTextDraw = function() {return false;};
         this.Draw(g, _layout, use_background, use_master_shapes, use_layout_shapes);
 
         try
