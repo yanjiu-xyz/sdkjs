@@ -1080,7 +1080,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
-					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j, true) : arg1.getElementRowCol(i, j);
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j, true);
 
 					val = val.tocBool();
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
