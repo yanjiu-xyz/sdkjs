@@ -1346,10 +1346,9 @@ CopyProcessor.prototype =
 		var presentation = this.oDocument;
 
 		if(elementsContent && elementsContent.length){
-			if(elementsContent[0].DocContent || (elementsContent[0].Drawings && elementsContent[0].Drawings.length) || (elementsContent[0].SlideObjects && elementsContent[0].SlideObjects.length))
+			if(elementsContent[0].isValid())
 			{
 				var themeName = elementsContent[0].ThemeName ? elementsContent[0].ThemeName : "";
-
 				this.oPresentationWriter.WriteString2(this.api.documentId);
 				this.oPresentationWriter.WriteString2(themeName);
 				this.oPresentationWriter.WriteDouble(presentation.GetWidthMM());
@@ -1937,10 +1936,7 @@ CopyProcessor.prototype =
 			}
 		} else {
 			selectedContent = oDocument.GetSelectedContent2();
-			if (!selectedContent[0].DocContent && (!selectedContent[0].Drawings ||
-				(selectedContent[0].Drawings && !selectedContent[0].Drawings.length)) &&
-				(!selectedContent[0].SlideObjects ||
-				(selectedContent[0].SlideObjects && !selectedContent[0].SlideObjects.length))) {
+			if (!selectedContent[0].isValid || !selectedContent[0].isValid()) {
 				return false;
 			}
 

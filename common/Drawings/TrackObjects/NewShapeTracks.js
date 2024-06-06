@@ -109,7 +109,7 @@
     SHAPE_ASPECTS["accentBorderCallout2"] = 914400/612648;
     SHAPE_ASPECTS["accentBorderCallout3"] = 914400/612648;
 
-function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide, pageIndex, drawingsController)
+function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide, pageIndex, drawingsController, nPlaceholderType, bVertical)
 {
     this.presetGeom = presetGeom;
     this.startX = startX;
@@ -135,6 +135,9 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
     this.startShape = null;
     this.endShape = null;
     this.endConnectionInfo = null;
+    this.placeholderType = nPlaceholderType || null;
+    this.bVertical = bVertical;
+    this.parentObject = slide || layout || master;
 
     AscFormat.ExecuteNoHistory(function(){
 
@@ -713,7 +716,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 shape.txBody.setContent(content);
                 var bNeedCheckExtents = false;
                 if(drawingObjects){
-                    if(!drawingObjects.cSld){
+                    if(!drawingObjects.cSld || this.placeholderType !== null){
                         body_pr.vertOverflow = AscFormat.nVOTClip;
                     }
                     else{
@@ -784,6 +787,37 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                             shape.spPr.setLn(spDef.spPr.ln.createDuplicate());
                         }
                     }
+                }
+            }
+        }
+
+        if(this.placeholderType !== null && this.placeholderType !== undefined)
+        {
+            shape.checkDrawingUniNvPr();
+            let oNvPr = shape.getNvProps();
+            if(oNvPr) {
+                let oPh = new AscFormat.Ph();
+                oPh.setType(this.placeholderType);
+                oNvPr.setPh(oPh);
+                let nMaxIdx = undefined;
+                let aDrawings = this.parentObject.cSld.spTree;
+                for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
+                    let oSp = aDrawings[nIdx];
+                    let nPhIdx = oSp.getPlaceholderIndex();
+                    if(nMaxIdx === undefined || nMaxIdx === null) {
+                        nMaxIdx = nPhIdx;
+                    }
+                    else {
+                        if(nPhIdx !== null) {
+                            nMaxIdx = Math.max(nMaxIdx, nPhIdx);
+                        }
+                    }
+                }
+                if(nMaxIdx !== undefined && nMaxIdx !== null) {
+                    oPh.setIdx(nMaxIdx + 1);
+                }
+                else {
+                    oPh.setIdx(1);
                 }
             }
         }

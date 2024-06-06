@@ -68,6 +68,8 @@ var c_oAscContextMenuTypes = {
 	Main       : 0,
 	Thumbnails : 1,
 	AnimEffect: 3,
+	Master: 4,
+	Layout: 5
 };
 
 var THEME_THUMBNAIL_WIDTH   = 180;
@@ -411,7 +413,7 @@ var c_oAscSlideAnimChartBuildType = {
 };
 
 /** @enum {number} */
-var c_oAscSlideOleChartBuildType = {
+var c_oAscSlideOleChartBuildTypec_oAscSlideOleChartBuildType = {
 	AllAtOnce:  0,
 	Category:   1,
 	CategoryEl: 2,
@@ -501,6 +503,13 @@ var c_oAscPresentationShortcutType = {
 	PasteFormat     : 30,
 	UnGroup         : 31,
 	SpeechWorker    : 32
+};
+
+
+const c_oAscPresentationViewMode = {
+	normal: 0,
+	masterSlide: 1,
+	sorter: 2
 };
 
 var TABLE_STYLE_WIDTH_PIX  = 72;
@@ -612,6 +621,11 @@ prot = window['Asc']['c_oAscPresetShadowVal'] = window['Asc'].c_oAscPresetShadow
 prot = window['Asc']['c_oAscBlendModeType'] = window['Asc'].c_oAscBlendModeType = c_oAscBlendModeType;
 
 prot = window['Asc']['c_oAscConformanceType'] = window['Asc'].c_oAscConformanceType = c_oAscConformanceType;
+
+prot = window['Asc']['c_oAscPresentationViewMode'] = window['Asc'].c_oAscPresentationViewMode = c_oAscPresentationViewMode;
+prot['normal']      = c_oAscPresentationViewMode.normal;
+prot['masterSlide'] = c_oAscPresentationViewMode.masterSlide;
+prot['sorter']      = c_oAscPresentationViewMode.sorter;
 
 
 window['AscCommon']                = window['AscCommon'] || {};

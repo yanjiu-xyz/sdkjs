@@ -996,7 +996,7 @@
 				if (-1 === logicDoc.CurPage)
 					return "none";
 
-				var _controller = logicDoc.Slides[logicDoc.CurPage].graphicObjects;
+				var _controller = logicDoc.GetCurrentSlide().graphicObjects;
 				var _elementsCount = _controller.selectedObjects.length;
 
 				var retType = "slide";

@@ -3013,7 +3013,7 @@
                 else
 				{
 					var transition = this.WordControl.DemonstrationManager.Transition;
-                    if ((manager.SlideNum >= 0 && manager.SlideNum < manager.SlidesCount) && (!transition || !transition.IsPlaying()))
+                    if ((manager.SlideNum >= 0 && manager.SlideNum < this.WordControl.GetSlidesCount()) && (!transition || !transition.IsPlaying()))
                     {
 						var _x = (transition.Rect.x / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 						var _y = (transition.Rect.y / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
