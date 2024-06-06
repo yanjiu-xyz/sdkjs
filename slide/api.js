@@ -9268,6 +9268,7 @@ background-repeat: no-repeat;\
 		if(this.presentationViewMode === mode) return;
 		this.presentationViewMode = mode;
 		this.updateViewMode();
+		this.sendEvent("asc_onChangeViewMode", mode);
 	};
 	asc_docs_api.prototype.updateViewMode = function() {
 		if(!this.WordControl) {
