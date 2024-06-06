@@ -139,7 +139,7 @@ function MasterSlide(presentation, theme)
     };
 
 
-    this.lastRecalcSlideIndex = -1;
+    this.lastRecalcSlideIndex = 0;
 
     this.presentation = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
     this.graphicObjects = new AscFormat.DrawingObjectsController(this);
@@ -240,7 +240,7 @@ MasterSlide.prototype.recalculateBackground = function() {
 
 MasterSlide.prototype.drawNoPlaceholders = function(graphics, slide) {
     if(slide) {
-        if(slide.num !== this.lastRecalcSlideIndex) {
+        if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
             this.lastRecalcSlideIndex = slide.num;
             this.cSld.refreshAllContentsFields();
         }
@@ -256,7 +256,7 @@ MasterSlide.prototype.drawNoPlaceholders = function(graphics, slide) {
 };
 MasterSlide.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
     if(slide) {
-        if(slide.num !== this.lastRecalcSlideIndex) {
+        if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
             this.lastRecalcSlideIndex = slide.num;
             this.cSld.refreshAllContentsFields();
         }
@@ -271,7 +271,7 @@ MasterSlide.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
 
 MasterSlide.prototype.draw = function (graphics, slide) {
 	if(slide) {
-		if(slide.num !== this.lastRecalcSlideIndex) {
+		if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
 			this.lastRecalcSlideIndex = slide.num;
 			this.cSld.refreshAllContentsFields();
 		}

@@ -437,7 +437,7 @@ SlideLayout.prototype.getTheme = function(){
 
     SlideLayout.prototype.drawNoPlaceholders = function(graphics, slide) {
         if(slide) {
-            if(slide.num !== this.lastRecalcSlideIndex) {
+            if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
                 this.lastRecalcSlideIndex = slide.num;
                 this.cSld.refreshAllContentsFields();
             }
@@ -456,7 +456,7 @@ SlideLayout.prototype.getTheme = function(){
     };
     SlideLayout.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
         if(slide) {
-            if(slide.num !== this.lastRecalcSlideIndex) {
+            if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
                 this.lastRecalcSlideIndex = slide.num;
                 this.cSld.refreshAllContentsFields();
             }
@@ -471,7 +471,7 @@ SlideLayout.prototype.getTheme = function(){
 
     SlideLayout.prototype.draw = function (graphics, slide) {
         if(slide){
-            if(slide.num !== this.lastRecalcSlideIndex){
+            if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = slide.num;
                 this.cSld.refreshAllContentsFields();
 
