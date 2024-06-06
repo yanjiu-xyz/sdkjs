@@ -141,6 +141,13 @@
 		
 		return null;
 	};
+	DocumentBackground.prototype.isDefault = function()
+	{
+		if (this.Unifill || this.shape)
+			return false;
+		
+		return (!this.Color || this.Color.IsEqualRGB({r : 255, g : 255, b : 255}));
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].DocumentBackground = DocumentBackground;
 	
