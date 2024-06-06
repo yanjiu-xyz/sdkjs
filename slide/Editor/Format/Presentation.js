@@ -9044,13 +9044,13 @@ CPresentation.prototype.GetCurrentTheme = function() {
 		let nType = oCurSlide.getObjectType();
 		switch (nType) {
 			case AscDFH.historyitem_type_Slide: {
-				return oCurSlide.Layout.Master;
+				return oCurSlide.Layout.Master.Theme;
 			}
 			case AscDFH.historyitem_type_SlideLayout: {
-				return oCurSlide.Master;
+				return oCurSlide.Master.Theme;
 			}
 			case AscDFH.historyitem_type_SlideMaster: {
-				return oCurSlide;
+				return oCurSlide.Theme;
 			}
 		}
 	}
