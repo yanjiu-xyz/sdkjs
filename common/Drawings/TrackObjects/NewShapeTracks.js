@@ -124,7 +124,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
     this.transform = new AscCommon.CMatrix();
     this.pageIndex = pageIndex;
     this.theme = theme;
-    this.drawingsController = drawingsController;
+    this.drawingsController = drawingsController ? drawingsController : Asc.editor.getGraphicController();
 
     //for connectors
     this.bConnector = false;
