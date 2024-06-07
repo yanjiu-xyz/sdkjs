@@ -146,6 +146,10 @@
 	{
 		return AscTest.GetLogicDocument().getSpeechDescription(...arguments);
 	};
+	editor.getGraphicController = function()
+	{
+		return AscTest.GetLogicDocument().DrawingObjects;
+	};
 	editor._addRemoveSpaceBeforeAfterParagraph = AscCommon.DocumentEditorApi.prototype._addRemoveSpaceBeforeAfterParagraph.bind(editor);
 	editor.asc_addSpaceBeforeParagraph = AscCommon.DocumentEditorApi.prototype.asc_addSpaceBeforeParagraph.bind(editor);
 	editor.asc_addSpaceAfterParagraph = AscCommon.DocumentEditorApi.prototype.asc_addSpaceAfterParagraph.bind(editor);

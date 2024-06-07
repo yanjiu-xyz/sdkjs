@@ -76,6 +76,10 @@
 		clear: function () {},
 		GetSlidesCount: function () {
 			return editor.getCountSlides();
+		},
+		getGraphicController: function()
+		{
+			return AscTest.DrawingDocument.m_oLogicDocument.GetCurrentController();
 		}
 	};
 
