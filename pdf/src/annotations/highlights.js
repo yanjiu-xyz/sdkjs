@@ -83,7 +83,7 @@
     CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
         let oCtx = Asc.editor.getDocumentRenderer().overlay.m_oContext;
         oCtx.save();
-        oCtx.resetTransform();
+        oCtx.setTransform(1, 0, 0, 1, 0, 0);
 
         let aQuads = this.GetQuads();
         
