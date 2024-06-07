@@ -42,7 +42,7 @@
     EXCLUDED_PUNCTUATION[160] = true;
     //EXCLUDED_PUNCTUATION[63] = true;
 
-	function insertLabelsAndContinue(oLabelChange, oTextIterator, oLabelIterator)
+	function insertLabelsAndContinue(oLabelChange, oTextIterator)
 	{
 		const bRet = oTextIterator.skipTo(oLabelChange.elementIndex, oLabelChange.isLast ? oLabelChange.innerElementIndex - 1 : oLabelChange.innerElementIndex);
 		if (bRet)

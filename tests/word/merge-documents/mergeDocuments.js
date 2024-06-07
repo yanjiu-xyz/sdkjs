@@ -941,6 +941,7 @@ const arrTestObjectsInfo = [
 			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
 		],
 	},
+	///////////////////////// -> 41 <- /////////////////////////////
 	{
 		originalDocument: [
 			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
@@ -963,6 +964,54 @@ const arrTestObjectsInfo = [
 			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
 			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)), createParagraphInfo("，这是一个测试段落")],
 			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		]
+	},
+	///////////////////////// -> 42 <- /////////////////////////////
+	{
+		originalDocument: [
+			[
+			createParagraphInfo("Приве", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript}}),
+			createParagraphInfo("т "),
+			createParagraphInfo("прив", undefined, undefined, undefined, {textPr: {Underline: true}}),
+			createParagraphInfo("ет пр"),
+			createParagraphInfo("иве", undefined, undefined, undefined, {textPr: {Bold: true}}),
+			createParagraphInfo("т")
+			]
+		],
+		revisedDocument: [
+			[
+			createParagraphInfo("П", undefined, undefined,  undefined,{textPr: {VertAlign: AscCommon.vertalign_SubScript}}),
+			createParagraphInfo("риве", undefined, undefined,  undefined,{textPr: {VertAlign: AscCommon.vertalign_SuperScript}}),
+			createParagraphInfo("т "),
+			createParagraphInfo("прив", undefined, undefined,  undefined,{textPr: {Underline: true}}),
+			createParagraphInfo("ет "),
+			createParagraphInfo("пр", undefined, undefined,  undefined,{textPr: {Underline: true}}),
+			createParagraphInfo("и", undefined, undefined,  undefined,{textPr: {Bold: true}}),
+			createParagraphInfo("ве", undefined, undefined,  undefined,{textPr: {Bold: true, Italic: true}}),
+			createParagraphInfo("т", undefined, undefined,  undefined,{textPr: {Italic: true}})
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("пр"),
+				createParagraphInfo("иве", undefined, undefined, undefined, {textPr: {VertAlign: AscFormat.vertalign_SuperScript}}),
+				createParagraphInfo("т п"),
+				createParagraphInfo("риве", {textPr: {Strikeout: true}}),
+				createParagraphInfo("т п"),
+				createParagraphInfo("ривет", {textPr: {Bold: true}}),
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("пр"),
+				createParagraphInfo("иве", undefined, undefined, undefined, {textPr: {VertAlign: AscFormat.vertalign_SuperScript}}),
+				createParagraphInfo("т п"),
+				createParagraphInfo("риве", undefined, undefined, undefined, {textPr: {Strikeout: true}}),
+				createParagraphInfo("т привет п"),
+				createParagraphInfo("ривет", undefined, undefined, undefined, {textPr: {Bold: true}})
+			]
 		]
 	}
 ];
@@ -1888,25 +1937,6 @@ const arrAnswers = [
 			createParagraphInfo("》的规定，达成如下协议，并由双方共同恪守。")]
 		]
 	},
-	{
-		finalDocument: [
-			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
-			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
-					start: [{
-						id   : 1,
-						start: true
-					}],
-					end: [
-						{id: 1,
-							data: {
-								text: "comment"
-							}
-						}
-					]
-				}}), createParagraphInfo("，这是一个测试段落")],
-			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
-		]
-	},
 	/////////////////////////////////// -> 40 <- ////////////////////////////////////////////
 	{
 		finalDocument: [
@@ -1926,6 +1956,56 @@ const arrAnswers = [
 				}}), createParagraphInfo("，这是一个测试段落")],
 			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
 		]
+	},
+	/////////////////////////////////// -> 41 <- ////////////////////////////////////////////
+	{
+		finalDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
+					start: [{
+						id   : 1,
+						start: true
+					}],
+					end: [
+						{id: 1,
+							data: {
+								text: "comment"
+							}
+						}
+					]
+				}}), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		]
+	},
+	/////////////////////////////////// -> 42 <- ////////////////////////////////////////////
+	{
+		finalDocument: [
+			[
+			createParagraphInfo("П", undefined, undefined,  undefined,{textPr: {VertAlign: AscCommon.vertalign_SubScript}}),
+			createParagraphInfo("риве", undefined, undefined,  undefined,{textPr: {VertAlign: AscCommon.vertalign_SuperScript}}),
+			createParagraphInfo("т "),
+			createParagraphInfo("прив", undefined, undefined,  undefined,{textPr: {Underline: true}}),
+			createParagraphInfo("ет "),
+			createParagraphInfo("пр", undefined, undefined,  undefined,{textPr: {Underline: true}}),
+			createParagraphInfo("и", undefined, undefined,  undefined,{textPr: {Bold: true}}),
+			createParagraphInfo("ве", undefined, undefined,  undefined,{textPr: {Bold: true, Italic: true}}),
+			createParagraphInfo("т", undefined, undefined,  undefined,{textPr: {Italic: true}})
+			]
+		]
+	},
+	/////////////////////////////////// -> 43 <- ////////////////////////////////////////////
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("пр", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000)),
+				createParagraphInfo("иве", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, undefined, {textPr: {VertAlign: AscFormat.vertalign_SuperScript}}),
+				createParagraphInfo("т ", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000)),
+				createParagraphInfo("п"),
+				createParagraphInfo("риве", undefined, undefined, undefined, {textPr: {Strikeout: true}}),
+				createParagraphInfo("т привет п"),
+				createParagraphInfo("ривет", undefined, undefined, undefined, {textPr: {Bold: true}})
+			]
+			]
 	}
 ];
 

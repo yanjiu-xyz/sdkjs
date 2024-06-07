@@ -60,6 +60,133 @@ AscCommon.ParaComment.prototype.getTestObject = function (arrParentContent)
 		arrParentContent.push(oContentObject);
 	}
 };
+AscCommonWord.CTextPr.prototype.getTestObject = function () {
+	const oRes = {};
+	if (this.Bold !== undefined) {
+		oRes.Bold = this.Bold;
+	}
+	if (this.Italic !== undefined) {
+		oRes.Italic = this.Italic;
+	}
+	if (this.Strikeout !== undefined) {
+		oRes.Strikeout = this.Strikeout;
+	}
+	if (this.Underline !== undefined) {
+		oRes.Underline = this.Underline;
+	}
+	if (this.FontSize !== undefined) {
+		oRes.FontSize = this.FontSize;
+	}
+	if (this.VertAlign !== undefined) {
+		oRes.VertAlign = this.VertAlign;
+	}
+	if (this.RStyle !== undefined) {
+		oRes.RStyle = this.RStyle;
+	}
+	if (this.Spacing !== undefined) {
+		oRes.Spacing = this.Spacing;
+	}
+	if (this.DStrikeout !== undefined) {
+		oRes.DStrikeout = this.DStrikeout;
+	}
+	if (this.Caps !== undefined) {
+		oRes.Caps = this.Caps;
+	}
+	if (this.SmallCaps !== undefined) {
+		oRes.SmallCaps = this.SmallCaps;
+	}
+	if (this.Position !== undefined) {
+		oRes.Position = this.Position;
+	}
+	if (this.BoldCS !== undefined) {
+		oRes.BoldCS = this.BoldCS;
+	}
+	if (this.ItalicCS !== undefined) {
+		oRes.ItalicCS = this.ItalicCS;
+	}
+	if (this.FontSizeCS !== undefined) {
+		oRes.FontSizeCS = this.FontSizeCS;
+	}
+	if (this.CS !== undefined) {
+		oRes.CS = this.CS;
+	}
+	if (this.RTL !== undefined) {
+		oRes.RTL = this.RTL;
+	}
+	if (this.FontScale !== undefined) {
+		oRes.FontScale = this.FontScale;
+	}
+	if (this.FontSizeOrig !== undefined) {
+		oRes.FontSizeOrig = this.FontSizeOrig;
+	}
+	if (this.FontSizeCSOrig !== undefined) {
+		oRes.FontSizeCSOrig = this.FontSizeCSOrig;
+	}
+	return oRes;
+};
+AscCommonWord.CTextPr.prototype.isEqualTestObject = function (oTestObject) {
+	if (this.Bold !== oTestObject.Bold) {
+		return false;
+	}
+	if (this.Italic !== oTestObject.Italic) {
+		return false;
+	}
+	if (this.Strikeout !== oTestObject.Strikeout) {
+		return false;
+	}
+	if (this.Underline !== oTestObject.Underline) {
+		return false;
+	}
+	if (this.FontSize !== oTestObject.FontSize) {
+		return false;
+	}
+	if (this.VertAlign !== oTestObject.VertAlign) {
+		return false;
+	}
+	if (this.RStyle !== oTestObject.RStyle) {
+		return false;
+	}
+	if (this.Spacing !== oTestObject.Spacing) {
+		return false;
+	}
+	if (this.DStrikeout !== oTestObject.DStrikeout) {
+		return false;
+	}
+	if (this.Caps !== oTestObject.Caps) {
+		return false;
+	}
+	if (this.SmallCaps !== oTestObject.SmallCaps) {
+		return false;
+	}
+	if (this.Position !== oTestObject.Position) {
+		return false;
+	}
+	if (this.BoldCS !== oTestObject.BoldCS) {
+		return false;
+	}
+	if (this.ItalicCS !== oTestObject.ItalicCS) {
+		return false;
+	}
+	if (this.FontSizeCS !== oTestObject.FontSizeCS) {
+		return false;
+	}
+	if (this.CS !== oTestObject.CS) {
+		return false;
+	}
+	if (this.RTL !== oTestObject.RTL) {
+		return false;
+	}
+	if (this.FontScale !== oTestObject.FontScale) {
+		return false;
+	}
+	if (this.FontSizeOrig !== oTestObject.FontSizeOrig) {
+		return false;
+	}
+	if (this.FontSizeCSOrig !== oTestObject.FontSizeCSOrig) {
+		return false;
+	}
+	return true;
+};
 AscCommonWord.CDocument.prototype.getTestObject = function ()
 {
 	const oContentObject = {type: 'document', content: []};
@@ -277,7 +404,8 @@ ParaRun.prototype.getTestObject = function (oParentContent)
 	let oCurrentTextInfo = oParentContent[oParentContent.length - 1];
 	const needCreateNewText = (oParentContent.length === 0 ||
 		oCurrentTextInfo.mainReviewType !== nMainReviewType || oCurrentTextInfo.mainUserName !== sMainUserName || oCurrentTextInfo.mainDateTime !== nMainDateTime ||
-		oCurrentTextInfo.additionalReviewType !== nAdditionalReviewType || oCurrentTextInfo.additionalUserName !== sAdditionalUserName || oCurrentTextInfo.additionalDateTime !== nAdditionalDateTime);
+		oCurrentTextInfo.additionalReviewType !== nAdditionalReviewType || oCurrentTextInfo.additionalUserName !== sAdditionalUserName || oCurrentTextInfo.additionalDateTime !== nAdditionalDateTime ||
+	!this.Pr.isEqualTestObject(oCurrentTextInfo.textPr));
 	if (needCreateNewText || this.IsParaEndRun())
 	{
 		oCurrentTextInfo = {
@@ -287,7 +415,8 @@ ParaRun.prototype.getTestObject = function (oParentContent)
 			additionalReviewType: nAdditionalReviewType,
 			additionalDateTime  : nAdditionalDateTime,
 			additionalUserName  : sAdditionalUserName,
-			text                : ''
+			text                : '',
+			textPr              : this.Pr.getTestObject()
 		};
 		oParentContent.push(oCurrentTextInfo);
 	}
@@ -406,7 +535,7 @@ function createTestDocument(oDocument, arrParagraphsTextInfo)
 			}
 			let arrStartCommentsInfo;
 			let arrEndCommentsInfo;
-			if (oParagraphTextInfo[j].options && oParagraphTextInfo[j].options.comments)
+			if (oParagraphTextInfo[j].options.comments)
 			{
 				arrStartCommentsInfo = oParagraphTextInfo[j].options.comments.start;
 				arrEndCommentsInfo = oParagraphTextInfo[j].options.comments.end;
@@ -453,6 +582,11 @@ function createTestDocument(oDocument, arrParagraphsTextInfo)
 				oParaRun.AddText(oParagraphTextInfo[j].text);
 				oParaRun.SetReviewTypeWithInfo(oParagraphTextInfo[j].reviewType, oParagraphTextInfo[j].reviewInfo);
 				oParagraph.AddToContentToEnd(oParaRun);
+			}
+			if (oParagraphTextInfo[j].options.textPr) {
+				const oTextPr = new AscCommonWord.CTextPr();
+				oTextPr.Set_FromObject(oParagraphTextInfo[j].options.textPr);
+				oParaRun.SetPr(oTextPr);
 			}
 			if (arrEndBookmarkInfo)
 			{
@@ -509,7 +643,7 @@ function createParagraphInfo(sText, oMainReviewInfoOptions, oAdditionalReviewInf
 		text      : sText,
 		reviewType: reviewtype_Common,
 		bookmark  : oBookmarkInfo,
-		options   : oOptions,
+		options   : oOptions || {},
 	};
 	let oMainReviewInfo;
 	if (oMainReviewInfoOptions)
