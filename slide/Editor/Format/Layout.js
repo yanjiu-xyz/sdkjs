@@ -861,6 +861,9 @@ SlideLayout.prototype.getTheme = function(){
         }
         return AscFormat.GetDefaultColorMap();
     };
+    SlideLayout.prototype.checkSlideTheme = function() {
+        return AscCommonSlide.Slide.prototype.checkSlideTheme.call(this);
+    };
 
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;
