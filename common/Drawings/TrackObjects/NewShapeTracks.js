@@ -570,12 +570,27 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         this.overlayObject.draw(overlay);
     };
 
+    this.createDrawing = function() {
+        let oDrawing;
+        if(this.bConnector) {
+            oDrawing = new AscFormat.CConnectionShape();
+        }
+        else if(this.placeholderType !== null && this.placeholderType !== undefined) {
+            oDrawing = AscCommonSlide.CreatePlaceholder(this.placeholderType, this.bVertical);
+        }
+        else if(this.drawingsController) {
+            oDrawing = this.drawingsController.createShape();
+        }
+        else {
+            oDrawing = new AscFormat.CShape();
+        }
+        return oDrawing;
+    };
+
     this.getShape = function(bFromWord, DrawingDocument, drawingObjects, isClickMouseEvent)
     {
-        var _sp_pr, shape;
+        var _sp_pr, shape = this.createDrawing();
         if(this.bConnector){
-
-            shape = new AscFormat.CConnectionShape();
             if(drawingObjects)
             {
                 shape.setDrawingObjects(drawingObjects);
@@ -629,7 +644,6 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         }
         else{
             if(this.placeholderType === null) {
-                shape = this.drawingsController.createShape();
                 if(drawingObjects)
                 {
                     shape.setDrawingObjects(drawingObjects);
@@ -640,9 +654,6 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 {
                     shape.setWordShape(true);
                 }
-            }
-            else {
-                shape = AscCommonSlide.CreatePlaceholder(this.placeholderType, this.bVertical);
             }
             var x, y;
             if(bFromWord)
