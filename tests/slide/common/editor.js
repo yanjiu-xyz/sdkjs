@@ -77,8 +77,7 @@
 		GetSlidesCount: function () {
 			return editor.getCountSlides();
 		},
-		getGraphicController: function()
-		{
+		getGraphicController: function() {
 			return AscTest.DrawingDocument.m_oLogicDocument.GetCurrentController();
 		}
 	};
