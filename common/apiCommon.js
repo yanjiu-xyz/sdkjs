@@ -3898,7 +3898,7 @@ function (window, undefined) {
 		if(window["IS_NATIVE_EDITOR"]) {
 			let fGetOriginalImageSize = window["native"]["GetOriginalImageSize"] ||
 				window["native"]["DD_GetOriginalImageSize"];
-			let sizes = fGetOriginalImageSize(this.ImageUrl);
+			let sizes = fGetOriginalImageSize.call(window["native"], this.ImageUrl);
 			let w = sizes[0];
 			let h = sizes[1];
 			let isN = AscFormat.isRealNumber;
