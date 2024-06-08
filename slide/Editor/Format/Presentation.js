@@ -11082,6 +11082,19 @@ function CPresentationProperties(oPresentation) {
 
 AscFormat.InitClass(CPresentationProperties, AscFormat.CBaseNoIdObject, 0);
 
+function isSlideLikeObject(oObjectToCheck) {
+	if(!oObjectToCheck) return false;
+	if(oObjectToCheck.getObjectType) {
+		let nType = oObjectToCheck.getObjectType();
+		if(nType === AscDFH.historyitem_type_Slide ||
+		nType === AscDFH.historyitem_type_SlideLayout ||
+		nType === AscDFH.historyitem_type_SlideMaster) {
+			return true;
+		}
+	}
+	return false;
+}
+
 //------------------------------------------------------------export----------------------------------------------------
 window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 window['AscCommonSlide'].CPresentation = CPresentation;
@@ -11095,3 +11108,4 @@ window['AscCommonSlide'].CONFORMANCE_TRANSITIONAL = CONFORMANCE_TRANSITIONAL;
 window['AscFormat'] = window['AscFormat'] || {};
 window['AscFormat'].CShowPr = CShowPr;
 window['AscFormat'].CPresentationProperties = CPresentationProperties;
+window['AscFormat'].isSlideLikeObject = isSlideLikeObject;

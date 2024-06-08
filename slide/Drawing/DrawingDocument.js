@@ -1542,6 +1542,10 @@ function CDrawingDocument()
 
 	this.OnRecalculateSlide = function(index)
 	{
+
+		let thpages = this.m_oWordControl.Thumbnails.m_arrPages;
+		if(index < 0 || index >= thpages.length) return;
+
 		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
 		{
 			this.m_oWordControl.MobileTouchManager.ClearContextMenu();
@@ -1559,7 +1563,6 @@ function CDrawingDocument()
 			this.SendChangeDocumentToApi(true);
 		}
 
-		var thpages = this.m_oWordControl.Thumbnails.m_arrPages;
 		if (thpages.length > index)
 		{
 			thpages[index].IsRecalc = true;
