@@ -9049,6 +9049,7 @@ CPresentation.prototype.deleteSlides = function (array) {
 				this.Slides[i].changeNum(i);
 			}
 		}
+		this.DrawingDocument.UpdateThumbnailsAttack();
 		if (array[array.length - 1] != oldLen - 1) {
 			this.DrawingDocument.m_oWordControl.GoToPage(array[array.length - 1] + 1 - array.length, undefined, undefined, true);
 		} else {
