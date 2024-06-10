@@ -688,7 +688,12 @@ function CPresentation(DrawingDocument) {
 }
 
 AscFormat.InitClass(CPresentation, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Presentation);
-
+CPresentation.prototype.sendEvent = function()
+{
+	if (!this.Api)
+		return;
+	this.Api.sendEvent.apply(this.Api, arguments);
+};
 CPresentation.prototype.notAllowedWithoutId = function () {
 	return true;
 };
@@ -2558,6 +2563,7 @@ CPresentation.prototype.Get_Id = function () {
 
 CPresentation.prototype.AddNewMasterSlide = function () {
 	if(!this.IsMasterMode) return;
+	this.StartAction(0);
 	let oMaster = AscCommonSlide.CreateDefaultMaster();
 	//oMaster.changeSize(this.GetWidthMM(), this.GetHeightMM());
 	oMaster.setSlideSize(this.GetWidthMM(), this.GetHeightMM());
@@ -2565,8 +2571,9 @@ CPresentation.prototype.AddNewMasterSlide = function () {
 		oMaster.sldLayoutLst[nLt].setSlideSize(this.GetWidthMM(), this.GetHeightMM());
 	}
 	this.addSlideMaster(this.slideMasters.length, oMaster);
-	this.Recalculate();
+	this.FinalizeAction(false);
 	this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlideIndex(oMaster));
+
 };
 CPresentation.prototype.AddNewLayout = function () {
 	if(!this.IsMasterMode) return;
