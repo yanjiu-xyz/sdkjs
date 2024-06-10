@@ -6261,7 +6261,7 @@ function CThumbnailsManager()
 					Type: nType,
 					X_abs: oMenuPos.X,
 					Y_abs: oMenuPos.Y,
-					IsSlideSelect: bPosBySelect,
+					IsSlideSelect: true,
 					IsSlideHidden: this.IsSlideHidden(sSelectedIdx)
 				};
 			editor.sync_ContextMenuCallback(new AscCommonSlide.CContextMenuData(oData));
