@@ -7250,6 +7250,7 @@ function CStyles(bCreateDefault)
 			Header            : null,
 			Footer            : null,
 			Hyperlink         : null,
+			FollowedHyperlink : null,
 			FootnoteText      : null,
 			FootnoteTextChar  : null,
 			FootnoteReference : null,
@@ -7850,6 +7851,7 @@ function CStyles(bCreateDefault)
 			Header            : null,
 			Footer            : null,
 			Hyperlink         : null,
+			FollowedHyperlink : null,
 			FootnoteText      : null,
 			FootnoteTextChar  : null,
 			FootnoteReference : null,
@@ -8919,7 +8921,8 @@ CStyles.prototype.UpdateDefaultStyleLinks = function()
 	// TODO: Если данный метод будет слишком часто вызываться, то нужно переделать, чтобы реальное обновление срабатывало
 	//       при запросе к одному из дефолтовых стилей GetDefaultParagraph, например
 	
-	let localHyperlink = AscCommon.translateManager.getValue("Hyperlink").toLowerCase().replace(/\s/g,"");
+	let localHyperlink  = AscCommon.translateManager.getValue("Hyperlink").toLowerCase().replace(/\s/g,"");
+	let localFHyperlink = AscCommon.translateManager.getValue("FollowedHyperlink").toLowerCase().replace(/\s/g,"");
 	for (let styleId in this.Style)
 	{
 		let name = this.Style[styleId].GetName().toLowerCase().replace(/\s/g,"");
@@ -8979,6 +8982,10 @@ CStyles.prototype.UpdateDefaultStyleLinks = function()
 			case "hyperlink":
 			case localHyperlink:
 				this.Default.Hyperlink = styleId;
+				break;
+			case "followedhyperlink":
+			case localFHyperlink:
+				this.Default.FollowedHyperlink = styleId;
 				break;
 			case "footnotetext":
 				this.Default.FootnoteText = styleId;
@@ -9090,6 +9097,10 @@ CStyles.prototype.GetDefaultTOF = function()
 CStyles.prototype.GetDefaultHyperlink = function()
 {
 	return this.Default.Hyperlink;
+};
+CStyles.prototype.GetDefaultFollowedHyperlink = function()
+{
+	return this.Default.FollowedHyperlink;
 };
 CStyles.prototype.GetDefaultHeading = function(nLvl)
 {
