@@ -1013,6 +1013,20 @@ const arrTestObjectsInfo = [
 				createParagraphInfo("ривет", undefined, undefined, undefined, {textPr: {Bold: true}})
 			]
 		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("привет "),
+				createParagraphInfo("при", undefined, undefined, undefined, {textPr: {Bold: true}}),
+				createParagraphInfo("вет привет")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("привет привет привет")
+			]
+		]
 	}
 ];
 
@@ -2006,6 +2020,13 @@ const arrAnswers = [
 				createParagraphInfo("ривет", undefined, undefined, undefined, {textPr: {Bold: true}})
 			]
 			]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("привет привет привет")
+			]
+		]
 	}
 ];
 
