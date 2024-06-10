@@ -442,6 +442,13 @@ SlideLayout.prototype.getTheme = function(){
                 this.cSld.refreshAllContentsFields();
             }
         }
+        else {
+            if(-1 !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = -1;
+                this.cSld.refreshAllContentsFields();
+
+            }
+        }
         this.recalculate();
 
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
@@ -461,6 +468,13 @@ SlideLayout.prototype.getTheme = function(){
                 this.cSld.refreshAllContentsFields();
             }
         }
+        else {
+            if(-1 !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = -1;
+                this.cSld.refreshAllContentsFields();
+
+            }
+        }
         this.recalculate();
         this.cSld.forEachSp(function(oSp) {
             if ( !AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
@@ -473,6 +487,13 @@ SlideLayout.prototype.getTheme = function(){
         if(slide){
             if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = slide.num;
+                this.cSld.refreshAllContentsFields();
+
+            }
+        }
+        else {
+            if(-1 !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = -1;
                 this.cSld.refreshAllContentsFields();
 
             }

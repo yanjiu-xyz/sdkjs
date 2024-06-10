@@ -245,6 +245,13 @@ MasterSlide.prototype.drawNoPlaceholders = function(graphics, slide) {
             this.cSld.refreshAllContentsFields();
         }
     }
+    else {
+        if(-1 !== this.lastRecalcSlideIndex){
+            this.lastRecalcSlideIndex = -1;
+            this.cSld.refreshAllContentsFields();
+
+        }
+    }
     this.recalculate();
 
     DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
@@ -259,6 +266,13 @@ MasterSlide.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
         if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
             this.lastRecalcSlideIndex = slide.num;
             this.cSld.refreshAllContentsFields();
+        }
+    }
+    else {
+        if(-1 !== this.lastRecalcSlideIndex){
+            this.lastRecalcSlideIndex = -1;
+            this.cSld.refreshAllContentsFields();
+
         }
     }
     this.recalculate();
@@ -276,6 +290,13 @@ MasterSlide.prototype.draw = function (graphics, slide) {
 			this.cSld.refreshAllContentsFields();
 		}
 	}
+    else {
+        if(-1 !== this.lastRecalcSlideIndex){
+            this.lastRecalcSlideIndex = -1;
+            this.cSld.refreshAllContentsFields();
+
+        }
+    }
     this.recalculate();
 
     DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
