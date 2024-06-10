@@ -373,8 +373,10 @@
         for (let i = oNode.children.length - 1; i >= 0; i -= 1) {
             const oChildNode = oNode.children[i];
             if (i !== oNode.children.length - 1) {
-                oChildNode.tryUpdateNode(this);
-                oChildNode.resolveTypesWithPartner(this);
+							if (oChildNode.partner && oChildNode.element instanceof CTextElement) {
+								oChildNode.tryUpdateNode(this);
+								oChildNode.resolveTypesWithPartner(this);
+							}
             }
             if (currentChangeId < oNode.changes.length && oNode.changes[currentChangeId].anchor.index === i) {
                 const aContentToInsert = oNode.getArrOfInsertsFromChanges(currentChangeId, this);

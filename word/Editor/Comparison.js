@@ -44,10 +44,8 @@
 
 	function insertLabelsAndContinue(oLabelChange, oTextIterator)
 	{
-		const bRet = oTextIterator.skipTo(oLabelChange.elementIndex, oLabelChange.isLast ? oLabelChange.innerElementIndex - 1 : oLabelChange.innerElementIndex);
-		if (bRet)
-		{
-			const oRun = oTextIterator.splitCurrentRun(oLabelChange.isLast ? oTextIterator.runElementIndex + 1 : oTextIterator.runElementIndex);
+		oTextIterator.skipTo(oLabelChange.elementIndex, oLabelChange.isLast ? oLabelChange.innerElementIndex - 1 : oLabelChange.innerElementIndex);
+			const oRun = oTextIterator.splitCurrentRun(oLabelChange.isLast);
 			oTextIterator.addToCollectBack(oRun);
 			for (let i = oLabelChange.labels.length - 1; i >= 0; i -= 1)
 			{
@@ -67,26 +65,23 @@
 					changeFirstTextElement(oTextIterator, oRun);
 				}
 			}
-		}
 	}
 	function applyEndChangeReview(oReviewChange, oTextIterator)
 	{
-		const bRet = oTextIterator.skipTo(oReviewChange.elementIndex, oReviewChange.innerElementIndex);
-		if (bRet)
-		{
-			oTextIterator.setCollectReviewRuns(oReviewChange);
-			oTextIterator.addToCollectCurrentRun();
-			oTextIterator.splitCurrentRun(oTextIterator.runElementIndex + 1);
-		}
+		const isLast = oTextIterator.elements[oReviewChange.elementIndex].elements.length === oReviewChange.innerElementIndex;
+		oTextIterator.skipTo(oReviewChange.elementIndex, isLast ? oReviewChange.innerElementIndex - 1 : oReviewChange.innerElementIndex);
+		oTextIterator.setCollectReviewRuns(oReviewChange);
+		oTextIterator.addToCollectCurrentRun();
+		oTextIterator.splitCurrentRun(isLast);
+		
 	}
 	function applyEndTextPrChange(oChange, oTextIterator) {
-		const bRet = oTextIterator.skipTo(oChange.elementIndex, oChange.innerElementIndex);
-		if (bRet)
-		{
+		const isLast = oTextIterator.elements[oChange.elementIndex].elements.length === oChange.innerElementIndex;
+		oTextIterator.skipTo(oChange.elementIndex, isLast ? oChange.innerElementIndex - 1 : oChange.innerElementIndex);
+
 			oTextIterator.setCollectTextPrRuns(oChange);
 			oTextIterator.addToCollectCurrentRun();
-			oTextIterator.splitCurrentRun(oTextIterator.runElementIndex + 1);
-		}
+			oTextIterator.splitCurrentRun(isLast);
 	}
 
 	function changeFirstTextElement(oTextIterator, oRun)
@@ -96,12 +91,14 @@
 		oElement.firstRun = oRun;
 	}
 	function applyStartTextPrChange(oChange, oTextIterator, oComparison) {
-		const bRet = oTextIterator.skipTo(oChange.elementIndex, oChange.innerElementIndex);
-		if (bRet) {
-			const oRun = oTextIterator.splitCurrentRun();
+		const isLast = oTextIterator.elements[oChange.elementIndex].elements.length === oChange.innerElementIndex;
+		oTextIterator.skipTo(oChange.elementIndex, isLast ? oChange.innerElementIndex - 1 : oChange.innerElementIndex);
+
+			const oRun = oTextIterator.splitCurrentRun(isLast);
 			oTextIterator.dropLastCollect();
 			oTextIterator.addToCollectBack(oRun);
 
+		oTextIterator.setCollectTextPrRuns(null);
 			const oPartner = oChange.partner;
 			const arrRuns = oPartner.collectRuns;
 			const oNewTextPr = oPartner.textPr;
@@ -115,61 +112,59 @@
 				oCopyTextPr.SetPrChange(oOldTextPr, reviewInfo);
 				oRun.SetPr(oCopyTextPr);
 			}
-		}
+		
 	}
 	function applyStartChangeReview(oReviewChange, oTextIterator, comparison, oNeedReviewWithUser)
 	{
-		const bRet = oTextIterator.skipTo(oReviewChange.elementIndex, oReviewChange.innerElementIndex);
-		if (bRet)
+		const isLast = oTextIterator.elements[oReviewChange.elementIndex].elements.length === oReviewChange.innerElementIndex;
+		oTextIterator.skipTo(oReviewChange.elementIndex, isLast ? oReviewChange.innerElementIndex - 1 : oReviewChange.innerElementIndex);
+		const oRun = oTextIterator.splitCurrentRun(isLast);
+		oTextIterator.dropLastCollect();
+		oTextIterator.addToCollectBack(oRun);
+		if (oReviewChange.elementIndex === 0 && oReviewChange.innerElementIndex === 0)
 		{
-			const oRun = oTextIterator.splitCurrentRun();
-			oTextIterator.dropLastCollect();
-			oTextIterator.addToCollectBack(oRun);
-			if (oReviewChange.elementIndex === 0 && oReviewChange.innerElementIndex === 0)
+			changeFirstTextElement(oTextIterator, oRun);
+		}
+
+
+		oTextIterator.setCollectReviewRuns(null);
+		const oPartner = oReviewChange.partner;
+		const arrRuns = oPartner.collectRuns;
+
+		const nPriorityReviewType = oPartner.reviewType;
+		const nPriorityMoveReviewType = oPartner.moveReviewType;
+		const sMoveReviewMarkName = oPartner.moveReviewMarkName;
+		const oReviewInfo = oPartner.reviewInfo;
+		const sReviewUserName = oReviewInfo.GetUserName();
+		const sReviewDate = oReviewInfo.GetDateTime();
+
+
+		if (!oNeedReviewWithUser[sReviewDate]) {
+			oNeedReviewWithUser[sReviewDate] = {};
+		}
+
+		if (!oNeedReviewWithUser[sReviewDate][sReviewUserName]) {
+			const oNeedReview = {reviewTypes: {}, moveReviewTypes: {}};
+			oNeedReview.reviewTypes[reviewtype_Add] = [];
+			oNeedReview.reviewTypes[reviewtype_Remove] = [];
+			oNeedReview.moveReviewTypes[Asc.c_oAscRevisionsMove.MoveTo] = [];
+			oNeedReview.moveReviewTypes[Asc.c_oAscRevisionsMove.MoveFrom] = [];
+			oNeedReviewWithUser[sReviewDate][sReviewUserName] = oNeedReview;
+		}
+
+		if (AscFormat.isRealNumber(nPriorityReviewType)) {
+			for (let i = 0; i < arrRuns.length; i += 1)
 			{
-				changeFirstTextElement(oTextIterator, oRun);
+				oNeedReviewWithUser[sReviewDate][sReviewUserName].reviewTypes[nPriorityReviewType].push({element: arrRuns[i], reviewInfo: oReviewInfo});
 			}
-
-
-			oTextIterator.setCollectTextPrRuns(null);
-			const oPartner = oReviewChange.partner;
-			const arrRuns = oPartner.collectRuns;
-
-			const nPriorityReviewType = oPartner.reviewType;
-			const nPriorityMoveReviewType = oPartner.moveReviewType;
-			const sMoveReviewMarkName = oPartner.moveReviewMarkName;
-			const oReviewInfo = oPartner.reviewInfo;
-			const sReviewUserName = oReviewInfo.GetUserName();
-			const sReviewDate = oReviewInfo.GetDateTime();
-
-
-			if (!oNeedReviewWithUser[sReviewDate]) {
-				oNeedReviewWithUser[sReviewDate] = {};
-			}
-
-			if (!oNeedReviewWithUser[sReviewDate][sReviewUserName]) {
-				const oNeedReview = {reviewTypes: {}, moveReviewTypes: {}};
-				oNeedReview.reviewTypes[reviewtype_Add] = [];
-				oNeedReview.reviewTypes[reviewtype_Remove] = [];
-				oNeedReview.moveReviewTypes[Asc.c_oAscRevisionsMove.MoveTo] = [];
-				oNeedReview.moveReviewTypes[Asc.c_oAscRevisionsMove.MoveFrom] = [];
-				oNeedReviewWithUser[sReviewDate][sReviewUserName] = oNeedReview;
-			}
-
-			if (AscFormat.isRealNumber(nPriorityReviewType)) {
-				for (let i = 0; i < arrRuns.length; i += 1)
-				{
-					oNeedReviewWithUser[sReviewDate][sReviewUserName].reviewTypes[nPriorityReviewType].push({element: arrRuns[i], reviewInfo: oReviewInfo});
-				}
-			}
-			else if (AscFormat.isRealNumber(nPriorityMoveReviewType))
+		}
+		else if (AscFormat.isRealNumber(nPriorityMoveReviewType))
+		{
+			for (let i = 0; i < arrRuns.length; i += 1)
 			{
-				for (let i = 0; i < arrRuns.length; i += 1)
-				{
-					comparison.oComparisonMoveMarkManager.addMoveMarkNameRunRelation(sMoveReviewMarkName, arrRuns[i]);
-					comparison.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sMoveReviewMarkName, arrRuns[i]);
-					oNeedReviewWithUser[sReviewDate][sReviewUserName].moveReviewTypes[nPriorityMoveReviewType].push({element: arrRuns[i], reviewInfo: oReviewInfo});												}
-			}
+				comparison.oComparisonMoveMarkManager.addMoveMarkNameRunRelation(sMoveReviewMarkName, arrRuns[i]);
+				comparison.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sMoveReviewMarkName, arrRuns[i]);
+				oNeedReviewWithUser[sReviewDate][sReviewUserName].moveReviewTypes[nPriorityMoveReviewType].push({element: arrRuns[i], reviewInfo: oReviewInfo});												}
 		}
 	}
 
@@ -186,7 +181,27 @@
 		this.collectRuns = [];
 		this.isStart = false;
 		this.partner = null;
+		this.mapRuns = {};
 	}
+	CReviewChange.prototype.addRun = function (oRun) {
+		if (!this.mapRuns[oRun.Id]) {
+			this.mapRuns[oRun.Id] = true;
+			this.collectRuns.push(oRun);
+		}
+	};
+
+	CReviewChange.prototype.addRunBack = function (oRun) {
+		if (!this.mapRuns[oRun.Id]) {
+			this.mapRuns[oRun.Id] = true;
+			this.collectRuns.unshift(oRun);
+		}
+	};
+	CReviewChange.prototype.dropLastRun = function () {
+		const oRun = this.collectRuns.pop();
+		if (oRun) {
+			delete this.mapRuns[oRun.Id];
+		}
+	};
 	CReviewChange.prototype.setPosition = function (nElementIndex, nInnerElementIndex) {
 		this.elementIndex = nElementIndex;
 		this.innerElementIndex = nInnerElementIndex;
@@ -472,7 +487,7 @@
 					}
 				} else if (lastPrChange) {
 					if (lastPrChange.isStart) {
-						oPriorityChange.setPosition(elementIndex, innerElementIndex);
+						oPriorityChange.setPosition(elementIndex, innerElementIndex + 1);
 						arrResult.push(oPriorityChange);
 					} else if (!lastPrChange.isSimilar(oPriorityChange)) {
 						const oStartReviewChange = new CReviewChange(null);
@@ -481,11 +496,11 @@
 						oStartReviewChange.setPartner(lastPrChange);
 						arrResult.push(oStartReviewChange);
 
-						oPriorityChange.setPosition(elementIndex, innerElementIndex);
+						oPriorityChange.setPosition(elementIndex, innerElementIndex + 1);
 						arrResult.push(oPriorityChange);
 					}
 				} else {
-					oPriorityChange.setPosition(elementIndex, innerElementIndex);
+					oPriorityChange.setPosition(elementIndex, innerElementIndex + 1);
 					arrResult.push(oPriorityChange);
 				}
 			}
@@ -539,9 +554,30 @@
 		this.textPr = textPr;
 		this.partner = null;
 		this.collectRuns = [];
+		this.mapRuns = {};
 	}
 	CTextPrChange.prototype.setPartner = function (partner) {
 		this.partner = partner;
+	};
+
+	CTextPrChange.prototype.addRun = function (oRun) {
+		if (!this.mapRuns[oRun.Id]) {
+			this.mapRuns[oRun.Id] = true;
+			this.collectRuns.push(oRun);
+		}
+	};
+
+	CTextPrChange.prototype.addRunBack = function (oRun) {
+		if (!this.mapRuns[oRun.Id]) {
+			this.mapRuns[oRun.Id] = true;
+			this.collectRuns.unshift(oRun);
+		}
+	};
+	CTextPrChange.prototype.dropLastRun = function () {
+		const oRun = this.collectRuns.pop();
+		if (oRun) {
+			delete this.mapRuns[oRun.Id];
+		}
 	};
 
 	function CTextPrChangeCollector(arrMainElements, arrRevisedElements, oMainParagraph, oRevisedParagraph) {
@@ -618,20 +654,19 @@
 						oStartPrChange.setPartner(lastPrChange);
 						arrResult.push(oStartPrChange);
 					}
-				} else {
-					if (lastPrChange) {
+				} else if (lastPrChange) {
 						if (lastPrChange.isStart) {
-							arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex, oRevisedTextPr));
+							arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex + 1, oRevisedTextPr));
 						} else if (!lastPrChange.textPr.Is_Equal(oRevisedTextPr)) {
 							const oStartPrChange = new CTextPrChange(true, elementIndex, innerElementIndex + 1);
 							oStartPrChange.setPartner(lastPrChange);
 							arrResult.push(oStartPrChange);
-							arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex, oRevisedTextPr));
+							arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex + 1, oRevisedTextPr));
 						}
 					} else {
-						arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex, oRevisedTextPr));
+						arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex + 1, oRevisedTextPr));
 					}
-				}
+				
 			}
 
 			while (revisedElementsCount !== 0 && mainElementsCount !== 0) {
@@ -715,7 +750,7 @@
 		return arrChanges.sort(function (a, b) {
 			if (a.elementIndex === b.elementIndex) {
 				if (b.innerElementIndex === a.innerElementIndex) {
-					return !b.isStart - !a.isStart;
+					return !!b.isStart - !!a.isStart;
 				}
 				return b.innerElementIndex - a.innerElementIndex;
 			}
@@ -762,7 +797,7 @@
 			const oNeedReviewWithUser = {};
 			const arrChanges = getChanges(arrMainElements, arrRevisedElements, comparison, oMainParent, oRevisedParent);
 
-			const oTextIterator = new AscCommonWord.CTextElementRunIterator(arrMainElements);
+			const oTextIterator = new CRunCollector(arrMainElements);
 
 			for (let i = 0; i < arrChanges.length; i += 1) {
 				const oChange = arrChanges[i];
@@ -2686,31 +2721,51 @@
 
 	CDocumentComparison.prototype.applyResolveTypes = function () {};
 
-    CDocumentComparison.prototype.applyChangesToParagraph = function(oNode)
-    {
-        oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
-				let nLastIndex = oNode.children.length - 1;
-        for(let i = 0; i < oNode.changes.length; ++i)
-        {
-					for (let j = nLastIndex; j >= oNode.changes[i].anchor.index; j -= 1)
-					{
-						oNode.children[j].resolveTypesWithPartner(this);
-					}
-            this.executeWithCheckInsertAndRemove(function () {
-                const aContentToInsert = oNode.getArrOfInsertsFromChanges(i, this);
-                //handle removed elements
-                oNode.applyInsertsToParagraph(this, aContentToInsert, i);
-            }.bind(this), oNode.changes[i]);
+	CDocumentComparison.prototype.applyChangesToParagraph = function(oNode)
+	{
+		oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
+		let nLastIndex = oNode.children.length - 1;
+		for(let i = 0; i < oNode.changes.length; ++i)
+		{
+			let arrResult = [];
+			for (let j = nLastIndex; j >= oNode.changes[i].anchor.index; j -= 1)
+			{
+				const oChild = oNode.children[j];
+				if (oChild.partner && oChild.element instanceof CTextElement) {
+					arrResult.unshift(oChild);
+				} else if (arrResult.length) {
+					resolveTypesWithPartner(arrResult, this);
+					arrResult = [];
+				}
+			}
+			if (arrResult.length) {
+				resolveTypesWithPartner(arrResult, this);
+			}
+			this.executeWithCheckInsertAndRemove(function () {
+				const aContentToInsert = oNode.getArrOfInsertsFromChanges(i, this);
+				//handle removed elements
+				oNode.applyInsertsToParagraph(this, aContentToInsert, i);
+			}.bind(this), oNode.changes[i]);
 
-	        nLastIndex = oNode.changes[i].anchor.index - 1;
-        }
-	    for (let j = nLastIndex; j >= 0; j -= 1)
-	    {
-		    oNode.children[j].resolveTypesWithPartner(this);
-	    }
-        this.applyChangesToChildrenOfParagraphNode(oNode);
-        this.applyChangesToSectPr(oNode);
-    };
+			nLastIndex = oNode.changes[i].anchor.index - 1;
+		}
+		let arrResult = [];
+		for (let j = nLastIndex; j >= 0; j -= 1)
+		{
+			const oChild = oNode.children[j];
+			if (oChild.partner && oChild.element instanceof CTextElement) {
+				arrResult.unshift(oChild);
+			} else if (arrResult.length) {
+				resolveTypesWithPartner(arrResult, this);
+				arrResult = [];
+			}
+		}
+		if (arrResult.length) {
+			resolveTypesWithPartner(arrResult, this);
+		}
+		this.applyChangesToChildrenOfParagraphNode(oNode);
+		this.applyChangesToSectPr(oNode);
+	};
 
     CDocumentComparison.prototype.applyChangesToChildrenOfParagraphNode = function (oNode) {
         for(let i = 0; i < oNode.children.length; ++i)
@@ -3864,7 +3919,10 @@
 	};
 	CComparisonBookmarkManager.prototype.getId = function (oBookmark)
 	{
-		return this.mapIdToBookmarkId[oBookmark.GetId()];
+		const sId = this.mapIdToBookmarkId[oBookmark.GetId()];
+		if (sId) {
+			return parseInt(sId, 10);
+		}
 	};
 	CComparisonBookmarkManager.prototype.addToStack = function (oBookmark, nInsertIndex)
 	{
@@ -4114,134 +4172,137 @@
 		this.comment = oParaComment;
 		this.insertIndex = nInsertIndex;
 	}
-
-	function CTextElementRunIterator(arrTextElements)
-	{
-		this.textElements = arrTextElements;
-		this.textElementIndex = arrTextElements.length - 1;
-		this.innerElementIndex = this.getCurrentElement().elements.length - 1;
-		this.currentRun = this.getCurrentElement().lastRun;
-		this.parent = this.currentRun.GetParent();
-		this.runIndex = this.currentRun.GetPosInParent(this.parent);
-		this.runElementIndex = this.currentRun.GetElementPosition(this.getRunTextElement());
-		this.bNext = this.innerElementIndex !== -1;
-
+	
+	function CRunCollector(arrElements) {
+		this.elements = arrElements;
+		this.runIndex = null;
+		this.runElementIndex = null;
+		this.elementIndex = null;
+		this.innerElementIndex = null;
+		this.parent = null;
 		this.collectTextPrChange = null;
 		this.collectReviewChange = null;
+
+		this.init();
 	}
 
-	CTextElementRunIterator.prototype.addToCollectCurrentRun = function ()
-	{
-		this.addToCollect(this.currentRun);
+	CRunCollector.prototype.init = function () {
+		this.elementIndex = this.elements.length - 1;
+		const oLastElement = this.elements[this.elementIndex];
+		this.innerElementIndex = oLastElement.elements.length - 1;
+		const oLastRun = oLastElement.lastRun;
+		const oParent = oLastRun.GetParent();
+		this.parent = oParent;
+		const oContent = oParent.Content;
+		for (let i = oContent.length - 1; i >= 0; i -= 1) {
+			const oRun = oContent[i];
+			if (oRun === oLastRun) {
+				this.runIndex = i;
+				break;
+			}
+		}
+		 const oLastRunElement = oLastElement.elements[this.innerElementIndex];
+		for (let i = oLastRun.Content.length - 1; i >= 0; i -= 1) {
+			const oElement = oLastRun.Content[i];
+			if (oElement === oLastRunElement) {
+				this.runElementIndex = i;
+				break;
+			}
+		}
 	};
-	CTextElementRunIterator.prototype.dropLastCollect = function ()
+	
+	CRunCollector.prototype.getCurrentElement = function () {
+		return this.elements[this.elementIndex];
+	};
+
+	CRunCollector.prototype.skipTo = function (elementIndex, innerElementIndex) {
+		while (this.elementIndex > elementIndex) {
+			let countElements = this.innerElementIndex + 1;
+			while (countElements) {
+				if (this.runElementIndex + 1 > countElements) {
+					this.runElementIndex -= countElements;
+					countElements = 0;
+				} else {
+					countElements -= this.runElementIndex + 1;
+					this.nextRun();
+				}
+			}
+			this.elementIndex -= 1;
+			const oElement = this.elements[this.elementIndex];
+			if (oElement) {
+				this.innerElementIndex = oElement.elements.length - 1;
+			}
+		}
+		if (this.innerElementIndex > innerElementIndex) {
+			let countElements = this.innerElementIndex - innerElementIndex;
+			while (countElements) {
+				if (this.runElementIndex + 1 > countElements) {
+					this.runElementIndex -= countElements;
+					countElements = 0;
+				} else {
+					countElements -= this.runElementIndex + 1;
+					this.nextRun();
+				}
+			}
+			this.innerElementIndex = innerElementIndex;
+		}
+	};
+	CRunCollector.prototype.dropLastCollect = function ()
 	{
 		if (this.collectTextPrChange) {
-			this.collectTextPrChange.collectRuns.pop();
+			this.collectTextPrChange.dropLastRun();
 		}
 		if (this.collectReviewChange) {
-			this.collectReviewChange.collectRuns.pop();
+			this.collectReviewChange.dropLastRun();
 		}
 	};
-	CTextElementRunIterator.prototype.setCollectTextPrRuns = function (oChange) {
+	CRunCollector.prototype.setCollectTextPrRuns = function (oChange) {
 		this.collectTextPrChange = oChange;
 	};
-	CTextElementRunIterator.prototype.setCollectReviewRuns = function (oChange) {
+	CRunCollector.prototype.setCollectReviewRuns = function (oChange) {
 		this.collectReviewChange = oChange;
 	}
-	CTextElementRunIterator.prototype.addToCollect = function (oRun)
+	CRunCollector.prototype.addToCollect = function (oRun)
 	{
 		if (this.collectTextPrChange) {
-			this.collectTextPrChange.collectRuns.push(oRun);
+			this.collectTextPrChange.addRun(oRun);
 		}
 		if (this.collectReviewChange) {
-			this.collectReviewChange.collectRuns.push(oRun);
+			this.collectReviewChange.addRun(oRun);
 		}
 
 	};
-	CTextElementRunIterator.prototype.addToCollectBack = function (oRun)
+	CRunCollector.prototype.addToCollectBack = function (oRun)
 	{
 		if (this.collectTextPrChange) {
-			this.collectTextPrChange.collectRuns.unshift(oRun);
+			this.collectTextPrChange.addRunBack(oRun);
 		}
 		if (this.collectReviewChange) {
-			this.collectReviewChange.collectRuns.unshift(oRun);
+			this.collectReviewChange.addRunBack(oRun);
 		}
 	};
-	CTextElementRunIterator.prototype.getCurrentElement = function ()
+	CRunCollector.prototype.addToCollectCurrentRun = function ()
 	{
-		return this.textElements[this.textElementIndex];
+		this.addToCollect(this.getRun());
 	};
-	CTextElementRunIterator.prototype.next = function ()
-	{
-		if (this.currentRun === this.textElements[0].firstRun && this.innerElementIndex === 0)
-		{
-			this.bNext = false;
-		}
-		if (this.bNext)
-		{
-			if (this.runElementIndex === 0)
-			{
-				do
-				{
-					this.runIndex -= 1;
-					this.currentRun = this.parent.Content[this.runIndex];
-					this.addToCollectCurrentRun(this.currentRun);
-				} while (!(this.currentRun instanceof AscWord.CRun) || this.currentRun.Content.length === 0);
-				this.runElementIndex = this.currentRun.Content.length;
-			}
-
-			this.runElementIndex -= 1;
-			this.innerElementIndex -= 1;
-			if (this.innerElementIndex < 0)
-			{
-				this.textElementIndex -= 1;
-				this.innerElementIndex = this.getCurrentElement().elements.length - 1;
-			}
+	CRunCollector.prototype.nextRun = function () {
+		do {
+			this.runIndex -= 1;
+		} while (!(this.getRun() instanceof AscCommonWord.ParaRun) && this.runIndex >= 0 || this.getRun().Content.length === 0)
+		const oCurRun = this.getRun();
+		if (oCurRun) {
+			this.addToCollectCurrentRun();
+			this.runElementIndex = oCurRun.Content.length - 1;
 		}
 	};
-	CTextElementRunIterator.prototype.splitCurrentRun = function (nSplitIndex)
+	CRunCollector.prototype.getRun = function () {
+		const oContent = this.parent.Content;
+		return oContent[this.runIndex];
+	};
+	CRunCollector.prototype.splitCurrentRun = function (bAfter)
 	{
-		nSplitIndex = typeof nSplitIndex === 'number' ? nSplitIndex : this.runElementIndex;
-
 		const oRun = this.getRun();
-		return oRun.Split2(nSplitIndex, this.parent, this.runIndex);
-	};
-
-	CTextElementRunIterator.prototype.skipTo = function (nTextElementIndex, nInnerTextElementIndex)
-	{
-		if (this.textElements.length - 1 < nTextElementIndex || nTextElementIndex < 0 || this.textElementIndex < nTextElementIndex)
-			return false;
-		while (this.textElementIndex !== nTextElementIndex)
-		{
-			if (!this.check())
-				return false;
-
-			this.next();
-		}
-		if (this.textElements[nTextElementIndex].elements.length - 1 < nInnerTextElementIndex || nInnerTextElementIndex < 0 || this.innerElementIndex < nInnerTextElementIndex)
-			return false;
-
-		while (nInnerTextElementIndex !== this.innerElementIndex)
-		{
-			if (!this.check())
-				return false;
-
-			this.next();
-		}
-		return true;
-	};
-	CTextElementRunIterator.prototype.check = function ()
-	{
-		return this.bNext;
-	};
-	CTextElementRunIterator.prototype.getRunTextElement = function ()
-	{
-		return this.getCurrentElement().elements[this.innerElementIndex];
-	};
-	CTextElementRunIterator.prototype.getRun = function ()
-	{
-		return this.currentRun;
+		return oRun.Split2(bAfter ? this.runElementIndex + 1 : this.runElementIndex, this.parent, this.runIndex);
 	};
 
     window['AscCommonWord']["CompareBinary"] =  window['AscCommonWord'].CompareBinary = CompareBinary;
@@ -4251,5 +4312,4 @@
     window['AscCommonWord'].CNode = CNode;
     window['AscCommonWord'].CTextElement = CTextElement;
     window['AscCommonWord'].isBreakWordElement = isBreakWordElement;
-    window['AscCommonWord'].CTextElementRunIterator = CTextElementRunIterator;
 })();
