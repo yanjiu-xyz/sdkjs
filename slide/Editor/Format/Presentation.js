@@ -8075,7 +8075,17 @@ CPresentation.prototype.InsertContent2 = function (aContents, nIndex) {
 				oMaster.addLayout(oLayout);
 			}
 		}
+
+		let oCurSlide = this.GetCurrentSlide();
+		let oCurMaster = this.GetCurrentMaster();
 		if(oContent.Masters.length > 0) {
+			let nPos = this.slideMasters.length;
+			for(let nMaster = this.slideMasters.length; nMaster < this.slideMasters.length; ++nMaster) {
+				if(this.slideMasters[nMaster] === oCurMaster) {
+					nPos = nMaster + 1;
+					break;
+				}
+			}
 			for (i = 0; i < oContent.Masters.length; ++i) {
 				if (bChangeSize) {
 					oContent.Masters[i].scale(kw, kh);
@@ -8083,15 +8093,36 @@ CPresentation.prototype.InsertContent2 = function (aContents, nIndex) {
 				oContent.Masters[i].setSlideSize(this.GetWidthMM(), this.GetHeightMM());
 				oTheme = oContent.Themes[i];
 				oContent.Masters[i].setTheme(oTheme);
-				this.addSlideMaster(this.slideMasters.length, oContent.Masters[i]);
+				this.addSlideMaster(nPos + i, oContent.Masters[i]);
+			}
+
+			let nPage = this.GetSlideIndex(oContent.Masters[0]);
+			if(nPage > -1) {
+				this.CurPage = this.GetSlideIndex(oContent.Masters[0]);
+				this.bGoToPage = true;
 			}
 		}
 		else {
-			let oCurMaster = this.GetCurrentMaster();
 			if(oCurMaster) {
+				let nPos = oCurMaster.sldLayoutLst.length;
+				if(oCurSlide.isMaster()) {
+					nPos = 0;
+				}
+				else {
+					for(let nLt = 0; nLt < oCurMaster.sldLayoutLst.length; ++nLt) {
+						if(oCurMaster.sldLayoutLst[nLt] === oCurSlide) {
+							nPos = nLt + 1;
+						}
+					}
+				}
 				for (i = 0; i < oContent.Layouts.length; ++i) {
 					oLayout = oContent.Layouts[i];
-					oCurMaster.addLayout(oLayout);
+					oCurMaster.addToSldLayoutLstToPos(nPos + i, oLayout);
+				}
+				let nPage = this.GetSlideIndex(oContent.Layouts[0]);
+				if(nPage > -1) {
+					this.CurPage = this.GetSlideIndex(oContent.Layouts[0]);
+					this.bGoToPage = true;
 				}
 			}
 		}
@@ -8337,7 +8368,7 @@ CPresentation.prototype.InsertContent = function (Content) {
 								}
 								oSp.addToDrawingObjects();
 								oSp.checkExtentsByDocContent && oSp.checkExtentsByDocContent();
-								if (oSp.isPlaceholder()) {
+								if (oSp.isPlaceholder() && !this.IsMasterMode()) {
 									if (oSlidePh || !oLayoutPlaceholder) {
 										let oNvProps = oSp.getNvProps();
 										if (oNvProps && oNvProps.ph) {
