@@ -762,29 +762,27 @@ MasterSlide.prototype.isLayout = function () {
 MasterSlide.prototype.isMaster = function () {
     return true;
 };
-MasterSlide.prototype.RestartSpellCheck = function()
-{
-    Slide.prototype.RestartSpellCheck.call(this);
+MasterSlide.prototype.RestartSpellCheck = function() {
+    AscCommonSlide.Slide.prototype.RestartSpellCheck.call(this);
 };
-MasterSlide.prototype.Search = function(Engine, Type)
-{
-    Slide.prototype.Search.call(this, Engine, Type);
+MasterSlide.prototype.Search = function(Engine, Type) {
+    AscCommonSlide.Slide.prototype.Search.call(this, Engine, Type);
 };
-MasterSlide.prototype.GetSearchElementId = function(isNext, StartPos)
-{
-    return Slide.prototype.GetSearchElementId.call(this, isNext, StartPos);
+MasterSlide.prototype.GetSearchElementId = function(isNext, StartPos) {
+    return AscCommonSlide.Slide.prototype.GetSearchElementId.call(this, isNext, StartPos);
 };
-MasterSlide.prototype.Get_ColorMap = function()
-{
+MasterSlide.prototype.Get_ColorMap = function() {
     if(this.clrMap)
     {
         return this.clrMap;
     }
     return AscFormat.GetDefaultColorMap();
 };
-MasterSlide.prototype.replaceSp = function(oPh, oObject)
-{
+MasterSlide.prototype.replaceSp = function(oPh, oObject) {
     return Slide.prototype.replaceSp.call(this, oPh, oObject);
+};
+MasterSlide.prototype.showChartSettings = function() {
+    return AscCommonSlide.Slide.prototype.showChartSettings.call(this);
 };
 function CMasterThumbnailDrawer()
 {

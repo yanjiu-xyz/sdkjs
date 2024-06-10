@@ -815,6 +815,9 @@ SlideLayout.prototype.getMaster = function(){
     SlideLayout.prototype.getPlaceholdersControls = function () {
         return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
     };
+    SlideLayout.prototype.showChartSettings = function () {
+        return AscCommonSlide.Slide.prototype.showChartSettings.call(this);
+    };
     SlideLayout.prototype.getParentObjects = function () {
         return {
             presentation: Asc.editor.private_GetLogicDocument(),
