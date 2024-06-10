@@ -6653,20 +6653,6 @@ CStyle.prototype.CreateNoList = function()
 	this.SetSemiHidden(true);
 	this.SetUnhideWhenUsed(true);
 };
-/**
- * Дефолтовые настройки для стиля Hyperlink
- */
-CStyle.prototype.CreateHyperlink = function()
-{
-	this.SetUiPriority(99);
-	this.SetUnhideWhenUsed(true);
-
-	this.SetTextPr({
-		Color     : {r : 0x00, g : 0x00, b : 0xFF},
-		Underline : true,
-		Unifill   : AscFormat.CreateUniFillSchemeColorWidthTint(11, 0)
-	});
-};
 CStyle.prototype.CreateTOC = function(nLvl, nType)
 {
 	var ParaPr = {},
@@ -7290,6 +7276,7 @@ function CStyles(bCreateDefault)
 		// Создаем стиль для таблиц, который будет применяться к новым таблицам
 		var Style_TableGrid = new CStyle("Table Grid", this.Default.Table, null, styletype_Table);
 		Style_TableGrid.Create_TableGrid();
+		this.Add(Style_TableGrid);
 
         var Style_TableGridLight = new CStyle("Table Grid Light", this.Default.Table, null, styletype_Table);
 		Style_TableGridLight.Create_TableGrid_Light(fUF(EThemeColor.themecolorText1, 0x50, null));
@@ -7808,11 +7795,6 @@ function CStyles(bCreateDefault)
 		
 		this.AddStylesFromObject(AscWord.DEFAULT_STYLES);
 		this.UpdateDefaultStyleLinks();
-		
-		
-        // Создаем стиль гиперссылки
-        var oHyperlink = new CStyle("Hyperlink", null, null, styletype_Character );
-		oHyperlink.CreateHyperlink();
 
 		for (var nLvl = 0; nLvl <= 8; ++nLvl)
 		{
