@@ -9149,34 +9149,72 @@ CPresentation.prototype.changeTheme = function (themeInfo, arrInd) {
 	if (this.viewMode === true) {
 		return;
 	}
-	var arr_ind, i;
-	if (!Array.isArray(arrInd)) {
-		let oCurMaster;
+
+	let arr_ind, i;
+	let bReplace = false;
+	if(this.IsMasterMode()) {
 		let oCurSlide = this.GetCurrentSlide();
+		let oCurMaster = oCurSlide.getMaster();
+		if(oCurMaster === themeInfo.Master) {
+			return;
+		}
+		for (i = 0; i < this.slideMasters.length; ++i) {
+			if (this.slideMasters[i] === themeInfo.Master) {
+				return;
+			}
+		}
+		bReplace = true;
+		if(oCurMaster.Theme.name === "Blank" || oCurMaster.Theme.name === "Office Theme") {
+			bReplace = false;
+		}
 		arr_ind = [];
-		if (oCurSlide) {
-			oCurMaster = oCurSlide.Layout && oCurSlide.Layout.Master;
-			for (i = 0; i < this.Slides.length; ++i) {
-				let oSlide = this.Slides[i];
-				let oMaster = oSlide.Layout && oSlide.Layout.Master;
-				if (oMaster === oCurMaster) {
-					arr_ind.push(i);
+		for(let nSlide = 0; nSlide < this.Slides.length; ++nSlide) {
+			if(this.Slides[nSlide].getMaster() === oCurMaster) {
+				arr_ind.push(nSlide);
+			}
+		}
+		if(!bReplace) {
+			this.addSlideMaster(this.slideMasters.length, themeInfo.Master);
+		}
+		else {
+			for(let nMaster = 0; nMaster < this.slideMasters.length; ++nMaster) {
+				if(this.slideMasters[nMaster] === oCurMaster) {
+					this.removeSlideMaster(nMaster, 1);
+					this.addSlideMaster(nMaster, themeInfo.Master)
+					break;
 				}
 			}
 		}
-	} else {
-		arr_ind = arrInd;
+	}
+	else {
+		if (!Array.isArray(arrInd)) {
+			let oCurMaster;
+			let oCurSlide = this.GetCurrentSlide();
+			arr_ind = [];
+			if (oCurSlide) {
+				oCurMaster = oCurSlide.Layout && oCurSlide.Layout.Master;
+				for (i = 0; i < this.Slides.length; ++i) {
+					let oSlide = this.Slides[i];
+					let oMaster = oSlide.Layout && oSlide.Layout.Master;
+					if (oMaster === oCurMaster) {
+						arr_ind.push(i);
+					}
+				}
+			}
+		} else {
+			arr_ind = arrInd;
+		}
+		for (i = 0; i < this.slideMasters.length; ++i) {
+			if (this.slideMasters[i] === themeInfo.Master) {
+				break;
+			}
+		}
+		if (i === this.slideMasters.length) {
+			this.addSlideMaster(this.slideMasters.length, themeInfo.Master);
+		}
 	}
 	this.clearThemeTimeouts();
 
-	for (i = 0; i < this.slideMasters.length; ++i) {
-		if (this.slideMasters[i] === themeInfo.Master) {
-			break;
-		}
-	}
-	if (i === this.slideMasters.length) {
-		this.addSlideMaster(this.slideMasters.length, themeInfo.Master);
-	}
 	let oCurSlide = this.GetCurrentSlide();
 	let oParents = oCurSlide.getParentObjects();
 	var oldMaster = oParents.master;
@@ -9260,6 +9298,12 @@ CPresentation.prototype.changeTheme = function (themeInfo, arrInd) {
 	History.Add(new AscDFH.CChangesDrawingChangeTheme(this, AscDFH.historyitem_Presentation_ChangeTheme, arr_ind));
 	///this.resetStateCurSlide();
 	this.Recalculate();
+	if(this.IsMasterMode()) {
+		let nIdx = this.GetSlideIndex(themeInfo.Master);
+		if(nIdx !== -1) {
+			this.DrawingDocument.m_oWordControl.GoToPage(nIdx);
+		}
+	}
 	this.Document_UpdateInterfaceState();
 };
 

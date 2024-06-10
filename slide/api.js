@@ -7441,7 +7441,7 @@ background-repeat: no-repeat;\
 		this.WordControl.ThemeGenerateThumbnails(theme_load_info.Master);
 		// меняем шаблоны в меню
 		this.WordControl.CheckLayouts();
-		this.WordControl.m_oLogicDocument.FinalizeAction();
+		this.WordControl.m_oLogicDocument.FinalizeAction(true);
 
 		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadTheme);
 	};

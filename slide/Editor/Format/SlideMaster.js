@@ -166,6 +166,9 @@ MasterSlide.prototype.getDrawingDocument = function() {
 MasterSlide.prototype.getTheme = function(){
     return  this.Theme || null;
 };
+MasterSlide.prototype.getMaster = function(){
+    return this.getParentObjects().master;
+};
 MasterSlide.prototype.getDrawingsForController = function(){
     return this.cSld.spTree;
 };

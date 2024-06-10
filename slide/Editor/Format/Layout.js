@@ -194,6 +194,9 @@ SlideLayout.prototype.getDrawingsForController = function(){
 SlideLayout.prototype.getTheme = function(){
     return this.Master && this.Master.Theme || null;
 };
+SlideLayout.prototype.getMaster = function(){
+    return this.getParentObjects().master;
+};
     SlideLayout.prototype.isAnimated = function () {
         return false;
     };
