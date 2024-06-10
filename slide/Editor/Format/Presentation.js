@@ -6829,9 +6829,11 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 	this.Api.sendEvent("asc_onCanCopyCut", this.Can_CopyCut());
 
 	if(this.IsMasterMode()) {
+		let bTitle = false;
+		let bFooter = false;
+		let bCanDeleteLayout = false;
 		let oCurSlide = this.GetCurrentSlide();
-		if(oCurSlide.isLayout()) {
-			let bTitle = false;
+		if(oCurSlide && oCurSlide.isLayout()) {
 			let oSp = oCurSlide.getMatchingShape(AscFormat.phType_title, null, false, {});
 			if(!oSp) {
 				oSp = oCurSlide.getMatchingShape(AscFormat.phType_ctrTitle, null, false, {});
@@ -6839,7 +6841,7 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 			if(oSp) {
 				bTitle = true;
 			}
-			let bFooter = true;
+			bFooter = true;
 			let aTypes = [AscFormat.phType_ftr, AscFormat.phType_dt, AscFormat.phType_sldNum];
 			for(let nIdx = 0; nIdx < aTypes.length; ++nIdx) {
 				let nType = aTypes[nIdx];
@@ -6849,12 +6851,9 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 					break;
 				}
 			}
-			this.Api.sendEvent("asc_onLayoutTitle", bTitle);
-			this.Api.sendEvent("asc_onLayoutFooter", bFooter);
-			this.Api.sendEvent("asc_onCanDeleteMaster", this.CanRemoveMaster(this.lastMaster));
 
 
-			let bCanDeleteLayout = true;
+			bCanDeleteLayout = true;
 			let aSelectedSlides = this.GetSelectedSlides();
 			for(let nIdx = 0; nIdx < aSelectedSlides.length; ++nIdx) {
 				let oSlide = this.GetSlide(aSelectedSlides[nIdx]);
@@ -6869,9 +6868,11 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 					break;
 				}
 			}
-			this.Api.sendEvent("asc_onCanDeleteMaster", this.CanRemoveMaster(this.lastMaster));
-			this.Api.sendEvent("asc_onCanDeleteLayout", bCanDeleteLayout);
 		}
+		this.Api.sendEvent("asc_onLayoutTitle", bTitle);
+		this.Api.sendEvent("asc_onLayoutFooter", bFooter);
+		this.Api.sendEvent("asc_onCanDeleteMaster", this.CanRemoveMaster(this.lastMaster));
+		this.Api.sendEvent("asc_onCanDeleteLayout", bCanDeleteLayout);
 	}
 
 	AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
