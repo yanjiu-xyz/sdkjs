@@ -67,14 +67,14 @@ CParagraphBookmark.prototype.GetId = function()
 };
 CParagraphBookmark.prototype.Copy = function(Selected, oPr, isCopyReviewPr)
 {
-	let sId = this.BookmarkId;
+	let nId = this.BookmarkId;
 	if (oPr && oPr.Comparison)
 	{
-		const sComparisonId = oPr.Comparison.oBookmarkManager.getId(this);
-		if (sComparisonId)
-			sId = sComparisonId;
+		const nComparisonId = oPr.Comparison.oBookmarkManager.getId(this);
+		if (nComparisonId)
+			nId = nComparisonId;
 	}
-	return new CParagraphBookmark(this.Start, sId, this.BookmarkName);
+	return new CParagraphBookmark(this.Start, nId, this.BookmarkName);
 };
 CParagraphBookmark.prototype.GetBookmarkId = function()
 {
