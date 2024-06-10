@@ -3410,7 +3410,7 @@ function CDrawingDocument()
 
 	this.isButtonsDisabled = function()
 	{
-		return Asc.editor.isEyedropperStarted() || Asc.editor.isDrawInkMode();
+		return Asc.editor.isEyedropperStarted() || Asc.editor.isDrawInkMode() || Asc.editor.isMasterMode();
 	};
 
 	this.checkMouseUp_Drawing = function (pos)
