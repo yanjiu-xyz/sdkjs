@@ -3276,6 +3276,15 @@
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
 								if(oDrawing.isShape() || oDrawing.isImage()) {
+									if(bCheckInHyperlink) {
+										let oNvPr = oDrawing.getCNvProps();
+										if (oNvPr
+											&& oNvPr.hlinkClick
+											&& typeof oNvPr.hlinkClick.id === "string"
+											&& oNvPr.hlinkClick.id.length > 0) {
+											return false;
+										}
+									}
 									return true;
 								}
 							}
