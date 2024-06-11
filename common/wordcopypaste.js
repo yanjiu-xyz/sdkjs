@@ -1346,10 +1346,9 @@ CopyProcessor.prototype =
 		var presentation = this.oDocument;
 
 		if(elementsContent && elementsContent.length){
-			if(elementsContent[0].DocContent || (elementsContent[0].Drawings && elementsContent[0].Drawings.length) || (elementsContent[0].SlideObjects && elementsContent[0].SlideObjects.length))
+			if(elementsContent[0].isValid())
 			{
 				var themeName = elementsContent[0].ThemeName ? elementsContent[0].ThemeName : "";
-
 				this.oPresentationWriter.WriteString2(this.api.documentId);
 				this.oPresentationWriter.WriteString2(themeName);
 				this.oPresentationWriter.WriteDouble(presentation.GetWidthMM());
@@ -1456,7 +1455,7 @@ CopyProcessor.prototype =
 			oThis.oPDFWriter.WriteString2("Drawings");
 			oThis.oPDFWriter.WriteULong(elements.length);
 
-			pptx_content_writer.Start_UseFullUrl();
+			oThis.oPDFWriter.Start_UseFullUrl();
 			for (let i = 0; i < elements.length; ++i) {
 				if (!elements[i].Drawing.isTable()) {
 					oThis.oPDFWriter.WriteBool(true);
@@ -1487,7 +1486,7 @@ CopyProcessor.prototype =
 					oThis.oPDFWriter.WriteString2(elements[i].ImageUrl);
 				}
 			}
-			pptx_content_writer.End_UseFullUrl();
+			oThis.oPDFWriter.End_UseFullUrl();
 
 		};
 
@@ -1937,10 +1936,7 @@ CopyProcessor.prototype =
 			}
 		} else {
 			selectedContent = oDocument.GetSelectedContent2();
-			if (!selectedContent[0].DocContent && (!selectedContent[0].Drawings ||
-				(selectedContent[0].Drawings && !selectedContent[0].Drawings.length)) &&
-				(!selectedContent[0].SlideObjects ||
-				(selectedContent[0].SlideObjects && !selectedContent[0].SlideObjects.length))) {
+			if (!selectedContent[0].isValid || !selectedContent[0].isValid()) {
 				return false;
 			}
 

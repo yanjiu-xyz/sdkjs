@@ -668,6 +668,9 @@
 
 		DrawingObjectsController.prototype =
 			{
+				createShape : function() {
+					return new AscFormat.CShape();
+				},
 
 				checkDrawingHyperlinkAndMacro: function (drawing, e, hit_in_text_rect, x, y, pageIndex) {
 					var oApi = this.getEditorApi();
@@ -842,7 +845,7 @@
 										return new ParaHyperlink();
 									}, this, []);
 									oHyperlink.Value = sLink2;
-									oHyperlink.Tooltip = oNvPr.hlinkClick.tooltip;
+									oHyperlink.ToolTip = oNvPr.hlinkClick.tooltip;
 									if (hit_in_text_rect) {
 										return {
 											objectId: drawing.Get_Id(),
@@ -3336,7 +3339,7 @@
 												oHyper.action = HyperProps.Value;
 											}
 											oHyper.id = HyperProps.Value;
-											oHyper.tooltip = HyperProps.Tooltip;
+											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										}
 									}
@@ -3382,7 +3385,7 @@
 												oHyper.action = HyperProps.Value;
 											}
 											oHyper.id = HyperProps.Value;
-											oHyper.tooltip = HyperProps.Tooltip;
+											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										}
 									}
@@ -6345,7 +6348,7 @@
 							this.document.DrawingDocument.OnRepaintPage(nPageNum1);
 						} else if (this.drawingObjects.cSld) {
 							if (!(bNoRedraw === true)) {
-								editor.WordControl.m_oDrawingDocument.OnRecalculatePage(nPageNum1, this.drawingObjects);
+								editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(nPageNum1);
 								editor.WordControl.m_oDrawingDocument.OnEndRecalculate(false, true);
 							}
 						} else {
@@ -6359,7 +6362,7 @@
 							this.document.DrawingDocument.OnRepaintPage(nPageNum2);
 						} else if (this.drawingObjects.cSld) {
 							if (!(bNoRedraw === true)) {
-								editor.WordControl.m_oDrawingDocument.OnRecalculatePage(nPageNum2, this.drawingObjects);
+								editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(nPageNum2);
 								editor.WordControl.m_oDrawingDocument.OnEndRecalculate(false, true);
 							}
 						} else {
@@ -6640,7 +6643,7 @@
 					return bRetArray === true ? ret_array : false;
 				},
 
-				startTrackNewShape: function (presetGeom) {
+				startTrackNewShape: function (presetGeom, nPlaceholderType, bVertical) {
 					switch (presetGeom) {
 						case "spline": {
 							this.changeCurrentState(new AscFormat.SplineBezierState(this));
@@ -6659,7 +6662,7 @@
 							break;
 						}
 						default : {
-							this.changeCurrentState(new AscFormat.StartAddNewShape(this, presetGeom));
+							this.changeCurrentState(new AscFormat.StartAddNewShape(this, presetGeom, nPlaceholderType, bVertical));
 							break;
 						}
 					}
@@ -9454,6 +9457,18 @@
 						this.loadDocumentStateAfterLoadChanges(oStateBeforeLoadChanges);
 						this.startRecalculate();
 					}, [], false, 0);
+				},
+
+				getInputLanguage: function () {
+					let oContent = this.getTargetDocContent();
+					if(!oContent) {
+						return lcid_enUS;
+					}
+					let oRun = oContent.GetCurrentRun();
+					if(!oRun) {
+						return lcid_enUS;
+					}
+					return oRun.Get_CompiledPr(false).Lang.Val;
 				}
 			};
 

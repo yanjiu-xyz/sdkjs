@@ -996,7 +996,7 @@
 				if (-1 === logicDoc.CurPage)
 					return "none";
 
-				var _controller = logicDoc.Slides[logicDoc.CurPage].graphicObjects;
+				var _controller = logicDoc.GetCurrentSlide().graphicObjects;
 				var _elementsCount = _controller.selectedObjects.length;
 
 				var retType = "slide";
@@ -1273,7 +1273,13 @@
 				"guid" : ""
 			};
 		}
-		
+
+		window.g_asc_plugins.isUICheckOnInitMessage = true;
+		setTimeout(function(){
+			if (window.g_asc_plugins.isUICheckOnInitMessage)
+				delete window.g_asc_plugins.isUICheckOnInitMessage;
+		});
+
 		// desktop detecting (it's necessary when we work with clouds into desktop)
 		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 		if (isLocal)

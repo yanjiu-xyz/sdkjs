@@ -16028,7 +16028,7 @@
 	};
 	Range.prototype.isOneCell=function(){
 		var oBBox = this.bbox;
-		return oBBox.r1 == oBBox.r2 && oBBox.c1 == oBBox.c2;
+		return oBBox.r1 === oBBox.r2 && oBBox.c1 === oBBox.c2;
 	};
 	Range.prototype.getBBox0=function(){
 		//0 - based
@@ -18440,7 +18440,10 @@
 		}
 
 		function strcmp(str1, str2) {
-			return ( ( str1 == str2 ) ? 0 : ( ( str1 > str2 ) ? 1 : -1 ) );
+			if (str1 === str2) {
+				return 0;
+			}
+			return str1.localeCompare(str2);
 		}
 
 

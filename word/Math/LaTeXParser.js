@@ -541,6 +541,16 @@
 		if (this.oLookahead.data === "\\above")
 			isBelow = false;
 
+		if (undefined === base)
+		{
+			return {
+				type: oLiteralNames.belowAboveLiteral[num],
+				base: {},
+				value: {},
+				isBelow: isBelow,
+			}
+		}
+
 		let strBaseContent = AscMath.AutoCorrection[base.value];
 		if (strBaseContent)
 		{

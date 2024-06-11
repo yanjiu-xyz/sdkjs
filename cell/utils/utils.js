@@ -3899,11 +3899,16 @@
 			return api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), this.getExcelDateWithTime() - this.getTimezoneOffset() / (60 * 24));
 		};
 		cDate.prototype.fromISO8601 = function (dateStr) {
+			let date;
 			if (dateStr.endsWith("Z")) {
-				return new cDate(dateStr);
+				date = new cDate(dateStr);
 			} else {
-				return new cDate(dateStr + "Z");
+				date = new cDate(dateStr + "Z");
 			}
+			if (isNaN(date)) {
+				date = null;
+			}
+			return date;
 		};
 		cDate.prototype.getCurrentDate = function () {
 			return this;

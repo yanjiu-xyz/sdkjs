@@ -4654,12 +4654,15 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								}
 								else
 								{
+									if (oComplexField.IsHaveNestedNUMPAGES())
+										oHdrFtr.Add_PageCountElement(Item);
+									
 									var sValue = oComplexField.CalculateValue();
 									var nValue = parseInt(sValue);
 									if (isNaN(nValue))
 										nValue = 0;
 
-									Item.SetNumValue(nValue);
+									Item.SetFormulaValue(nValue);
 								}
 							}
 
@@ -5407,15 +5410,9 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 if ( true === Item.Is_Inline() || true === Para.Parent.Is_DrawingShape() )
                 {
                 	if (linerule_Exact === Para.Get_CompiledPr2(false).ParaPr.Spacing.LineRule)
-					{
-						var LineTop    = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
-						var LineBottom = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Descent;
-						Item.SetVerticalClip(LineTop, LineBottom);
-					}
+						Item.SetVerticalClip(PRSA.getLineTop(), PRSA.getLineBottom());
 					else
-					{
 						Item.SetVerticalClip(null, null);
-					}
 
                     Item.Update_Position(PRSA.Paragraph, new CParagraphLayout( PRSA.X, PRSA.Y , PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent, Para.Pages[CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine);
                     Item.Reset_SavedPosition();

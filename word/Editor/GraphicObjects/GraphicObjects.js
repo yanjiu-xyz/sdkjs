@@ -108,6 +108,8 @@ function CGraphicObjects(document, drawingDocument, api)
 
 CGraphicObjects.prototype =
 {
+    createShape: DrawingObjectsController.prototype.createShape,
+
     handleAdjustmentHit: DrawingObjectsController.prototype.handleAdjustmentHit,
     handleHandleHit: DrawingObjectsController.prototype.handleHandleHit,
     handleMoveHit: DrawingObjectsController.prototype.handleMoveHit,
@@ -4766,7 +4768,6 @@ CGraphicObjects.prototype.saveStartDocState = function() {
 
 	}
 };
-
 
 function ComparisonByZIndexSimpleParent(obj1, obj2)
 {

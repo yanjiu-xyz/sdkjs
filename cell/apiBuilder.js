@@ -272,7 +272,7 @@
 
 	//TODO not support "xlPasteAllMergingConditionalFormats" / "xlPasteAllUsingSourceTheme" / "xlPasteValidation"
 	/**
-	 * Paste options.
+	 * Specifies the part of the range to be pasted.
 	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders"
 	 * | "xlPasteColumnWidths" | "xlPasteComments"
 	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
@@ -515,6 +515,15 @@
 	 */
 	Api.prototype.RemoveCustomFunction = function (sName) {
 		return this.removeCustomFunction(sName);
+	};
+	/**
+	 * Clears all custom functions.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns false if such functions do not exist.
+	 */
+	Api.prototype.ClearCustomFunctions = function () {
+		return this.clearCustomFunctions();
 	};
 
 	/**

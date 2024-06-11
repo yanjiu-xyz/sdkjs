@@ -310,15 +310,15 @@
 
 
 
-	function fSaveStream(oStream, nLength) {
-		/*var aData = oStream.data.slice(oStream.cur, oStream.cur + nLength);
-		var sData = "XLSY;;";
-		sData += (nLength + ";");
-		sData += AscCommon.Base64.encode(aData);
-		var nCRC32 = AscCommon.g_oCRC32.Calculate_ByString(sData, sData.length);
-		return {data: sData, crc32: nCRC32};*/
-		return undefined;
-	}
+	// function fSaveStream(oStream, nLength) {
+	// 	var aData = oStream.data.slice(oStream.cur, oStream.cur + nLength);
+	// 	var sData = "XLSY;;";
+	// 	sData += (nLength + ";");
+	// 	sData += AscCommon.Base64.encode(aData);
+	// 	var nCRC32 = AscCommon.g_oCRC32.Calculate_ByString(sData, sData.length);
+	// 	return {data: sData, crc32: nCRC32};
+	// 	return undefined;
+	// }
 
     //----------------------------------------------------------export----------------------------------------------------
 
@@ -433,7 +433,7 @@
 		sResultScript += fGenerateScriptMap("g_oChartStylesIdMap", AscCommon.g_oChartStylesIdMap, true);
 		return sResultScript;
 	}
-  window['AscCommon'].fSaveStream = fSaveStream;
+  //window['AscCommon'].fSaveStream = fSaveStream;
   window['AscCommon'].fGenerateStyles = fGenerateStyles;
 
 })(window);

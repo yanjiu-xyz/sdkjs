@@ -4000,7 +4000,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.removeDocumentInfoEvent = function () {
-	this.broadcastChannel.removeEventListener("message", window.fBroadcastChannelDocumentInfo);
+	this.broadcastChannel && this.broadcastChannel.removeEventListener("message", window.fBroadcastChannelDocumentInfo);
 	window.fBroadcastChannelDocumentInfo = null;
   };
 
@@ -5845,9 +5845,29 @@ var editor;
       this.spellcheckState.isIgnoreUppercase = isIgnore;
     };
 
-  spreadsheet_api.prototype.asc_cancelSpellCheck = function() {
-    this.cleanSpelling();
-  };
+	spreadsheet_api.prototype.asc_cancelSpellCheck = function () {
+		this.cleanSpelling();
+	};
+
+	spreadsheet_api.prototype.asc_getKeyboardLanguage = function () {
+		if (undefined !== window["asc_current_keyboard_layout"]) {
+			return window["asc_current_keyboard_layout"];
+		}
+		return -1;
+	};
+	spreadsheet_api.prototype.asc_getInputLanguage = function () {
+		let keyboardLang = this.asc_getKeyboardLanguage();
+		if (-1 !== keyboardLang) {
+			return keyboardLang;
+		}
+
+		let ws = this.wb && this.wb.getWorksheet();
+		if (ws && ws.objectRender && ws.objectRender.controller && ws.objectRender.selectedGraphicObjectsExists()) {
+			return ws.objectRender.controller.getInputLanguage();
+		}
+
+		return this.defaultLanguage;
+	};
 
   // Frozen pane
   spreadsheet_api.prototype.asc_freezePane = function (type, col, row) {
@@ -6013,7 +6033,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
      return;
     }
 
@@ -9253,6 +9273,14 @@ var editor;
 		return wb.customFunctionEngine && wb.customFunctionEngine.remove(sName);
 	};
 
+	spreadsheet_api.prototype.clearCustomFunctions = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.customFunctionEngine && wb.customFunctionEngine.clear();
+	};
+
 	spreadsheet_api.prototype.asc_getCustomFunctionInfo = function(sName, bIgnoreLocal) {
 		let wb = this.wb;
 		if (!wb) {
@@ -9263,6 +9291,10 @@ var editor;
 
 
 	spreadsheet_api.prototype.asc_getOpeningDocumentsList = function(callback) {
+		if (!this.broadcastChannel) {
+			return;
+		}
+
 		let docInfo = this.DocInfo;
 		let addedMapDocs = {};
 		if (!window.fBroadcastChannelDocumentInfo) {
@@ -9293,6 +9325,9 @@ var editor;
 		})
 	};
 	spreadsheet_api.prototype.sendSheetsToOtherBooks = function(where, arrNames, arrSheets, arrBooks) {
+		if (!this.broadcastChannel) {
+			return;
+		}
 		let arrBinary = this.getBinaryContentSheets(arrSheets);
 		if (arrBinary) {
 			this.broadcastChannel.postMessage({
@@ -9308,8 +9343,13 @@ var editor;
 	};
 	spreadsheet_api.prototype.initBroadcastChannel = function() {
 		if (!this.broadcastChannel) {
-			this.broadcastChannel = new BroadcastChannel("onlyofficeChannel");
+			if (this.asc_isSupportCopySheetsBetweenBooks()) {
+				this.broadcastChannel = new BroadcastChannel("onlyofficeChannel");
+			}
 		}
+	};
+	spreadsheet_api.prototype.asc_isSupportCopySheetsBetweenBooks = function() {
+		return typeof BroadcastChannel !== "undefined";
 	};
 	spreadsheet_api.prototype.closeBroadcastChannel = function() {
 		if (this.broadcastChannel) {
@@ -9679,6 +9719,8 @@ var editor;
   prot["asc_cancelSpellCheck"] = prot.asc_cancelSpellCheck;
   prot["asc_ignoreNumbers"] = prot.asc_ignoreNumbers;
   prot["asc_ignoreUppercase"] = prot.asc_ignoreUppercase;
+  prot["asc_getKeyboardLanguage"] = prot.asc_getKeyboardLanguage;
+  prot["asc_getInputLanguage"] = prot.asc_getInputLanguage;
 
   // Frozen pane
   prot["asc_freezePane"] = prot.asc_freezePane;
@@ -9952,6 +9994,7 @@ var editor;
 
   prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
   prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
+  prot["asc_isSupportCopySheetsBetweenBooks"]= prot.asc_isSupportCopySheetsBetweenBooks;
 
 
 

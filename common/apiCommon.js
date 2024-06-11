@@ -223,11 +223,11 @@ function (window, undefined) {
 				const description = paramMatch[6] || '';
 	
 				params.push({
-					type,
-					name,
-					isOptional,
-					defaultValue,
-					description
+					type: type,
+					name: name,
+					isOptional: isOptional,
+					defaultValue: defaultValue,
+					description: description
 				});
 			}
 	
@@ -242,11 +242,11 @@ function (window, undefined) {
 				const description = propertyMatch[6] || '';
 	
 				properties.push({
-					type,
-					name,
-					isOptional,
-					defaultValue,
-					description
+					type: type,
+					name: name,
+					isOptional: isOptional,
+					defaultValue: defaultValue,
+					description: description
 				});
 			}
 	
@@ -267,8 +267,10 @@ function (window, undefined) {
 
 			if (nameMatch && nameMatch[1]) {
 				const localesAndNames = nameMatch[1].split(/\s*\|\s*/);
-				localesAndNames.forEach(localeAndName => {
-					const [locale, name] = localeAndName.split(':');
+				localesAndNames.forEach(function (localeAndName) {
+					const splitLocaleAndName = localeAndName.split(':');
+					const locale = splitLocaleAndName[0];
+					const name = splitLocaleAndName[1];
 					nameLocale[locale.trim()] = name.trim();
 				});
 			}
@@ -3896,7 +3898,7 @@ function (window, undefined) {
 		if(window["IS_NATIVE_EDITOR"]) {
 			let fGetOriginalImageSize = window["native"]["GetOriginalImageSize"] ||
 				window["native"]["DD_GetOriginalImageSize"];
-			let sizes = fGetOriginalImageSize(this.ImageUrl);
+			let sizes = fGetOriginalImageSize.call(window["native"], this.ImageUrl);
 			let w = sizes[0];
 			let h = sizes[1];
 			let isN = AscFormat.isRealNumber;
@@ -5098,7 +5100,7 @@ function (window, undefined) {
 					}
 					case AscCommon.c_oEditorId.Presentation: {
 						oShape.setWordShape(false);
-						oShape.setParent(oApi.WordControl.m_oLogicDocument.Slides[oApi.WordControl.m_oLogicDocument.CurPage]);
+						oShape.setParent(oApi.WordControl.m_oLogicDocument.GetCurrentSlide());
 						break;
 					}
 					case AscCommon.c_oEditorId.Spreadsheet: {

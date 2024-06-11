@@ -3013,7 +3013,7 @@
                 else
 				{
 					var transition = this.WordControl.DemonstrationManager.Transition;
-                    if ((manager.SlideNum >= 0 && manager.SlideNum < manager.SlidesCount) && (!transition || !transition.IsPlaying()))
+                    if ((manager.SlideNum >= 0 && manager.SlideNum < this.WordControl.GetSlidesCount()) && (!transition || !transition.IsPlaying()))
                     {
 						var _x = (transition.Rect.x / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 						var _y = (transition.Rect.y / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -3347,6 +3347,10 @@
 		{
 			window["AscInputMethod"][_prop] = _obj[_prop];
 		}
+	};
+	baseEditorsApi.prototype.asc_getInputLanguage = function()
+	{
+		return lcid_enUS;
 	};
 
 	baseEditorsApi.prototype.asc_addSignatureLine = function (oPr, Width, Height, sImgUrl) {
@@ -5106,6 +5110,7 @@
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
 	prot['asc_openDocumentFromBytes'] = prot.asc_openDocumentFromBytes;
 	prot['asc_onMediaPlayerEvent'] = prot.asc_onMediaPlayerEvent;
+	prot['asc_getInputLanguage'] = prot.asc_getInputLanguage;
 
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
