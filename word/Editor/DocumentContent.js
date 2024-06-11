@@ -6528,7 +6528,10 @@ CDocumentContent.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent
 							}
 							else
 							{
-								this.DrawingDocument.OnRecalculatePage(PageIdx, this.DrawingDocument.m_oLogicDocument.Slides[PageIdx]);
+								if(this.DrawingDocument.OnRecalculateSlide)
+								{
+									this.DrawingDocument.OnRecalculateSlide(this.GetAbsolutePage(0));
+								}
 							}
 							this.DrawingDocument.OnEndRecalculate(false, true);
 						}
