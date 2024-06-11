@@ -3489,9 +3489,7 @@
 			if (this.parent.getObjectType) {
 				nParentType = this.parent.getObjectType();
 			}
-			if (nParentType === AscDFH.historyitem_type_SlideLayout ||
-				nParentType === AscDFH.historyitem_type_SlideMaster ||
-				nParentType === AscDFH.historyitem_type_Notes ||
+			if (nParentType === AscDFH.historyitem_type_Notes ||
 				nParentType === AscDFH.historyitem_type_NotesMaster) {
 				return "";
 			}
