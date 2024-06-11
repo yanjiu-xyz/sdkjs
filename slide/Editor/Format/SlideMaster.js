@@ -377,6 +377,7 @@ MasterSlide.prototype.getMatchingLayout = function (type, matchingName, cSldName
 MasterSlide.prototype.handleAllContents = Slide.prototype.handleAllContents;
 MasterSlide.prototype.getMatchingShape = Slide.prototype.getMatchingShape;
 MasterSlide.prototype.recalculate = function () {
+    if (!this.Theme) return;
     var _shapes = this.cSld.spTree;
     var _shape_index, _slideLayout_index;
     var _shape_count = _shapes.length;

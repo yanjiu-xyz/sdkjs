@@ -578,6 +578,9 @@ SlideLayout.prototype.getMaster = function(){
     };
     SlideLayout.prototype.recalculate = function()
     {
+
+        if(!this.Master)
+            return;
         var _shapes = this.cSld.spTree;
         var _shape_index;
         var _shape_count = _shapes.length;

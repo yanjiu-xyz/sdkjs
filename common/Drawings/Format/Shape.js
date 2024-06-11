@@ -1648,19 +1648,29 @@
 					}
 					switch (this.parent.kind) {
 						case AscFormat.TYPE_KIND.SLIDE: {
-							hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body, info));
-							hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, true));
+							let oLayout = this.parent.Layout;
+							if(oLayout) {
+								hierarchy.push(oLayout.getMatchingShape(ph_type, ph_index, b_is_single_body, info));
+								let oMaster = oLayout.Master;
+								if(oMaster) {
+									hierarchy.push(oMaster.getMatchingShape(ph_type, ph_index, true));
+								}
+							}
 							break;
 						}
 
 						case AscFormat.TYPE_KIND.LAYOUT: {
-							hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, true));
+							let oMaster = this.parent.Master;
+							if(oMaster) {
+								hierarchy.push(oMaster.getMatchingShape(ph_type, ph_index, true));
+							}
 							break;
 						}
 
 						case AscFormat.TYPE_KIND.NOTES: {
-							if (this.parent.Master) {
-								hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, true));
+							let oMaster = this.parent.Master;
+							if(oMaster) {
+								hierarchy.push(oMaster.getMatchingShape(ph_type, ph_index, true));
 							}
 							break;
 						}
