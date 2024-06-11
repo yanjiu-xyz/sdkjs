@@ -2198,7 +2198,7 @@ CPresentation.prototype.GetSlideNumber = function (nIdx) {
 	let oSlide = this.GetSlide(nIdx);
 	if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideMaster) {
 		for(let nMaster = 0; nMaster < this.slideMasters.length; ++nMaster) {
-			if(this.slideMasters[nIdx] === oSlide) {
+			if(this.slideMasters[nMaster] === oSlide) {
 				return nMaster + 1;
 			}
 		}
