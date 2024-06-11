@@ -53,7 +53,7 @@
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
-	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
+	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents a list of functions.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -507,7 +507,7 @@
 	};
 
 	/**
-	 * Remove a custom function.
+	 * Removes a custom function.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The name of a custom function.
@@ -1446,96 +1446,102 @@
 	};
 
 	/**
-	 * For Double-byte character set (DBCS) languages, the function changes full-width (double-byte) characters to half-width (single-byte) characters.
+	 * For double-byte character set (DBCS) languages, the function changes full-width (double-byte) characters to half-width (single-byte) characters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text or a reference to a cell containing the text to change.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.ASC = function (arg1) {
 		return this.private_calculateFunction("ASC", arguments);
 	};
 	/**
-	 * Returns the character specified by the code number from the character set for your computer.
+	 * Returns the character specified by the code number from your computer's character set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number between 1 and 255 specifying which character you want.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number between 1 and 255 specifying a character from the computer character set.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.CHAR = function (arg1) {
 		return this.private_calculateFunction("CHAR", arguments);
 	};
 	/**
-	 * Removes all nonprintable characters from text.
+	 * Removes all the nonprintable characters from the text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is any worksheet information from which you want to remove nonprintable characters.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - A string from which nonprintable characters will be removed.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.CLEAN = function (arg1) {
 		return this.private_calculateFunction("CLEAN", arguments);
 	};
 	/**
-	 * Returns a numeric code for the first character in a text string, in the character set used by your computer.
+	 * Returns the code number from your computer's character set for the first character in the specified text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text for which you want the code of the first character.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text for which to get the code of the first character.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CODE = function (arg1) {
 		return this.private_calculateFunction("CODE", arguments);
 	};
 	/**
-	 * Joins several text strings into one text string.
+	 * Combines multiple text strings into one text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {string} arg_n - Up to 255 data values that will be combined.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.CONCATENATE = function () {
 		return this.private_calculateFunction("CONCATENATE", arguments);
 	};
 	/**
-	 * Converts a number to text, using currency format.
+	 * Converts a number to text, using a currency format $#.##.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number, a reference to a cell containing a number, or a formula that evaluates to a number.
-	 * @param {?number} arg2 Is the number of digits to the right of the decimal point. The number is rounded as necessary; if omitted, Decimals = 2.
-	 * @returns {number | string | boolean}
+	 * @param {number | string} arg1 - A number, a reference to a cell containing a number, or a formula that returns a number.
+	 * @param {?number} arg2 - A number of digits to the right of the decimal point. The number is rounded as necessary.
+	 * If it is omitted, the function will assume it to be 2.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.DOLLAR = function (arg1, arg2) {
 		return this.private_calculateFunction("DOLLAR", arguments);
 	};
 	/**
-	 * Checks whether two text strings are exactly the same, and returns TRUE or FALSE. EXACT is case-sensitive.
+	 * Checks whether two text strings are exactly the same, and returns <b>true</b> or <b>false</b>. This function is case-sensitive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the first text string.
-	 * @param {string} arg2 Is the second text string.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The first text string.
+	 * @param {string} arg2 - The second text string.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.EXACT = function (arg1, arg2) {
 		return this.private_calculateFunction("EXACT", arguments);
 	};
 	/**
-	 * Returns the starting position of one text string within another text string. FIND is case-sensitive.
+	 * Returns the starting position of one text string within another text string. This function is case-sensitive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want to find. Use double quotes (empty text) to match the first character in Within_text; wildcard characters not allowed.
-	 * @param {string} arg2 Is the text containing the text you want to find.
-	 * @param {?number} arg3 Specifies the character at which to start the search. The first character in Within_text is character number 1. If omitted, Start_num = 1.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to find. Use double quotes (empty text) to match the first character in the search string.
+	 * Wildcard characters are not allowed.
+	 * @param {string} arg2 - The text containing the text to find.
+	 * @param {?number} arg3 - Specifies the character at which to start the search. The first character in the search string is character number 1.
+	 * If omitted, this parameter is equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FIND = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FIND", arguments);
 	};
 	/**
-	 * Finds the specified substring (string-1) within a string (string-2) and is intended for languages the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Finds the specified substring within another string and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {string} arg2.
-	 * @param {?number} arg3.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to find. Use double quotes (empty text) to match the first character in the search string.
+	 * Wildcard characters are not allowed.
+	 * @param {string} arg2 - The text containing the text to find.
+	 * @param {?number} arg3 - Specifies the character at which to start the search. The first character in the search string is character number 1.
+	 * If omitted, this parameter is equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FINDB = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FINDB", arguments);
@@ -1544,10 +1550,10 @@
 	 * Rounds a number to the specified number of decimals and returns the result as text with or without commas.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number you want to round and convert to text.
-	 * @param {?number} arg2 Is the number of digits to the right of the decimal point. If omitted, Decimals = 2.
-	 * @param {?boolean} arg3 Is a logical value: do not display commas in the returned text = TRUE; do display commas in the returned text = FALSE or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number to round and convert to text.
+	 * @param {?number} arg2 - The number of digits to the right of the decimal point. If omitted, the function will assume it to be 2.
+	 * @param {?boolean} arg3 - Specifies whether do display commas in the returned text (<b>false</b> or omitted) or not (<b>true</b>).
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.FIXED = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FIXED", arguments);
@@ -1556,20 +1562,20 @@
 	 * Returns the specified number of characters from the start of a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text string containing the characters you want to extract.
-	 * @param {?number} arg2 Specifies how many characters you want LEFT to extract; 1 if omitted.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string containing the characters to extract.
+	 * @param {?number} arg2 - A number of the substring characters. It must be greater than or equal to 0.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.LEFT = function (arg1, arg2) {
 		return this.private_calculateFunction("LEFT", arguments);
 	};
 	/**
-	 * Extracts the substring from the specified string starting from the left character and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Extracts the substring from the specified string starting from the left character and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {?number} arg2.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string containing the characters to extract.
+	 * @param {?number} arg2 - A number of the substring characters, based on bytes.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.LEFTB = function (arg1, arg2) {
 		return this.private_calculateFunction("LEFTB", arguments);
@@ -1578,18 +1584,18 @@
 	 * Returns the number of characters in a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text whose length you want to find. Spaces count as characters.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text whose length will be returned. Spaces are considered as characters.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LEN = function (arg1) {
 		return this.private_calculateFunction("LEN", arguments);
 	};
 	/**
-	 * Analyses the specified string and returns the number of characters it contains and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Analyses the specified string and returns the number of characters it contains and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text whose length will be returned. Spaces are considered as characters.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LENB = function (arg1) {
 		return this.private_calculateFunction("LENB", arguments);
@@ -1598,8 +1604,8 @@
 	 * Converts all letters in a text string to lowercase.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want to convert to lowercase. Characters in Text that are not letters are not changed.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to convert to lowercase. The text characters that are not letters are not changed.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.LOWER = function (arg1) {
 		return this.private_calculateFunction("LOWER", arguments);
@@ -1608,44 +1614,44 @@
 	 * Returns the characters from the middle of a text string, given a starting position and length.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text string from which you want to extract the characters.
-	 * @param {number} arg2 Is the position of the first character you want to extract. The first character in Text is 1.
-	 * @param {number} arg3 Specifies how many characters to return from Text.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string from which to extract the characters.
+	 * @param {number} arg2 - The position of the first character to extract. The first text character is 1.
+	 * @param {number} arg3 - A number of the characters to extract.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.MID = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MID", arguments);
 	};
 	/**
-	 * Extracts the characters from the specified string starting from any position and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Extracts the characters from the specified string starting from any position and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {number} arg2.
-	 * @param {number} arg3.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string from which to extract the characters.
+	 * @param {number} arg2 - The position of the first character to extract. The first text character is 1.
+	 * @param {number} arg3 - A number of the characters to extract, based on bytes.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.MIDB = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MIDB", arguments);
 	};
 	/**
-	 * Converts text to number in a locale-independent manner.
+	 * Converts text to a number, in a locale-independent way.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the string representing the number you want to convert.
-	 * @param {?string} arg2 Is the character used as the decimal separator in the string.
-	 * @param {?string} arg3 Is the character used as the group separator in the string.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The string representing a number to convert.
+	 * @param {?string} arg2 - The character used as the decimal separator in the string.
+	 * @param {?string} arg3 - The character used as the group separator in the string.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NUMBERVALUE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NUMBERVALUE", arguments);
 	};
 	/**
-	 * Converts a text string to proper case; the first letter in each word to uppercase, and all other letters to lowercase.
+	 * Converts a text string to proper case: the first letter in each word to uppercase, and all other letters to lowercase.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is text enclosed in quotation marks, a formula that returns text, or a reference to a cell containing text to partially capitalize.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text enclosed in quotation marks, a formula that returns text, or a reference to a cell containing text to partially capitalize.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.PROPER = function (arg1) {
 		return this.private_calculateFunction("PROPER", arguments);
@@ -1654,35 +1660,35 @@
 	 * Replaces part of a text string with a different text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is text in which you want to replace some characters.
-	 * @param {number} arg2 Is the position of the character in Old_text that you want to replace with New_text.
-	 * @param {number} arg3 Is the number of characters in Old_text that you want to replace.
-	 * @param {string} arg4 Is the text that will replace characters in Old_text.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text where some characters will be replaced.
+	 * @param {number} arg2 - The position of the character in the original text that will be replaced with the new text.
+	 * @param {number} arg3 - The number of characters in the original text that will be replaced.
+	 * @param {string} arg4 - The text that will replace characters in the original text.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.REPLACE = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("REPLACE", arguments);
 	};
 	/**
-	 * Replaces a set of characters, based on the number of characters and the start position you specify, with a new set of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Replaces a set of characters, based on the number of characters and the start position specified, with a new set of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {number} arg2.
-	 * @param {number} arg3.
-	 * @param {string} arg4.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text where some characters will be replaced.
+	 * @param {number} arg2 - The position of the character in the original text that will be replaced with the new text.
+	 * @param {number} arg3 - The number of characters in the original text that will be replaced, based on bytes.
+	 * @param {string} arg4 - The text that will replace characters in the original text.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.REPLACEB = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("REPLACEB", arguments);
 	};
 	/**
-	 * Repeats text a given number of times. Use REPT to fill a cell with a number of instances of a text string.
+	 * Repeats text a given number of times. Use this function to fill a cell with a number of instances of a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want to repeat.
-	 * @param {number} arg2 Is a positive number specifying the number of times to repeat text.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text that will be repeated.
+	 * @param {number} arg2 - A positive number specifying the number of times to repeat text.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.REPT = function (arg1, arg2) {
 		return this.private_calculateFunction("REPT", arguments);
@@ -1691,20 +1697,20 @@
 	 * Returns the specified number of characters from the end of a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text string that contains the characters you want to extract.
-	 * @param {?number} arg2 Specifies how many characters you want to extract, 1 if omitted.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string that contains the characters to extract.
+	 * @param {?number} arg2 - A number of the substring characters. If it is omitted, the function will assume it to be 1.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.RIGHT = function (arg1, arg2) {
 		return this.private_calculateFunction("RIGHT", arguments);
 	};
 	/**
-	 * Extracts a substring from a string starting from the right-most character, based on the specified number of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Extracts a substring from a string starting from the right-most character, based on the specified number of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {?number} arg2.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string that contains the characters to extract.
+	 * @param {?number} arg2 - A number of the substring characters, based on bytes.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.RIGHTB = function (arg1, arg2) {
 		return this.private_calculateFunction("RIGHTB", arguments);
@@ -1713,22 +1719,22 @@
 	 * Returns the number of the character at which a specific character or text string is first found, reading left to right (not case-sensitive).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want to find. You can use the ? and * wildcard characters; use ~? and ~* to find the ? and * characters.
-	 * @param {string} arg2 Is the text in which you want to search for Find_text.
-	 * @param {?number} arg3 Is the character number in Within_text, counting from the left, at which you want to start searching. If omitted, 1 is used.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to find. The ? and * wildcard characters can be used. Use ~? and ~* to find the ? and * characters.
+	 * @param {string} arg2 - The text where to search for the specified text.
+	 * @param {?number} arg3 - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SEARCH = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SEARCH", arguments);
 	};
 	/**
-	 * Returns the location of the specified substring in a string and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Returns the location of the specified substring in a string and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {string} arg2.
-	 * @param {?number} arg3.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to find. The ? and * wildcard characters can be used. Use ~? and ~* to find the ? and * characters.
+	 * @param {string} arg2 - The text where to search for the specified text.
+	 * @param {?number} arg3 - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SEARCHB = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SEARCHB", arguments);
@@ -1737,11 +1743,11 @@
 	 * Replaces existing text with new text in a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text or the reference to a cell containing text in which you want to substitute characters.
-	 * @param {string} arg2 Is the existing text you want to replace. If the case of Old_text does not match the case of text, SUBSTITUTE will not replace the text.
-	 * @param {string} arg3 Is the text you want to replace Old_text with.
-	 * @param {?string} arg4 Specifies which occurrence of Old_text you want to replace. If omitted, every instance of Old_text is replaced.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text or the reference to a cell containing text in which the characters will be substituted.
+	 * @param {string} arg2 - The existing text to replace. If the case of the original text does not match the case of text, the function will not replace the text.
+	 * @param {string} arg3 - The text to replace the original text with.
+	 * @param {?string} arg4 - Specifies which occurrence of the original text to replace. If omitted, every instance of the original text will be replaced.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.SUBSTITUTE = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("SUBSTITUTE", arguments);
@@ -1750,8 +1756,8 @@
 	 * Checks whether a value is text, and returns the text if it is, or returns double quotes (empty text) if it is not.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value to test.
-	 * @returns {number | string | boolean}
+	 * @param {any} arg1 - The value to test.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.T = function (arg1) {
 		return this.private_calculateFunction("T", arguments);
@@ -1760,9 +1766,9 @@
 	 * Converts a value to text in a specific number format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a number, a formula that evaluates to a numeric value, or a reference to a cell containing a numeric value.
-	 * @param {string} arg2 Is a number format in text form from the Category box on the Number tab in the Format Cells dialog box.
-	 * @returns {number | string | boolean}
+	 * @param {number | string} arg1 - A number, a formula that evaluates to a numeric value, or a reference to a cell containing a numeric value.
+	 * @param {string} arg2 - A number format in the text form from the <b>Number format</b> combo box on the <b>Home</b> tab.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.TEXT = function (arg1, arg2) {
 		return this.private_calculateFunction("TEXT", arguments);
@@ -1771,8 +1777,8 @@
 	 * Removes all spaces from a text string except for single spaces between words.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text from which you want spaces removed.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text from which the spaces will be removed.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.TRIM = function (arg1) {
 		return this.private_calculateFunction("TRIM", arguments);
@@ -1781,8 +1787,8 @@
 	 * Returns the Unicode character referenced by the given numeric value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the Unicode number representing a character.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The Unicode number representing a character.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.UNICHAR = function (arg1) {
 		return this.private_calculateFunction("UNICHAR", arguments);
@@ -1791,8 +1797,8 @@
 	 * Returns the number (code point) corresponding to the first character of the text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the character that you want the Unicode value of.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The character for which the Unicode value will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.UNICODE = function (arg1) {
 		return this.private_calculateFunction("UNICODE", arguments);
@@ -1801,8 +1807,8 @@
 	 * Converts a text string to all uppercase letters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want converted to uppercase, a reference or a text string.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text which will be converted to uppercase, a reference or a text string.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.UPPER = function (arg1) {
 		return this.private_calculateFunction("UPPER", arguments);
@@ -1811,17 +1817,19 @@
 	 * Converts a text string that represents a number to a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the text enclosed in quotation marks or a reference to a cell containing the text you want to convert.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text enclosed in quotation marks or a reference to a cell containing the text which will be converted to a number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VALUE = function (arg1) {
 		return this.private_calculateFunction("VALUE", arguments);
 	};
 	/**
-	 * Returns the average of the absolute deviations of data points from their mean. Arguments can be numbers or names, arrays or references that contain numbers.
+	 * Returns the average of the absolute deviations of data points from their mean.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[]} args - Up to 255 numeric values for which the average of the absolute deviations will be returned. The first argument is required,
+	 * subsequent numbers are optional. Arguments can be numbers or names, arrays or references that contain numbers.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AVEDEV = function () {
 		return this.private_calculateFunction("AVEDEV", arguments);
