@@ -471,6 +471,7 @@ function (window, undefined) {
 		return typedArr;
 	}
 
+
 /** @enum */
 var cElementType = {
 		number      : 0,
@@ -3947,6 +3948,23 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return null;
 	};
+	cBaseFunction.prototype.checkArgumentsTypes = function (args) {
+		if (args) {
+			let length = args.length;
+			for (let i = 0; i < length; i++) {
+				let arg = args[i];
+				if (arg && this.exactTypes[i] && this.argumentsType && this.argumentsType[i] !== undefined) {
+					// check types
+					if (this.argumentsType[i] === Asc.c_oAscFormulaArgumentType.reference && (arg.type !== cElementType.cellsRange && arg.type !== cElementType.cellsRange3D 
+						&& arg.type !== cElementType.cell && arg.type !== cElementType.cell3D)) {
+							return false;
+					}
+					// todo add other data types for arguments to the check, if the function requires it
+				}
+			}
+		}
+		return true;
+	};
 
 	/** @constructor */
 	function cUnknownFunction(name) {
@@ -5991,6 +6009,13 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		return res;
 	};
 
+	function CalculateResult(checkOnError) {
+		this.checkOnError = checkOnError;
+		this.error = null;
+	}
+	CalculateResult.prototype.setError = function(error) {
+		this.error = error;
+	};
 
 	var g_defParseResult = new ParseResult(undefined, undefined);
 
@@ -6813,10 +6838,10 @@ function parserFormula( formula, parent, _ws ) {
 			return true;
 		};
 
-		var parseCommaAndArgumentsUnion = function () {
+		const parseCommaAndArgumentsUnion = function () {
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
-			var stackLength = elemArr.length, top_elem = null, top_elem_arg_pos;
+			let stackLength = elemArr.length, top_elem = null, top_elem_arg_pos;
 
 			if (elemArr.length !== 0 && elemArr[stackLength - 1].name === "(" &&
 				((!elemArr[stackLength - 2]) || (elemArr[stackLength - 2] && elemArr[stackLength - 2].type !== cElementType.func))) {
@@ -7638,7 +7663,7 @@ function parserFormula( formula, parent, _ws ) {
 			return false;
 		}
 	};
-	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect) {
+	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect, opt_oCalculateResult) {
 		if (this.outStack.length < 1) {
 			this.value = new cError(cErrorType.wrong_name);
 			this._endCalculate();
@@ -7707,7 +7732,16 @@ function parserFormula( formula, parent, _ws ) {
 					//если данная функция не может возвращать массив, проходимся по всем элементам аргументов и формируем массив
 					var formulaArray = null;
 					if (currentElement.type === cElementType.func) {
-						formulaArray = cBaseFunction.prototype.checkFormulaArray.call(currentElement, arg, opt_bbox, opt_defName, this, bIsSpecialFunction, argumentsCount);
+						// checkArgumentsTypes before calculate
+						if (opt_oCalculateResult && opt_oCalculateResult.checkOnError && currentElement.exactTypes && !currentElement.checkArgumentsTypes(arg)) {
+							this.value = new cError(cErrorType.null_value);
+							this._endCalculate();
+							opt_oCalculateResult.setError(c_oAscError.ID.FrmlOperandExpected);
+							return this.value;
+						} else {
+							formulaArray = cBaseFunction.prototype.checkFormulaArray.call(currentElement, arg, opt_bbox, opt_defName, this, bIsSpecialFunction, argumentsCount);
+						}
+
 					} else if (currentElement.type === cElementType.operator && currentElement.bArrayFormula) {
 						bIsSpecialFunction = true;
 					}
@@ -10205,6 +10239,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].parserFormula = parserFormula;
 	window['AscCommonExcel'].ParseResult = ParseResult;
+	window['AscCommonExcel'].CalculateResult = CalculateResult;
 
 	window['AscCommonExcel'].parseNum = parseNum;
 	window['AscCommonExcel'].matching = matching;

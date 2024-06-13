@@ -16800,6 +16800,7 @@
 		let isFormula = this._isFormula(val);
 		let newFP, parseResult;
 		if (isFormula) {
+			let calculateResult = new AscCommonExcel.CalculateResult(true);
 			//перед созданием точки в истории, проверяю, валидная ли формула
 			let cellWithFormula = new AscCommonExcel.CCellWithFormula(this.model, bbox.r1, bbox.c1);
 			newFP = new AscCommonExcel.parserFormula(val[0].getFragmentText().substring(1), cellWithFormula, this.model);
@@ -16818,7 +16819,7 @@
 					let isRef = newFP.findRefByOutStack();
 					if (isRef) {
 						// if formula has ref, calculate it to get the final size of ref
-						let formulaRes = newFP.calculate();
+						let formulaRes = newFP.calculate(null, null, null, null, calculateResult);
 						applyByArray = true;
 						ctrlKey = true;
 
@@ -16839,9 +16840,9 @@
 					}
 				} else if (!applyByArray) {
 					// refInfo = {cannoChangeFormulaArray: true|false, applyByArray: true|false, ctrlKey: true|false, dynamicRange: range}
-					let refInfo = ws.getRefDynamicInfo(newFP);
+					let refInfo = ws.getRefDynamicInfo(newFP, calculateResult);
 					if (refInfo) {
-						if (refInfo.cannoChangeFormulaArray) {
+						if (refInfo.cannotChangeFormulaArray) {
 							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
 								c_oAscError.Level.NoCritical);
 							return false;
@@ -16851,6 +16852,13 @@
 						ctrlKey = refInfo.ctrlKey;
 						dynamicSelectionRange = refInfo.dynamicRange;
 					}
+				}
+
+				// preliminary calculation of the formula
+				// if calculateResult.error is not empty - return this error
+				if (calculateResult && calculateResult.error != null) {
+					this.model.workbook.handlers.trigger("asc_onError", calculateResult.error, c_oAscError.Level.NoCritical);
+					return false;
 				}
 			}
 		}
