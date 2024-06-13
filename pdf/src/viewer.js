@@ -4130,11 +4130,11 @@
 	};
 	CHtmlPage.prototype.createComponents = function()
 	{
-		var elements = "<div id=\"id_main\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";overflow:hidden;\" UNSELECTABLE=\"on\">";
-		elements += "<canvas id=\"id_viewer\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
-		elements += "<canvas id=\"id_forms\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
+		var elements = "<div id=\"id_main\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action:none;-moz-user-select:none;user-select:none;-webkit-user-select:none;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";overflow:hidden;\" UNSELECTABLE=\"on\">";
+		elements += "<canvas id=\"id_viewer\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action:none;-moz-user-select:none;user-select:none;-webkit-user-select:none;left:0px;top:0px;width:100;height:100;\"></canvas>";
+		elements += "<canvas id=\"id_forms\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action:none;-moz-user-select:none;user-select:none;-webkit-user-select:none;left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "<div id=\"id_target_cursor\" class=\"block_elem\" width=\"1\" height=\"1\" style=\"touch-action:none;-ms-touch-action: none;-webkit-user-select: none;width:2px;height:13px;z-index:4;\"></div>"
-		elements += "<canvas id=\"id_overlay\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
+		elements += "<canvas id=\"id_overlay\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action:none;-moz-user-select:none;user-select:none;-webkit-user-select:none;left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "</div>";
 
 		elements += "<div id=\"id_vertical_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
