@@ -333,7 +333,8 @@ CBookmarksManager.prototype.GetBookmarkById = function(Id)
 
 	for (var nIndex = 0, nCount = this.Bookmarks.length; nIndex < nCount; ++nIndex)
 	{
-		if (this.Bookmarks[nIndex].GetBookmarkId() === Id)
+		var oStart = this.Bookmarks[nIndex][0];
+		if (oStart.GetBookmarkId() === Id)
 			return this.Bookmarks[nIndex];
 	}
 
