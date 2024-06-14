@@ -1952,10 +1952,7 @@
 			oDoc.HideComments();
 
 			var mouseButton = AscCommon.getMouseButton(e || {});
-
-			e.CtrlKey	= e.ctrlKey;
-			e.ShiftKey	= e.shiftKey;
-			e.Button	= mouseButton;
+			AscCommon.check_MouseDownEvent(e, true);
 
 			if (mouseButton !== 0)
 			{
@@ -2002,7 +1999,7 @@
 					else
 					{
 						oThis.removeSelection();
-						oDoc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+						oDoc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 						oThis.Api.sync_ContextMenuCallback({
 							Type: Asc.c_oAscPdfContextMenuTypes.Common,
 							X_abs: x,
@@ -2018,15 +2015,13 @@
 			if (!oThis.file || !oThis.file.isValid())
 				return;
 
-			AscCommon.check_MouseDownEvent(e, true);
 			global_mouseEvent.LockMouse();
 
 			oThis.mouseDownCoords.X = AscCommon.global_mouseEvent.X;
 			oThis.mouseDownCoords.Y = AscCommon.global_mouseEvent.Y;
 
 			oThis.isMouseMoveBetweenDownUp = false;
-			e.ClickCount = global_mouseEvent.ClickCount;
-			oDoc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+			oDoc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 		};
 
 		this.onMouseDownEpsilon = function(e)
@@ -2098,9 +2093,7 @@
 			AscCommon.check_MouseUpEvent(e);
 
 			let oDoc = oThis.getPDFDoc();
-			e.Type = AscCommon.g_mouse_event_type_up;
-			e.ClickCount = global_mouseEvent.ClickCount;
-			oDoc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+			oDoc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 
 			if (oThis.canSelectPageText())
 			{
@@ -2138,7 +2131,6 @@
 
 			let oDoc = oThis.getPDFDoc();
 			AscCommon.check_MouseMoveEvent(e);
-			e.IsLocked = oThis.isMouseDown;
 
 			if (e && e.preventDefault)
 				e.preventDefault();
@@ -2173,7 +2165,7 @@
 				else
 				{
 					if (false == editor.isEmbedVersion)
-						oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+						oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 				}
 				return;
 			}
@@ -2207,12 +2199,12 @@
 					else
 					{
 						if (false == editor.isEmbedVersion)
-							oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+							oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 					}
 				}
 				else
 				{
-					oThis.getPDFDoc().OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+					oThis.getPDFDoc().OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 				}
 			}
 			return false;
