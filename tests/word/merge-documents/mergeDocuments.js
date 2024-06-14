@@ -1070,7 +1070,17 @@ const arrTestObjectsInfo = [
 					FontSizeCS: 12,
 				}
 			}), createParagraphInfo("п", undefined, undefined, undefined, {
-				comments: {start: [{start: false, id: 0, data: {text: "1"}}]},
+				comments: {
+					start: [{
+						start: false,
+						id   : 0,
+						data : {
+							text      : "1",
+							quoteText : "ет ",
+							arrAnswers: null
+						}
+					}]
+				},
 				textPr  : {
 					Bold      : true,
 					Underline : true,
@@ -1084,27 +1094,25 @@ const arrTestObjectsInfo = [
 					Underline: true,
 					BoldCS   : true,
 				}
-			}), createParagraphInfo("ет привет", undefined, undefined, {start: [{id: 1}]}, {textPr: {Underline: true,}})]
-		],
+			}), createParagraphInfo("ет привет", undefined, undefined, {start: [{id: 1}]}, {textPr: {Underline: true,}}), createParagraphInfo()]],
 		revisedDocument: [
-			[createParagraphInfo("при", undefined, undefined, {
-				start: [{
-					id  : 0,
-					name: "s4"
-				}]
-			}, {
-				comments: {start: [{start: true, id: 0}]},
-				textPr  : {VertAlign: 2,}
-			}), createParagraphInfo("в", undefined, undefined, {
+			[createParagraphInfo("пр", undefined, undefined, {start: [{id: 0, name: "s4"}]}, {
+				comments : {
+					start: [{
+						start: true,
+						id   : 0
+					}]
+				}, textPr: {VertAlign: 2,}
+			}), createParagraphInfo("и", undefined, undefined, {
 				start: [{
 					id  : 2,
 					name: "s7"
 				}]
-			}, {}), createParagraphInfo("ет ", undefined, undefined, {
-				start: [{id: 3, name: "s2"}, {
-					id  : 4,
-					name: "s3"
-				}, {id: 5, name: "s5"}, {id: 0}]
+			}, {textPr: {VertAlign: 2,}}), createParagraphInfo("в"), createParagraphInfo("ет ", undefined, undefined, {
+				start: [{
+					id  : 3,
+					name: "s2"
+				}, {id: 4, name: "s3"}, {id: 5, name: "s5"}, {id: 0}]
 			}, {textPr: {VertAlign: 1,}}), createParagraphInfo("при", undefined, undefined, undefined, {
 				textPr: {
 					Bold      : true,
@@ -1136,29 +1144,51 @@ const arrTestObjectsInfo = [
 					Bold  : true,
 					BoldCS: true,
 				}
-			}), createParagraphInfo(" п", undefined, undefined, undefined, {
+			}), createParagraphInfo(" ", undefined, undefined, undefined, {
 				textPr: {
 					Bold      : true,
 					FontSize  : 12,
 					BoldCS    : true,
 					FontSizeCS: 12,
 				}
-			}), createParagraphInfo("рив", undefined, undefined, {
-				start: [{
-					id  : 9,
-					name: "s6"
-				}]
-			}, {
-				comments: {start: [{start: false, id: 1, data: {text: "1"}}, {start: true, id: 2}]},
-				textPr  : {Bold: true, BoldCS: true,}
-			}), createParagraphInfo("ет п", undefined, undefined, {start: [{id: 5}, {id: 6}]}, {textPr: {Underline: true,}}), createParagraphInfo("рив", undefined, undefined, {start: [{id: 9}]}, {
+			}), createParagraphInfo("п", undefined, undefined, undefined, {
 				comments: {
 					start: [{
 						start: false,
-						id   : 0, data: {text: "3"}
-					}]
+						id   : 1,
+						data : {
+							text      : "1",
+							quoteText : "ет ",
+							arrAnswers: null
+						}
+					}, {start: true, id: 2}]
 				},
 				textPr  : {
+					Bold      : true,
+					FontSize  : 12,
+					BoldCS    : true,
+					FontSizeCS: 12,
+				}
+			}), createParagraphInfo("рив", undefined, undefined, {start: [{id: 9, name: "s6"}]}, {
+				textPr: {
+					Bold  : true,
+					BoldCS: true,
+				}
+			}), createParagraphInfo("ет ", undefined, undefined, {start: [{id: 5}, {id: 6}]}, {textPr: {Underline: true,}}), createParagraphInfo("п", undefined, undefined, {start: [{id: 9}]}, {
+				comments: {
+					start: [{
+						start: false,
+						id   : 0,
+						data : {
+							text      : "3",
+							quoteText : "привет привет привет ",
+							arrAnswers: null
+						}
+					}]
+				},
+				textPr  : {Underline: true,}
+			}), createParagraphInfo("рив", undefined, undefined, undefined, {
+				textPr: {
 					Underline : true,
 					FontSize  : 12,
 					FontSizeCS: 12,
@@ -1167,10 +1197,240 @@ const arrTestObjectsInfo = [
 				comments: {
 					start: [{
 						start: false,
-						id   : 2, data: {text: "2"}
+						id   : 2,
+						data : {
+							text      : "2",
+							quoteText : "привет привет",
+							arrAnswers: null
+						}
 					}]
 				},
-			})]]
+			})]
+		]
+	},
+	{
+		originalDocument: [
+			[createParagraphInfo("пр", undefined, undefined, undefined, {}), createParagraphInfo("и", undefined, undefined, undefined, {
+				textPr: {
+					Bold     : true,
+					Underline: true,
+					BoldCS   : true,
+				}
+			}), createParagraphInfo("в", undefined, undefined, {start: [{id: 0, name: "s2"}]}, {
+				textPr: {
+					Bold     : true,
+					Underline: true,
+					BoldCS   : true,
+				}
+			}), createParagraphInfo("ет ", undefined, undefined, undefined, {
+				textPr: {
+					Bold  : true,
+					BoldCS: true,
+				}
+			}), createParagraphInfo("пр", undefined, undefined, undefined, {
+				comments: {
+					start: [{
+						start: true,
+						id   : 0
+					}]
+				},
+			}), createParagraphInfo("и", undefined, undefined, undefined, {textPr: {VertAlign: 2,}}), createParagraphInfo("вет", undefined, undefined, {
+				start: [{
+					id  : 2,
+					name: "s1"
+				}, {id: 0}]
+			}, {
+				comments: {start: [{start: true, id: 1}]},
+				textPr  : {VertAlign: 1,}
+			}), createParagraphInfo(" ", undefined, undefined, {start: [{id: 2}]}, {}), createParagraphInfo("прив", undefined, undefined, undefined, {
+				textPr: {
+					Italic   : true,
+					Strikeout: true,
+					ItalicCS : true,
+				}
+			}), createParagraphInfo("е", undefined, undefined, undefined, {
+				comments: {
+					start: [{
+						start: false,
+						id   : 1,
+						data : {
+							text      : "1",
+							quoteText : "вет прив",
+							arrAnswers: null
+						}
+					}]
+				},
+				textPr  : {
+					Italic   : true,
+					Strikeout: true,
+					ItalicCS : true,
+				}
+			}), createParagraphInfo("т ", undefined, undefined, undefined, {textPr: {Strikeout: true,}}), createParagraphInfo("привет", undefined, undefined, undefined, {
+				comments: {
+					start: [{
+						start: false,
+						id   : 0,
+						data : {
+							text      : "2",
+							quoteText : "привет привет ",
+							arrAnswers: null
+						}
+					}]
+				},
+				textPr  : {
+					Strikeout: true,
+					VertAlign: 1,
+				}
+			}), createParagraphInfo(undefined, undefined, undefined, undefined, {})]
+		],
+		revisedDocument: [
+			[createParagraphInfo("пр", undefined, undefined, {
+				start: [{id: 0, name: "s6"}, {
+					id  : 1,
+					name: "s3"
+				}]
+			}, {
+				comments: {
+					start: [{
+						start: true,
+						id   : 0
+					}]
+				},
+			}), createParagraphInfo("и", undefined, undefined, undefined, {
+				comments: {
+					start: [{
+						start: true,
+						id   : 1
+					}, {start: true, id: 2}]
+				},
+				textPr  : {
+					Bold     : true,
+					Underline: true,
+					BoldCS   : true,
+				}
+			}), createParagraphInfo("в", undefined, undefined, {start: [{id: 5, name: "s2"}]}, {
+				textPr: {
+					Bold     : true,
+					Underline: true,
+					BoldCS   : true,
+				}
+			}), createParagraphInfo("ет", undefined, undefined, undefined, {
+				textPr: {
+					Bold  : true,
+					BoldCS: true,
+				}
+			}), createParagraphInfo(" ", undefined, undefined, undefined, {
+				textPr: {
+					Bold      : true,
+					FontSize  : 12,
+					BoldCS    : true,
+					FontSizeCS: 12,
+				}
+			}), createParagraphInfo("пр", undefined, undefined, {
+				start: [{
+					id  : 6,
+					name: "s7"
+				}, {id: 0}]
+			}, {
+				comments: {start: [{start: true, id: 3}]},
+				textPr  : {Strikeout: true, VertAlign: 1,}
+			}), createParagraphInfo("и", undefined, undefined, undefined, {
+				comments : {
+					start: [{
+						start: false,
+						id   : 1,
+						data : {
+							text      : "5",
+							quoteText : "ивет пр",
+							arrAnswers: null
+						}
+					}]
+				}, textPr: {Strikeout: true, VertAlign: 2,}
+			}), createParagraphInfo("вет", undefined, undefined, {
+				start: [{
+					id  : 8,
+					name: "s1"
+				}, {id: 1}, {id: 5}, {id: 6}]
+			}, {
+				comments: {start: [{start: true, id: 4}]},
+				textPr  : {VertAlign: 1,}
+			}), createParagraphInfo(" ", undefined, undefined, {start: [{id: 8}]}, {}), createParagraphInfo("пр", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
+				textPr: {
+					Italic   : true,
+					Strikeout: true,
+					VertAlign: 1,
+					ItalicCS : true,
+				}
+			}), createParagraphInfo("и", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, {
+				start: [{
+					id  : 11,
+					name: "s5"
+				}]
+			}, {
+				textPr: {
+					Italic    : true,
+					Strikeout : true,
+					FontSize  : 12,
+					VertAlign : 1,
+					ItalicCS  : true,
+					FontSizeCS: 12,
+				}
+			}), createParagraphInfo("в", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
+				comments: {
+					start: [{
+						start: false,
+						id   : 2,
+						data : {
+							text      : "4",
+							quoteText : "ивет привет при",
+							arrAnswers: null
+						}
+					}]
+				},
+				textPr  : {
+					Italic    : true,
+					Strikeout : true,
+					FontSize  : 12,
+					ItalicCS  : true,
+					FontSizeCS: 12,
+				}
+			}), createParagraphInfo("е", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
+				comments: {
+					start: [{
+						start: false,
+						id   : 4,
+						data : {
+							text      : "1",
+							quoteText : "вет прив",
+							arrAnswers: null
+						}
+					}]
+				},
+				textPr  : {
+					Italic   : true,
+					Strikeout: true,
+					ItalicCS : true,
+				}
+			}), createParagraphInfo("т ", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {textPr: {Strikeout: true,}}), createParagraphInfo("при", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, {
+				start: [{
+					id  : 12,
+					name: "s4"
+				}]
+			}, {
+				comments : {
+					start: [{
+						start: false,
+						id   : 3,
+						data : {text: "2", quoteText: "привет привет ", arrAnswers: null}
+					}, {start: false, id: 0, data: {text: "3", quoteText: "привет привет привет ", arrAnswers: null}}]
+				}, textPr: {Strikeout: true, VertAlign: 1,}
+			}), createParagraphInfo("вет", undefined, undefined, undefined, {
+				textPr: {
+					Strikeout: true,
+					VertAlign: 1,
+				}
+			}), createParagraphInfo(undefined, undefined, undefined, {start: [{id: 11}, {id: 12}]}, {})]
+		]
 	}
 ];
 
@@ -2174,24 +2434,23 @@ const arrAnswers = [
 	},
 	{
 		finalDocument: [
-			[createParagraphInfo("при", undefined, undefined, {
-				start: [{
-					id  : 0,
-					name: "s4"
-				}]
-			}, {
-				comments: {start: [{start: true, id: 0}]},
-				textPr  : {VertAlign: 2,}
-			}), createParagraphInfo("в", undefined, undefined, {
+			[createParagraphInfo("пр", undefined, undefined, {start: [{id: 0, name: "s4"}]}, {
+				comments : {
+					start: [{
+						start: true,
+						id   : 0
+					}]
+				}, textPr: {VertAlign: 2,}
+			}), createParagraphInfo("и", undefined, undefined, {
 				start: [{
 					id  : 2,
 					name: "s7"
 				}]
-			}, {}), createParagraphInfo("ет ", undefined, undefined, {
-				start: [{id: 3, name: "s2"}, {
-					id  : 4,
-					name: "s3"
-				}, {id: 5, name: "s5"}, {id: 0}]
+			}, {textPr: {VertAlign: 2,}}), createParagraphInfo("в"), createParagraphInfo("ет ", undefined, undefined, {
+				start: [{
+					id  : 3,
+					name: "s2"
+				}, {id: 4, name: "s3"}, {id: 5, name: "s5"}, {id: 0}]
 			}, {textPr: {VertAlign: 1,}}), createParagraphInfo("при", undefined, undefined, undefined, {
 				textPr: {
 					Bold      : true,
@@ -2200,7 +2459,10 @@ const arrAnswers = [
 					BoldCS    : true,
 					FontSizeCS: 14,
 				}
-			}), createParagraphInfo("в", undefined, undefined, {start: [{id: 3}]}, {
+			}), createParagraphInfo("в", undefined, undefined, {start: [{id: 3}], end: [{
+					id  : 6,
+					name: "s1"
+				}]}, {
 				textPr: {
 					Bold      : true,
 					Italic    : true,
@@ -2211,10 +2473,7 @@ const arrAnswers = [
 					FontSizeCS: 14,
 				}
 			}), createParagraphInfo("е", undefined, undefined, {
-				start: [{
-					id  : 6,
-					name: "s1"
-				}, {id: 2}, {id: 4}]
+				start: [{id: 2}, {id: 4}]
 			}, {
 				comments: {start: [{start: true, id: 1}]},
 				textPr  : {Bold: true, Italic: true, BoldCS: true, ItalicCS: true,}
@@ -2223,29 +2482,51 @@ const arrAnswers = [
 					Bold  : true,
 					BoldCS: true,
 				}
-			}), createParagraphInfo(" п", undefined, undefined, undefined, {
+			}), createParagraphInfo(" ", undefined, undefined, undefined, {
 				textPr: {
 					Bold      : true,
 					FontSize  : 12,
 					BoldCS    : true,
 					FontSizeCS: 12,
 				}
-			}), createParagraphInfo("рив", undefined, undefined, {
-				start: [{
-					id  : 9,
-					name: "s6"
-				}]
-			}, {
-				comments: {start: [{start: false, id: 1, data: {text: "1"}}, {start: true, id: 2}]},
-				textPr  : {Bold: true, BoldCS: true,}
-			}), createParagraphInfo("ет п", undefined, undefined, {start: [{id: 5}, {id: 6}]}, {textPr: {Underline: true,}}), createParagraphInfo("рив", undefined, undefined, {start: [{id: 9}]}, {
+			}), createParagraphInfo("п", undefined, undefined, undefined, {
 				comments: {
 					start: [{
 						start: false,
-						id   : 0, data: {text: "3"}
-					}]
+						id   : 1,
+						data : {
+							text      : "1",
+							quoteText : "ет ",
+							arrAnswers: null
+						}
+					}, {start: true, id: 2}]
 				},
 				textPr  : {
+					Bold      : true,
+					FontSize  : 12,
+					BoldCS    : true,
+					FontSizeCS: 12,
+				}
+			}), createParagraphInfo("рив", undefined, undefined, {start: [{id: 9, name: "s6"}]}, {
+				textPr: {
+					Bold  : true,
+					BoldCS: true,
+				}
+			}), createParagraphInfo("ет ", undefined, undefined, {start: [{id: 6}, {id: 5}]}, {textPr: {Underline: true,}}), createParagraphInfo("п", undefined, undefined, {start: [{id: 9}]}, {
+				comments: {
+					start: [{
+						start: false,
+						id   : 0,
+						data : {
+							text      : "3",
+							quoteText : "привет привет привет ",
+							arrAnswers: null
+						}
+					}]
+				},
+				textPr  : {Underline: true,}
+			}), createParagraphInfo("рив", undefined, undefined, undefined, {
+				textPr: {
 					Underline : true,
 					FontSize  : 12,
 					FontSizeCS: 12,
@@ -2254,10 +2535,170 @@ const arrAnswers = [
 				comments: {
 					start: [{
 						start: false,
-						id   : 2, data: {text: "2"}
+						id   : 2,
+						data : {
+							text      : "2",
+							quoteText : "привет привет",
+							arrAnswers: null
+						}
 					}]
 				},
-			})]]
+			})]
+		]
+	},
+	{
+		finalDocument: [
+			[createParagraphInfo("пр", undefined, undefined, {
+				start: [{id: 0, name: "s6"}, {
+					id  : 1,
+					name: "s3"
+				}]
+			}, {
+				comments: {
+					start: [{
+						start: true,
+						id   : 0
+					}]
+				},
+			}), createParagraphInfo("и", undefined, undefined, undefined, {
+				comments: {
+					start: [{
+						start: true,
+						id   : 1
+					}, {start: true, id: 2}]
+				},
+				textPr  : {
+					Bold     : true,
+					Underline: true,
+					BoldCS   : true,
+				}
+			}), createParagraphInfo("в", undefined, undefined, {start: [{id: 5, name: "s2"}]}, {
+				textPr: {
+					Bold     : true,
+					Underline: true,
+					BoldCS   : true,
+				}
+			}), createParagraphInfo("ет", undefined, undefined, undefined, {
+				textPr: {
+					Bold  : true,
+					BoldCS: true,
+				}
+			}), createParagraphInfo(" ", undefined, undefined, {
+				end: [{id: 0}]
+			}, {
+				textPr: {
+					Bold      : true,
+					FontSize  : 12,
+					BoldCS    : true,
+					FontSizeCS: 12,
+				}
+			}), createParagraphInfo("пр", undefined, undefined, {
+				start: [{
+					id  : 6,
+					name: "s7"
+				}]
+			}, {
+				comments: {start: [{start: true, id: 3}]},
+				textPr  : {Strikeout: true, VertAlign: 1,}
+			}), createParagraphInfo("и", undefined, undefined, {
+				end: [{
+					id  : 8,
+					name: "s1"
+				}, {id: 5}]
+			}, {
+				comments : {
+					start: [{
+						start: false,
+						id   : 1,
+						data : {
+							text      : "5",
+							quoteText : "ивет пр",
+							arrAnswers: null
+						}
+					}]
+				}, textPr: {Strikeout: true, VertAlign: 2,}
+			}), createParagraphInfo("вет", undefined, undefined, {
+				start: [{id: 1}, {id: 6}]
+			}, {
+				comments: {start: [{start: true, id: 4}]},
+				textPr  : {VertAlign: 1,}
+			}), createParagraphInfo(" ", undefined, undefined, {start: [{id: 8}]}, {}), createParagraphInfo("пр", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
+				textPr: {
+					Italic   : true,
+					Strikeout: true,
+					VertAlign: 1,
+					ItalicCS : true,
+				}
+			}), createParagraphInfo("и", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, {
+				start: [{
+					id  : 11,
+					name: "s5"
+				}]
+			}, {
+				textPr: {
+					Italic    : true,
+					Strikeout : true,
+					FontSize  : 12,
+					VertAlign : 1,
+					ItalicCS  : true,
+					FontSizeCS: 12,
+				}
+			}), createParagraphInfo("в", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
+				comments: {
+					start: [{
+						start: false,
+						id   : 2,
+						data : {
+							text      : "4",
+							quoteText : "ивет привет при",
+							arrAnswers: null
+						}
+					}]
+				},
+				textPr  : {
+					Italic    : true,
+					Strikeout : true,
+					FontSize  : 12,
+					ItalicCS  : true,
+					FontSizeCS: 12,
+				}
+			}), createParagraphInfo("е", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
+				comments: {
+					start: [{
+						start: false,
+						id   : 4,
+						data : {
+							text      : "1",
+							quoteText : "вет прив",
+							arrAnswers: null
+						}
+					}]
+				},
+				textPr  : {
+					Italic   : true,
+					Strikeout: true,
+					ItalicCS : true,
+				}
+			}), createParagraphInfo("т ", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {textPr: {Strikeout: true,}}), createParagraphInfo("при", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, {
+				start: [{
+					id  : 12,
+					name: "s4"
+				}]
+			}, {
+				comments : {
+					start: [{
+						start: false,
+						id   : 3,
+						data : {text: "2", quoteText: "привет привет ", arrAnswers: null}
+					}, {start: false, id: 0, data: {text: "3", quoteText: "привет привет привет ", arrAnswers: null}}]
+				}, textPr: {Strikeout: true, VertAlign: 1,}
+			}), createParagraphInfo("вет", undefined, undefined, undefined, {
+				textPr: {
+					Strikeout: true,
+					VertAlign: 1,
+				}
+			}), createParagraphInfo(undefined, undefined, undefined, {start: [{id: 11}, {id: 12}]}, {})]
+		]
 	}
 ];
 

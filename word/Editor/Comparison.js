@@ -75,7 +75,8 @@
 		const isLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
 		oTextIterator.skipTo(this.elementIndex, isLast ? this.innerElementIndex - 1 : this.innerElementIndex);
 		const oRun = oTextIterator.splitCurrentRun(isLast);
-		oTextIterator.dropLastCollect();
+		const oPartner = this.partner;
+		oPartner.dropLastRun();
 		oTextIterator.addToCollectBack(oRun);
 		if (this.elementIndex === 0 && this.innerElementIndex === 0)
 		{
@@ -84,7 +85,6 @@
 
 
 		oTextIterator.setCollectReviewRuns(null);
-		const oPartner = this.partner;
 		const arrRuns = oPartner.collectRuns;
 
 		const nPriorityReviewType = oPartner.reviewType;
@@ -128,7 +128,8 @@
 		oTextIterator.skipTo(this.elementIndex, isLast ? this.innerElementIndex - 1 : this.innerElementIndex);
 		oTextIterator.setCollectReviewRuns(this);
 		oTextIterator.addToCollectCurrentRun();
-		oTextIterator.splitCurrentRun(isLast);
+		const oSplitRun = oTextIterator.splitCurrentRun(isLast);
+		oTextIterator.addToCollectTextPr(oSplitRun);
 	};
 	CReviewChange.prototype.addRun = function (oRun) {
 		if (!this.mapRuns[oRun.Id]) {
@@ -499,13 +500,12 @@
 	CTextPrChange.prototype.applyStart = function (oTextIterator, oComparison) {
 		const isLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
 		oTextIterator.skipTo(this.elementIndex, isLast ? this.innerElementIndex - 1 : this.innerElementIndex);
-
+		const oPartner = this.partner;
 		const oRun = oTextIterator.splitCurrentRun(isLast);
-		oTextIterator.dropLastCollect();
+		oPartner.dropLastRun();
 		oTextIterator.addToCollectBack(oRun);
 
 		oTextIterator.setCollectTextPrRuns(null);
-		const oPartner = this.partner;
 		const arrRuns = oPartner.collectRuns;
 		const oNewTextPr = oPartner.textPr;
 
@@ -525,7 +525,8 @@
 
 		oTextIterator.setCollectTextPrRuns(this);
 		oTextIterator.addToCollectCurrentRun();
-		oTextIterator.splitCurrentRun(isLast);
+		const oSplitRun = oTextIterator.splitCurrentRun(isLast);
+		oTextIterator.addToCollectReviewChange(oSplitRun);
 	};
 	CTextPrChange.prototype.setPartner = function (partner) {
 		this.partner = partner;
@@ -4208,24 +4209,37 @@
 	CRunCollector.prototype.setCollectReviewRuns = function (oChange) {
 		this.collectReviewChange = oChange;
 	}
-	CRunCollector.prototype.addToCollect = function (oRun)
-	{
+	CRunCollector.prototype.addToCollectTextPr = function (oRun) {
 		if (this.collectTextPrChange) {
 			this.collectTextPrChange.addRun(oRun);
 		}
+	};
+	CRunCollector.prototype.addToCollectReviewChange = function (oRun) {
 		if (this.collectReviewChange) {
 			this.collectReviewChange.addRun(oRun);
 		}
-
 	};
-	CRunCollector.prototype.addToCollectBack = function (oRun)
+	CRunCollector.prototype.addToCollectBackTextPr = function (oRun) 
 	{
 		if (this.collectTextPrChange) {
 			this.collectTextPrChange.addRunBack(oRun);
 		}
+	};
+	CRunCollector.prototype.addToCollectBackReviewChange = function (oRun) 
+	{
 		if (this.collectReviewChange) {
 			this.collectReviewChange.addRunBack(oRun);
 		}
+	};
+	CRunCollector.prototype.addToCollect = function (oRun)
+	{
+		this.addToCollectReviewChange(oRun);
+		this.addToCollectTextPr(oRun);
+	};
+	CRunCollector.prototype.addToCollectBack = function (oRun)
+	{
+		this.addToCollectBackTextPr(oRun);
+		this.addToCollectBackReviewChange(oRun);
 	};
 	CRunCollector.prototype.addToCollectCurrentRun = function ()
 	{
