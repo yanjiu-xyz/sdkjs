@@ -51,6 +51,37 @@ mockEditor.sync_RemoveComment = function ()
 {
 	
 };
+let oCurrentTestDocument;
+AscCommonWord.CDocument.prototype.getTestObject = function ()
+{
+	oCurrentTestDocument = this;
+	const oContentObject = {type: 'document', content: []};
+	this.Content.forEach(function (oItem)
+	{
+		if (oItem.getTestObject)
+		{
+			oItem.getTestObject(oContentObject.content);
+		}
+		else
+		{
+			oContentObject.content.push(oItem.constructor.name);
+		}
+	});
+	if (this.SectPr)
+	{
+		const arrHdrFtr = this.SectPr.GetAllHdrFtrs();
+		for (let i = 0; i < arrHdrFtr.length; i += 1)
+		{
+			arrHdrFtr[i].getTestObject(oContentObject.content);
+		}
+
+	}
+	if (this.Footnotes)
+	{
+		this.Footnotes.getTestObject(oContentObject.content);
+	}
+	return oContentObject;
+};
 AscCommon.ParaComment.prototype.getTestObject = function (arrParentContent)
 {
 	let oComment = oMainComments.Get_ById(this.GetCommentId());
@@ -186,35 +217,6 @@ AscCommonWord.CTextPr.prototype.isEqualTestObject = function (oTestObject) {
 		return false;
 	}
 	return true;
-};
-AscCommonWord.CDocument.prototype.getTestObject = function ()
-{
-	const oContentObject = {type: 'document', content: []};
-	this.Content.forEach(function (oItem)
-	{
-		if (oItem.getTestObject)
-		{
-			oItem.getTestObject(oContentObject.content);
-		}
-		else
-		{
-			oContentObject.content.push(oItem.constructor.name);
-		}
-	});
-	if (this.SectPr)
-	{
-		const arrHdrFtr = this.SectPr.GetAllHdrFtrs();
-		for (let i = 0; i < arrHdrFtr.length; i += 1)
-		{
-			arrHdrFtr[i].getTestObject(oContentObject.content);
-		}
-
-	}
-	if (this.Footnotes)
-	{
-		this.Footnotes.getTestObject(oContentObject.content);
-	}
-	return oContentObject;
 };
 
 AscCommonWord.CHeaderFooter.prototype.getTestObject = function (arrParentContent)
@@ -374,10 +376,10 @@ Paragraph.prototype.getTestObject = function (arrParentContent)
 };
 AscCommonWord.CParagraphBookmark.prototype.getTestObject = function (arrParentContent)
 {
+	const oStartBookmark = oCurrentTestDocument.BookmarksManager.GetBookmarkById(this.GetBookmarkId())[0];
 	const oContentObject = {
 		type : 'bookmark',
-		id   : this.GetBookmarkId(),
-		name : this.GetBookmarkName(),
+		name : oStartBookmark.GetBookmarkName(),
 		start: this.IsStart()
 	};
 	arrParentContent.push(oContentObject)
@@ -698,3 +700,264 @@ function createFindingReviewInfo(nReviewType)
 {
 	return new CCreatingReviewInfo('Valdemar', nReviewType, 3000000);
 }
+//
+// asc_docs_api.prototype.getTest = function()
+// {
+// 	function getPr(oPr) {
+// 		const oRes = {};
+// 		if (oPr.Bold !== undefined) {
+// 			oRes.Bold = oPr.Bold;
+// 		}
+// 		if (oPr.Italic !== undefined) {
+// 			oRes.Italic = oPr.Italic;
+// 		}
+// 		if (oPr.Strikeout !== undefined) {
+// 			oRes.Strikeout = oPr.Strikeout;
+// 		}
+// 		if (oPr.Underline !== undefined) {
+// 			oRes.Underline = oPr.Underline;
+// 		}
+// 		if (oPr.FontSize !== undefined) {
+// 			oRes.FontSize = oPr.FontSize;
+// 		}
+// 		if (oPr.VertAlign !== undefined) {
+// 			oRes.VertAlign = oPr.VertAlign;
+// 		}
+// 		if (oPr.RStyle !== undefined) {
+// 			oRes.RStyle = oPr.RStyle;
+// 		}
+// 		if (oPr.Spacing !== undefined) {
+// 			oRes.Spacing = oPr.Spacing;
+// 		}
+// 		if (oPr.DStrikeout !== undefined) {
+// 			oRes.DStrikeout = oPr.DStrikeout;
+// 		}
+// 		if (oPr.Caps !== undefined) {
+// 			oRes.Caps = oPr.Caps;
+// 		}
+// 		if (oPr.SmallCaps !== undefined) {
+// 			oRes.SmallCaps = oPr.SmallCaps;
+// 		}
+// 		if (oPr.Position !== undefined) {
+// 			oRes.Position = oPr.Position;
+// 		}
+// 		if (oPr.BoldCS !== undefined) {
+// 			oRes.BoldCS = oPr.BoldCS;
+// 		}
+// 		if (oPr.ItalicCS !== undefined) {
+// 			oRes.ItalicCS = oPr.ItalicCS;
+// 		}
+// 		if (oPr.FontSizeCS !== undefined) {
+// 			oRes.FontSizeCS = oPr.FontSizeCS;
+// 		}
+// 		if (oPr.CS !== undefined) {
+// 			oRes.CS = oPr.CS;
+// 		}
+// 		if (oPr.RTL !== undefined) {
+// 			oRes.RTL = oPr.RTL;
+// 		}
+// 		if (oPr.FontScale !== undefined) {
+// 			oRes.FontScale = oPr.FontScale;
+// 		}
+// 		if (oPr.FontSizeOrig !== undefined) {
+// 			oRes.FontSizeOrig = oPr.FontSizeOrig;
+// 		}
+// 		if (oPr.FontSizeCSOrig !== undefined) {
+// 			oRes.FontSizeCSOrig = oPr.FontSizeCSOrig;
+// 		}
+// 		return oRes;
+// 	}
+// 	function getReview(oRun) {
+// 		const bPrevAdded = oRun.ReviewInfo && oRun.ReviewInfo.GetPrevAdded();
+// 		const nMainReviewInfo = oRun.GetReviewType();
+//
+// 		const oRes = {};
+// 		if (nMainReviewInfo !== reviewtype_Common) {
+// 			oRes.mainReviewType = nMainReviewInfo;
+// 		}
+//
+// 		if (bPrevAdded) {
+// 			oRes.additionalReviewType = reviewtype_Add;
+// 		}
+// 		return oRes;
+// 	}
+//
+// 	function compareReviewDiff(rev1, rev2) {
+// 		if (rev1.mainReviewType !== rev2.mainReviewType) {
+// 			return false;
+// 		}
+// 		if (rev1.additionalReviewType !== rev2.additionalReviewType) {
+// 			return false;
+// 		}
+// 		return true;
+// 	}
+//
+// 	function compareTextPrDiff(oPr1, oPr2) {
+// 		if (oPr1.Bold !== oPr2.Bold) {
+// 			return false;
+// 		}
+// 		if (oPr1.Italic !== oPr2.Italic) {
+// 			return false;
+// 		}
+// 		if (oPr1.Strikeout !== oPr2.Strikeout) {
+// 			return false;
+// 		}
+// 		if (oPr1.Underline !== oPr2.Underline) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontSize !== oPr2.FontSize) {
+// 			return false;
+// 		}
+// 		if (oPr1.VertAlign !== oPr2.VertAlign) {
+// 			return false;
+// 		}
+// 		if (oPr1.RStyle !== oPr2.RStyle) {
+// 			return false;
+// 		}
+// 		if (oPr1.Spacing !== oPr2.Spacing) {
+// 			return false;
+// 		}
+// 		if (oPr1.DStrikeout !== oPr2.DStrikeout) {
+// 			return false;
+// 		}
+// 		if (oPr1.Caps !== oPr2.Caps) {
+// 			return false;
+// 		}
+// 		if (oPr1.SmallCaps !== oPr2.SmallCaps) {
+// 			return false;
+// 		}
+// 		if (oPr1.Position !== oPr2.Position) {
+// 			return false;
+// 		}
+// 		if (oPr1.BoldCS !== oPr2.BoldCS) {
+// 			return false;
+// 		}
+// 		if (oPr1.ItalicCS !== oPr2.ItalicCS) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontSizeCS !== oPr2.FontSizeCS) {
+// 			return false;
+// 		}
+// 		if (oPr1.CS !== oPr2.CS) {
+// 			return false;
+// 		}
+// 		if (oPr1.RTL !== oPr2.RTL) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontScale !== oPr2.FontScale) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontSizeOrig !== oPr2.FontSizeOrig) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontSizeCSOrig !== oPr2.FontSizeCSOrig) {
+// 			return false;
+// 		}
+// 		return true;
+// 	}
+//
+// 	const oLogicDocument = this.private_GetLogicDocument();
+// 	const arrTests = [];
+// 	for (let i = 0; i < oLogicDocument.Content.length; i += 1) {
+// 		const oParagraph = oLogicDocument.Content[i];
+// 		let arrBookmarks = [];
+// 		let arrComments = [];
+// 		let test;
+// 		let paragraphTest = [];
+// 		arrTests.push(paragraphTest);
+// 		for (let j = 0; j < oParagraph.Content.length; j += 1) {
+// 			const oRunElement = oParagraph.Content[j];
+// 			if (oRunElement instanceof AscCommon.ParaComment) {
+// 				const isStart = oRunElement.IsCommentStart();
+// 				const comment = oLogicDocument.Comments.GetById(oRunElement.CommentId);
+// 				const data = !isStart ? `, data:{text: "${comment.Data.m_sText}", quoteText: "${comment.Data.m_sQuoteText}", arrAnswers: ${comment.Data.m_aReplies.length ? `[${comment.Data.m_aReplies.map((e) => '"' + e.Get_Text() + '"')}]` : "null"}}`: "";
+// 				arrComments.push(`{start: ${isStart}, id: ${comment.Id}${data}}`);
+// 			} else if (oRunElement instanceof AscCommonWord.CParagraphBookmark) {
+// 				arrBookmarks.push(`{id: ${oRunElement.GetBookmarkId()}${oRunElement.IsStart() ? ", name: " + '"' + oRunElement.GetBookmarkName() + '"' : ""}}`);
+// 			} else if (oRunElement instanceof AscCommonWord.ParaRun && oRunElement.Content.length) {
+// 				const prChange = getPr(oRunElement.Pr);
+// 				const revChange = getReview(oRunElement);
+// 				if (test) {
+// 					const prChange = getPr(oRunElement.Pr);
+// 					const revChange = getReview(oRunElement);
+// 					if (!compareReviewDiff(revChange, test.revChange) || !compareTextPrDiff(prChange, test.prChange) || arrBookmarks.length || arrComments.length) {
+// 						test = {
+// 							bookmarks: arrBookmarks,
+// 							comments: arrComments,
+// 							text: oRunElement.GetText(),
+// 							revChange: revChange,
+// 							prChange: prChange
+// 						};
+// 						arrComments = [];
+// 						arrBookmarks = [];
+// 						paragraphTest.push(test);
+// 					} else {
+// 						test.text += oRunElement.GetText();
+// 					}
+// 				} else {
+// 					test = {
+// 						bookmarks: arrBookmarks,
+// 						comments: arrComments,
+// 						text: oRunElement.GetText(),
+// 						revChange: revChange,
+// 						prChange: prChange
+// 					};
+// 					paragraphTest.push(test);
+// 					arrComments = [];
+// 					arrBookmarks = [];
+// 				}
+// 			}
+// 		}
+// 		if (arrBookmarks.length || arrComments.length) {
+// 			paragraphTest.push({bookmarks: arrBookmarks, comments: arrComments});
+// 			arrComments = [];
+// 			arrBookmarks = [];
+// 		}
+// 	}
+//
+//
+// 	let result = [];
+// 	for (let i = 0; i < arrTests.length; i++) {
+// 		const paragraphTest = arrTests[i];
+// 		const paragraphResult = [];
+// 		for (let j = 0; j < paragraphTest.length; j++) {
+// 			const runInfo = paragraphTest[j];
+// 			const stext = runInfo.text ? '"' + runInfo.text + '"' : "undefined";
+// 			let review = "undefined";
+// 			let addReview = "undefined"
+// 			if (runInfo.revChange) {
+// 				if (runInfo.revChange.mainReviewType === reviewtype_Add) {
+// 					review = "new CCreatingReviewInfo('Mark Potato', reviewtype_Add, 1000)";
+// 				} else if (runInfo.revChange.mainReviewType === reviewtype_Remove) {
+// 					review = "new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000)";
+// 				}
+// 				if (runInfo.revChange.additionalReviewType === reviewtype_Add) {
+// 					addReview = "new CCreatingReviewInfo('Mark Potato', reviewtype_Add, 1000)";
+// 				}
+// 			}
+// 			let bookmarks = "undefined";
+// 			if (runInfo.bookmarks && runInfo.bookmarks.length) {
+// 				bookmarks = `{start: [${runInfo.bookmarks.join(", ")}]}`;
+// 			}
+// 			let comments = "";
+// 			if (runInfo.comments && runInfo.comments.length) {
+// 				comments = `comments: {start: [${runInfo.comments.join(", ")}]},`;
+// 			}
+// 			let textpr = "";
+// 			if (runInfo.prChange) {
+// 				for (let sName in runInfo.prChange) {
+// 					if (!textpr) {
+// 						textpr = "textPr: {"
+// 					}
+// 					textpr += `${sName}: ${runInfo.prChange[sName]},`
+// 				}
+// 				if (textpr) {
+// 					textpr += "}"
+// 				}
+// 			}
+// 			paragraphResult.push(`createParagraphInfo(${stext}, ${review}, ${addReview}, ${bookmarks}, {${comments}${textpr}})`)
+// 		}
+// 		result.push("[" + paragraphResult.join(", ") + "]")
+// 	}
+// 	console.log(result.join(", "))
+// };
