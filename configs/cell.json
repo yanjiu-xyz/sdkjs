@@ -290,6 +290,7 @@
 			"word/Editor/document-composite-input.js",
 			"word/Editor/ChangeCase.js",
 			"word/Editor/SelectedContent.js",
+			"word/Editor/document/document-background.js",
 			"word/Editor/DocumentOutline.js",
 			"word/Editor/DocumentChanges.js",
 			"word/Editor/DocumentContent.js",

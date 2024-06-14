@@ -13967,6 +13967,7 @@
 	window["AscCommon"].g_oDocumentUrls = g_oDocumentUrls;
 	window["AscCommon"].FormulaTablePartInfo = FormulaTablePartInfo;
 	window["AscCommon"].cBoolLocal = cBoolLocal;
+	window["AscCommon"].cBoolOrigin = cBoolOrigin;
 	window["AscCommon"].cErrorOrigin = cErrorOrigin;
 	window["AscCommon"].cErrorLocal = cErrorLocal;
 	window["AscCommon"].cCellFunctionLocal = cCellFunctionLocal;

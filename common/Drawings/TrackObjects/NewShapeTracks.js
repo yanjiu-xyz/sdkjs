@@ -124,7 +124,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
     this.transform = new AscCommon.CMatrix();
     this.pageIndex = pageIndex;
     this.theme = theme;
-    this.drawingsController = drawingsController;
+    this.drawingsController = drawingsController ? drawingsController : Asc.editor.getGraphicController();
 
     //for connectors
     this.bConnector = false;
@@ -141,7 +141,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
 
     AscFormat.ExecuteNoHistory(function(){
 
-        if(this.drawingsController){
+        if(this.drawingsController && !this.drawingsController.document){
             this.bConnector = AscFormat.isConnectorPreset(presetGeom);
             if(this.bConnector){
 
@@ -570,12 +570,27 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         this.overlayObject.draw(overlay);
     };
 
+    this.createDrawing = function() {
+        let oDrawing;
+        if(this.bConnector) {
+            oDrawing = new AscFormat.CConnectionShape();
+        }
+        else if(this.placeholderType !== null && this.placeholderType !== undefined) {
+            oDrawing = AscCommonSlide.CreatePlaceholder(this.placeholderType, this.bVertical);
+        }
+        else if(this.drawingsController) {
+            oDrawing = this.drawingsController.createShape();
+        }
+        else {
+            oDrawing = new AscFormat.CShape();
+        }
+        return oDrawing;
+    };
+
     this.getShape = function(bFromWord, DrawingDocument, drawingObjects, isClickMouseEvent)
     {
-        var _sp_pr, shape;
+        var _sp_pr, shape = this.createDrawing();
         if(this.bConnector){
-
-            shape = new AscFormat.CConnectionShape();
             if(drawingObjects)
             {
                 shape.setDrawingObjects(drawingObjects);
@@ -629,7 +644,6 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         }
         else{
             if(this.placeholderType === null) {
-                shape = Asc.editor.isPdfEditor() === false ? new AscFormat.CShape() : new AscPDF.CPdfShape();
                 if(drawingObjects)
                 {
                     shape.setDrawingObjects(drawingObjects);
@@ -640,9 +654,6 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 {
                     shape.setWordShape(true);
                 }
-            }
-            else {
-                shape = AscCommonSlide.CreatePlaceholder(this.placeholderType, this.bVertical);
             }
             var x, y;
             if(bFromWord)
@@ -723,10 +734,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                     shape.txBody.setContent(content);
                     var bNeedCheckExtents = false;
                     if(drawingObjects){
-                        if(!drawingObjects.cSld || this.placeholderType !== null){
-                            body_pr.vertOverflow = AscFormat.nVOTClip;
-                        }
-                        else{
+                        if((drawingObjects.cSld || Asc.editor.isPdfEditor()) && this.placeholderType === null) {
                             body_pr.textFit = new AscFormat.CTextFit();
                             body_pr.textFit.type = AscFormat.text_fit_Auto;
                             if (isClickMouseEvent) {
@@ -735,6 +743,9 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                                 body_pr.wrap = AscFormat.nTWTSquare;
                             }
                             bNeedCheckExtents = true;
+                        }
+                        else{
+                            body_pr.vertOverflow = AscFormat.nVOTClip;
                         }
                     }
                     shape.txBody.setBodyPr(body_pr);

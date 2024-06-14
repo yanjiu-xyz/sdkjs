@@ -69,7 +69,8 @@ var c_oAscContextMenuTypes = {
 	Thumbnails : 1,
 	AnimEffect: 3,
 	Master: 4,
-	Layout: 5
+	Layout: 5,
+	TimelineZoom: 6
 };
 
 var THEME_THUMBNAIL_WIDTH   = 180;
@@ -532,6 +533,9 @@ prot = window['Asc']['c_oAscContextMenuTypes'] = window['Asc'].c_oAscContextMenu
 prot['Main']       = c_oAscContextMenuTypes.Main;
 prot['Thumbnails'] = c_oAscContextMenuTypes.Thumbnails;
 prot['AnimEffect'] = c_oAscContextMenuTypes.AnimEffect;
+prot['Master'] = c_oAscContextMenuTypes.Master;
+prot['Layout'] = c_oAscContextMenuTypes.Layout;
+prot['TimelineZoom'] = c_oAscContextMenuTypes.TimelineZoom;
 
 prot = window['Asc']['c_oAscAlignShapeType'] = c_oAscAlignShapeType;
 prot['ALIGN_LEFT']   = c_oAscAlignShapeType.ALIGN_LEFT;

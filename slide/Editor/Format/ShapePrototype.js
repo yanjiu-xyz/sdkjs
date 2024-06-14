@@ -676,6 +676,9 @@ CShape.prototype.OnContentReDraw = function(){
                 if(oParents.slide) {
                     return oParents.slide.num;
                 }
+                if(oParents.notes && oParents.notes.slide) {
+                    return oParents.notes.slide.num;
+                }
                 if(oParents.layout) {
                     return oParents.presentation.GetSlideIndex(oParents.layout);
                 }

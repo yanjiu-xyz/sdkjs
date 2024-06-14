@@ -2761,15 +2761,17 @@
 	};
 	CGraphicObjectBase.prototype.createPlaceholderControl = function (aControls) {
 
+		if(!this.parent) return;
+		if(!this.parent.getObjectType) return;
 		let bCanAdd = false;
-		if(this.isPlaceholder() && this.parent && this.parent.getObjectType &&
-			(this.parent.getObjectType() === AscDFH.historyitem_type_SlideMaster ||
-				this.parent.getObjectType() === AscDFH.historyitem_type_SlideLayout)) {
+		let nParentType = this.parent.getObjectType();
+		if(this.isPlaceholder() &&
+			(nParentType === AscDFH.historyitem_type_SlideMaster || nParentType === AscDFH.historyitem_type_SlideLayout)) {
 			bCanAdd = true;
 		}
 		else {
-			if (!this.isEmptyPlaceholder() || !this.canAddButtonPlaceholder()) {
-				bCanAdd = false;
+			if (this.isEmptyPlaceholder() && this.canAddButtonPlaceholder()) {
+				bCanAdd = true;
 			}
 		}
 
@@ -3487,9 +3489,7 @@
 			if (this.parent.getObjectType) {
 				nParentType = this.parent.getObjectType();
 			}
-			if (nParentType === AscDFH.historyitem_type_SlideLayout ||
-				nParentType === AscDFH.historyitem_type_SlideMaster ||
-				nParentType === AscDFH.historyitem_type_Notes ||
+			if (nParentType === AscDFH.historyitem_type_Notes ||
 				nParentType === AscDFH.historyitem_type_NotesMaster) {
 				return "";
 			}

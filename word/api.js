@@ -139,7 +139,7 @@
 			this.LinkToPrevious   = null;
 			this.Locked           = false;
 			this.StartPageNumber  = -1;
-			this.NumFormat        = (undefined !== obj.NumFormat) ? obj.NumFormat : -1;
+			this.NumFormat        = -1;
 		}
 	}
 
@@ -13581,7 +13581,7 @@ background-repeat: no-repeat;\
 	{
 		// TODO: get color from theme
 		if (this.isDarkMode)
-			return "#2A2A2A";
+			return "#616161";
 		return GlobalSkin.PageOutline;
 	};
 
@@ -13989,16 +13989,10 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_getPageColor = function()
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument || !logicDocument.Background)
-			return;
+		if (!logicDocument)
+			return null;
 		
-		let Unifill = logicDocument.Background.Unifill;
-		if (Unifill && Unifill.fill && Unifill.fill.color)
-			return AscCommon.CreateAscColor(Unifill.fill.color);
-		else if (logicDocument.Background.Color)
-			return AscCommon.CreateAscColorCustom(logicDocument.Background.Color.r, logicDocument.Background.Color.g, logicDocument.Background.Color.b, false);
-		
-		return null;
+		return logicDocument.Background.getAscColor();
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------

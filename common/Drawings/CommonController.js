@@ -845,7 +845,7 @@
 										return new ParaHyperlink();
 									}, this, []);
 									oHyperlink.Value = sLink2;
-									oHyperlink.Tooltip = oNvPr.hlinkClick.tooltip;
+									oHyperlink.ToolTip = oNvPr.hlinkClick.tooltip;
 									if (hit_in_text_rect) {
 										return {
 											objectId: drawing.Get_Id(),
@@ -3276,6 +3276,15 @@
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
 								if(oDrawing.isShape() || oDrawing.isImage()) {
+									if(bCheckInHyperlink) {
+										let oNvPr = oDrawing.getCNvProps();
+										if (oNvPr
+											&& oNvPr.hlinkClick
+											&& typeof oNvPr.hlinkClick.id === "string"
+											&& oNvPr.hlinkClick.id.length > 0) {
+											return false;
+										}
+									}
 									return true;
 								}
 							}
@@ -3339,7 +3348,7 @@
 												oHyper.action = HyperProps.Value;
 											}
 											oHyper.id = HyperProps.Value;
-											oHyper.tooltip = HyperProps.Tooltip;
+											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										}
 									}
@@ -3385,7 +3394,7 @@
 												oHyper.action = HyperProps.Value;
 											}
 											oHyper.id = HyperProps.Value;
-											oHyper.tooltip = HyperProps.Tooltip;
+											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										}
 									}

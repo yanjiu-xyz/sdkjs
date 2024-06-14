@@ -2730,7 +2730,7 @@ CTable.prototype.GetEndInfo = function()
 };
 CTable.prototype.GetPrevElementEndInfo = function(RowIndex)
 {
-	if (-1 === RowIndex || !this.Parent)
+	if (-1 === RowIndex || !this.Parent || !this.Content[RowIndex])
 		return null;
 
 	if (0 === RowIndex)
@@ -16568,6 +16568,9 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 		isAllSelected = true;
 	}
 	
+	if (isCellSelection)
+		this.RemoveSelection();
+	
 	if ((bAll || (isCellSelection && !this.ApplyToAll))
 		&& (undefined === nType
 			|| c_oAscRevisionsChangeType.TablePr === nType
@@ -16621,12 +16624,9 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 			}
 		}
 	}
-
+	
 	if (this.GetRowsCount() <= 0)
 		return;
-	
-	if (isCellSelection)
-		this.RemoveSelection();
 	
 	if (arrSelectionArray.length <= 0)
 	{

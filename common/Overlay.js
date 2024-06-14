@@ -948,7 +948,7 @@
         }
         else
         {
-            this.m_oContext.resetTransform();
+            this.m_oContext.setTransform(1, 0, 0, 1, 0, 0);
         }
         this.m_oOverlay.CanvasTransform = this.CanvasTransform;
     };
