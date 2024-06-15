@@ -2964,7 +2964,7 @@
 				}
 			}
 		}
-		return sCopyNumId;
+		return sCopyNumId === undefined ? sNumId : sCopyNumId;
 	};
     CDocumentComparison.prototype.copyStyleById = function(sId)
     {
