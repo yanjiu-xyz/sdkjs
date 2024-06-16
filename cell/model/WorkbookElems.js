@@ -47,6 +47,7 @@ var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
 
 var UndoRedoDataTypes = AscCommonExcel.UndoRedoDataTypes;
 var UndoRedoData_IndexSimpleProp = AscCommonExcel.UndoRedoData_IndexSimpleProp;
+var UndoRedoData_FromTo = AscCommonExcel.UndoRedoData_FromTo;
 
 var UndoRedoData_Layout = AscCommonExcel.UndoRedoData_Layout;
 
@@ -5443,6 +5444,7 @@ CCellStyles.prototype._prepareCellStyle = function (name) {
 		return style.XfId;
 
 	if (defaultStyle) {
+		//todo add to history. it allows save XfId in history
 		this.CustomStyles[i] = defaultStyle.clone();
 		this.CustomStyles[i].XfId = ++maxXfId;
 		return this.CustomStyles[i].XfId;
@@ -6297,7 +6299,8 @@ StyleManager.prototype =
 			null == this.CustomWidth && 0 === this.outlineLevel && false == this.collapsed;
 	};
 	Col.prototype.isUpdateScroll = function () {
-		return null !== this.hd || null !== this.xfs || 0 !== this.outlineLevel || false !== this.collapsed;
+		//TODO temporary added check on CustomWidth -> nColsCount common for scroll/draw. need separate nColsCount for draw and for scroll
+		return null !== this.hd || null !== this.xfs || 0 !== this.outlineLevel || false !== this.collapsed || true === this.CustomWidth;
 	};
 	Col.prototype.clone = function (oNewWs) {
 		if (!oNewWs) {
@@ -6381,6 +6384,7 @@ StyleManager.prototype =
 		this.xfs = g_StyleCache.addXf(xfs);
 	};
 	Col.prototype.setCellStyle = function (val) {
+		var oStyle;
 		var newVal = this.ws.workbook.CellStyles._prepareCellStyle(val);
 		var oRes = this.ws.workbook.oStyleManager.setCellStyle(this, newVal);
 		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
@@ -6389,7 +6393,7 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oldStyleName, val));
 
 			// Выставляем стиль
-			var oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
+			oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
 			if (oStyle.ApplyFont) {
 				this.setFont(oStyle.getFont());
 			}
@@ -6403,6 +6407,7 @@ StyleManager.prototype =
 				this.setNumFormat(oStyle.getNumFormatStr());
 			}
 		}
+		return oStyle;
 	};
 	Col.prototype.setNumFormat = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setNum(this, new Num({f: val}));
@@ -6789,6 +6794,7 @@ StyleManager.prototype =
 		this._hasChanged = true;
 	};
 	Row.prototype.setCellStyle = function (val) {
+		var oStyle;
 		var newVal = this.ws.workbook.CellStyles._prepareCellStyle(val);
 		var oRes = this.ws.workbook.oStyleManager.setCellStyle(this, newVal);
 		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
@@ -6797,7 +6803,7 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oldStyleName, val));
 
 			// Выставляем стиль
-			var oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
+			oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
 			if (oStyle.ApplyFont) {
 				this.setFont(oStyle.getFont());
 			}
@@ -6811,6 +6817,7 @@ StyleManager.prototype =
 				this.setNumFormat(oStyle.getNumFormatStr());
 			}
 		}
+		return oStyle;
 	};
 	Row.prototype.setNumFormat = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setNum(this, new Num({f: val}));
@@ -8432,6 +8439,11 @@ function RangeDataManagerElem(bbox, data)
 			this.TableColumns[i].getAllFormulas(formulas);
 		}
 	};
+	TablePart.prototype.forEachFormula = function (callback) {
+		for (let i = 0; i < this.TableColumns.length; ++i) {
+			this.TableColumns[i].forEachFormula(callback);
+		}
+	};
 	TablePart.prototype.moveRef = function (col, row) {
 		let ref = this.Ref.clone();
 		ref.setOffset(new AscCommon.CellBase(row || 0, col || 0));
@@ -9896,6 +9908,11 @@ function RangeDataManagerElem(bbox, data)
 			formulas.push(this.TotalsRowFormula);
 		}
 	};
+	TableColumn.prototype.forEachFormula = function (callback) {
+		if (this.TotalsRowFormula) {
+			callback(this.TotalsRowFormula);
+		}
+	};
 	TableColumn.prototype.clone = function () {
 		var res = new TableColumn();
 		res.Name = this.Name;
@@ -11117,6 +11134,12 @@ function RangeDataManagerElem(bbox, data)
 		var isDigitValue = !isNaN(val);
 		if (!isDigitValue) {
 			val = val.toLowerCase();
+		} else {
+			let isQuotePrefix = cell && cell.getQuotePrefix();
+			if (isQuotePrefix) {
+				isDigitValue = false;
+				val = val.toLowerCase();
+			}
 		}
 
 		var checkComplexSymbols = null, filterVal;
@@ -14391,6 +14414,7 @@ function RangeDataManagerElem(bbox, data)
 		return this.name;
 	};
 
+
 	function CPrintPreviewState(wb) {
 		this.ctx = null;
 		this.pages = null;
@@ -14966,6 +14990,12 @@ function RangeDataManagerElem(bbox, data)
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
+			if (this.worksheets[null]) {
+				this.changeSheetName(null, sheetName);
+			}
+			if (!this.worksheets[sheetName]) {
+				this.addSheetName(sheetName, true, true);
+			}
 			if (this.worksheets && this.worksheets[sheetName]) {
 				let wsTo = this.worksheets[sheetName];
 				//меняем лист
@@ -15000,13 +15030,31 @@ function RangeDataManagerElem(bbox, data)
 		//path also can changed
 		var path = oPortalData && oPortalData["path"];
 		if (path && this.Id !== path) {
-			!this.notUpdateId && this.setId(path);
+			let isNotUpdate = (AscCommonExcel.importRangeLinksState && AscCommonExcel.importRangeLinksState.notUpdateIdMap[this.Id]) || this.notUpdateId;
+			!isNotUpdate && this.setId(path);
 			isChanged = true;
 		}
 
 		if (isChanged && History.Is_On()) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 				null, null, new AscCommonExcel.UndoRedoData_FromTo(cloneER, this));
+		}
+	};
+
+	ExternalReference.prototype.changeSheetName = function (from, to) {
+		for (let i in this.SheetNames) {
+			if (this.SheetNames[i] === from) {
+				this.SheetNames[i] = to;
+			}
+		}
+
+		for (let i in this.worksheets) {
+			if (i === from + "") {
+				let _val = this.worksheets[i];
+				_val.sName = to;
+				this.worksheets[to] = _val;
+				delete this.worksheets[from];
+			}
 		}
 	};
 
@@ -15062,12 +15110,21 @@ function RangeDataManagerElem(bbox, data)
 		return this.Id.match(p);
 	};
 
-	ExternalReference.prototype.addSheetName = function (name, generateDefaultStructure) {
+	ExternalReference.prototype.addSheetName = function (name, generateDefaultStructure, addSheetObj) {
 		this.SheetNames.push(name);
 		if (generateDefaultStructure) {
 			var externalSheetDataSet = new ExternalSheetDataSet();
 			externalSheetDataSet.SheetId = this.SheetNames.length - 1;
 			this.SheetDataSet.push(externalSheetDataSet);
+		}
+		if (addSheetObj) {
+			let wb = this.getWb();
+			if (!wb) {
+				wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
+			}
+			let ws = new AscCommonExcel.Worksheet(wb);
+			ws.sName = name;
+			this.worksheets[name] = ws;
 		}
 	};
 
@@ -15196,7 +15253,7 @@ function RangeDataManagerElem(bbox, data)
 	ExternalReference.prototype.initRows = function (range) {
 
 		var sheetName = range && range.worksheet && range.worksheet.sName;
-		if (sheetName) {
+		if (sheetName !== undefined) {
 			var index = this.getSheetByName(sheetName);
 			if (index != null) {
 				var externalSheetDataSet = this.SheetDataSet[index];
@@ -15295,6 +15352,14 @@ function RangeDataManagerElem(bbox, data)
 	};
 	asc_CExternalReference.prototype.asc_getData = function () {
 		return this.data;
+	};
+	asc_CExternalReference.prototype.asc_getLink = function () {
+		let res = null;
+		//if link on portal(example - importRange function)
+		if (this.externalReference && this.externalReference.isExternalLink()) {
+			res = this.externalReference && this.externalReference.Id;
+		}
+		return res;
 	};
 	asc_CExternalReference.prototype.asc_getSource = function () {
 		let id = this.externalReference && this.externalReference.Id;
@@ -17000,6 +17065,249 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	/**
+	 * Class representing "Formulas" properties specifies calculation options
+	 * @constructor
+	 */
+	function CCalcPr() {
+		this.calcId = null;
+		this.calcMode = null;
+		this.fullCalcOnLoad = null;
+		this.refMode = null;
+		this.iterate = null;
+		this.iterateCount = null;
+		this.iterateDelta = null;
+		this.fullPrecision = null;
+		this.calcCompleted = null;
+		this.calcOnSave = null;
+		this.concurrentCalc = null;
+		this.concurrentManualCount = null;
+		this.forceFullCalc = null;
+	}
+
+	/**
+	 * Method clones calculation options
+	 * @memberof CCalcPr
+	 * @returns {CCalcPr}
+	 */
+	CCalcPr.prototype.clone = function () {
+		var res = new CCalcPr();
+
+		res.calcId = this.calcId;
+		res.calcMode = this.calcMode;
+		res.fullCalcOnLoad = this.fullCalcOnLoad;
+		res.refMode = this.refMode;
+		res.iterate = this.iterate;
+		res.iterateCount = this.iterateCount;
+		res.iterateDelta = this.iterateDelta;
+		res.fullPrecision = this.fullPrecision;
+		res.calcCompleted = this.calcCompleted;
+		res.calcOnSave = this.calcOnSave;
+		res.concurrentCalc = this.concurrentCalc;
+		res.concurrentManualCount = this.concurrentManualCount;
+		res.forceFullCalc = this.forceFullCalc;
+
+		return res;
+	};
+	/**
+	 * Method returns "iterate" attribute specifies whether the application should attempt to calculate formulas
+	 * that contain circular references.
+	 * @memberof CCalcPr
+	 * @returns {boolean}
+	 */
+	CCalcPr.prototype.getIterate = function () {
+		return this.iterate;
+	};
+	/**
+	 * Method returns "iterateCount" attribute specifies the number of iterations attempts when calculating a
+	 * workbook with circular references, when the "iterate" attribute is true.
+	 * @memberof CCalcPr
+	 * @returns {number}
+	 */
+	CCalcPr.prototype.getIterateCount = function () {
+		return this.iterateCount;
+	};
+	/**
+	 * Method returns "iterateDelta" attribute specifies the maximum change for iterative calculations.
+	 * @memberof CCalcPr
+	 * @returns {number}
+	 */
+	CCalcPr.prototype.getIterateDelta = function () {
+		return this.iterateDelta;
+	};
+	/**
+	 * Method returns "calcMode" attribute specifies when the application should calculate formulas in the workbook.
+	 * @memberof CCalcPr
+	 * @returns {Asc.c_oAscCalcMode}
+	 */
+	CCalcPr.prototype.getCalcMode = function () {
+		return this.calcMode;
+	};
+	/**
+	 * Method sets "iterate" attribute specifies whether the application should attempt to calculate formulas
+	 * that contain circular references.
+	 * @memberof CCalcPr
+	 * @param {boolean} bIterate
+	 */
+	CCalcPr.prototype.setIterate = function (bIterate) {
+		const DEFAULT_ITERATE = false;
+		this.iterate = DEFAULT_ITERATE !== bIterate ? bIterate : null;
+	};
+	/**
+	 * Method sets "iterateCount" attribute specifies the number of iterations attempts when calculating a
+	 * workbook with circular references, when the "iterate" attribute is true.
+	 * @memberof CCalcPr
+	 * @param {number} nIterateCount
+	 */
+	CCalcPr.prototype.setIterateCount = function (nIterateCount) {
+		const DEFAULT_ITER_COUNT = 100;
+		this.iterateCount = DEFAULT_ITER_COUNT !== nIterateCount ? nIterateCount : null;
+	};
+	/**
+	 * Method sets "iterateDelta" attribute specifies the maximum change for iterative calculations.
+	 * @memberof CCalcPr
+	 * @param {number} nIterateDelta
+	 */
+	CCalcPr.prototype.setIterateDelta = function (nIterateDelta) {
+		const DEFAULT_ITER_DELTA = 1e-3;
+		this.iterateDelta = DEFAULT_ITER_DELTA !== nIterateDelta ? nIterateDelta : null;
+	};
+	/**
+	 * Method updates calcPr attributes
+	 * @memberof CCalcPr
+	 * @param {asc_CCalcSettings} oCalcSettings
+	 * @param {Workbook} oWbModel
+	 */
+	CCalcPr.prototype.updateCalcProperties = function (oCalcSettings, oWbModel) {
+		let bIterativeCalc = oCalcSettings.asc_getIterativeCalc();
+		let nMaxIterations = oCalcSettings.asc_getMaxIterations();
+		let nMaxChange = oCalcSettings.asc_getMaxChange();
+
+		let bOldIterate = this.getIterate();
+		let nOldIterateCount = this.getIterateCount();
+		let nOldIterateDelta = this.getIterateDelta();
+
+		this.setIterate(bIterativeCalc);
+		this.setIterateCount(nMaxIterations);
+		this.setIterateDelta(nMaxChange);
+
+		if (History.Is_On()) {
+			let oUpdateSheet = oWbModel.getActiveWs();
+			let oUpdateRange = new Asc.Range(0, 0, oUpdateSheet.getColsCount(), oUpdateSheet.getRowsCount());
+
+			if (this.getIterate() !== bOldIterate) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_CalcPr_iterate,
+					oUpdateSheet.getId(), oUpdateRange, new UndoRedoData_FromTo(bOldIterate, this.getIterate()));
+			}
+			if (this.getIterateCount() !== nOldIterateCount) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_CalcPr_iterateCount,
+					oUpdateSheet.getId(), oUpdateRange, new UndoRedoData_FromTo(nOldIterateCount, this.getIterateCount()));
+			}
+			if (this.getIterateDelta() !== nOldIterateDelta) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_CalcPr_iterateDelta,
+					oUpdateSheet.getId(), oUpdateRange, new UndoRedoData_FromTo(nOldIterateDelta, this.getIterateDelta()));
+			}
+		}
+	};
+
+	/**
+	 * Class representing calculation settings for UI interface
+	 * @constructor
+	 */
+	function asc_CCalcSettings() {
+		// Default values if calcPr is empty
+		this.bIterativeCalc = false;
+		this.nMaxIterations = 100;
+		this.nMaxChange = 1e-3;
+	}
+
+	/**
+	 * Method sets "Enable iterative calculation" setting
+	 * @memberof asc_CCalcSettings
+	 * @param {boolean} bIterativeCalc
+	 */
+	asc_CCalcSettings.prototype.asc_setIterativeCalc = function (bIterativeCalc) {
+		this.bIterativeCalc = bIterativeCalc
+	};
+	/**
+	 * Method returns "Enable iterative calculation" setting
+	 * @memberof asc_CCalcSettings
+	 * @returns {boolean}
+	 */
+	asc_CCalcSettings.prototype.asc_getIterativeCalc = function () {
+		return this.bIterativeCalc;
+	};
+	/**
+	 * Method sets "Maximum iterations" setting
+	 * @memberof asc_CCalcSettings
+	 * @param {number} nMaxIterations
+	 */
+	asc_CCalcSettings.prototype.asc_setMaxIterations = function (nMaxIterations) {
+		this.nMaxIterations = nMaxIterations;
+	};
+	/**
+	 * Method returns "Maximum iterations" setting
+	 * @memberof asc_CCalcSettings
+	 * @returns {number}
+	 */
+	asc_CCalcSettings.prototype.asc_getMaxIterations = function () {
+		return this.nMaxIterations;
+	};
+	/**
+	 * Method sets "Maximum change" setting
+	 * @memberof asc_CCalcSettings
+	 * @param {number} nMaxChange
+	 */
+	asc_CCalcSettings.prototype.asc_setMaxChange = function (nMaxChange) {
+		this.nMaxChange = nMaxChange;
+	};
+	/**
+	 * Method returns "Maximum change" setting
+	 * @memberof asc_CCalcSettings
+	 * @returns {number}
+	 */
+	asc_CCalcSettings.prototype.asc_getMaxChange = function () {
+		return this.nMaxChange;
+	};
+	/**
+	 * Method initializes settings according CalcPr
+	 * @memberof asc_CCalcSettings
+	 * @param {Workbook} oWbModel
+	 */
+	asc_CCalcSettings.prototype.asc_initSettings = function (oWbModel) {
+		const oCalcPr = oWbModel.calcPr;
+		if (oCalcPr.getIterate() != null) {
+			this.asc_setIterativeCalc(oCalcPr.getIterate());
+		}
+		if (oCalcPr.getIterateCount() != null) {
+			this.asc_setMaxIterations(oCalcPr.getIterateCount());
+		}
+		if (oCalcPr.getIterateDelta() != null) {
+			this.asc_setMaxChange(oCalcPr.getIterateDelta());
+		}
+	};
+	/**
+	 * Method checks if the given CalcPr object is equal to the current object.
+	 * @memberof asc_CCalcSettings
+	 * @param {CCalcPr} oCalcPr - The CalcPr to compare with.
+	 * @returns {boolean} - True if the objects are equal, false otherwise.
+	 */
+	asc_CCalcSettings.prototype.asc_isEqual = function (oCalcPr) {
+		const DEFAULT_ITERATE = false;
+		const DEFAULT_MAX_ITERATE = 100;
+		const DEFAULT_MAX_CHANGE = 1e-3;
+
+		const bIterativeCalcEqual = this.asc_getIterativeCalc() === oCalcPr.getIterate();
+		const bMaxIterationEqual = this.asc_getMaxIterations() === oCalcPr.getIterateCount();
+		const bMaxChangeEqual = this.asc_getMaxChange() === oCalcPr.getIterateDelta();
+		const bIterCalcDefaultVal = this.asc_getIterativeCalc() === DEFAULT_ITERATE && oCalcPr.getIterate() == null;
+		const bMaxIterDefaultVal = this.asc_getMaxIterations() === DEFAULT_MAX_ITERATE && oCalcPr.getIterateCount() == null;
+		const bMaxChangeDefaultVal = this.asc_getMaxChange() === DEFAULT_MAX_CHANGE && oCalcPr.getIterateDelta() == null;
+
+		return (bIterativeCalcEqual && bMaxIterationEqual && bMaxChangeEqual) ||
+			(bIterCalcDefaultVal && bMaxIterDefaultVal && bMaxChangeDefaultVal);
+	};
+
 	//****metadata****
 	function CMetadata() {
 		this.metadataTypes = null;
@@ -17304,7 +17612,12 @@ function RangeDataManagerElem(bbox, data)
 		this.wb = wb;
 		this.funcsMapInfo = {};
 
+		this.localiztionMap = {};//{en: {"SUM": "SUMMA"}{"SUMMA": "SUM"}}
+
 		this.prefixName = "";
+		this.activeLocale = null;
+
+		this.needRecalculate = null;
 	}
 	CCustomFunctionEngine.prototype.add = function (func, options) {
 		//options ->
@@ -17330,6 +17643,7 @@ function RangeDataManagerElem(bbox, data)
 		*/
 
 		this._add(func, options);
+		this.needRecalculate = true;
 	};
 
 	CCustomFunctionEngine.prototype._add = function (func, options) {
@@ -17436,12 +17750,64 @@ function RangeDataManagerElem(bbox, data)
 				let returnInfo = options.returnInfo;
 				return oThis.prepareResult(res, returnInfo.type);
 			} catch (e) {
-				console.log("ERROR CUSTOM FUNCTION CALCULATE")
+				console.log("ERROR CUSTOM FUNCTION CALCULATE");
 				return  new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 			}
 		};
 
-		this.addToFunctionsList(newFunc);
+		this.addToFunctionsList(newFunc, options);
+	};
+
+	CCustomFunctionEngine.prototype.remove = function (sName) {
+		sName = sName.toUpperCase();
+
+		let isFound = false;
+		if (AscCommonExcel.cFormulaFunctionGroup["Custom"]) {
+			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
+			for (let i in aCustomFunc) {
+				if (aCustomFunc[i] && aCustomFunc[i].prototype && aCustomFunc[i].prototype.name === sName) {
+					aCustomFunc.splice(i - 0, 1);
+					isFound = true;
+					break;
+				}
+			}
+		}
+
+		if (isFound) {
+			AscCommonExcel.removeCustomFunction(sName);
+			this.wb.initFormulasList && this.wb.initFormulasList();
+			if (this.wb && this.wb.Api) {
+				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+			}
+			this.wb.handlers && this.wb.handlers.trigger("asc_onRemoveCustomFunction");
+			return true;
+		}
+		return false;
+	};
+
+	CCustomFunctionEngine.prototype.clear = function () {
+		if (AscCommonExcel.cFormulaFunctionGroup["Custom"] && AscCommonExcel.cFormulaFunctionGroup["Custom"].length) {
+			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
+			for (let i = 0; i < aCustomFunc.length; i++) {
+				let sName = aCustomFunc[i].prototype.name;
+				AscCommonExcel.removeCustomFunction(sName);
+			}
+			AscCommonExcel.cFormulaFunctionGroup["Custom"] = [];
+
+			this.wb.initFormulasList && this.wb.initFormulasList();
+			if (this.wb && this.wb.Api) {
+				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+			}
+			this.wb.handlers && this.wb.handlers.trigger("asc_onRemoveCustomFunction");
+
+			return true;
+		}
+
+		return false;
+	};
+
+	CCustomFunctionEngine.prototype.setActiveLocale = function (sLocale) {
+		this.activeLocale = sLocale;
 	};
 
 	CCustomFunctionEngine.prototype._getParamsInfo = function (func, params) {
@@ -17450,7 +17816,7 @@ function RangeDataManagerElem(bbox, data)
 		if (!aArgs) {
 			return argsInfo;
 		}
-		
+
 		let paramsMap = {};
 		if (params) {
 			for (let i in params) {
@@ -17481,17 +17847,22 @@ function RangeDataManagerElem(bbox, data)
 		return sFunc.slice(sFunc.indexOf('(') + 1, sFunc.indexOf(')')).match(funcArgsNamesRegExp);
 	};
 
-	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, translations) {
-		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
+	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, params) {
+		AscCommonExcel.cFormulaFunctionGroup['Custom'] = AscCommonExcel.cFormulaFunctionGroup['Custom'] || [];
+
+		let translations = params.nameLocale;
+		let description = params.description;
+		let args = params.params;
 
 		let funcName = newFunc.prototype.name;
 
 		//already added function
+		let isNewFunc = false;
 		if (this.funcsMapInfo[funcName]) {
 			//reload translations
-			this.funcsMapInfo[funcName].translations = translations;
+			this.pushTranslations(funcName, translations);
 
-			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
+			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["Custom"];
 			for (let i in customFunctionList) {
 				if (customFunctionList[i] && customFunctionList[i].prototype.name === funcName) {
 					customFunctionList.splice(i - 0, 1);
@@ -17499,25 +17870,64 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		} else {
-			this.funcsMapInfo[funcName] = {};
-			this.funcsMapInfo[funcName].translations = translations;
+			this.funcsMapInfo[funcName] = new CCustomFunctionInfo(funcName);
+			this.pushTranslations(funcName, translations);
+			this.funcsMapInfo[funcName].description = description;
+
+			if (args) {
+				for (let i = 0; i < args.length; i++) {
+					if (!this.funcsMapInfo[funcName].args) {
+						this.funcsMapInfo[funcName].args = [];
+					}
+					this.funcsMapInfo[funcName].args.push(new CCustomFunctionArgInfo(args[i].name, args[i].isOptional));
+				}
+			}
+			isNewFunc = true;
 		}
 
 		//add or reload
 		if (AscCommonExcel.cFormulaFunctionToLocale && ((!this.funcsMapInfo[funcName].addLocalization
 			&& !AscCommonExcel.cFormulaFunctionToLocale[funcName]) || this.funcsMapInfo[funcName].addLocalization)) {
-			//TODO translation
+
 			//need get from interface short formula lang("en", ...)
-			let localName = this.getTranslationName(funcName);
+			let localName = this.getTranslationName(funcName, this.activeLocale);
 			AscCommonExcel.cFormulaFunctionLocalized[localName] = newFunc;
 			AscCommonExcel.cFormulaFunctionToLocale[funcName] = localName;
 
 			this.funcsMapInfo[funcName].addLocalization = true;
+			this.funcsMapInfo[funcName].description = description;
 		}
 
-		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
+		AscCommonExcel.cFormulaFunctionGroup["Custom"].push(newFunc);
 		AscCommonExcel.addNewFunction(newFunc);
 		this.wb.initFormulasList && this.wb.initFormulasList();
+		if (this.wb && this.wb.Api) {
+			this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+		}
+		if (isNewFunc) {
+			this.wb.handlers && this.wb.handlers.trigger("asc_onAddCustomFunction");
+		}
+	};
+
+	CCustomFunctionEngine.prototype.pushTranslations = function (funcName, translations) {
+		for (let i in translations) {
+			if (!translations[i]) {
+				continue;
+			}
+			if (!this.localiztionMap[i]) {
+				this.localiztionMap[i] = {};
+			}
+			if (!this.localiztionMap[i].fullNameToLocalName) {
+				this.localiztionMap[i].fullNameToLocalName = {};
+			}
+			if (!this.localiztionMap[i].localNameToFullName) {
+				this.localiztionMap[i].localNameToFullName = {};
+			}
+
+
+			this.localiztionMap[i].fullNameToLocalName[funcName] = (translations[i] + "").toUpperCase();
+			this.localiztionMap[i].localNameToFullName[translations[i]] = funcName;
+		}
 	};
 
 	CCustomFunctionEngine.prototype.getTypeByString = function (_type) {
@@ -17626,16 +18036,42 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
-	CCustomFunctionEngine.prototype.getFunc = function (name) {
+	CCustomFunctionEngine.prototype.getFunc = function (name, bLocale) {
+		if (bLocale) {
+			let activeLocale = this.activeLocale;
+			if (this.localiztionMap[activeLocale]) {
+				if (this.localiztionMap[activeLocale].localNameToFullName[name]) {
+					name = this.localiztionMap[activeLocale].localNameToFullName[name];
+				}
+			}
+		}
+
 		return this.funcsMapInfo[name];
+	};
+	
+	CCustomFunctionEngine.prototype.getDescription = function (name, ignoreLocale) {
+		let res = null;
+
+		let activeLocale = this.activeLocale;
+		if (!ignoreLocale && this.localiztionMap[activeLocale]) {
+			if (this.localiztionMap[activeLocale].localNameToFullName[name]) {
+				name = this.localiztionMap[activeLocale].localNameToFullName[name];
+			}
+		}
+
+		if (this.funcsMapInfo[name]) {
+			res = this.funcsMapInfo[name].description;
+		}
+
+		return res;
 	};
 
 	CCustomFunctionEngine.prototype.getTranslationName = function (name, lang) {
 		let res = name;
-		if (this.funcsMapInfo[name]) {
-			name = this.funcsMapInfo[name].translations && this.funcsMapInfo[name].translations[lang];
-			if (name) {
-				res = name;
+		if (this.localiztionMap[lang]) {
+			let localName = this.localiztionMap[lang].fullNameToLocalName[name];
+			if (localName) {
+				res = this.localiztionMap[lang].fullNameToLocalName[name];
 			}
 		}
 		return res;
@@ -17807,6 +18243,72 @@ function RangeDataManagerElem(bbox, data)
 		return false;
 	};
 
+
+	function CCustomFunctionInfo(name) {
+		this.name = name;
+		this.description = null;
+
+		this.args = null;
+
+		this.addLocalization = null;
+	}
+	CCustomFunctionInfo.prototype.asc_getDescription = function () {
+		return this.description;
+	};
+	CCustomFunctionInfo.prototype.asc_getArg = function (num) {
+		if (num == null) {
+			return this.args;
+		}
+		if (this.args && this.args[num]) {
+			return this.args[num];
+		}
+		return null;
+	};
+
+	function CCustomFunctionArgInfo(sName, bOptional) {
+		this.sName = sName;
+		this.bOptional = bOptional;
+	}
+	CCustomFunctionArgInfo.prototype.asc_getName = function () {
+		return this.sName;
+	};
+	CCustomFunctionArgInfo.prototype.asc_getIsOptional = function () {
+		return this.bOptional;
+	};
+
+	function CWorkbookInfo(name, id) {
+		this.name = name;
+		this.id = id;
+
+		this.sheets = null;
+	}
+	CWorkbookInfo.prototype.addSheet = function (name, index) {
+		if (!this.sheets) {
+			this.sheets = [];
+		}
+		let newObj = new CWorksheetInfo(name, index);
+		this.sheets.push(newObj);
+	};
+	CWorkbookInfo.prototype.asc_getName = function () {
+		return this.name;
+	};
+	CWorkbookInfo.prototype.asc_getId = function () {
+		return this.id;
+	};
+	CWorkbookInfo.prototype.asc_getSheets = function () {
+		return this.sheets;
+	};
+
+	function CWorksheetInfo(name, index) {
+		this.name = name;
+		this.index = index;
+	}
+	CWorksheetInfo.prototype.asc_getName = function () {
+		return this.name;
+	};
+	CWorksheetInfo.prototype.asc_getIndex = function () {
+		return this.index;
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -18185,6 +18687,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getId"] = prot.asc_getId;
 	prot["asc_isExternalLink"] = prot.isExternalLink;
 	prot["asc_getPath"] = prot.asc_getPath;
+	prot["asc_getLink"] = prot.asc_getLink;
 
 
 
@@ -18322,6 +18825,19 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CTimelineStyleElement = CTimelineStyleElement;
 	window["AscCommonExcel"].CTimelinePivotFilter = CTimelinePivotFilter;
 
+	window["AscCommonExcel"].CCalcPr = CCalcPr;
+
+	window["Asc"]["asc_CCalcSettings"] = window["Asc"].asc_CCalcSettings = asc_CCalcSettings;
+	prot = asc_CCalcSettings.prototype;
+	prot["asc_getIterativeCalc"] = prot.asc_getIterativeCalc;
+	prot["asc_getMaxIterations"] = prot.asc_getMaxIterations;
+	prot["asc_getMaxChange"] = prot.asc_getMaxChange;
+
+	prot["asc_setIterativeCalc"] = prot.asc_setIterativeCalc;
+	prot["asc_setMaxIterations"] = prot.asc_setMaxIterations;
+	prot["asc_setMaxChange"] = prot.asc_setMaxChange;
+	prot["asc_initSettings"] = prot.asc_initSettings;
+
 	window["AscCommonExcel"].CMetadata = CMetadata;
 	window["AscCommonExcel"].CMetadataType = CMetadataType;
 	window["AscCommonExcel"].CMetadataString = CMetadataString;
@@ -18339,6 +18855,28 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CDynamicArrayProperties = CDynamicArrayProperties;
 	window["AscCommonExcel"].CRichValueBlock = CRichValueBlock;
 	window["AscCommonExcel"].CCustomFunctionEngine = CCustomFunctionEngine;
+
+	window["AscCommonExcel"].CCustomFunctionInfo = CCustomFunctionInfo;
+	prot = CCustomFunctionInfo.prototype;
+	prot["asc_getDescription"] = prot.asc_getDescription;
+	prot["asc_getArg"] = prot.asc_getArg;
+
+	window["AscCommonExcel"].CCustomFunctionArgInfo = CCustomFunctionArgInfo;
+	prot = CCustomFunctionArgInfo.prototype;
+	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_getIsOptional"] = prot.asc_getIsOptional;
+
+
+	window["AscCommonExcel"].CWorkbookInfo = CWorkbookInfo;
+	prot = CWorkbookInfo.prototype;
+	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_getId"] = prot.asc_getId;
+	prot["asc_getSheets"] = prot.asc_getSheets;
+
+	window["AscCommonExcel"].CWorksheetInfo = CWorksheetInfo;
+	prot = CWorksheetInfo.prototype;
+	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_getIndex"] = prot.asc_getIndex;
 
 
 

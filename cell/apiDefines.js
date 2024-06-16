@@ -499,7 +499,8 @@ var c_oAscPopUpSelectorType = {
     text: 1,
     reference: 2,
     any: 3,
-    logical: 4
+    logical: 4,
+    array: 5
   };
 
   var c_oAscSelectionForCFType = {
@@ -634,6 +635,12 @@ var c_oAscPopUpSelectorType = {
   var c_oAscContextMenuTypes = {
     common       : 0, // default context menu
     changeSeries : 1  // fill right click mouse - series menu
+  };
+
+  var c_oAscCalcMode = {
+    auto: 0,
+    autoNoTable: 1,
+    manual: 2
   };
 
   //----------------------------------------------------------export----------------------------------------------------
@@ -1091,5 +1098,11 @@ var c_oAscPopUpSelectorType = {
   prot = c_oAscContextMenuTypes;
   prot['common'] = prot.common;
   prot['changeSeries'] = prot.changeSeries;
+
+  window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
+  prot = c_oAscCalcMode;
+  prot['auto'] = prot.auto;
+  prot['autoNoTable'] = prot.autoNoTable;
+  prot['manual'] = prot.manual;
 
 })(window);
