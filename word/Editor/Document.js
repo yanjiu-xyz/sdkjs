@@ -24701,17 +24701,21 @@ CDocument.prototype.AddCaption = function(oPr)
     }
     else
     {
-        if(this.Selection.Use)
-        {
-            var oTable = this.Content[this.Selection.StartPos];
-            NewParagraph = new AscWord.Paragraph();
-            this.Internal_Content_Add(oPr.get_Before() ? oTable.Index : (oTable.Index + 1), NewParagraph, true);
-        }
-        else
-        {
-            NewParagraph = new AscWord.Paragraph();
-            this.Internal_Content_Add(oPr.get_Before() ? this.CurPos.ContentPos : (this.CurPos.ContentPos + 1), NewParagraph, true);
-        }
+		let targetElement = this.GetCurrentTable();
+		if (!targetElement)
+			targetElement = this.GetCurrentParagraph();
+		
+		let docContent = targetElement ? targetElement.GetParent() : null;
+		if (docContent)
+		{
+			let targetPos = targetElement.GetIndex();
+			if (!oPr.get_Before() || -1 === targetPos)
+				++targetPos;
+			
+			NewParagraph = new AscWord.Paragraph();
+			this.RemoveSelection();
+			docContent.AddToContent(targetPos, NewParagraph);
+		}
     }
     if(NewParagraph)
     {
