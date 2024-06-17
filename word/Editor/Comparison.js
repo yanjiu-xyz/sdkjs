@@ -2896,8 +2896,40 @@
             }
         }
     };
+	CDocumentComparison.prototype.applyChangesToTablePr = function (oNode) {
+		if (oNode.partner) {
+			const oMainTable = oNode.element;
+			const oRevisedTable = oNode.partner.element;
+
+			const oMainPr = oMainTable.Pr;
+			const oRevisedPr = oRevisedTable.Pr;
+
+			const sMainStyleId = oMainTable.TableStyle;
+			const sRevisedStyleId  = this.copyStyleById(oRevisedTable.TableStyle);
+
+			const oMainTableLook = oMainTable.Get_TableLook();
+			const oRevisedTableLook = oMainTable.Get_TableLook();
+			if (oMainPr.Is_Equal(oRevisedPr) && sMainStyleId === sRevisedStyleId && (oMainTableLook && oMainTableLook.IsEqual(oRevisedTableLook) || oMainTableLook === oRevisedTableLook)) {
+				return;
+			}
+			if (sMainStyleId !== sRevisedStyleId) {
+				oMainTable.Set_TableStyle(sRevisedStyleId, true);
+			}
+			if (oRevisedTableLook) {
+				oMainTable.Set_TableLook(oRevisedTableLook.Copy());
+			} else {
+				oMainTable.Set_TableLook(oRevisedTableLook);
+			}
+			const oNewPr = oRevisedPr.Copy();
+			oNewPr.PrChange = oMainPr.Copy();
+			oNewPr.ReviewInfo = new CReviewInfo();
+			this.setReviewInfo(oNewPr.ReviewInfo);
+			oMainTable.Set_Pr(oNewPr);
+		}
+	}
     CDocumentComparison.prototype.applyChangesToTable = function(oNode)
     {
+			this.applyChangesToTablePr(oNode);
         this.applyChangesToTableSize(oNode);
         this.applyChangesToTableRows(oNode);
     };
@@ -2932,14 +2964,51 @@
         }
     };
     CDocumentComparison.prototype.checkRowReview = function(oRowNode) {};
+	CDocumentComparison.prototype.addTablePrChange = function (oTablePr) {
+		oTablePr.PrChange = oTablePr.Copy(false);
+		oTablePr.ReviewInfo = new CReviewInfo();
+		this.setReviewInfo(oTablePr.ReviewInfo);
+	};
+		CDocumentComparison.prototype.applyChangesToTableCellPr = function (oNode) {
+			if (oNode.partner) {
+				const oMainCell = oNode.element.GetParent();
+				const oRevisedCell = oNode.partner.element.GetParent();
+				this.setTableElementChange(oMainCell, oRevisedCell);
+			}
+		};
+		CDocumentComparison.prototype.applyChangesToTableRowPr = function (oNode) {
+			if (oNode.partner) {
+				const oMainRow = oNode.element;
+				const oRevisedRow = oNode.partner.element;
+				this.setTableElementChange(oMainRow, oRevisedRow);
+			}
+		};
+	CDocumentComparison.prototype.setTableElementChange = function (oMainElement, oRevisedElement) {
+		const oMainPr = oMainElement.Pr;
+		const oRevisedPr = oRevisedElement.Pr;
+
+		if (oMainPr.Is_Equal(oRevisedPr)) {
+			return;
+		}
+		const oNewPr = oRevisedPr.Copy();
+		oNewPr.PrChange = oMainPr.Copy();
+		oNewPr.ReviewInfo = new CReviewInfo();
+		this.setReviewInfo(oNewPr.ReviewInfo);
+		oMainElement.Set_Pr(oNewPr);
+		const oTable = oMainElement.GetTable();
+		oTable.AddPrChange(this.copyPr);
+	};
     CDocumentComparison.prototype.applyChangesToTableRow = function(oNode)
     {
         this.checkRowReview(oNode);
+				this.applyChangesToTableRowPr(oNode);
         //TODO: handle cell inserts and removes
 
         for(let i = 0; i < oNode.children.length; ++i)
         {
-            this.applyChangesToDocContent(oNode.children[i]);
+					const oChild = oNode.children[i];
+					this.applyChangesToTableCellPr(oChild);
+          this.applyChangesToDocContent(oChild);
         }
     };
 	CDocumentComparison.prototype.getCopyNumId = function (sNumId)
@@ -4138,7 +4207,7 @@
 		const oLastElement = this.elements[this.elementIndex];
 		this.innerElementIndex = oLastElement.elements.length - 1;
 		const oLastRun = oLastElement.lastRun;
-		const oParent = oLastRun.GetParent();
+		const oParent = oLastRun.Paragraph;
 		this.parent = oParent;
 		const oContent = oParent.Content;
 		for (let i = oContent.length - 1; i >= 0; i -= 1) {
