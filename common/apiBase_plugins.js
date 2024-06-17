@@ -1263,6 +1263,8 @@
 		}
 		return false;
 	}
+	AscCommon.getLocalStorageItem = getLocalStorageItem;
+	AscCommon.setLocalStorageItem = setLocalStorageItem;
 
 	function installPlugin(config, loadFuncName)
 	{

@@ -293,13 +293,19 @@
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
 
+		this.needPasteText = false; // если не вставили бинарник, то вставляем текст
 		// пока что копирование бинарником только внутри drawings или самих drawings
-		if (_format == AscCommon.c_oAscClipboardDataFormat.Internal && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
+		if ([AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.HtmlElement].includes(_format) && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
-			return;
+		}
+		else {
+			this.needPasteText = true;
 		}
 		
+		if (!this.needPasteText || typeof(data) != "string")
+			return;
+
 		if (oActiveForm && (oActiveForm.GetType() != AscPDF.FIELD_TYPES.text || oActiveForm.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
@@ -453,6 +459,7 @@
 		let viewer = this.DocumentRenderer;
 		let doc    = viewer.getPDFDoc();
 		let drDoc  = doc.GetDrawingDocument();
+		let drController = doc.GetController();
 		
 		let textController = doc.getTextController();
 		if (!textController)
@@ -461,11 +468,15 @@
 			return false;
 		}
 		
+		let docContent = textController.GetDocContent();
 		let result = textController.EnterText(codePoints);
 		
+		if (null == drController.getTargetTextObject()) {
+			drController.selection.textSelection = textController;
+		}
+
 		drDoc.showTarget(true);
 		drDoc.TargetStart();
-		let docContent = textController.GetDocContent();
 		
 		if (docContent.IsSelectionUse() && !docContent.IsSelectionEmpty())
 			drDoc.TargetEnd();
@@ -2256,7 +2267,9 @@
 		this.sendMathToMenu();
 		this.sendStandartTextures();
 		//выставляем тип copypaste
+		this.isDocumentEditor = false;
 		AscCommon.PasteElementsId.g_bIsDocumentCopyPaste = false;
+		AscCommon.PasteElementsId.g_bIsPDFCopyPaste = true;
 	};
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));
