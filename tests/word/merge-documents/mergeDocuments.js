@@ -1431,6 +1431,20 @@ const arrTestObjectsInfo = [
 				}
 			}), createParagraphInfo(undefined, undefined, undefined, {start: [{id: 11}, {id: 12}]}, {})]
 		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("привет привет")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("привет hello"), 
+				createParagraphInfo(" при", undefined, undefined, undefined, {textPr: {Bold: true}}), 
+				createParagraphInfo("вет")
+			]
+		]
 	}
 ];
 
@@ -2698,6 +2712,16 @@ const arrAnswers = [
 					VertAlign: 1,
 				}
 			}), createParagraphInfo(undefined, undefined, undefined, {start: [{id: 11}, {id: 12}]}, {})]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("привет"),
+				createParagraphInfo(" hello", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000)),
+				createParagraphInfo(" при", undefined, undefined, undefined, {textPr: {Bold: true}}),
+				createParagraphInfo("вет")
+			]
 		]
 	}
 ];

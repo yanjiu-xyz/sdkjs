@@ -501,10 +501,13 @@
 		const bIsLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
 		oTextIterator.skipTo(this.elementIndex, bIsLast ? this.innerElementIndex - 1 : this.innerElementIndex);
 		const oPartner = this.partner;
-		const oRun = oTextIterator.splitCurrentRun(bIsLast);
+		const oSplitRun = oTextIterator.splitCurrentRun(bIsLast);
 		oPartner.dropLastRun();
-		oTextIterator.addToCollectBack(oRun);
-
+		oTextIterator.addToCollectBack(oSplitRun);
+		if (this.elementIndex === 0 && this.innerElementIndex === 0)
+		{
+			changeFirstTextElement(oTextIterator, oSplitRun);
+		}
 		oTextIterator.setCollectTextPrRuns(null);
 		const arrRuns = oPartner.collectRuns;
 		const oNewTextPr = oPartner.textPr;
