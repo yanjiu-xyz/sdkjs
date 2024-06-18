@@ -555,11 +555,12 @@
 		}
 	};
 
-	function CTextPrChangeCollector(arrMainElements, arrRevisedElements, oMainParagraph, oRevisedParagraph) {
+	function CTextPrChangeCollector(arrMainElements, arrRevisedElements, oMainParagraph, oRevisedParagraph, oCopyPr) {
 		this.elements = arrRevisedElements;
 		this.comparedElements = arrMainElements;
 		this.mainParagraph = oMainParagraph;
 		this.revisedParagraph = oRevisedParagraph;
+		this.copyPr = oCopyPr;
 	}
 	CTextPrChangeCollector.prototype.getRevisedLastRunIndex = function () {
 		const oLastElement = this.elements[this.elements.length - 1];
@@ -611,7 +612,7 @@
 			const oRevisedRun = oRevisedContent[nRevisedRunIndex];
 			const oMainRun = oMainContent[nMainRunIndex];
 			const oMainTextPr = oMainRun.Pr;
-			const oRevisedTextPr = oRevisedRun.Pr;
+			const oRevisedTextPr = oRevisedRun.Pr.Copy(undefined, this.copyPr);
 
 			if (!bSaveOldRevisedCount) {
 				nRevisedElementsCount = oRevisedRun.Content.length;
@@ -702,7 +703,7 @@
     }
 
 	function getChanges(arrOriginalTextElements, arrRevisedTextElements, comparison, oMainParent, oRevisedParent) {
-		const oTextPrChangeCollector = new CTextPrChangeCollector(arrOriginalTextElements, arrRevisedTextElements, oMainParent, oRevisedParent);
+		const oTextPrChangeCollector = new CTextPrChangeCollector(arrOriginalTextElements, arrRevisedTextElements, oMainParent, oRevisedParent, comparison.copyPr);
 		const arrTextPrChanges = oTextPrChangeCollector.getTextPrChanges();
 
 		let arrReviewChanges = [];

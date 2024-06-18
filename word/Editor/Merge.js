@@ -921,6 +921,7 @@
 	      comparison.oBookmarkManager = this.oBookmarkManager;
         comparison.oComparisonMoveMarkManager = this.oComparisonMoveMarkManager;
         comparison.CommentsMap = this.CommentsMap;
+				comparison.StylesMap = this.StylesMap;
         const originalDocument = new CMockDocument();
         const revisedDocument = new CMockDocument();
         const originalParagraph = new CMockParagraph();
