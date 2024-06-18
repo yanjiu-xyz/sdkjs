@@ -129,7 +129,11 @@
 			"common/Controls.js",
 			"common/Overlay.js",
 			"common/Drawings/HatchPattern.js",
-
+			
+			"common/bidi/bidi-common.js",
+			"common/bidi/bidi-types.js",
+			"common/bidi/unicode-data.js",
+			
 			"common/scroll.js",
 			"vendor/iscroll.js",
 			"vendor/delta.js",
@@ -290,6 +294,7 @@
 			"word/Editor/document-composite-input.js",
 			"word/Editor/ChangeCase.js",
 			"word/Editor/SelectedContent.js",
+			"word/Editor/document/document-background.js",
 			"word/Editor/DocumentOutline.js",
 			"word/Editor/DocumentChanges.js",
 			"word/Editor/DocumentContent.js",

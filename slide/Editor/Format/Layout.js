@@ -194,6 +194,9 @@ SlideLayout.prototype.getDrawingsForController = function(){
 SlideLayout.prototype.getTheme = function(){
     return this.Master && this.Master.Theme || null;
 };
+SlideLayout.prototype.getMaster = function(){
+    return this.getParentObjects().master;
+};
     SlideLayout.prototype.isAnimated = function () {
         return false;
     };
@@ -442,6 +445,13 @@ SlideLayout.prototype.getTheme = function(){
                 this.cSld.refreshAllContentsFields();
             }
         }
+        else {
+            if(-1 !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = -1;
+                this.cSld.refreshAllContentsFields();
+
+            }
+        }
         this.recalculate();
 
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
@@ -461,6 +471,13 @@ SlideLayout.prototype.getTheme = function(){
                 this.cSld.refreshAllContentsFields();
             }
         }
+        else {
+            if(-1 !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = -1;
+                this.cSld.refreshAllContentsFields();
+
+            }
+        }
         this.recalculate();
         this.cSld.forEachSp(function(oSp) {
             if ( !AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
@@ -477,6 +494,13 @@ SlideLayout.prototype.getTheme = function(){
 
             }
         }
+        else {
+            if(-1 !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = -1;
+                this.cSld.refreshAllContentsFields();
+
+            }
+        }
         this.recalculate();
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
 
@@ -489,6 +513,9 @@ SlideLayout.prototype.getTheme = function(){
                 oSp.draw(graphics);
             }
         });
+        if(!slide) {
+            this.drawViewPrMarks(graphics);
+        }
     };
     SlideLayout.prototype.calculateType = function()
     {
@@ -554,6 +581,9 @@ SlideLayout.prototype.getTheme = function(){
     };
     SlideLayout.prototype.recalculate = function()
     {
+
+        if(!this.Master)
+            return;
         var _shapes = this.cSld.spTree;
         var _shape_index;
         var _shape_count = _shapes.length;
@@ -685,6 +715,7 @@ SlideLayout.prototype.getTheme = function(){
                 }
                 case AscDFH.historyitem_SlideLayoutSetBg:
                 {
+                    this.recalcInfo.recalculateBackground = true;
                     break;
                 }
             }
@@ -791,6 +822,9 @@ SlideLayout.prototype.getTheme = function(){
     SlideLayout.prototype.getPlaceholdersControls = function () {
         return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
     };
+    SlideLayout.prototype.showChartSettings = function () {
+        return AscCommonSlide.Slide.prototype.showChartSettings.call(this);
+    };
     SlideLayout.prototype.getParentObjects = function () {
         return {
             presentation: Asc.editor.private_GetLogicDocument(),
@@ -860,6 +894,25 @@ SlideLayout.prototype.getTheme = function(){
             return this.Master.clrMap;
         }
         return AscFormat.GetDefaultColorMap();
+    };
+    SlideLayout.prototype.checkSlideTheme = function() {
+        return AscCommonSlide.Slide.prototype.checkSlideTheme.call(this);
+    };
+    SlideLayout.prototype.IsUseInDocument = function() {
+        let oMaster = this.Master;
+        if(!oMaster) return false;
+        if(!oMaster.IsUseInDocument()) return false;
+        for(let nLt = 0; nLt < oMaster.sldLayoutLst.length; ++nLt) {
+            if(oMaster.sldLayoutLst[nLt] === this) return true;
+        }
+        return false;
+    };
+    SlideLayout.prototype.drawViewPrMarks = function(oGraphics) {
+        if(oGraphics.isSupportTextDraw && !oGraphics.isSupportTextDraw()) return;
+        return AscCommonSlide.Slide.prototype.drawViewPrMarks.call(this, oGraphics);
+    };
+    SlideLayout.prototype.checkPlaceholders = function(oPlaceholders) {
+        return AscCommonSlide.Slide.prototype.checkPlaceholders.call(this, oPlaceholders);
     };
 
     let LAYOUT_TYPE_MAP = {};
@@ -1130,7 +1183,7 @@ function CLayoutThumbnailDrawer()
                 {
                     _master.recalculate();
                 }
-                _master.draw(g);
+                _master.drawNoPlaceholdersShapesOnly(g);
             }
         }
 

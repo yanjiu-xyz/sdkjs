@@ -3229,6 +3229,8 @@ var editor;
 		this.wb = new AscCommonExcel.WorkbookView(this.wbModel, this.controller, this.handlers, this.HtmlElement,
 			this.topLineEditorElement, this, this.collaborativeEditing, this.fontRenderingMode);
 
+		this.registerCustomFunctionsLibrary();
+
 		if (this.isCopyOutEnabled && this.topLineEditorElement) {
 			if (this.isCopyOutEnabled() === false) {
 				this.topLineEditorElement.oncopy = function () {
@@ -9303,6 +9305,31 @@ var editor;
 			return;
 		}
 		return wb.customFunctionEngine && wb.customFunctionEngine.remove(sName);
+	};
+
+	spreadsheet_api.prototype.clearCustomFunctions = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.customFunctionEngine && wb.customFunctionEngine.clear();
+	};
+
+	spreadsheet_api.prototype.recalculateCustomFunctions = function() {
+		let needDraw = null;
+		if (this.wb && this.wb.customFunctionEngine && this.wb.customFunctionEngine.needRecalculate) {
+			if (this.wbModel.addCustomFunctionToChanged()) {
+				needDraw = true;
+			}
+			this.wb.customFunctionEngine.needRecalculate = false;
+		}
+		if (needDraw) {
+			this.wb.model.dependencyFormulas.calcTree();
+			const ws = this.wb && this.wb.getWorksheet();
+			ws && ws.draw();
+			return true;
+		}
+		return false;
 	};
 
 	spreadsheet_api.prototype.asc_getCustomFunctionInfo = function(sName, bIgnoreLocal) {

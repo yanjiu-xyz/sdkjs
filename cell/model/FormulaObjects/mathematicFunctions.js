@@ -4992,9 +4992,10 @@ function (window, undefined) {
 	cSUMIF.prototype.argumentsMin = 2;
 	cSUMIF.prototype.argumentsMax = 3;
 	cSUMIF.prototype.arrayIndexes = {0: 1, 2: 1};
+	cSUMIF.prototype.exactTypes = {0: 1};
 	cSUMIF.prototype.argumentsType = [argType.reference, argType.any, argType.reference];
 	cSUMIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, matchingInfo;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, matchingInfo;
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
 			cElementType.cellsRange !== arg0.type) {
 			if (cElementType.cellsRange3D === arg0.type) {
@@ -5025,7 +5026,9 @@ function (window, undefined) {
 			arg1 = arg1.getElementRowCol(0, 0);
 		}
 
-		arg1 = arg1.tocString();
+		if (cElementType.string !== arg1.type) {
+			arg1 = arg1.tocString();
+		}
 
 		if (cElementType.string !== arg1.type) {
 			return new cError(cErrorType.wrong_value_type);
@@ -5033,9 +5036,9 @@ function (window, undefined) {
 
 		matchingInfo = AscCommonExcel.matchingValue(arg1);
 		if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type) {
-			var arg0Matrix = arg0.getMatrix(), arg2Matrix = arg2.getMatrix(), valMatrix2;
-			for (var i = 0; i < arg0Matrix.length; i++) {
-				for (var j = 0; j < arg0Matrix[i].length; j++) {
+			let arg0Matrix = arg0.getMatrix(), arg2Matrix = arg[2] ? arg2.getMatrix() : arg0Matrix, valMatrix2;
+			for (let i = 0; i < arg0Matrix.length; i++) {
+				for (let j = 0; j < arg0Matrix[i].length; j++) {
 					if (arg2Matrix[i] && (valMatrix2 = arg2Matrix[i][j]) && cElementType.number === valMatrix2.type &&
 						AscCommonExcel.matching(arg0Matrix[i][j], matchingInfo)) {
 						_sum += valMatrix2.getValue();
@@ -5124,6 +5127,7 @@ function (window, undefined) {
 	cSUMIFS.prototype.name = 'SUMIFS';
 	cSUMIFS.prototype.argumentsMin = 3;
 	cSUMIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1};
+	cSUMIFS.prototype.exactTypes = {0: 1, 1: 1};	// in this function every odd argument is should be checked for type reference
 	cSUMIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cSUMIFS.prototype.Calculate = function (arg) {
 		let arg0 = arg[0];
@@ -5281,6 +5285,24 @@ function (window, undefined) {
 	};
 	cSUMIFS.prototype.checkArguments = function (countArguments) {
 		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
+	};
+	cSUMIFS.prototype.checkArgumentsTypes = function (args) {
+		// check first element, then all odd ones
+		if (!cBaseFunction.prototype.checkArgumentsTypes.call(this, [args[0]])) {
+			return false
+		}
+
+		for (let i = 1; i < args.length; i += 2) {
+			// check reference type for each odd element
+			let oddArgument = args[i];
+			if (oddArgument && this.exactTypes[1]) {
+				if (oddArgument.type !== cElementType.cellsRange && oddArgument.type !== cElementType.cellsRange3D 
+					&& oddArgument.type !== cElementType.cell && oddArgument.type !== cElementType.cell3D) {
+						return false
+				}
+			}
+		}
+		return true;
 	};
 
 	/**

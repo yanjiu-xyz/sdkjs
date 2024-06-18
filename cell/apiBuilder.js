@@ -292,6 +292,17 @@
 	function ApiColor(color) {
 		this.color = color;
 	}
+	/**
+	 * Returns the color number.
+	 * @memberof ApiColor
+	 * @returns {number}
+	 */
+	ApiColor.prototype.GetRGB = function () {
+		if (!this.color) {
+			return 0;
+		}
+		return this.color.getRgb();
+	};
 
 	/**
 	 * Class representing a name.
@@ -515,6 +526,15 @@
 	 */
 	Api.prototype.RemoveCustomFunction = function (sName) {
 		return this.removeCustomFunction(sName);
+	};
+	/**
+	 * Clear all custom functions.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns false if such a functions does not exist.
+	 */
+	Api.prototype.ClearCustomFunctions = function () {
+		return this.clearCustomFunctions();
 	};
 
 	/**
@@ -13255,12 +13275,13 @@
 	ApiChart.prototype["SetAxieNumFormat"]            =  ApiChart.prototype.SetAxieNumFormat;
 
 	ApiOleObject.prototype["GetClassType"]            = ApiOleObject.prototype.GetClassType;
-	ApiOleObject.prototype["SetData"]              = ApiOleObject.prototype.SetData;
-	ApiOleObject.prototype["GetData"]              = ApiOleObject.prototype.GetData;
+	ApiOleObject.prototype["SetData"]                 = ApiOleObject.prototype.SetData;
+	ApiOleObject.prototype["GetData"]                 = ApiOleObject.prototype.GetData;
 	ApiOleObject.prototype["SetApplicationId"]        = ApiOleObject.prototype.SetApplicationId;
 	ApiOleObject.prototype["GetApplicationId"]        = ApiOleObject.prototype.GetApplicationId;
 
-	ApiColor.prototype["GetClassType"]                 =  ApiColor.prototype.GetClassType;
+	ApiColor.prototype["GetClassType"]                =  ApiColor.prototype.GetClassType;
+	ApiColor.prototype["GetRGB"]                      =  ApiColor.prototype.GetRGB;
 
 
 	ApiName.prototype["GetName"]                 =  ApiName.prototype.GetName;

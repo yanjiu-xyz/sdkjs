@@ -1094,6 +1094,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 			oSp.handleUpdateTheme();
 		});
     };
+    Slide.prototype.checkPlaceholders = function(aPlaceholders)
+    {
+        let bResult = false;
+		this.cSld.forEachSp(function(oSp) {
+			let bSpResult = oSp.checkPlaceholders(aPlaceholders);
+            if(bSpResult) {
+                bResult = true;
+            }
+		});
+        return bResult;
+    };
 
     Slide.prototype.checkSlideColorScheme = function()
     {
@@ -1634,6 +1645,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     Slide.prototype.getTheme = function(){
         return this.Layout && this.Layout.Master && this.Layout.Master.Theme || null;
     };
+    Slide.prototype.getMaster = function(){
+        return this.getParentObjects().master;
+    };
 
     Slide.prototype.drawSelect = function(_type)
     {
@@ -2020,6 +2034,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return false;
     };
     Slide.prototype.isMaster = function () {
+        return false;
+    };
+
+    Slide.prototype.IsUseInDocument = function() {
+        let oPresentation = Asc.editor.private_GetLogicDocument();
+        if(!oPresentation) return false;
+        for(let nSld = 0; nSld < oPresentation.Slides.length; ++nSld) {
+            if(oPresentation.Slides[nSld] === this) {
+                return true;
+            }
+        }
         return false;
     };
 

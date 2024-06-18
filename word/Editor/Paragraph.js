@@ -13759,6 +13759,7 @@ Paragraph.prototype.GetSelectionState = function()
 		X          : this.CurPos.X,
 		Y          : this.CurPos.Y,
 		Line       : this.CurPos.Line,
+		Range      : this.CurPos.Range,
 		ContentPos : this.Get_ParaContentPos(false, false),
 		RealX      : this.CurPos.RealX,
 		RealY      : this.CurPos.RealY,
@@ -13787,16 +13788,17 @@ Paragraph.prototype.SetSelectionState = function(State, StateIndex)
 		return;
 
 	var ParaState = State[StateIndex];
-
-	this.CurPos.X        = ParaState.CurPos.X;
-	this.CurPos.Y        = ParaState.CurPos.Y;
-	this.CurPos.Line     = ParaState.CurPos.Line;
-	this.CurPos.RealX    = ParaState.CurPos.RealX;
-	this.CurPos.RealY    = ParaState.CurPos.RealY;
-	this.CurPos.PagesPos = ParaState.CurPos.PagesPos;
 	
 	this.RemoveSelection();
 	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1, false);
+	
+	this.CurPos.X        = ParaState.CurPos.X;
+	this.CurPos.Y        = ParaState.CurPos.Y;
+	this.CurPos.Line     = ParaState.CurPos.Line;
+	this.CurPos.Range    = ParaState.CurPos.Range;
+	this.CurPos.RealX    = ParaState.CurPos.RealX;
+	this.CurPos.RealY    = ParaState.CurPos.RealY;
+	this.CurPos.PagesPos = ParaState.CurPos.PagesPos;
 	
 	this.Selection.Start = ParaState.Selection.Start;
 	this.Selection.Use   = ParaState.Selection.Use;
@@ -18802,6 +18804,10 @@ Paragraph.prototype.getLayoutFontSizeCoefficient = function()
 	// 	return this.getLayoutScaleCoefficient();
 	
 	return logicDocument.GetDocumentLayout().GetFontScale();
+};
+Paragraph.prototype.isRtlDirection = function()
+{
+	return !!this.Get_CompiledPr2(false).ParaPr.Bidi;
 };
 
 Paragraph.prototype.asc_getText = function()

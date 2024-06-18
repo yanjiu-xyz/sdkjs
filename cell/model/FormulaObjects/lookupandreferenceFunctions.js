@@ -2990,6 +2990,9 @@ function (window, undefined) {
 		} else if (cElementType.array === arg1.type && opt_xlookup) {
 			let _cacheElem = {elements: []};
 			arg1.foreach(function (elem, r, c) {
+				if (elem && elem.type === cElementType.string) {
+					elem.value = elem.value.toLowerCase();
+				}
 				_cacheElem.elements.push({v: elem, i: (t.bHor ? c : r)});
 			});
 			return this._calculate(_cacheElem.elements, arg0Val, null, opt_arg4, opt_arg5);
@@ -3076,17 +3079,18 @@ function (window, undefined) {
 		//TODO неверно работает функция, допустим для случая: VLOOKUP("12",A1:A5,1) 12.00 ; "qwe" ; "3" ; 3.00 ; 4.00
 		//ascending order: ..., -2, -1, 0, 1, 2, ..., A-Z, FALSE
 
-		const _compareValues = function (val1, val2, op) {
-			if (val2.type === cElementType.string) {
-				val2 = new cString(val2.getValue().toLowerCase());
-			}
 
+		const _compareValues = function (val1, val2, op) {
+			/*if (val2.type === cElementType.string) {
+				_cString.value = val2.getValue().toLowerCase();
+				val2 = _cString;
+			}*/
 			if (opt_arg4 === 2 && val2.type === cElementType.string) {
 				let matchingInfo = AscCommonExcel.matchingValue(val1);
 				return AscCommonExcel.matching(val2, matchingInfo)
 			} else {
-				let res = _func[val1.type][val2.type](val1, val2, op);
-				return res ? res.value : false;
+				let res = _func[val1.type][val2.type](val1, val2, op, null, null, true);
+				return res;
 			}
 		};
 
@@ -3140,8 +3144,9 @@ function (window, undefined) {
 		//из обработанных элементов выбираем те, которые больше(меньше) -> из них уже ищем наименьший(наибольший)
 		//т.е. в итоге получаем следующий наименьший/наибольший элемент
 		const _binarySearch = function (revert) {
+			let canCompare;
+			
 			i = 0;
-
 			//TODO проверить обратный поиск
 			if (revert) {
 				j = length - 1;
@@ -3168,12 +3173,22 @@ function (window, undefined) {
 					k = Math.floor((i + j) / 2);
 					elem = cacheArray[k];
 					val = elem.v;
+					canCompare = true;
 					if (val.type === cElementType.empty) {
 						val = val.tocBool();
 					}
+
+					if (valueForSearching.type !== val.type) {
+						if (valueForSearching.type !== cElementType.string && val.type !== cElementType.string) {
+							canCompare = true;
+						} else {
+							canCompare = false;
+						}
+					}
+
 					if (_compareValues(valueForSearching, val, "=")) {
 						return elem.i;
-					} else if (_compareValues(valueForSearching, val, "<")) {
+					} else if (canCompare && _compareValues(valueForSearching, val, "<")) {
 						j = k - 1;
 						opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching, true);
 					} else {
@@ -3241,7 +3256,7 @@ function (window, undefined) {
 
 		//сильного прироста не получил, пока оставляю прежнюю обработку, подумать на счёт разбития диапазонов
 		range._foreachNoEmpty(function (cell, r, c) {
-			cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
+			cacheElem.elements.push({v: checkTypeCell(cell, true), i: (_this.bHor ? c : r)});
 		});
 		return;
 
@@ -3323,7 +3338,7 @@ function (window, undefined) {
 
 			var addElemsFromWs = function (_range) {
 				_range._foreachNoEmpty(function (cell, r, c) {
-					cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
+					cacheElem.elements.push({v: checkTypeCell(cell, true), i: (_this.bHor ? c : r)});
 				});
 			};
 

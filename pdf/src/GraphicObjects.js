@@ -393,7 +393,6 @@
                             oTargetTextObject.group.SetNeedRecalc(true);
                         }
                         else {
-                            oTargetTextObject.SetInTextBox(true);
                             oTargetTextObject.SetNeedRecalc(true);
                             
                             if (oTargetTextObject.checkExtentsByDocContent)
@@ -939,10 +938,11 @@
                     }
                 }
             } else if (!this.selection.chartSelection) {
+                let nCurPage = this.document.GetCurPage();
                 this.resetSelection();
-                var drawings = this.getDrawingObjects();
+                var drawings = this.getDrawingObjects(nCurPage);
                 for (i = drawings.length - 1; i > -1; --i) {
-                    this.selectObject(drawings[i], 0);
+                    this.selectObject(drawings[i], nCurPage);
                 }
             }
         }
@@ -1297,6 +1297,7 @@
     CGraphicObjects.prototype.handleDblClickEmptyShape  = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
     CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
     CGraphicObjects.prototype.endTrackNewShape          = AscFormat.DrawingObjectsController.prototype.endTrackNewShape;
+    CGraphicObjects.prototype.removeCallback            = AscFormat.DrawingObjectsController.prototype.removeCallback;
 
     CGraphicObjects.prototype.startRecalculate = function() {};
 

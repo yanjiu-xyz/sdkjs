@@ -259,8 +259,8 @@
 
         if (oGraphics.isThumbnails) {
             let oTr = oGraphics.GetTransform();
-            wScaled *= oTr.sy;
-            hScaled *= oTr.sy;
+            wScaled = wScaled * oTr.sy + 0.5 >> 0;
+            hScaled = hScaled * oTr.sy + 0.5 >> 0;
         }
         
         // Set the canvas dimensions to match the image
@@ -324,7 +324,7 @@
         let X = pageObject.x;
         let Y = pageObject.y;
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CAnnotationText.prototype.IsComment = function() {
         return true;

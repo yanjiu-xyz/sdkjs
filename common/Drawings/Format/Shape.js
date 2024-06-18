@@ -1648,19 +1648,29 @@
 					}
 					switch (this.parent.kind) {
 						case AscFormat.TYPE_KIND.SLIDE: {
-							hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body, info));
-							hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, true));
+							let oLayout = this.parent.Layout;
+							if(oLayout) {
+								hierarchy.push(oLayout.getMatchingShape(ph_type, ph_index, b_is_single_body, info));
+								let oMaster = oLayout.Master;
+								if(oMaster) {
+									hierarchy.push(oMaster.getMatchingShape(ph_type, ph_index, true));
+								}
+							}
 							break;
 						}
 
 						case AscFormat.TYPE_KIND.LAYOUT: {
-							hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, true));
+							let oMaster = this.parent.Master;
+							if(oMaster) {
+								hierarchy.push(oMaster.getMatchingShape(ph_type, ph_index, true));
+							}
 							break;
 						}
 
 						case AscFormat.TYPE_KIND.NOTES: {
-							if (this.parent.Master) {
-								hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, true));
+							let oMaster = this.parent.Master;
+							if(oMaster) {
+								hierarchy.push(oMaster.getMatchingShape(ph_type, ph_index, true));
 							}
 							break;
 						}
@@ -2114,7 +2124,7 @@
 				var diffX = 0;
 				var diffY = 0;
 				if (oSmartArt.group) {
-					if (bForceSlideTransform || (this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
+					if (bForceSlideTransform || (AscFormat.isSlideLikeObject(this.parent) || this.worksheet)) {
 						const oMainGroupRelativePosition = oSmartArt.group.getRelativePosition();
 						diffX = oMainGroupRelativePosition.x;
 						diffY = oMainGroupRelativePosition.y;
@@ -2157,7 +2167,7 @@
 				var extX = (oRect.r - oRect.l) / 2;
 				var extY = (oRect.b - oRect.t) / 2;
 				var deltaTranslateX = 0, deltaTranslateY = 0;
-				if (bForceSlideTransform || (deltaShape.parent && deltaShape.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
+				if (bForceSlideTransform || (AscFormat.isSlideLikeObject(deltaShape.parent) || this.worksheet)) {
 					deltaTranslateX = deltaShape.group.group.x;
 					deltaTranslateY = deltaShape.group.group.y;
 				}
@@ -3109,8 +3119,7 @@
 			return this.transformText.CreateDublicate();
 		};
 		CShape.prototype.canAddButtonPlaceholder = function () {
-			return (this.parent && (this.parent.getObjectType() === AscDFH.historyitem_type_Slide) ||
-				this.isObjectInSmartArt());
+			return AscFormat.isSlideLikeObject(this.parent) || this.isObjectInSmartArt();
 		};
 		CShape.prototype.isEmptyPlaceholder = function (bDefaultEmpty) {
 			if (this.isObjectInSmartArt()) {
@@ -3136,6 +3145,7 @@
 					|| phldrType == AscFormat.phType_ftr
 					|| phldrType == AscFormat.phType_hdr
 					|| phldrType == AscFormat.phType_sldNum
+					|| phldrType == AscFormat.phType_dgm
 					|| phldrType == AscFormat.phType_sldImg) {
 					if (this.txBody) {
 						if (this.txBody.content) {
@@ -5346,7 +5356,7 @@
 				bMasterPh = true;
 			}
 			if ((!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && (this.isEmptyPlaceholder() || bMasterPh) && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)
-				|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder() && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)) {
+				|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder(graphics) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)) {
 					var drawingObjects = this.getDrawingObjectsController();
 					if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (Asc.editor.isPdfEditor() || !drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
 						var angle = _transform.GetRotation();

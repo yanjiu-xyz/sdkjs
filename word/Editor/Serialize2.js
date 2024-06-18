@@ -279,7 +279,10 @@ var c_oSerProp_pPrType = {
 	Spacing_AfterTwips: 41,
 	Tab_Item_PosTwips: 42,
 	Tab_Item_Val: 43,
-	SuppressLineNumbers: 44
+	SuppressLineNumbers: 44,
+	CnfStyle: 45,
+	SnapToGrid: 46,
+	Bidi: 47
 };
 var c_oSerProp_rPrType = {
     Bold:0,
@@ -2449,6 +2452,12 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 			this.memory.WriteByte(c_oSerProp_pPrType.SuppressLineNumbers);
 			this.memory.WriteByte(c_oSerPropLenType.Byte);
 			this.memory.WriteBool(pPr.SuppressLineNumbers);
+		}
+		if(null != pPr.Bidi)
+		{
+			this.memory.WriteByte(c_oSerProp_pPrType.Bidi);
+			this.memory.WriteByte(c_oSerPropLenType.Byte);
+			this.memory.WriteBool(pPr.Bidi);
 		}
     };
     this.WriteInd = function(Ind)
@@ -5176,7 +5185,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
         {
             //sectPr
             this.bs.WriteItem(c_oSerParType.sectPr, function(){oThis.bpPrs.WriteSectPr(oThis.Document.SectPr, oThis.Document);});
-			if (oThis.Document.Background) {
+			if (oThis.Document.Background && !oThis.Document.Background.isDefault()) {
 				this.bs.WriteItem(c_oSerParType.Background, function(){oThis.WriteBackground(oThis.Document.Background);});
 			}
 			var macros = this.Document.DrawingDocument.m_oWordControl.m_oApi.macros.GetData();
@@ -9074,6 +9083,9 @@ function Binary_pPrReader(doc, oReadResult, stream)
         var pPr = this.pPr;
         switch(type)
         {
+			case c_oSerProp_pPrType.Bidi:
+				pPr.Bidi = this.stream.GetBool();
+				break;
             case c_oSerProp_pPrType.contextualSpacing:
 				pPr.ContextualSpacing = this.stream.GetBool();
                 break;
@@ -11221,7 +11233,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 			Content.push(oSdt);
 		} else if ( c_oSerParType.Background === type ) {
-			oThis.Document.Background = {Color: null, Unifill: null, shape: null};
 			res = this.bcr.Read2(length, function(t, l){
 				return oThis.ReadBackground(t,l, oThis.Document.Background);
 			});
