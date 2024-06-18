@@ -2774,10 +2774,25 @@ background-repeat: no-repeat;\
 		}
 		let bIsDownloadEvent = options.isDownloadEvent;
 		let changes = null;
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
+		let isCloudLocal = false;
+		if (this.isUseNativeViewer && this.isDocumentRenderer()) {
+			isCloudLocal = this.isCloudSaveAsLocalToDrawingFormat(Asc.c_oAscAsyncAction.DownloadAs, Asc.c_oAscFileType.PDF);
 			changes = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
+			if (!changes && isCloudLocal)
+				window["AscDesktopEditor"]["emulateCloudPrinting"](false);
+		}
 
 		if (changes) {
+			if (isCloudLocal) {
+				this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
+				this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
+
+				window["AscDesktopEditor"]["localSaveToDrawingFormat2"](this.documentTitle, this.DocumentUrl || "", "",
+					AscCommon.Base64.encode(changes), AscCommon.Base64.encode(this.DocumentRenderer.getFileNativeBinary()), this.currentPassword || "");
+
+				return true;
+			}
+
 			options.asc_setFileType(Asc.c_oAscFileType.PDF);
 			options.pdfChanges = changes;
 			this.asc_DownloadAs(options);
