@@ -72,9 +72,9 @@
 		}
 	};
 	CReviewChange.prototype.applyStart = function (oTextIterator, comparison, oNeedReviewWithUser) {
-		const isLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
-		oTextIterator.skipTo(this.elementIndex, isLast ? this.innerElementIndex - 1 : this.innerElementIndex);
-		const oRun = oTextIterator.splitCurrentRun(isLast);
+		const bIsLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
+		oTextIterator.skipTo(this.elementIndex, bIsLast ? this.innerElementIndex - 1 : this.innerElementIndex);
+		const oRun = oTextIterator.splitCurrentRun(bIsLast);
 		const oPartner = this.partner;
 		oPartner.dropLastRun();
 		oTextIterator.addToCollectBack(oRun);
@@ -124,11 +124,11 @@
 		}
 	};
 	CReviewChange.prototype.applyEnd = function (oTextIterator) {
-		const isLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
-		oTextIterator.skipTo(this.elementIndex, isLast ? this.innerElementIndex - 1 : this.innerElementIndex);
+		const bIsLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
+		oTextIterator.skipTo(this.elementIndex, bIsLast ? this.innerElementIndex - 1 : this.innerElementIndex);
 		oTextIterator.setCollectReviewRuns(this);
 		oTextIterator.addToCollectCurrentRun();
-		const oSplitRun = oTextIterator.splitCurrentRun(isLast);
+		const oSplitRun = oTextIterator.splitCurrentRun(bIsLast);
 		oTextIterator.addToCollectTextPr(oSplitRun);
 	};
 	CReviewChange.prototype.addRun = function (oRun) {
@@ -194,9 +194,9 @@
 		this.innerElementIndex = nInnerElementIndex;
 	}
 	CLabelChange.prototype.apply = function (oTextIterator, comparison, oNeedReviewWithUser) {
-		const isLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
-		oTextIterator.skipTo(this.elementIndex, isLast ? this.innerElementIndex - 1 : this.innerElementIndex);
-		const oRun = oTextIterator.splitCurrentRun(isLast);
+		const bIsLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
+		oTextIterator.skipTo(this.elementIndex, bIsLast ? this.innerElementIndex - 1 : this.innerElementIndex);
+		const oRun = oTextIterator.splitCurrentRun(bIsLast);
 		oTextIterator.addToCollectBack(oRun);
 		for (let i = this.labels.length - 1; i >= 0; i -= 1)
 		{
@@ -229,20 +229,20 @@
 			const arrInsertIndexes = oElement.getBookmarkInsertIndexes();
 			for (let j = 0; j < arrInsertIndexes.length; j += 1) {
 				const nInsertIndex = arrInsertIndexes[j];
-				const elements = this.getBookmarkElements(oElement, nInsertIndex);
-				arrResult.push(new CLabelChange(elements, i, nInsertIndex));
+				const arrElements = this.getBookmarkElements(oElement, nInsertIndex);
+				arrResult.push(new CLabelChange(arrElements, i, nInsertIndex));
 			}
 		}
 		return arrResult;
 	}
 	CBookmarkChangesCollector.prototype.getBookmarkElements = function (oTextElement, nInsertIndex) {
-		const elements = oTextElement.bookmarks[nInsertIndex].slice();
+		const arrElements = oTextElement.bookmarks[nInsertIndex].slice();
 		if (this.copyPr) {
-			for (let i = 0; i < elements.length; i += 1) {
-				elements[i] = elements[i].Copy(false, this.copyPr);
+			for (let i = 0; i < arrElements.length; i += 1) {
+				arrElements[i] = arrElements[i].Copy(false, this.copyPr);
 			}
 		}
-		return elements;
+		return arrElements;
 	};
 
 	function CCommentChangesCollector(arrMainElements, arrRevisedElements, copyPr, oCommentManager) {
@@ -350,22 +350,22 @@
 		}
 	};
 	CReviewChangeCollector.prototype.getRevisedLastRunIndex = function () {
-		const lastElement = this.revisedElements[this.revisedElements.length - 1];
-		const lastRun = lastElement.lastRun;
-		return this.getLastRunIndex(lastRun, lastElement.elements[lastElement.elements.length - 1], this.revisedParagraph);
+		const oLastElement = this.revisedElements[this.revisedElements.length - 1];
+		const oLastRun = oLastElement.lastRun;
+		return this.getLastRunIndex(oLastRun, oLastElement.elements[oLastElement.elements.length - 1], this.revisedParagraph);
 	};
 	CReviewChangeCollector.prototype.getMainLastRunIndex = function () {
-		const lastElement = this.mainElements[this.mainElements.length - 1];
-		const lastRun = lastElement.lastRun;
-		return this.getLastRunIndex(lastRun, lastElement.elements[lastElement.elements.length - 1], this.mainParagraph);
+		const oLastElement = this.mainElements[this.mainElements.length - 1];
+		const oLastRun = oLastElement.lastRun;
+		return this.getLastRunIndex(oLastRun, oLastElement.elements[oLastElement.elements.length - 1], this.mainParagraph);
 	};
 	CReviewChangeCollector.prototype.getLastRunIndex = function (oRun, oElement, oRunParagraph) {
 		const oContent = oRunParagraph.Content;
 		for (let i = oContent.length - 1; i >= 0; i -= 1) {
 			if (oContent[i] === oRun) {
 				for (let j = oRun.Content.length - 1; j >= 0; j -= 1) {
-					const runElement = oRun.Content[j];
-					if (runElement === oElement) {
+					const oRunElement = oRun.Content[j];
+					if (oRunElement === oElement) {
 						return {runIndex: i, elementIndex: j};
 					}
 				}
@@ -376,105 +376,105 @@
 	CReviewChangeCollector.prototype.getReviewChanges = function () {
 		const arrResult = [];
 
-		let elementIndex = this.revisedElements.length - 1;
-		let innerElementIndex = this.revisedElements[elementIndex].elements.length - 1;
+		let nElementIndex = this.revisedElements.length - 1;
+		let nInnerElementIndex = this.revisedElements[nElementIndex].elements.length - 1;
 
 		const oRevisedContent = this.revisedParagraph.Content;
 		const oMainContent = this.mainParagraph.Content;
 
-		const lastRevisedRunInfo = this.getRevisedLastRunIndex();
-		const lastMainRunInfo = this.getMainLastRunIndex();
-		if (!lastMainRunInfo || !lastRevisedRunInfo) {
+		const oLastRevisedRunInfo = this.getRevisedLastRunIndex();
+		const oLastMainRunInfo = this.getMainLastRunIndex();
+		if (!oLastMainRunInfo || !oLastRevisedRunInfo) {
 			return arrResult;
 		}
 
-		let revisedRunIndex = lastRevisedRunInfo.runIndex;
-		let mainRunIndex = lastMainRunInfo.runIndex;
+		let nRevisedRunIndex = oLastRevisedRunInfo.runIndex;
+		let nMainRunIndex = oLastMainRunInfo.runIndex;
 
 		let bSaveOldRevisedCount = true;
 		let bSaveOldMainCount = true;
-		let revisedElementsCount = lastRevisedRunInfo.elementIndex + 1;
-		let mainElementsCount = lastMainRunInfo.elementIndex + 1;
-		while (revisedRunIndex >= 0 && mainRunIndex >= 0) {
-			const oRevisedRun = oRevisedContent[revisedRunIndex];
-			const oMainRun = oMainContent[mainRunIndex];
+		let nRevisedElementsCount = oLastRevisedRunInfo.elementIndex + 1;
+		let nMainElementsCount = oLastMainRunInfo.elementIndex + 1;
+		while (nRevisedRunIndex >= 0 && nMainRunIndex >= 0) {
+			const oRevisedRun = oRevisedContent[nRevisedRunIndex];
+			const oMainRun = oMainContent[nMainRunIndex];
 
 			if (!bSaveOldRevisedCount) {
-				revisedElementsCount = oRevisedRun.Content.length;
+				nRevisedElementsCount = oRevisedRun.Content.length;
 				bSaveOldRevisedCount = true;
 			}
 			if (!bSaveOldMainCount) {
-				mainElementsCount = oMainRun.Content.length;
+				nMainElementsCount = oMainRun.Content.length;
 				bSaveOldMainCount = true;
 			}
-			if (mainElementsCount !== 0 && revisedElementsCount !== 0) {
-				const lastPrChange = arrResult[arrResult.length - 1];
+			if (nMainElementsCount !== 0 && nRevisedElementsCount !== 0) {
+				const oLastPrChange = arrResult[arrResult.length - 1];
 				const oPriorityChange = this.getPriorityChange(oRevisedRun, oMainRun);
 				if (!oPriorityChange) {
-					if (lastPrChange && !lastPrChange.isStart) {
+					if (oLastPrChange && !oLastPrChange.isStart) {
 						const oStartReviewChange = new CReviewChange(null);
 						oStartReviewChange.isStart = true;
-						oStartReviewChange.setPosition(elementIndex, innerElementIndex + 1);
-						oStartReviewChange.setPartner(lastPrChange);
+						oStartReviewChange.setPosition(nElementIndex, nInnerElementIndex + 1);
+						oStartReviewChange.setPartner(oLastPrChange);
 						arrResult.push(oStartReviewChange);
 					}
-				} else if (lastPrChange) {
-					if (lastPrChange.isStart) {
-						oPriorityChange.setPosition(elementIndex, innerElementIndex + 1);
+				} else if (oLastPrChange) {
+					if (oLastPrChange.isStart) {
+						oPriorityChange.setPosition(nElementIndex, nInnerElementIndex + 1);
 						arrResult.push(oPriorityChange);
-					} else if (!lastPrChange.isSimilar(oPriorityChange)) {
+					} else if (!oLastPrChange.isSimilar(oPriorityChange)) {
 						const oStartReviewChange = new CReviewChange(null);
 						oStartReviewChange.isStart = true;
-						oStartReviewChange.setPosition(elementIndex, innerElementIndex + 1);
-						oStartReviewChange.setPartner(lastPrChange);
+						oStartReviewChange.setPosition(nElementIndex, nInnerElementIndex + 1);
+						oStartReviewChange.setPartner(oLastPrChange);
 						arrResult.push(oStartReviewChange);
 
-						oPriorityChange.setPosition(elementIndex, innerElementIndex + 1);
+						oPriorityChange.setPosition(nElementIndex, nInnerElementIndex + 1);
 						arrResult.push(oPriorityChange);
 					}
 				} else {
-					oPriorityChange.setPosition(elementIndex, innerElementIndex + 1);
+					oPriorityChange.setPosition(nElementIndex, nInnerElementIndex + 1);
 					arrResult.push(oPriorityChange);
 				}
 			}
 
-			while (revisedElementsCount !== 0 && mainElementsCount !== 0) {
-				const minCount = Math.min(revisedElementsCount, mainElementsCount);
-				if (innerElementIndex + 1 > minCount) {
-					innerElementIndex -= minCount;
-					revisedElementsCount -= minCount;
-					mainElementsCount -= minCount;
+			while (nRevisedElementsCount !== 0 && nMainElementsCount !== 0) {
+				const nMinCount = Math.min(nRevisedElementsCount, nMainElementsCount);
+				if (nInnerElementIndex + 1 > nMinCount) {
+					nInnerElementIndex -= nMinCount;
+					nRevisedElementsCount -= nMinCount;
+					nMainElementsCount -= nMinCount;
 				} else {
-					revisedElementsCount -= innerElementIndex + 1;
-					mainElementsCount -= innerElementIndex + 1;
-					elementIndex -= 1;
-					if (this.revisedElements[elementIndex] && this.mainElements[elementIndex]) {
-						innerElementIndex = this.revisedElements[elementIndex].revisedElements.length - 1;
+					nRevisedElementsCount -= nInnerElementIndex + 1;
+					nMainElementsCount -= nInnerElementIndex + 1;
+					nElementIndex -= 1;
+					if (this.revisedElements[nElementIndex] && this.mainElements[nElementIndex]) {
+						nInnerElementIndex = this.revisedElements[nElementIndex].revisedElements.length - 1;
 					}
 				}
-				if (elementIndex < 0) {
-					const lastPrChange = arrResult[arrResult.length - 1];
-					if (lastPrChange && !lastPrChange.isStart) {
+				if (nElementIndex < 0) {
+					const oLastPrChange = arrResult[arrResult.length - 1];
+					if (oLastPrChange && !oLastPrChange.isStart) {
 						const oStartReviewChange = new CReviewChange(null);
 						oStartReviewChange.isStart = true;
 						oStartReviewChange.setPosition(0, 0);
-						oStartReviewChange.setPartner(lastPrChange);
+						oStartReviewChange.setPartner(oLastPrChange);
 						arrResult.push(oStartReviewChange);
 					}
 					return arrResult;
 				}
 			}
-			if (revisedElementsCount === 0) {
+			if (nRevisedElementsCount === 0) {
 				do {
-					revisedRunIndex -= 1;
+					nRevisedRunIndex -= 1;
 					bSaveOldRevisedCount = false;
-				} while (!(oRevisedContent[revisedRunIndex] instanceof AscCommonWord.ParaRun) && revisedRunIndex >= 0)
+				} while (!(oRevisedContent[nRevisedRunIndex] instanceof AscCommonWord.ParaRun) && nRevisedRunIndex >= 0)
 			}
-			if (mainElementsCount === 0) {
+			if (nMainElementsCount === 0) {
 				do {
-					mainRunIndex -= 1;
+					nMainRunIndex -= 1;
 					bSaveOldMainCount = false;
-				} while (!(oMainContent[mainRunIndex] instanceof AscCommonWord.ParaRun) && mainRunIndex >= 0)
+				} while (!(oMainContent[nMainRunIndex] instanceof AscCommonWord.ParaRun) && nMainRunIndex >= 0)
 			}
 		}
 		return arrResult;
@@ -498,10 +498,10 @@
 		}
 	};
 	CTextPrChange.prototype.applyStart = function (oTextIterator, oComparison) {
-		const isLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
-		oTextIterator.skipTo(this.elementIndex, isLast ? this.innerElementIndex - 1 : this.innerElementIndex);
+		const bIsLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
+		oTextIterator.skipTo(this.elementIndex, bIsLast ? this.innerElementIndex - 1 : this.innerElementIndex);
 		const oPartner = this.partner;
-		const oRun = oTextIterator.splitCurrentRun(isLast);
+		const oRun = oTextIterator.splitCurrentRun(bIsLast);
 		oPartner.dropLastRun();
 		oTextIterator.addToCollectBack(oRun);
 
@@ -513,19 +513,19 @@
 			const oRun = arrRuns[i];
 			const oCopyTextPr = oNewTextPr.Copy();
 			const oOldTextPr = oRun.GetTextPr();
-			const reviewInfo = new CReviewInfo();
-			oComparison.setReviewInfo(reviewInfo);
-			oCopyTextPr.SetPrChange(oOldTextPr, reviewInfo);
+			const oReviewInfo = new CReviewInfo();
+			oComparison.setReviewInfo(oReviewInfo);
+			oCopyTextPr.SetPrChange(oOldTextPr, oReviewInfo);
 			oRun.SetPr(oCopyTextPr);
 		}
 	};
 	CTextPrChange.prototype.applyEnd = function (oTextIterator) {
-		const isLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
-		oTextIterator.skipTo(this.elementIndex, isLast ? this.innerElementIndex - 1 : this.innerElementIndex);
+		const bIsLast = oTextIterator.elements[this.elementIndex].elements.length === this.innerElementIndex;
+		oTextIterator.skipTo(this.elementIndex, bIsLast ? this.innerElementIndex - 1 : this.innerElementIndex);
 
 		oTextIterator.setCollectTextPrRuns(this);
 		oTextIterator.addToCollectCurrentRun();
-		const oSplitRun = oTextIterator.splitCurrentRun(isLast);
+		const oSplitRun = oTextIterator.splitCurrentRun(bIsLast);
 		oTextIterator.addToCollectReviewChange(oSplitRun);
 	};
 	CTextPrChange.prototype.setPartner = function (partner) {
@@ -559,22 +559,22 @@
 		this.revisedParagraph = oRevisedParagraph;
 	}
 	CTextPrChangeCollector.prototype.getRevisedLastRunIndex = function () {
-		const lastElement = this.elements[this.elements.length - 1];
-		const lastRun = lastElement.lastRun;
-		return this.getLastRunIndex(lastRun, lastElement.elements[lastElement.elements.length - 1], this.revisedParagraph);
+		const oLastElement = this.elements[this.elements.length - 1];
+		const oLastRun = oLastElement.lastRun;
+		return this.getLastRunIndex(oLastRun, oLastElement.elements[oLastElement.elements.length - 1], this.revisedParagraph);
 	};
 	CTextPrChangeCollector.prototype.getMainLastRunIndex = function () {
-		const lastElement = this.comparedElements[this.comparedElements.length - 1];
-		const lastRun = lastElement.lastRun;
-		return this.getLastRunIndex(lastRun, lastElement.elements[lastElement.elements.length - 1], this.mainParagraph);
+		const oLastElement = this.comparedElements[this.comparedElements.length - 1];
+		const oLastRun = oLastElement.lastRun;
+		return this.getLastRunIndex(oLastRun, oLastElement.elements[oLastElement.elements.length - 1], this.mainParagraph);
 	};
 	CTextPrChangeCollector.prototype.getLastRunIndex = function (oRun, oElement, oRunParagraph) {
 		const oContent = oRunParagraph.Content;
 		for (let i = oContent.length - 1; i >= 0; i -= 1) {
 			if (oContent[i] === oRun) {
 				for (let j = oRun.Content.length - 1; j >= 0; j -= 1) {
-					const runElement = oRun.Content[j];
-					if (runElement === oElement) {
+					const oRunElement = oRun.Content[j];
+					if (oRunElement === oElement) {
 						return {runIndex: i, elementIndex: j};
 					}
 				}
@@ -585,97 +585,97 @@
 	CTextPrChangeCollector.prototype.getTextPrChanges = function () {
 		const arrResult = [];
 
-		let elementIndex = this.elements.length - 1;
-		let innerElementIndex = this.elements[elementIndex].elements.length - 1;
+		let nElementIndex = this.elements.length - 1;
+		let nInnerElementIndex = this.elements[nElementIndex].elements.length - 1;
 
 		const oRevisedContent = this.revisedParagraph.Content;
 		const oMainContent = this.mainParagraph.Content;
 
-		const lastRevisedRunInfo = this.getRevisedLastRunIndex();
-		const lastMainRunInfo = this.getMainLastRunIndex();
-		if (!lastMainRunInfo || !lastRevisedRunInfo) {
+		const oLastRevisedRunInfo = this.getRevisedLastRunIndex();
+		const oLastMainRunInfo = this.getMainLastRunIndex();
+		if (!oLastMainRunInfo || !oLastRevisedRunInfo) {
 			return arrResult;
 		}
 
-		let revisedRunIndex = lastRevisedRunInfo.runIndex;
-		let mainRunIndex = lastMainRunInfo.runIndex;
+		let nRevisedRunIndex = oLastRevisedRunInfo.runIndex;
+		let nMainRunIndex = oLastMainRunInfo.runIndex;
 
 		let bSaveOldRevisedCount = true;
 		let bSaveOldMainCount = true;
-		let revisedElementsCount = lastRevisedRunInfo.elementIndex + 1;
-		let mainElementsCount = lastMainRunInfo.elementIndex + 1;
-		while (revisedRunIndex >= 0 && mainRunIndex >= 0) {
-			const oRevisedRun = oRevisedContent[revisedRunIndex];
-			const oMainRun = oMainContent[mainRunIndex];
+		let nRevisedElementsCount = oLastRevisedRunInfo.elementIndex + 1;
+		let nMainElementsCount = oLastMainRunInfo.elementIndex + 1;
+		while (nRevisedRunIndex >= 0 && nMainRunIndex >= 0) {
+			const oRevisedRun = oRevisedContent[nRevisedRunIndex];
+			const oMainRun = oMainContent[nMainRunIndex];
 			const oMainTextPr = oMainRun.Pr;
 			const oRevisedTextPr = oRevisedRun.Pr;
 
 			if (!bSaveOldRevisedCount) {
-				revisedElementsCount = oRevisedRun.Content.length;
+				nRevisedElementsCount = oRevisedRun.Content.length;
 				bSaveOldRevisedCount = true;
 			}
 			if (!bSaveOldMainCount) {
-				mainElementsCount = oMainRun.Content.length;
+				nMainElementsCount = oMainRun.Content.length;
 				bSaveOldMainCount = true;
 			}
-			if (mainElementsCount !== 0 && revisedElementsCount !== 0) {
-				const lastPrChange = arrResult[arrResult.length - 1];
+			if (nMainElementsCount !== 0 && nRevisedElementsCount !== 0) {
+				const oLastPrChange = arrResult[arrResult.length - 1];
 				if (oMainTextPr.Is_Equal(oRevisedTextPr)) {
-					if (lastPrChange && !lastPrChange.isStart) {
-						const oStartPrChange = new CTextPrChange(true, elementIndex, innerElementIndex + 1);
-						oStartPrChange.setPartner(lastPrChange);
+					if (oLastPrChange && !oLastPrChange.isStart) {
+						const oStartPrChange = new CTextPrChange(true, nElementIndex, nInnerElementIndex + 1);
+						oStartPrChange.setPartner(oLastPrChange);
 						arrResult.push(oStartPrChange);
 					}
-				} else if (lastPrChange) {
-						if (lastPrChange.isStart) {
-							arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex + 1, oRevisedTextPr));
-						} else if (!lastPrChange.textPr.Is_Equal(oRevisedTextPr)) {
-							const oStartPrChange = new CTextPrChange(true, elementIndex, innerElementIndex + 1);
-							oStartPrChange.setPartner(lastPrChange);
+				} else if (oLastPrChange) {
+						if (oLastPrChange.isStart) {
+							arrResult.push(new CTextPrChange(false, nElementIndex, nInnerElementIndex + 1, oRevisedTextPr));
+						} else if (!oLastPrChange.textPr.Is_Equal(oRevisedTextPr)) {
+							const oStartPrChange = new CTextPrChange(true, nElementIndex, nInnerElementIndex + 1);
+							oStartPrChange.setPartner(oLastPrChange);
 							arrResult.push(oStartPrChange);
-							arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex + 1, oRevisedTextPr));
+							arrResult.push(new CTextPrChange(false, nElementIndex, nInnerElementIndex + 1, oRevisedTextPr));
 						}
 					} else {
-						arrResult.push(new CTextPrChange(false, elementIndex, innerElementIndex + 1, oRevisedTextPr));
+						arrResult.push(new CTextPrChange(false, nElementIndex, nInnerElementIndex + 1, oRevisedTextPr));
 					}
 				
 			}
 
-			while (revisedElementsCount !== 0 && mainElementsCount !== 0) {
-				const minCount = Math.min(revisedElementsCount, mainElementsCount);
-				if (innerElementIndex + 1 > minCount) {
-					innerElementIndex -= minCount;
-					revisedElementsCount -= minCount;
-					mainElementsCount -= minCount;
+			while (nRevisedElementsCount !== 0 && nMainElementsCount !== 0) {
+				const nMinCount = Math.min(nRevisedElementsCount, nMainElementsCount);
+				if (nInnerElementIndex + 1 > nMinCount) {
+					nInnerElementIndex -= nMinCount;
+					nRevisedElementsCount -= nMinCount;
+					nMainElementsCount -= nMinCount;
 				} else {
-					revisedElementsCount -= innerElementIndex + 1;
-					mainElementsCount -= innerElementIndex + 1;
-					elementIndex -= 1;
-					if (this.elements[elementIndex] && this.comparedElements[elementIndex]) {
-						innerElementIndex = this.elements[elementIndex].elements.length - 1;
+					nRevisedElementsCount -= nInnerElementIndex + 1;
+					nMainElementsCount -= nInnerElementIndex + 1;
+					nElementIndex -= 1;
+					if (this.elements[nElementIndex] && this.comparedElements[nElementIndex]) {
+						nInnerElementIndex = this.elements[nElementIndex].elements.length - 1;
 					}
 				}
-				if (elementIndex < 0) {
-					const lastPrChange = arrResult[arrResult.length - 1];
-					if (lastPrChange && !lastPrChange.isStart) {
+				if (nElementIndex < 0) {
+					const oLastPrChange = arrResult[arrResult.length - 1];
+					if (oLastPrChange && !oLastPrChange.isStart) {
 						const oStartPrChange = new CTextPrChange(true, 0, 0);
-						oStartPrChange.setPartner(lastPrChange);
+						oStartPrChange.setPartner(oLastPrChange);
 						arrResult.push(oStartPrChange);
 					}
 					return arrResult;
 				}
 			}
-			if (revisedElementsCount === 0) {
+			if (nRevisedElementsCount === 0) {
 				do {
-					revisedRunIndex -= 1;
+					nRevisedRunIndex -= 1;
 					bSaveOldRevisedCount = false;
-				} while (!(oRevisedContent[revisedRunIndex] instanceof AscCommonWord.ParaRun) && revisedRunIndex >= 0)
+				} while (!(oRevisedContent[nRevisedRunIndex] instanceof AscCommonWord.ParaRun) && nRevisedRunIndex >= 0)
 			}
-			if (mainElementsCount === 0) {
+			if (nMainElementsCount === 0) {
 				do {
-					mainRunIndex -= 1;
+					nMainRunIndex -= 1;
 					bSaveOldMainCount = false;
-				} while (!(oMainContent[mainRunIndex] instanceof AscCommonWord.ParaRun) && mainRunIndex >= 0)
+				} while (!(oMainContent[nMainRunIndex] instanceof AscCommonWord.ParaRun) && nMainRunIndex >= 0)
 			}
 		}
 		return arrResult;
@@ -744,9 +744,9 @@
 				return;
 			}
 
-			const firstNode = arrNodes[0];
-			const oRevisedParent = firstNode.partner.par.element;
-			const oMainParent = firstNode.par.element;
+			const oFirstNode = arrNodes[0];
+			const oRevisedParent = oFirstNode.partner.par.element;
+			const oMainParent = oFirstNode.par.element;
 
 
 			const oNeedReviewWithUser = {};
