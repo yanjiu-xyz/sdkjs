@@ -16162,7 +16162,7 @@
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
 	/**
-	 * Returns the value of color in RGB format
+	 * Returns a color value in RGB format.
 	 * @memberof ApiUniColor
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}

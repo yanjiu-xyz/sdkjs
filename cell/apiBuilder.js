@@ -293,7 +293,7 @@
 		this.color = color;
 	}
 	/**
-	 * Returns the color number.
+	 * Returns a color value in RGB format.
 	 * @memberof ApiColor
 	 * @returns {number}
 	 */
@@ -3653,13 +3653,13 @@
 		return this.private_calculateFunction("Z.TEST", arguments);
 	};
 	/**
-	 * Returns the number that represents the date in the date-time code.
+	 * Returns a number that represents the date in the date-time code.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number from 1900 or 1904 (depending on the workbook's date system) to 9999.
-	 * @param {number} arg2 Is a number from 1 to 12 representing the month of the year.
-	 * @param {number} arg3 Is a number from 1 to 31 representing the day of the month.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number from 1900 or 1904 (depending on the workbook's date system) to 9999.
+	 * @param {number} arg2 - A number from 1 to 12 representing the month of the year.
+	 * @param {number} arg3 - A number from 1 to 31 representing the day of the month.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DATE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DATE", arguments);
@@ -3668,29 +3668,29 @@
 	 * Converts a date in the form of text to a number that represents the date in the date-time code.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is text that represents a date in a Microsoft Excel date format, between 1/1/1900 or 1/1/1904 (depending on the workbook's date system) and 12/31/9999.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text that represents a date, between 1/1/1900 or 1/1/1904 (depending on the workbook's date system) and 12/31/9999.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DATEVALUE = function (arg1) {
 		return this.private_calculateFunction("DATEVALUE", arguments);
 	};
 	/**
-	 * Returns the day of the month, a number from 1 to 31..
+	 * Returns the day of the date given in the numerical format, a number from 1 to 31.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number in the date-time code.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DAY = function (arg1) {
 		return this.private_calculateFunction("DAY", arguments);
 	};
 	/**
-	 * Returns the number of days between the two dates..
+	 * Returns the number of days between the two dates.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Start_date and end_date are the two dates between which you want to know the number of days.
-	 * @param {number} arg2 Start_date and end_date are the two dates between which you want to know the number of days.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Start date from which days will be counted.
+	 * @param {number} arg2 - End date until which days will be counted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DAYS = function (arg1, arg2) {
 		return this.private_calculateFunction("DAYS", arguments);
@@ -3699,21 +3699,25 @@
 	 * Returns the number of days between two dates based on a 360-day year (twelve 30-day months).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Start_date and end_date are the two dates between which you want to know the number of days.
-	 * @param {number} arg2 Start_date and end_date are the two dates between which you want to know the number of days.
-	 * @param {?boolean} arg3 Is a logical value specifying the calculation method: U.S. (NASD) = FALSE or omitted; European = TRUE..
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Start date from which days will be counted.
+	 * @param {number} arg2 - End date until which days will be counted.
+	 * @param {?boolean} arg3 - A logical value that specifies whether to use the U.S. (NASD) (false or omitted) or European (true) method in the calculation.
+	 * According to the European method, the start and end dates that occur on the 31st of a month become equal to the 30th of the same month.
+	 * According to the U.S. method, the start date is the last day of a month, it becomes equal to the 30th of the same month.
+	 * If the end date is the last day of a month and the start date is earlier than the 30th of a month, the end date becomes equal to the 1st of the next month.
+	 * Otherwise the end date becomes equal to the 30th of the same month.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DAYS360 = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DAYS360", arguments);
 	};
 	/**
-	 * Returns the serial number of the date that is the indicated number of months before or after the start date.
+	 * Returns the serial number of the date which comes the indicated number of months before or after the start date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a serial date number that represents the start date.
-	 * @param {any} arg2 Is the number of months before or after start_date.
-	 * @returns {number | string | boolean}
+	 * @param {any} arg1 - A serial date number that represents the start date.
+	 * @param {any} arg2 - The number of months before or after the start date.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EDATE = function (arg1, arg2) {
 		return this.private_calculateFunction("EDATE", arguments);
@@ -3724,7 +3728,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a serial date number that represents the start date.
 	 * @param {any} arg2 Is the number of months before or after the start_date.
-	 * @returns {number | string | boolean}
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EOMONTH = function (arg1, arg2) {
 		return this.private_calculateFunction("EOMONTH", arguments);
