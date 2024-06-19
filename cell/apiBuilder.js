@@ -12843,6 +12843,17 @@
 	};
 
 	/**
+	 * Removes all frozen panes in the current worksheet.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @since 8.0.0
+	 */
+	ApiFreezePanes.prototype.Unfreeze = function () {
+		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
+			this.ws.workbook.oApi.asc_freezePane(undefined);
+	};
+
+	/**
 	 * Class representing a user-protected range.
 	 * @constructor
 	 */
