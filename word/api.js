@@ -10975,7 +10975,6 @@ background-repeat: no-repeat;\
 		
 		oLogicDocument.StartAction(AscDFH.historydescription_Document_SetContentControlListPr);
 		oContentControl.ApplyDatePickerPr(oPr, updateDate);
-		///oLogicDocument.RemoveSelection();
 		oContentControl.MoveCursorToContentControl(false);
 		oLogicDocument.Recalculate();
 		oLogicDocument.UpdateInterface();
