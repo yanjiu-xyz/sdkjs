@@ -18721,7 +18721,8 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 			var ItemReviewType = Item.GetReviewType();
 			// Создаем новый параграф
 			var NewParagraph   = new AscWord.Paragraph();
-
+			
+			let firstPara, secondPara;
 			if (Item.IsCursorAtBegin())
 			{
 				// Продолжаем (в плане настроек) новый параграф
@@ -18733,6 +18734,9 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 				var nContentPos = this.CurPos.ContentPos;
 				this.AddToContent(nContentPos, NewParagraph);
 				this.CurPos.ContentPos = nContentPos + 1;
+				
+				firstPara  = NewParagraph;
+				secondPara = Item;
 			}
 			else
 			{
@@ -18793,20 +18797,23 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 				var nContentPos = this.CurPos.ContentPos + 1;
 				this.AddToContent(nContentPos, NewParagraph);
 				this.CurPos.ContentPos = nContentPos;
+				
+				firstPara  = Item;
+				secondPara = NewParagraph;
 			}
-
-			if (true === this.IsTrackRevisions())
+			
+			if (this.IsTrackRevisions())
 			{
-				Item.RemovePrChange();
-				NewParagraph.SetReviewType(ItemReviewType);
-				Item.SetReviewType(reviewtype_Add);
+				firstPara.RemovePrChange();
+				firstPara.SetReviewType(reviewtype_Add);
+				secondPara.SetReviewType(ItemReviewType);
 			}
 			else if (reviewtype_Common !== ItemReviewType)
 			{
-				NewParagraph.SetReviewType(ItemReviewType);
-				Item.SetReviewType(reviewtype_Common);
+				firstPara.SetReviewType(reviewtype_Common);
+				secondPara.SetReviewType(ItemReviewType);
 			}
-            NewParagraph.CheckSignatureLinesOnAdd();
+			NewParagraph.CheckSignatureLinesOnAdd();
 		}
 
 		if (isCheckAutoCorrect)
