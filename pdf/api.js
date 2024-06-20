@@ -471,7 +471,7 @@
 		let docContent = textController.GetDocContent();
 		let result = textController.EnterText(codePoints);
 		
-		if (null == drController.getTargetTextObject()) {
+		if (null == drController.getTargetTextObject() && false == textController.IsForm()) {
 			drController.selection.textSelection = textController;
 		}
 
