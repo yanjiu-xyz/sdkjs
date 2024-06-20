@@ -4382,7 +4382,7 @@
 		// add		- 1
 		// delete	- 2
 
-		function writePageInfo(nPage, oPageInfo, nRotAngle, bClearPage, nType) {
+		function writePageInfo(oPageInfo, nType) {
 			if (!oMemory)
 			{
 				oMemory = new AscCommon.CMemory(true);
@@ -4393,8 +4393,11 @@
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			oMemory.WriteByte(nType);
-			oMemory.WriteLong(nPage);
+			oMemory.WriteLong(oPageInfo.originIndex != undefined ? oPageInfo.originIndex : oPageInfo.curIndex);
 			
+			let nRotAngle = this.getPageRotate(oPageInfo.curIndex);
+			let bClearPage = !!oFile.pages[oPageInfo.curIndex].isConvertedToShapes;
+
 			if (nType == 0 || nType == 1) {
 				oMemory.WriteByte(AscCommon.CommandType.ctPageRotate);
 				oMemory.WriteLong(8);
@@ -4410,10 +4413,10 @@
 				// add page
 				if (nType == 1) {
 					oMemory.WriteByte(AscCommon.CommandType.ctPageWidth);
-					oMemory.WriteDouble(oFile.pages[nPage].W);
+					oMemory.WriteDouble(oFile.pages[oPageInfo.curIndex].W);
 					
 					oMemory.WriteByte(AscCommon.CommandType.ctPageHeight);
-					oMemory.WriteDouble(oFile.pages[nPage].H);
+					oMemory.WriteDouble(oFile.pages[oPageInfo.curIndex].H);
 				}
 			}
 			
@@ -4429,7 +4432,7 @@
 
 			// annots
 			if (oPageInfo.annots) {
-				this.InitAnnotsRenderer(oMemory, nPage);
+				this.InitAnnotsRenderer(oMemory, oPageInfo.curIndex);
 				
 				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
 					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
@@ -4439,11 +4442,11 @@
 				}
 			}
 
-			if (aDeleted[nPage]) {
-				for (let j = 0; j < aDeleted[nPage].length; j++) {
+			if (aDeleted[oPageInfo.curIndex]) {
+				for (let j = 0; j < aDeleted[oPageInfo.curIndex].length; j++) {
 					oMemory.WriteByte(AscCommon.CommandType.ctAnnotFieldDelete);
 					oMemory.WriteLong(8);
-					oMemory.WriteLong(aDeleted[nPage][j]);
+					oMemory.WriteLong(aDeleted[oPageInfo.curIndex][j]);
 				}
 			}
 
@@ -4458,11 +4461,7 @@
 			// drawings
 			if (oPageInfo.drawings && oPageInfo.drawings.length != 0) {
 				let oRenderer	= this.InitDocRenderer(oMemory);
-				// let jsZlibToSave = new AscCommon.ZLib();
-				// jsZlibToSave.create();
 				oMemory.context	= new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
-				// let oFilePart	= new AscCommon.openXml.OpenXmlPackage(jsZlibToSave, oMemory.context);
-				// oFilePart.addPart(AscCommon.openXml.Types.image);
 
 				for (let nDr = 0; nDr < oPageInfo.drawings.length; nDr++) {
 					let oDrawing = oPageInfo.drawings[nDr];
@@ -4483,7 +4482,7 @@
 				oMemory.context.docType	= AscFormat.XMLWRITER_DOC_TYPE_PPTX;
 
 				// graphics
-				oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(oDoc.GetPageWidthMM(nPage), oDoc.GetPageHeightMM(nPage));
+				oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(oDoc.GetPageWidthMM(oPageInfo.curIndex), oDoc.GetPageHeightMM(oPageInfo.curIndex));
 				oRenderer.m_lPagesCount														= oRenderer.m_arrayPages.length;
 				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].Memory					= oRenderer.Memory;
 				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].StartOffset				= oRenderer.Memory.pos;
@@ -4572,7 +4571,7 @@
 			return operations;
 		}
 
-		function checkNeedEditPage(nPage) {
+		function checkNeedEditOrigPage(nPage) {
 			let aDrawings		= aPagesInfo[nPage].drawings;
 			let aAnnots			= aPagesInfo[nPage].annots;
 			let aForms			= aPagesInfo[nPage].fields;
@@ -4586,9 +4585,14 @@
 
 		// сначала edit исходных страниц
 		for (let i = 0; i < aPagesInfo.length; i++) {
-			if (checkNeedEditPage(i)) {
-				let needClearPage = oFile.pages[i].isConvertedToShapes;
-				writePageInfo.call(this, oFile.pages[i].originIndex, aPagesInfo[i], this.getPageRotate(i), needClearPage, 0);
+			if (checkNeedEditOrigPage(i)) {
+				aPagesInfo[i].originIndex = oFile.pages[i].originIndex;
+				aPagesInfo[i].curIndex = i;
+
+				writePageInfo.call(this, aPagesInfo[i], 0);
+
+				delete aPagesInfo[i].originIndex;
+				delete aPagesInfo[i].curIndex;
 			}
 		}
 
@@ -4600,8 +4604,13 @@
 			let nPage = aOrder[i][0];
 			let nType = aOrder[i][1];
 
-			let needClearPage = oFile.pages[nPage].isConvertedToShapes;
-			writePageInfo.call(this, nPage, aPagesInfo[nPage], this.getPageRotate(nPage), needClearPage, nType);
+			aPagesInfo[nPage].originIndex = undefined;
+			aPagesInfo[nPage].curIndex = nPage;
+
+			writePageInfo.call(this, aPagesInfo[nPage], nType);
+
+			delete aPagesInfo[nPage].originIndex;
+			delete aPagesInfo[nPage].curIndex;
 		}
 
 		if (oMemory) {
