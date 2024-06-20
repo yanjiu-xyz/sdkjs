@@ -422,8 +422,6 @@ function (window, undefined) {
 			this.End_CompositeInput();
 		}
 
-		AscCommon.StartIntervalDrawText(false);
-
 		if (saveValue) {
 			// Пересчет делаем всегда для не пустой ячейки или если были изменения. http://bugzilla.onlyoffice.com/show_bug.cgi?id=34864
 			if (0 < this.undoList.length || 0 < AscCommonExcel.getFragmentsCharCodesLength(this.options.fragments)) {
@@ -2389,6 +2387,7 @@ function (window, undefined) {
 			var applyByArray = t.textFlags && t.textFlags.ctrlKey;
 			if (!applyByArray && success) {
 				t.handlers.trigger("applyCloseEvent", event);
+				AscCommon.StartIntervalDrawText(false);
 			}
 		};
 		this.close(true, callback);
