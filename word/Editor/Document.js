@@ -1784,6 +1784,21 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 	return this.FixedFormShape;
 };
 
+let ACTION_FLAGS = {
+	RECALCULATE      : 0x0001,
+	SCROLL_TO_TARGET : 0x0002,
+	UPDATE_SELECTION : 0x0004,
+	UPDATE_INTERFACE : 0x0008,
+	UPDATE_RULERS    : 0x0010,
+	UPDATE_UNDO_REDO : 0x0020,
+	UPDATE_TRACKS    : 0x0040
+};
+
+ACTION_FLAGS.UPDATEALL = ACTION_FLAGS.UPDATE_SELECTION | ACTION_FLAGS.UPDATE_INTERFACE | ACTION_FLAGS.UPDATE_RULERS | ACTION_FLAGS.UPDATE_UNDO_REDO | ACTION_FLAGS.UPDATE_TRACKS;
+ACTION_FLAGS.UPDATEALL_RECALCULATE_NOSCROLL = ACTION_FLAGS.UPDATEALL | ACTION_FLAGS.RECALCULATE;
+
+AscWord.ACTION_FLAGS = ACTION_FLAGS;
+
 /**
  * Основной класс для работы с документом в Word.
  * @param DrawingDocument
@@ -1922,6 +1937,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		UpdateRulers    : false,
 		UpdateUndoRedo  : false,
 		UpdateStates    : false,
+		ScrollToTarget  : true,
 		Redraw          : {
 			Start : undefined,
 			End   : undefined
@@ -2556,8 +2572,9 @@ CDocument.prototype.GetColorMap = function()
  * Начинаем новое действие, связанное с изменением документа
  * @param {number} nDescription
  * @param {object} [oSelectionState=null] - начальное состояние селекта, до начала действия
+ * @param {number} [flags=null]
  */
-CDocument.prototype.StartAction = function(nDescription, oSelectionState)
+CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
 {
 	this.sendEvent("asc_onUserActionStart");
 	
@@ -2582,9 +2599,21 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState)
 		this.Action.UpdateRulers    = false;
 		this.Action.UpdateUndoRedo  = false;
 		this.Action.UpdateTracks    = false;
+		this.Action.ScrollToTarget  = true;
 		this.Action.Redraw.Start    = undefined;
 		this.Action.Redraw.End      = undefined;
 		this.Action.Additional      = {};
+		
+		if (undefined !== flags && null !== flags)
+		{
+			this.Action.Recalculate     = !!(flags & ACTION_FLAGS.RECALCULATE);
+			this.Action.UpdateSelection = !!(flags & ACTION_FLAGS.UPDATE_SELECTION);
+			this.Action.UpdateInterface = !!(flags & ACTION_FLAGS.UPDATE_INTERFACE);
+			this.Action.UpdateRulers    = !!(flags & ACTION_FLAGS.UPDATE_RULERS);
+			this.Action.UpdateUndoRedo  = !!(flags & ACTION_FLAGS.UPDATE_UNDO_REDO);
+			this.Action.UpdateTracks    = !!(flags & ACTION_FLAGS.UPDATE_TRACKS);
+			this.Action.ScrollToTarget  = !!(flags & ACTION_FLAGS.SCROLL_TO_TARGET);
+		}
 	}
 };
 /**
@@ -2834,7 +2863,8 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction)
 	this.Action.UpdateUndoRedo     = false;
 	this.Action.UpdateTracks       = false;
 	this.Action.UpdatePlaceholders = false;
-	
+	this.Action.ScrollToTarget     = true;
+
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
@@ -3239,7 +3269,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     this.private_ClearSearchOnRecalculate();
 
     // Обновляем позицию курсора
-    this.NeedUpdateTarget = true;
+    this.NeedUpdateTarget = this.Action.Start ? this.Action.ScrollToTarget : true;
 
     // Увеличиваем номер пересчета
     this.RecalcId++;
@@ -16596,10 +16626,8 @@ CDocument.prototype.setAutoHyphenation = function(isAuto)
 	if (this.IsSelectionLocked(AscCommon.changestype_Document_SectPr))
 		return
 
-	this.StartAction(AscDFH.historydescription_Document_SetAutoHyphenation);
+	this.StartAction(AscDFH.historydescription_Document_SetAutoHyphenation, null, AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE_NOSCROLL);
 	this.Settings.setAutoHyphenation(isAuto);
-	this.Recalculate();
-	this.UpdateInterface();
 	this.FinalizeAction();
 };
 CDocument.prototype.setConsecutiveHyphenLimit = function(limit)
@@ -21617,11 +21645,12 @@ CDocument.prototype.controller_UpdateSelectionState = function()
 		{
 			if (false === this.IsSelectionEmpty() || !this.RemoveEmptySelection)
 			{
-				if (true !== this.Selection.Start)
+				if (true !== this.Selection.Start && (!this.Action.UpdateStates || this.Action.ScrollToTarget))
 				{
 					this.private_CheckCurPage();
 					this.RecalculateCurPos();
 				}
+				
 				this.private_UpdateTracks(true, false);
 
 				this.DrawingDocument.TargetEnd();
