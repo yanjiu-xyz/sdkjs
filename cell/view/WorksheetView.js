@@ -13934,8 +13934,16 @@
 			}
 
 			if (shiftMove) {
-				arnFrom = lastSelection;
 				arnTo = t.model.selectionRange.getLast().clone();
+				if (lastSelection.getType() === c_oAscSelectionType.RangeCol && lastSelection.c1 > arnTo.c1) {
+					let diff = arnFrom.c2 - arnFrom.c1 + 1;
+					arnFrom = new asc_Range(lastSelection.c1 + diff, lastSelection.r1, lastSelection.c2 + diff, lastSelection.r2);
+				} else if (lastSelection.getType() === c_oAscSelectionType.RangeRow && lastSelection.r1 > arnTo.r1) {
+					let diff = arnFrom.r2 - arnFrom.r1 + 1;
+					arnFrom = new asc_Range(lastSelection.c1, lastSelection.r1 + diff, lastSelection.c2, lastSelection.r2 + diff);
+				} else {
+					arnFrom = lastSelection;
+				}
 			}
 
 			//***array-formula***
@@ -13986,11 +13994,13 @@
 				t.model.selectionRange.getLast().assign(lastSelection.c1, rowStart, lastSelection.c2, rowEnd);
 			}
 
-			if (colByX != null || rowByY != null) {
+			if (t.model.selectionRange.getLast().isEqual(lastSelection) !== true &&(colByX != null || rowByY != null)) {
 				History.Create_NewPoint();
 				History.StartTransaction();
-				let insProp = colByX ? c_oAscInsertOptions.InsertCellsAndShiftRight : c_oAscInsertOptions.InsertCellsAndShiftDown;
+				let insProp = null != colByX ? c_oAscInsertOptions.InsertCellsAndShiftRight : c_oAscInsertOptions.InsertCellsAndShiftDown;
 				this.changeWorksheet("insCell", insProp, doMove, true);
+			} else {
+				this._cleanSelectionMoveRange();
 			}
 		} else {
 			doMove(true);
