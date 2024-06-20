@@ -2781,10 +2781,11 @@
 	};
 	CGraphicObjectBase.prototype.createPlaceholderControl = function (aControls) {
 
-		if(!this.parent) return;
-		if(!this.parent.getObjectType) return;
+		let nParentType = null;
+		if(this.parent && this.parent.getObjectType) {
+			nParentType = this.parent.getObjectType();
+		}
 		let bCanAdd = false;
-		let nParentType = this.parent.getObjectType();
 		if(this.isPlaceholder() &&
 			(nParentType === AscDFH.historyitem_type_SlideMaster || nParentType === AscDFH.historyitem_type_SlideLayout)) {
 			bCanAdd = true;
