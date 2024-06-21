@@ -3240,7 +3240,7 @@ CInlineLevelSdt.prototype.ConvertFormToInline = function()
 		var nInRunPos = -1;
 		for (var nPos = 0, nRunLen = oRun.GetElementsCount(); nPos < nRunLen; ++nPos)
 		{
-			if (oRun.GetElement() === oParaDrawing)
+			if (oRun.GetElement(nPos) === oParaDrawing)
 			{
 				nInRunPos = nPos;
 				break;
