@@ -10371,7 +10371,11 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			{
 				this.CurPos.SetCC(oCC);
 				oCC.SkipSpecialContentControlLock(true);
-				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode() && this.CheckOFormUserMaster(oCC)))
+				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, {
+					Type      : AscCommon.changestype_2_Element_and_Type,
+					Element   : oCC,
+					CheckType : AscCommon.changestype_Paragraph_Content
+				}, true, this.IsFillingFormMode() && this.CheckOFormUserMaster(oCC)))
 				{
 					this.RemoveTextSelection();
 					this.StartAction();
