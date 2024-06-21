@@ -3296,6 +3296,9 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     var RecalcData = History.Get_RecalcData(_RecalcData);
 
     History.Reset_RecalcIndex();
+	
+	if (RecalcData.ResetCache)
+		this.Reset_RecalculateCache();
 
     this.DrawingObjects.recalculate(RecalcData.Drawings);
 
@@ -12925,12 +12928,16 @@ CDocument.prototype.Refresh_RecalcData = function(oData)
 		case AscDFH.historyitem_Document_MathSettings:
 		case AscDFH.historyitem_Document_Settings_GutterAtTop:
 		case AscDFH.historyitem_Document_Settings_MirrorMargins:
+		{
+			nChangePos = 0;
+			break;
+		}
 		case AscDFH.historyitem_Document_Settings_AutoHyphenation:
 		case AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit:
 		case AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps:
 		case AscDFH.historyitem_Document_Settings_HyphenationZone:
 		{
-			nChangePos = 0;
+			this.History.RecalcData_Add({Type : AscDFH.historyitem_recalctype_FromStart});
 			break;
 		}
 	}

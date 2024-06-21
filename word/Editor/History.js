@@ -72,6 +72,7 @@
 		NotesEnd     : false,
 		NotesEndPage : 0,
 		LineNumbers  : false,
+		ResetCache   : false,
 		Update       : true
 	};
 
@@ -606,6 +607,20 @@ CHistory.prototype =
 				this.RecalculateData.NotesEnd     = true;
 				this.RecalculateData.NotesEndPage = Data.PageNum;
 				break;
+			}
+			case AscDFH.historyitem_recalctype_FromStart:
+			{
+				this.RecalculateData.Inline.Pos     = 0;
+				this.RecalculateData.Inline.PageNum = 0;
+				this.RecalculateData.Flow           = [];
+				this.RecalculateData.HdrFtr         = [];
+				this.RecalculateData.Drawings.All   = true;
+				this.RecalculateData.Drawings.Map   = {};
+				this.RecalculateData.Tables         = [];
+				this.RecalculateData.NumPr          = [];
+				this.RecalculateData.NotesEnd       = false;
+				this.RecalculateData.NotesEndPage   = 0;
+				this.RecalculateData.ResetCache     = true;
 			}
         }
     },
@@ -1324,6 +1339,7 @@ CHistory.prototype.private_ClearRecalcData = function()
 		ChangedStyles     : {},
 		ChangedNums       : {},
 		LineNumbers       : false,
+		ResetCache        : false,
 		AllParagraphs     : null
 	};
 };
@@ -1353,6 +1369,7 @@ CHistory.prototype.private_ClearRecalcData = function()
 			ChangedStyles     : {},
 			ChangedNums       : {},
 			LineNumbers       : false,
+			ResetCache        : false,
 			AllParagraphs     : null
 		};
 		
