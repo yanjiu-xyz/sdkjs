@@ -12254,13 +12254,13 @@ CRFonts.prototype.Compare = function(rFonts)
 		this.Ascii = {Name : undefined, Index : -1};
 	
 	if (!this.private_IsEqual(this.EastAsia, rFonts.EastAsia))
-		this.EastAsia = {Name : undefined, Index : -1};;
+		this.EastAsia = {Name : undefined, Index : -1};
 	
 	if (!this.private_IsEqual(this.HAnsi, rFonts.HAnsi))
-		this.HAnsi = {Name : undefined, Index : -1};;
+		this.HAnsi = {Name : undefined, Index : -1};
 	
 	if (!this.private_IsEqual(this.CS, rFonts.CS))
-		this.CS = {Name : undefined, Index : -1};;
+		this.CS = {Name : undefined, Index : -1};
 	
 	if (this.AsciiTheme !== rFonts.AsciiTheme)
 		this.AsciiTheme = undefined;
