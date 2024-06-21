@@ -175,7 +175,8 @@ CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 
 	if (nStartPos <= nEndPos)
 		oContentControl.ClearContent();
-
+	
+	AscCommon.History.skipFormFillingLockCheck(true);
 	for (var nCurPos = nStartPos; nCurPos <= nEndPos; ++nCurPos)
 	{
 		var oItem = this.Content[nCurPos];
@@ -185,6 +186,7 @@ CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 		else
 			oContentControl.AddToContent(nCurPos - nStartPos, oItem.Copy(false, oPr));
 	}
+	AscCommon.History.skipFormFillingLockCheck(false);
 
 	// ВАЖНО: настройки копируем после копирования содержимого, потому что есть специальные случаи, когда
 	//        содержимое дальше меняется в зависимости от настроек (например, для радио кнопок)
