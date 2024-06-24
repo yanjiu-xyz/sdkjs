@@ -12248,9 +12248,31 @@ CRFonts.prototype.Is_Equal = function(oRFonts)
 {
 	return this.IsEqual(oRFonts);
 };
-CRFonts.prototype.Compare = function(oRFonts)
+CRFonts.prototype.Compare = function(rFonts)
 {
-	return this.IsEqual(oRFonts);
+	if (!this.private_IsEqual(this.Ascii, rFonts.Ascii))
+		this.Ascii = {Name : undefined, Index : -1};
+	
+	if (!this.private_IsEqual(this.EastAsia, rFonts.EastAsia))
+		this.EastAsia = {Name : undefined, Index : -1};
+	
+	if (!this.private_IsEqual(this.HAnsi, rFonts.HAnsi))
+		this.HAnsi = {Name : undefined, Index : -1};
+	
+	if (!this.private_IsEqual(this.CS, rFonts.CS))
+		this.CS = {Name : undefined, Index : -1};
+	
+	if (this.AsciiTheme !== rFonts.AsciiTheme)
+		this.AsciiTheme = undefined;
+	
+	if (this.EastAsiaTheme !== rFonts.EastAsiaTheme)
+		this.EastAsiaTheme = undefined;
+	
+	if (this.HAnsiTheme !== rFonts.HAnsiTheme)
+		this.HAnsiTheme = undefined;
+	
+	if (this.CSTheme !== rFonts.CSTheme)
+		this.CSTheme = undefined;
 };
 CRFonts.prototype.Write_ToBinary = function(oWriter)
 {

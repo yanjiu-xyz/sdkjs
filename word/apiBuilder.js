@@ -16162,7 +16162,7 @@
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
 	/**
-	 * Returns the value of color in RGB format
+	 * Returns a color value in RGB format.
 	 * @memberof ApiUniColor
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
@@ -16818,10 +16818,11 @@
 	};
 	
 	/**
-	 * Place cursor before/after the current content control
-	 * @param {boolean?} [isAfter=true]
+	 * Places a cursor before/after the current content control.
+	 * @param {boolean?} [isAfter=true] - Specifies whether a cursor will be placed before (false) or after (true) the current content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
+	 * @since 8.1.0
 	 */
 	ApiInlineLvlSdt.prototype.MoveCursorOutside = function(isAfter)
 	{
@@ -17878,10 +17879,11 @@
 	};
 	
 	/**
-	 * Place cursor before/after the current content control
-	 * @param {boolean?} [isAfter=true]
+	 * Places a cursor before/after the current content control.
+	 * @param {boolean?} [isAfter=true] - Specifies whether a cursor will be placed before (false) or after (true) the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
+	 * @since 8.1.0
 	 */
 	ApiBlockLvlSdt.prototype.MoveCursorOutside = function(isAfter)
 	{
@@ -18249,10 +18251,11 @@
 		return new ApiTextPr(this, this.Sdt.Pr.TextPr.Copy());
 	};
 	/**
-	 * Place cursor before/after the current form.
-	 * @param {boolean?} [isAfter=true]
+	 * Places a cursor before/after the current form.
+	 * @param {boolean?} [isAfter=true] - Specifies whether a cursor will be placed before (false) or after (true) the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 8.1.0
 	 */
 	ApiFormBase.prototype.MoveCursorOutside = function(isAfter)
 	{

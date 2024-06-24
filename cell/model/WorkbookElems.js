@@ -15031,7 +15031,7 @@ function RangeDataManagerElem(bbox, data)
 		//path also can changed
 		var path = oPortalData && oPortalData["path"];
 		if (path && this.Id !== path) {
-			let isNotUpdate = (AscCommonExcel.importRangeLinksState && AscCommonExcel.importRangeLinksState.notUpdateIdMap[this.Id]) || this.notUpdateId;
+			let isNotUpdate = (AscCommonExcel.importRangeLinksState && AscCommonExcel.importRangeLinksState.notUpdateIdMap && AscCommonExcel.importRangeLinksState.notUpdateIdMap[this.Id]) || this.notUpdateId;
 			!isNotUpdate && this.setId(path);
 			isChanged = true;
 		}
