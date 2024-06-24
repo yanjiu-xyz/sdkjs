@@ -4066,10 +4066,9 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 };
 CDelimiter.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	oMathText.IsBracket = true;
+	oMathText.IsBracket  = true;
 
 	let strSeparatorSymbol	= oMathText.IsLaTeX() ? "\\mid" : "∣";
 	let strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
@@ -4091,7 +4090,7 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 		{
 			strStartSymbol = "\\left";
 		}
-		let oText = new AscMath.MathText(strStartSymbol === "\\left" ? "\\left. " : "\\left" + strStartSymbol + " ", this.Pr.GetRPr());
+		let oText = new AscMath.MathText(strStartSymbol === "\\left" ? "\\left. " : "\\left" + strStartSymbol, this);
 		oMathText.AddText(oText);
 	}
 	else
@@ -4108,23 +4107,22 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 			strStartText = "├" + strStartSymbol;
 		}
 
-		let oOpenText = new AscMath.MathText(strStartText, this.Pr.GetRPr());
+		let oOpenText = new AscMath.MathText(strStartText, this);
 		oMathText.AddText(oOpenText);
 	}
 
 	for (let intCount = 0; intCount < this.getColumnsCount(); intCount++)
 	{
-		let oCurrentPos = oMathText.Add(this.Content[intCount], true);
+		let oCurrentPos = oMathText.Add(this.Content[intCount], !oMathText.LaTeX);
 		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1)
 		{
-			let oSepText = new AscMath.MathText(strSeparatorSymbol, this.Content[intCount].GetCtrPrp());
+			let oSepText = new AscMath.MathText(strSeparatorSymbol, this.Content[intCount]);
 			oMathText.AddAfter(oCurrentPos, oSepText);
 		}
 	}
 
 	if (oMathText.IsLaTeX())
 	{
-		let oLastConPr = this.Content[this.Content.length - 1].CtrPrp;
 		if (strEndSymbol)
 		{
 			let tempStrSymbol = strEndSymbol;
@@ -4137,7 +4135,7 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 			strEndSymbol = "\\right";
 		}
 
-		oMathText.AddText(new AscMath.MathText(strEndSymbol === "\\right" ? "\\right. " : "\\right" + strEndSymbol + " ", oLastConPr), true);
+		oMathText.AddText(new AscMath.MathText(strEndSymbol === "\\right" ? "\\right. " : "\\right" + strEndSymbol, this.Content[this.Content.length - 1]), true);
 	}
 	else
 	{
@@ -4159,8 +4157,7 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 			}
 		}
 
-		let oLastConPr = this.Content[this.Content.length - 1].CtrPrp;
-		let oText = new AscMath.MathText(strCloseSymbol, oLastConPr);
+		let oText = new AscMath.MathText(strCloseSymbol, this.Content[this.Content.length - 1]);
 		oMathText.AddText(oText, true);
 	}
 
@@ -4644,24 +4641,26 @@ CGroupCharacter.prototype.Can_ChangePos = function()
  */
 CGroupCharacter.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	let nStartCode = this.Pr.chr || this.operator.Get_CodeChr();
 	let strStart = String.fromCharCode(nStartCode);
 	let oBase = this.getBase();
 
+	let oPos;
+
 	if (oMathText.IsLaTeX())
 	{
 		if (nStartCode === 9182 || nStartCode === 9183)
 		{
+			oPos = oMathText.Add(oBase, true, 1);
+
 			if (nStartCode === 9182)
 				strStart = '\\overbrace';
 			else if (nStartCode === 9183)
 				strStart = '\\underbrace';
 
-			oMathText.AddText(strStart);
-			oMathText.Add(oBase, false);
+			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
 		}
 		else
 		{
@@ -4682,10 +4681,10 @@ CGroupCharacter.prototype.GetTextOfElement = function(oMathText)
 			strPos = "┴";
 		}
 
-		oMathText.AddText( new AscMath.MathText(strStart, this.Pr.GetRPr()), true, false);
+		oMathText.AddText( new AscMath.MathText(strStart, this), true);
 		if (nStartCode !== 9182 && nStartCode !== 9183)
 		{
-			oMathText.AddText(new AscMath.MathText(strPos, oBase.CtrPrp), true, false);
+			oMathText.AddText(new AscMath.MathText(strPos, oBase), true);
 		}
 		oMathText.Add(oBase, true);
 	}

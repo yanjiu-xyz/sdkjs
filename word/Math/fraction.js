@@ -641,42 +641,46 @@ CFraction.prototype.raw_SetFractionType = function(FractionType)
  */
 CFraction.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	let oFracContent;
-	let oPr = this.Pr.GetRPr();
-	let oNumerator			= this.getNumerator();
-	let oDenominator		= this.getDenominator();
+	let oFracContent,
+		strFracSymbol,
+		oNumerator		= this.getNumerator(),
+		oDenominator	= this.getDenominator();
 
-	oMathText.SetStyle(oPr);
-	let oPosNumerator		= oMathText.Add(oNumerator, true);
-	oMathText.SetStyle(oPr);
-	let oPosDenominator		= oMathText.Add(oDenominator, true);
+	oMathText.SetGlobalStyle(this);
 
-	if (!oMathText.IsLaTeX())
+	if (oMathText.IsLaTeX())
 	{
+		let oPosNumerator	= oMathText.Add(oNumerator, true, 1);
+		let oPosDenominator	= oMathText.Add(oDenominator, true, 1);
 		switch (this.Pr.type)
 		{
-			case BAR_FRACTION:			oFracContent = new AscMath.MathText('/', oPr, {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType});	break;
-			case SKEWED_FRACTION:		oFracContent = new AscMath.MathText('⁄', oPr, {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType});	break;
-			case LINEAR_FRACTION:		oFracContent = new AscMath.MathText('∕', oPr, {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType});	break;
-			case NO_BAR_FRACTION:		oFracContent = new AscMath.MathText('¦', oPr, {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType});	break;
-			default:					oFracContent = new AscMath.MathText('/', oPr, {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType});	break;
+			case NO_BAR_FRACTION:	strFracSymbol = '\\binom';	break;
+			case BAR_FRACTION:		strFracSymbol = '\\frac';	break;
+			default:				strFracSymbol = '\\sfrac';	break;
 		}
-		oMathText.AddAfter(oPosNumerator, oFracContent);
+
+		oFracContent	= new AscMath.MathText(strFracSymbol, oMathText.GetStyleFromFirst());
+		oMathText.AddBefore(oPosNumerator, oFracContent);
 	}
 	else
 	{
+		let oPosNumerator	= oMathText.Add(oNumerator, true);
+		let oPosDenominator	= oMathText.Add(oDenominator, true);
 		switch (this.Pr.type)
 		{
-			case NO_BAR_FRACTION:		oFracContent = new AscMath.MathText('\\binom', oPr);	break;
-			case BAR_FRACTION:			oFracContent = new AscMath.MathText('\\frac', oPr);		break;
-			default:					oFracContent = new AscMath.MathText('\\sfrac', oPr);	break;
+			case BAR_FRACTION:		strFracSymbol = '/';	break;
+			case SKEWED_FRACTION:	strFracSymbol = '⁄';	break;
+			case LINEAR_FRACTION:	strFracSymbol = '∕';	break;
+			case NO_BAR_FRACTION:	strFracSymbol = '¦';	break;
+			default:				strFracSymbol = '/';	break;
 		}
-		oMathText.AddBefore(oPosNumerator, oFracContent);
+		oFracContent	= new AscMath.MathText(strFracSymbol, this);
+		oMathText.AddAfter(oPosNumerator, oFracContent);
 	}
 
+	oMathText.ResetGlobalStyle()
 	return oMathText;
 };
 /**

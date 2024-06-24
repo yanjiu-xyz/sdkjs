@@ -535,11 +535,13 @@ ParaRun.prototype.GetText = function(oText)
  */
 ParaRun.prototype.GetTextOfElement = function(oMathText)
 {
-	if (oMathText === undefined || !oMathText instanceof AscMath.MathTextAndStyles)
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 	
 	let isLatex = oMathText.IsLaTeX();
 	let isOperator = false;
+
+	if (this.Content.length === 1 && this.Content[0].value === 11034)
+		return false;
 
 	for (let i = 0; i < this.Content.length; i++)
 	{
@@ -552,16 +554,7 @@ ParaRun.prototype.GetTextOfElement = function(oMathText)
 		if (AscMath.MathLiterals.number.GetByOneRule(strCurrentElement))
 			oMathText.SetIsNumbers(true);
 
-		oMathText.AddText(
-			new AscMath.MathText(
-				strCurrentElement,
-				this.Pr.Copy(),
-				{
-					reviewType : this.ReviewType,
-					reviewInfo : this.ReviewInfo ? this.ReviewInfo.Copy() : undefined},
-			),
-			isOperator,
-		);
+		oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
 	}
 
 	return oMathText;

@@ -341,25 +341,21 @@ CLimit.prototype.Can_ModifyArgSize = function()
  */
 CLimit.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	let strLimitSymbol  = "";
 	let oFuncName       = this.getFName();
 	let oArgument       = this.getIterator();
-	let oPr = this.Pr.GetRPr();
 
 	if (oMathText.IsLaTeX())
 	{
-		let text = oFuncName.GetTextOfElement().GetText();
-		if (AscMath.MathAutoCorrectionFuncNames.includes(text))
-		{
-			oMathText.AddText(new AscMath.MathText('\\', oPr));
-			oMathText.Add(oFuncName, false);
-			oMathText.AddText(new AscMath.MathText((this.Pr.type == 1) ? "\\above" : "\\below", oPr));
-			oMathText.Add(oArgument, true);
+		let text = oFuncName.GetTextOfElement();
+		if (AscMath.functionNames.includes(text.GetText()))
+			oMathText.AddText(new AscMath.MathText('\\', this));
 
-		}
+		oMathText.Add(oFuncName, false);
+		oMathText.AddText(new AscMath.MathText((this.Pr.type == 1) ? "\\above" : "\\below", this));
+		oMathText.Add(oArgument, true, 1);
 	}
 	else
 	{
@@ -374,7 +370,7 @@ CLimit.prototype.GetTextOfElement = function(oMathText)
 
 		let oNamePos = oMathText.Add(oFuncName, true);
 
-		oMathText.AddAfter(oNamePos, new AscMath.MathText(strLimitSymbol, oPr));
+		oMathText.AddAfter(oNamePos, new AscMath.MathText(strLimitSymbol, this));
 		oMathText.Add(oArgument, true);
 	}
 
@@ -518,13 +514,21 @@ CMathFunc.prototype.fillContent = function()
 };
 CMathFunc.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	let oFuncName = this.getFName();
 	let oArgument = this.getArgument();
+	oMathText.SetGlobalStyle(this);
 
-	if (!oMathText.IsLaTeX())
+	if (oMathText.IsLaTeX())
+	{
+		oMathText.AddText(new AscMath.MathText("\\", this));
+		let oPosFuncName = oMathText.Add(oFuncName, false);
+		let oStrContent = oMathText.GetExact(oPosFuncName, true);
+
+		oMathText.Add(oArgument, true, 1);
+	}
+	else
 	{
 		oMathText.Add(oFuncName, true, 0);
 		let oArgumentPos = oMathText.Add(oArgument, true, 0);
@@ -534,21 +538,9 @@ CMathFunc.prototype.GetTextOfElement = function(oMathText)
 
 		if (oArgumentToken.GetLength() > 1 && !oArgumentToken.IsBracket)
 		{
-			oMathText.SetStyle(this.Pr.GetRPr());
+			oMathText.SetGlobalStyle(this.Pr.GetRPr());
 			oMathText.WrapExactElement(oArgumentPos, "〖", "〗");
 		}
-	}
-	else
-	{
-		let oPosFuncName = oMathText.Add(oFuncName, false);
-		let oStrContent = oMathText.GetExact(oPosFuncName, true);
-
-		if (!(oStrContent instanceof AscMath.MathTextAndStyles) && oStrContent[0]!== "\\")
-		{
-			oMathText.AddBefore(oPosFuncName, new AscMath.MathText("\\", oMathText.GetExact(oPosFuncName).style));
-		}
-		oMathText.SetStyle(this.Pr.GetRPr());
-		oMathText.Add(oArgument, true);
 	}
 
 	return oMathText;

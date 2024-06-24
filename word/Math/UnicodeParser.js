@@ -590,12 +590,14 @@
 	};
 	CUnicodeParser.prototype.GetCubertLiteral = function ()
 	{
+		let oRadicalStyle = this.oLookahead.style;
         this.EatToken(this.oLookahead.class);
 
 		return this.GetContentOfAnyTypeRadical({
             type: Struc.char,
 			value: "3",
-		});
+			style: oRadicalStyle,
+		}, oRadicalStyle);
 	};
 	CUnicodeParser.prototype.IsCubertLiteral = function ()
 	{
@@ -603,12 +605,14 @@
 	};
 	CUnicodeParser.prototype.GetFourthrtLiteral = function ()
 	{
+		let oRadicalStyle = this.oLookahead.style;
         this.EatToken(Literals.radical.id);
 
 		return this.GetContentOfAnyTypeRadical({
             type: Struc.char,
 			value: "4",
-		});
+			style: oRadicalStyle,
+		}, oRadicalStyle);
 	};
 	CUnicodeParser.prototype.IsFourthrtLiteral = function ()
 	{
@@ -1607,7 +1611,8 @@
 	{
 		let oDiacriticBase;
 
-		if (this.IsAnLiteral()) {
+		if (this.IsAnLiteral())
+		{
 			oDiacriticBase = this.GetAnLiteral();
 			return {
                 type: Struc.diacritic_base,
@@ -2334,21 +2339,19 @@
 	CUnicodeParser.prototype.WriteSavedTokens = function ()
 	{
 		let intSavedTokensLength = this.arrSavedTokens.length;
-		let strOutput = "";
+		let arrOutput = [];
+
 		for (let i = 0; i < intSavedTokensLength; i++)
 		{
-            let str = this.oTokenizer.GetTextOfToken(this.arrSavedTokens[i].index, false);
-
-            if (str)
-                strOutput += str;
-            else
-			strOutput += this.arrSavedTokens[i].data;
+			let oCurrentEl = this.arrSavedTokens[i];
+			arrOutput.push({
+				type: Struc.char,
+				value: oCurrentEl.data,
+				style: oCurrentEl.style,
+			})
 		}
 		this.isSaveTokens = false;
-		return {
-            type: Literals.char.id,
-			value: strOutput,
-		};
+		return arrOutput;
 	};
 
 	function CUnicodeConverter(str, oContext, isGetOnlyTokens)

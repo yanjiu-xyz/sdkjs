@@ -585,8 +585,7 @@ CBorderBox.prototype.Get_InterfaceProps = function()
  */
 CBorderBox.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	let oBase = this.getBase();
 
@@ -597,9 +596,9 @@ CBorderBox.prototype.GetTextOfElement = function(oMathText)
 	}
 	else
 	{
-		let oBoxStr = new AscMath.MathText("▭", this.Pr.GetRPr())
+		let oBoxStr = new AscMath.MathText("▭", this, true)
 		oMathText.AddText(oBoxStr);
-		oMathText.SetStyle(this.Pr.GetRPr());
+		oMathText.SetGlobalStyle(this, true);
 		oMathText.Add(oBase, true)
 	}
 
@@ -1032,8 +1031,8 @@ CBox.prototype.GetTextOfElement = function(oMathText)
 	}
 	else
 	{
-		oMathText.AddText(new AscMath.MathText("□", this.Pr.GetRPr()));
-		oMathText.SetStyle(this.Pr.GetRPr());
+		oMathText.AddText(new AscMath.MathText("□", this));
+		oMathText.SetGlobalStyle(this, this);
 		oMathText.Add(oBase, true);
 	}
 	return oMathText;
@@ -1202,8 +1201,7 @@ CBar.prototype.raw_SetLinePos = function(Value)
  */
 CBar.prototype.GetTextOfElement = function(oMathText)
 {
-	if (oMathText === undefined || !oMathText instanceof AscMath.MathTextAndStyles)
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	let oBase       = this.getBase();
 
@@ -1214,7 +1212,7 @@ CBar.prototype.GetTextOfElement = function(oMathText)
 	}
 	else
 	{
-		let oText =  new AscMath.MathText((this.Pr.pos) ? "▁" : "¯", this.Pr.GetRPr())
+		let oText =  new AscMath.MathText((this.Pr.pos) ? "▁" : "¯", this, true)
 		oMathText.AddText(oText, true);
 		oMathText.Add(oBase, true);
 	}

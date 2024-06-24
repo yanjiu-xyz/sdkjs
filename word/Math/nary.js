@@ -844,8 +844,7 @@ CNary.prototype.Can_ModifyArgSize = function()
  */
 CNary.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	let strStartCode;
 	let oBase	= this.getBase();
@@ -854,76 +853,59 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		switch (this.Pr.chr)
-		{
-			case 8747:	strStartCode = '\\int';			break;
-			case 8748:	strStartCode = '\\iint';		break;
-			case 8749:	strStartCode = '\\iiint';		break;
-			case 8750:
-			case 8755:	strStartCode = '\\oint';		break;
-			case 8751:	strStartCode = '\\oiint';		break;
-			case 8752:	strStartCode = '\\oiiint';		break;
-			case 8721:	strStartCode = '\\sum';			break;
-			case 8719:	strStartCode = '\\prod';		break;
-			case 8720:	strStartCode = '\\coprod';		break;
-			case 8899:	strStartCode = '\\bigcup';		break;
-			case 8898:	strStartCode = '\\bigcap';		break;
-			case 8897:	strStartCode = '\\bigvee';		break;
-			case 8896:	strStartCode = '\\bigwedge';	break;
-			case 10753:	strStartCode = '\\bigoplus';	break;
-			case 10754:	strStartCode = '\\bigotimes';	break;
-			case 10756:	strStartCode = '\\biguplus';	break;
-			case 10764:	strStartCode = '\\iiiint';		break;
-			case 10758: strStartCode = '\\bigsqcup';	break;
-			case 10752: strStartCode = '\\bigodot';		break;
-			default: break;
-		}
-
-		let oPosNaryChar = oMathText.AddText(new AscMath.MathText(strStartCode, this.Pr.GetRPr()));
+		strStartCode = AscMath.MathLiterals.nary.Unicode[String.fromCharCode(this.Pr.chr)];
 
 		if (oLower)
 		{
-			oMathText.AddText(new AscMath.MathText("_", oLower.GetCtrPrp()));
-			oMathText.SetStyle(oLower.GetCtrPrp());
-			oMathText.Add(oLower, true);
+			oMathText.SetGlobalStyle(oLower);
+			let oLowerPos	= oMathText.Add(oLower, true, oMathText.IsLaTeX() ? 1 : undefined);
+			oMathText.AddBefore(oLowerPos, new AscMath.MathText(strStartCode, oMathText.GetStyleFromFirst()));
+			oLowerPos		= oMathText.AddBefore(oLowerPos, new AscMath.MathText("_", oLower));
 		}
 
 		if (oUpper)
 		{
-			oMathText.AddText(new AscMath.MathText("^", oUpper.GetCtrPrp()));
-			oMathText.SetStyle(oUpper.GetCtrPrp());
-			oMathText.Add(oUpper, true);
+			oMathText.SetNotGetStyleFromFirst();
+			let oUpperPos = oMathText.AddText(new AscMath.MathText("^", oUpper));
+
+			oMathText.SetGlobalStyle(oUpper);
+			oMathText.Add(oUpper, true, 1);
+
+			if (!oLower)
+				oMathText.AddBefore(oUpperPos, new AscMath.MathText(strStartCode, oUpper));
 		}
 
 		if (oBase)
 		{
-			oMathText.SetStyle(this.Pr.GetRPr());
-			oMathText.Add(oBase, true);
+			oMathText.SetGlobalStyle(this);
+			oMathText.Add(oBase, true, 0);
 		}
 	}
 	else
 	{
-		let oLastPos = oMathText.AddText(new AscMath.MathText(String.fromCharCode(this.Pr.chr), this.Pr.GetRPr()));
+		let oLastPos = oMathText.AddText(new AscMath.MathText(String.fromCharCode(this.Pr.chr), this));
 		let isScript = false;
 
 		if (oLower)
 		{
 			isScript = true;
+			oMathText.SetGlobalStyle(this);
 			oLastPos = oMathText.Add(oLower, true);
-			oMathText.AddBefore(oLastPos, new AscMath.MathText("_", oLower.GetCtrPrp()));
+			oMathText.AddBefore(oLastPos, new AscMath.MathText("_", oLower));
 		}
 
 		if (oUpper)
 		{
 			isScript = true;
+			oMathText.SetGlobalStyle(this);
 			oLastPos = oMathText.Add(oUpper, true);
-			oMathText.AddBefore(oLastPos, new AscMath.MathText("^", oUpper.GetCtrPrp()));
+			oMathText.AddBefore(oLastPos, new AscMath.MathText("^", oUpper));
 		}
 
 		if (oBase)
 		{
 			if (oBase.GetCountForAutoProcessing() >= 1)
-				oMathText.AddText(new AscMath.MathText("▒", oBase.CtrPrp));
+				oMathText.AddText(new AscMath.MathText("▒", oBase));
 
 			oLastPos = oMathText.Add(oBase, true, 1);
 			let oBaseText = oMathText.GetExact(oLastPos);

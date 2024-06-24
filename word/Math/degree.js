@@ -555,16 +555,14 @@ CDegree.prototype.Can_ModifyArgSize = function()
 };
 CDegree.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	let oBase           = this.getBase();
 	let oIterator       = this.getIterator();
 
-	oMathText.Add(oBase, true, false);
-	let oText = new AscMath.MathText(this.Pr.type === 1 ? "^" : "_", oIterator.GetCtrPrp(), {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType});
-	oMathText.AddText(oText);
-	oMathText.SetStyle(oIterator.GetCtrPrp());
+	oMathText.Add(oBase, true);
+	oMathText.AddText(new AscMath.MathText(this.Pr.type === 1 ? "^" : "_", this));
+	oMathText.SetGlobalStyle(this);
 	oMathText.Add(oIterator, true);
 
 	return oMathText;
@@ -1237,13 +1235,13 @@ CDegreeSubSup.prototype.Can_ModifyArgSize = function()
 };
 CDegreeSubSup.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
     let oBase                = this.getBase();
     let oLowerIterator       = this.getLowerIterator();
     let oUpperIterator       = this.getUpperIterator();
     let isPreScript = this.Pr.type === -1;
+
     if (isPreScript)
     {
         let oPosLowerIterator  = oMathText.Add(oLowerIterator, true);
@@ -1256,12 +1254,15 @@ CDegreeSubSup.prototype.GetTextOfElement = function(oMathText)
     }
     else
     {
-        oMathText.Add(oBase, true);
-        oMathText.AddText(new AscMath.MathText("_", oLowerIterator.GetCtrPrp()));
-		oMathText.SetStyle(oLowerIterator.GetCtrPrp());
+        oMathText.Add(oBase, true, 1);
+        oMathText.AddText(new AscMath.MathText("_", oLowerIterator));
+
+		oMathText.SetGlobalStyle(oLowerIterator);
         oMathText.Add(oLowerIterator, true);
-        oMathText.AddText(new AscMath.MathText("^", oUpperIterator.GetCtrPrp()));
-	    oMathText.SetStyle(oUpperIterator.GetCtrPrp());
+
+        oMathText.AddText(new AscMath.MathText("^", oUpperIterator));
+
+	    oMathText.SetGlobalStyle(oUpperIterator);
         oMathText.Add(oUpperIterator, true);
     }
 

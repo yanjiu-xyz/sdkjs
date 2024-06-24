@@ -163,10 +163,12 @@
 	};
 	CLaTeXParser.prototype.GetOperatorLiteral = function ()
 	{
+		let oPr = this.oLookahead.style;
 		const strToken = this.EatToken(Literals.operator.id);
 		return {
 			type: Struc.char,
 			value: strToken.data,
+			style: oPr
 		};
 	};
 	CLaTeXParser.prototype.IsAccentLiteral = function ()
@@ -612,7 +614,7 @@
 			? this.GetArguments(1)
 			: undefined;
 
-		let name = oFuncContent.data.slice(1)
+		let name = oFuncContent.data;
 
 		if (oFuncContent.class === Literals.nary.id)
 		{
@@ -623,26 +625,26 @@
 				third: oThirdContent,
 			}
 		}
-		else if (LimitFunctions.includes(name))
+		else if (AscMath.MathLiterals.func.IsLaTeXIncludeLimit(name))
 		{
 			return {
 				type: Struc.func_lim,
 				value: {
 					type: Struc.char,
-					value: name,
+					value: name.slice(1),
 					style: oPr,
 				},
 				style: oPr,
 				third: oThirdContent,
 			}
 		}
-		else if (FunctionNames.includes(name))
+		else if (AscMath.MathLiterals.func.IsLaTeXIncludeNormal(name))
 		{
 			return {
 				type: Struc.func,
 				value: {
 					type: Struc.char,
-					value: name,
+					value: name.slice(1),
 					style: oFuncContent.style,
 				},
 				style: oPr,
@@ -709,14 +711,20 @@
 	};
 	CLaTeXParser.prototype.GetHBracketLiteral = function ()
 	{
-		let oDown, oUp;
-		let hBrack = this.EatToken(this.oLookahead.class).data;
+		let oHBracket = this.oLookahead,
+			oPr = this.oLookahead.style,
+			oDown,
+			oUp;
+		oHBracket.data = Literals.hbrack.LaTeX[oHBracket.data]
+
+		this.EatToken(this.oLookahead.class);
+
 		let oContent = this.GetArguments(1);
 		this.SkipFreeSpace();
 
-		if (this.oLookahead.data === "_" || this.oLookahead.data === "^")
+		if (this.IsSubSup())
 		{
-			if (this.oLookahead.class === "_")
+			if (this.oLookahead.data === "_")
 			{
 				this.EatToken(this.oLookahead.class);
 				oDown = this.GetArguments(1);
@@ -729,11 +737,12 @@
 		}
 
 		return {
-			type: Struc.horizontal,
+			type: Struc.group_character,
 			value: oContent,
-			hBrack: hBrack,
+			hBrack: oHBracket,
 			down: oDown,
 			up: oUp,
+			style: oPr,
 		}
 	};
 	CLaTeXParser.prototype.GetWrapperElementLiteral = function ()

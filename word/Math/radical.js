@@ -774,25 +774,25 @@ CRadical.prototype.Is_ContentUse = function(MathContent)
  */
 CRadical.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	let oDegree		= this.getDegree();
 	let oBase		= this.getBase();
 
 	if (oMathText.IsLaTeX())
 	{
-		let oPr = this.Pr.GetRPr();
-		let oPosSqrt		= oMathText.AddText(new AscMath.MathText("\\sqrt", oPr), true);
-		oMathText.SetStyle(oPr);
+		oMathText.SetGlobalStyle(this);
 		let oPosDegree		= oMathText.Add(oDegree, true, ["[", "]"]);
-		oMathText.SetStyle(oPr);
+
+		oMathText.SetGlobalStyle(this);
 		let oPosBase		= oMathText.Add(oBase, true);
+
+		oMathText.AddBefore(oPosDegree, new AscMath.MathText("\\sqrt", oMathText.GetStyleFromFirst()));
 	}
 	else
 	{
 		let oDegreeText		= oDegree.GetTextOfElement();
-		let oPosSqrt		= oMathText.AddText(new AscMath.MathText("√", this.Pr.GetRPr(), {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType}), true);
+		let oPosSqrt		= oMathText.AddText(new AscMath.MathText("√", this), true);
 		let nLengthOfDegree	= oDegreeText.GetLength();
 
 		if (nLengthOfDegree === 0 || !oDegreeText.IsHasText())
@@ -806,9 +806,9 @@ CRadical.prototype.GetTextOfElement = function(oMathText)
 			}
 			else
 			{
-				let oStartPos	= oMathText.AddAfter(oPosSqrt, new AscMath.MathText("(", this.CtrPrp, {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType}));
+				let oStartPos	= oMathText.AddAfter(oPosSqrt, new AscMath.MathText("(", this));
 				let oPosBase	= oMathText.AddAfter(oStartPos, oBaseText);
-				oMathText.AddAfter(oPosBase, new AscMath.MathText(")", this.CtrPrp, {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType}));
+				oMathText.AddAfter(oPosBase, new AscMath.MathText(")", this));
 			}
 		}
 		else
@@ -818,21 +818,21 @@ CRadical.prototype.GetTextOfElement = function(oMathText)
 			{
 				if (strDegree === "3")
 				{
-					oMathText.ChangeContent(new AscMath.MathText("∛", this.Pr.GetRPr(), {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType}));
+					oMathText.ChangeContent(new AscMath.MathText("∛", this));
 				}
 				else if (strDegree === "4")
 				{
-					oMathText.ChangeContent(new AscMath.MathText("∜", this.Pr.GetRPr(), {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType}));
+					oMathText.ChangeContent(new AscMath.MathText("∜", this));
 				}
 				oMathText.Add(oBase, true);
 			}
 			else
 			{
-				oMathText.AddText(new AscMath.MathText("(", this.Pr.GetRPr(), {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType}));
+				oMathText.AddText(new AscMath.MathText("(", this));
 				oMathText.AddText(oDegreeText);
-				oMathText.AddText(new AscMath.MathText("&", this.Pr.GetRPr(), {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType}));
-				oMathText.Add(oBase, true);
-				oMathText.AddText(new AscMath.MathText(")", this.Pr.GetRPr(), {reviewInfo: this.ReviewInfo, reviewType: this.ReviewType}));
+				oMathText.AddText(new AscMath.MathText("&", this));
+				oMathText.Add(oBase, true, 0);
+				oMathText.AddText(new AscMath.MathText(")", this));
 			}
 		}
 	}

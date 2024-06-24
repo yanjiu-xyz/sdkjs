@@ -739,29 +739,6 @@
 	{
 		this.id = 15;
 		this.Unicode = {
-			"⅀" : null,
-			"⨊" : null,
-			"⨋" : null,
-			"∱" : null,
-			"⨑" : null,
-			"⨍" : null,
-			"⨎" : null,
-			"⨏" : null,
-			"⨕" : null,
-			"⨖" : null,
-			"⨗" : null,
-			"⨘" : null,
-			"⨙" : null,
-			"⨚" : null,
-			"⨛" : null,
-			"⨜" : null,
-			"⨒" : null,
-			"⨓" : null,
-			"⨔" : null,
-			"⨃" : null,
-			"⨅" : null,
-			"⨉" : null,
-			"⫿" : null,
 		};
 		this.LaTeX = {
 			"\\amalg" : "∐",
@@ -857,7 +834,6 @@
 			"\\hvec" : "⃑",
 			"\\tvec" : "⃡",
 			"\\lvec" : "⃖",
-
 		};
 		this.Unicode = {};
 
@@ -974,6 +950,16 @@
 		if (MathAutoCorrectionFuncNames.includes(str.slice(1)) || limitFunctions.includes(str.slice(1)) || (str.length > 0 && str[0] === "\\"))
 			return str;
 	};
+	TokenFunctionLiteral.prototype.IsLaTeXIncludeNormal = function (str)
+	{
+		if (MathAutoCorrectionFuncNames.includes(str.slice(1)) || (str.length > 0 && str[0] === "\\"))
+			return str;
+	}
+	TokenFunctionLiteral.prototype.IsLaTeXIncludeLimit = function (str)
+	{
+		if (limitFunctions.includes(str.slice(1)))
+			return str;
+	}
 	TokenFunctionLiteral.prototype.IsUnicodeInclude = function(arrStr)
 	{
 		if (!arrStr)
@@ -1639,8 +1625,8 @@
 		if (string instanceof MathTextAndStyles)
 		{
 			let arrContent = [];
-			let oStyles = {};
-				let nLength = 0;
+			let oAdditionalData = {};
+			let nLength = 0;
 
 			function Proceed (oMathTextAndStyles, context)
 			{
@@ -1655,7 +1641,7 @@
 					}
 					else if (oCurrentElement instanceof MathText)
 					{
-						let oCurrentStyle		= oCurrentElement.GetStyle();
+						let oLocalAdditionalData	= oCurrentElement.GetAdditionalData();
 						let strCurrent 			= oCurrentElement.GetText();
 						let tempLength 			= context.GetStringLength(strCurrent);
 						let arrCurrent 			= context.GetSymbols(strCurrent);
@@ -1663,7 +1649,7 @@
 
 						for (let j = nLength; j < tempLength + nLength; j++)
 						{
-							oStyles[j] = oCurrentStyle;
+							oAdditionalData[j] = oLocalAdditionalData;
 						}
 						nLength += tempLength;
 					}
@@ -1672,7 +1658,7 @@
 						let arrCurrent 			= context.GetSymbols(oCurrentElement);
 						nLength 				+= arrCurrent.length;
 						arrContent 				= arrContent.concat(arrCurrent);
-						oStyles[nLength] = undefined;
+						oAdditionalData[nLength] = undefined;
 					}
 				}
 			}
@@ -1680,7 +1666,7 @@
 			Proceed(string, this)
 
 			this._string = arrContent;
-			this._styles = oStyles;
+			this._styles = oAdditionalData;
 		}
 		else
 		{
@@ -1914,7 +1900,7 @@
 		{
 			if (oTokens instanceof MathText)
 			{
-				oContext.Add_Text(oTokens.text, undefined, undefined, oTokens.style);
+				oContext.Add_Text(oTokens.text, undefined, undefined, oTokens);
 				return;
 			}
 			switch (oTokens.type)
@@ -1967,7 +1953,7 @@
 						}
 						else
 						{
-							oContext.Add_Text(oTokens.value, undefined, undefined, Array.isArray(oTokens.style) ? oTokens.style[0] : oTokens.style);
+							oContext.Add_Text(oTokens.value, undefined, undefined, oTokens.style);
 						}
 					}
 					break;
@@ -1976,7 +1962,7 @@
 					break
 				case MathStructures.nary:
 					let lPr = {
-						ctrPrp: oTokens.style,
+						ctrPrp: oTokens.style.style,
 						chr: oTokens.value.charCodeAt(0),
 						subHide: true,
 						supHide: true,
@@ -1991,7 +1977,7 @@
 						);
 					}
 					let oBase = oNary.getBase();
-					oBase.setCtrPrp(oTokens.thirdStyle);
+					oBase.setCtrPrp(oTokens.thirdStyle.style);
 					break;
 				case MathStructures.pre_script:
 					let oPreSubSup = oContext.Add_Script(
@@ -2018,7 +2004,7 @@
 					break;
 				case MathStructures.accent:
 					let oAccent = oContext.Add_Accent(
-						oTokens.value.style,
+						oTokens.value.style.style,
 						GetFixedCharCodeAt(oTokens.value.data),
 						null
 					);
@@ -2036,7 +2022,7 @@
 						oContext.Add_Element(oBox);
 						let BoxMathContent = oBox.getBase();
 						BoxMathContent.SetArgSize(-1);
-						let oFraction = BoxMathContent.Add_Fraction({ctrPrp: oTokens.style, type: BAR_FRACTION}, null, null);
+						let oFraction = BoxMathContent.Add_Fraction({ctrPrp: oTokens.style.style, type: BAR_FRACTION}, null, null);
 						UnicodeArgument(
 							oTokens.up,
 							MathStructures.bracket_block,
@@ -2051,10 +2037,12 @@
 					else
 					{
 						let oFraction = oContext.Add_Fraction(
-							{ctrPrp: oTokens.style, type: oTokens.fracType},
+							{ctrPrp: oTokens.style.style, type: oTokens.fracType},
 							null,
 							null
 						);
+						oFraction.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+						oFraction.ReviewInfo.Update();
 						UnicodeArgument(
 							oTokens.up,
 							MathStructures.bracket_block,
@@ -2119,7 +2107,7 @@
 
 						// Set styles
 						let oUpper = SubSup.getUpperIterator();
-						if (oUpper && oTokens.style.suStyle)
+						if (oUpper && oTokens.style.supStyle)
 							oUpper.CtrPrp.Merge(oTokens.style.supStyle);
 
 						let oLower = SubSup.getLowerIterator();
@@ -2164,7 +2152,7 @@
 					else if (oTokens.value && oTokens.value.type === MathStructures.nary)
 					{
 						let Pr = {
-							ctrPrp: oTokens.value.style,
+							ctrPrp: oTokens.value.style.style,
 							chr: oTokens.value.value.charCodeAt(0),
 							subHide: oTokens.down === undefined,
 							supHide: oTokens.up === undefined,
@@ -2178,7 +2166,9 @@
 						);
 
 						let oBase = oNary.getBase();
-						oBase.setCtrPrp(oTokens.style.ofStyle);
+
+						if (oTokens.style.ofStyle)
+							oBase.setCtrPrp(oTokens.style.ofStyle.style);
 
 						UnicodeArgument(
 							oTokens.up,
@@ -2187,7 +2177,9 @@
 						);
 
 						let oUp = oNary.getSupMathContent();
-						oUp.setCtrPrp(oTokens.style.supStyle);
+
+						if (oTokens.style.supStyle)
+							oUp.setCtrPrp(oTokens.style.supStyle.style);
 
 						UnicodeArgument(
 							oTokens.down,
@@ -2196,7 +2188,8 @@
 						)
 
 						let oDown = oNary.getSubMathContent();
-						oDown.setCtrPrp(oTokens.style.subStyle);
+						if (oTokens.style.subStyle)
+							oDown.setCtrPrp(oTokens.style.subStyle.style);
 
 					}
 					else
@@ -2204,8 +2197,9 @@
 						let isSubSup = ((Array.isArray(oTokens.up) && oTokens.up.length > 0) || (!Array.isArray(oTokens.up) && oTokens.up !== undefined)) &&
 							((Array.isArray(oTokens.down) && oTokens.down.length > 0) || (!Array.isArray(oTokens.down) && oTokens.down !== undefined))
 
+						let oCurrentStyle = oTokens.style.subStyle ? oTokens.style.subStyle : oTokens.style.supStyle;
 						let Pr = {};
-						Pr.ctrPrp = oTokens.style.subStyle ? oTokens.style.subStyle : oTokens.style.supStyle;
+						Pr.ctrPrp = oCurrentStyle.style;
 
 						if (!isSubSup)
 						{
@@ -2222,6 +2216,8 @@
 							null,
 							null
 						);
+
+						SubSup.SetReviewTypeWithInfo(oCurrentStyle.reviewData.reviewType, oCurrentStyle.reviewData.reviewInfo);
 
 						ConvertTokens(
 							oTokens.value,
@@ -2243,11 +2239,19 @@
 						// Set styles
 						let oUpper = SubSup.getUpperIterator();
 						if (oUpper && oTokens.style.subStyle)
-							oUpper.CtrPrp.Merge(oTokens.style.subStyle);
+						{
+							oUpper.CtrPrp.Merge(oTokens.style.subStyle.style);
+							if (oTokens.style.subStyle.reviewData.reviewInfo)
+								oUpper.SetReviewTypeWithInfo(oTokens.style.subStyle.reviewData.reviewType, oTokens.style.subStyle.reviewData.reviewInfo);
+						}
 
 						let oLower = SubSup.getLowerIterator();
 						if (oLower && oTokens.style.supStyle)
-							oLower.CtrPrp.Merge(oTokens.style.supStyle);
+						{
+							oLower.CtrPrp.Merge(oTokens.style.supStyle.style);
+							if (oTokens.style.supStyle.reviewData.reviewInfo)
+								oLower.SetReviewTypeWithInfo(oTokens.style.supStyle.reviewData.reviewType, oTokens.style.supStyle.reviewData.reviewInfo);
+						}
 					}
 					break;
 				case MathStructures.func_lim:
@@ -2256,7 +2260,7 @@
 
 					let FuncName = MathFunc.getFName();
 
-					let Limit = new CLimit({ctrPrp : oTokens.style, type : oTokens.down !== undefined ? LIMIT_LOW : LIMIT_UP});
+					let Limit = new CLimit({ctrPrp : oTokens.style.style, type : oTokens.down !== undefined ? LIMIT_LOW : LIMIT_UP});
 					FuncName.Add_Element(Limit);
 
 					let LimitName = Limit.getFName();
@@ -2287,8 +2291,8 @@
 					if (oTokens.hBrack.data === "¯" || oTokens.hBrack.data === "▁")
 					{
 						let oBar = (oTokens.hBrack.data === "¯")
-							? oContext.Add_Bar({ctrPrp : oTokens.style, pos : LOCATION_TOP}, null)
-							: oContext.Add_Bar({ctrPrp : oTokens.style, pos : LOCATION_BOT}, null);
+							? oContext.Add_Bar({ctrPrp : oTokens.style.style, pos : LOCATION_TOP}, null)
+							: oContext.Add_Bar({ctrPrp : oTokens.style.style, pos : LOCATION_BOT}, null);
 
 						UnicodeArgument(
 							oTokens.value,
@@ -2299,9 +2303,9 @@
 					else
 					{
 						let Pr = (intBracketPos === VJUST_TOP)
-							? {ctrPrp : oTokens.hBrack.style, pos : VJUST_TOP, vertJc : VJUST_BOT, chr: oTokens.hBrack.data.charCodeAt(0)}
+							? {ctrPrp : oTokens.hBrack.style.style, pos : VJUST_TOP, vertJc : VJUST_BOT, chr: oTokens.hBrack.data.charCodeAt(0)}
 							: {
-								ctrPrp : typeof oTokens.hBrack.data === "object" ? oTokens.hBrack.data.style : oTokens.hBrack.style,
+								ctrPrp : typeof oTokens.hBrack.data === "object" ? oTokens.hBrack.data.style.style : oTokens.hBrack.style.style,
 								vertJc : VJUST_TOP,
 								chr : typeof oTokens.hBrack.data === "object" ?  oTokens.hBrack.data.data.charCodeAt(0) :  oTokens.hBrack.data.charCodeAt(0)
 							};
@@ -2316,7 +2320,7 @@
 						);
 
 						let oBase = Group.getBase();
-						oBase.setCtrPrp(oTokens.style);
+						oBase.setCtrPrp(oTokens.style.style);
 					}
 
 					break;
@@ -2324,7 +2328,7 @@
 					let arr = [null]
 					let oPr =
 						{
-							ctrPrp : oTokens.style.startStyle,
+							ctrPrp : oTokens.style.startStyle.style,
 							column : oTokens.value.length > 0 ? oTokens.value.length : 1,
 							begChr : GetBracketCode(oTokens.left),
 							endChr : GetBracketCode(oTokens.right),
@@ -2350,13 +2354,13 @@
 							if (intCount === oTokens.value.length - 1)
 							{
 								let oCon = oBracket.getElementMathContent(intCount);
-								oCon.setCtrPrp(oTokens.style.endStyle);
+								oCon.setCtrPrp(oTokens.style.endStyle.style);
 							}
 
 							if (oTokens.style.middle && oTokens.style.middle[intCount - 1])
 							{
 								let oContent = oBracket.getElementMathContent(intCount - 1);
-								oContent.setCtrPrp(oTokens.style.middle[intCount - 1]);
+								oContent.setCtrPrp(oTokens.style.middle[intCount - 1].style);
 							}
 						}
 					}
@@ -2371,12 +2375,14 @@
 					break;
 				case MathStructures.radical:
 					let Pr = GetPrForFunction(oTokens.index);
-					Pr.ctrPrp = oTokens.style;
+					Pr.ctrPrp = oTokens.style.style;
 					let oRadical = oContext.Add_Radical(
 						Pr,
 						null,
 						null
 					);
+
+					oRadical.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
 					UnicodeArgument(
 						oTokens.value,
 						MathStructures.bracket_block,
@@ -2388,7 +2394,7 @@
 					);
 					break;
 				case MathStructures.func:
-					let oFunc = oContext.Add_Function({ctrPrp: oTokens.style}, null, null);
+					let oFunc = oContext.Add_Function({ctrPrp: oTokens.style.style}, null, null);
 
 					oTokens.value.type = 0;
 					ConvertTokens(
@@ -2467,7 +2473,7 @@
 							let oPr = oTokens.style.cols[intRow]
 							if (oPr && intCol === cols - 1)
 							{
-								oContent.setCtrPrp(oPr);
+								oContent.setCtrPrp(oPr.style);
 								continue;
 							}
 
@@ -2476,7 +2482,7 @@
 							{
 								let cPr = rPr[intCol];
 								if (cPr)
-									oContent.setCtrPrp(cPr);
+									oContent.setCtrPrp(cPr.style);
 							}
 						}
 					}
@@ -2485,7 +2491,7 @@
 					let intCountOfRows = oTokens.value.length;
 
 					let arrayPr = {
-						ctrPrp: oTokens.style,
+						ctrPrp: oTokens.style.style,
 						row: intCountOfRows
 					};
 
@@ -2501,7 +2507,7 @@
 					}
 					break;
 				case MathStructures.box:
-					let oBox = oContext.Add_Box({ctrPrp: oTokens.style, opEmu : 1}, null);
+					let oBox = oContext.Add_Box({ctrPrp: oTokens.style.style, opEmu : 1}, null);
 					if (oTokens.argSize)
 					{
 						let BoxMathContent = oBox.getBase();
@@ -2514,7 +2520,7 @@
 					)
 					break;
 				case MathStructures.rect:
-					let oBorderBox = oContext.Add_BorderBox({ctrPrp: oTokens.style}, null);
+					let oBorderBox = oContext.Add_BorderBox({ctrPrp: oTokens.style.style}, null);
 					UnicodeArgument(
 						oTokens.value,
 						MathStructures.bracket_block,
@@ -2531,7 +2537,7 @@
 				// 	);
 				// 	break;
 				case MathStructures.limit:
-					let oLimit = oContext.Add_Limit({ctrPrp: oTokens.style, type: oTokens.isBelow});
+					let oLimit = oContext.Add_Limit({ctrPrp: oTokens.style.style, type: oTokens.isBelow});
 					UnicodeArgument(
 						oTokens.base,
 						MathStructures.bracket_block,
@@ -4037,12 +4043,16 @@
 		this.pos = nPos; 		// EndPos
 		this.length = nLength;	// Length of content
 	}
+
 	/**
-	 * @param {boolean} isLaTeX
+	 * @param {boolean|undefined|MathTextAndStyles} [isLaTeX]
 	 * @constructor
 	 */
 	function MathTextAndStyles (isLaTeX)
 	{
+		if (isLaTeX instanceof MathTextAndStyles)
+			return isLaTeX;
+
 		if (isLaTeX === undefined)
 			isLaTeX = false;
 
@@ -4056,22 +4066,75 @@
 		this.IsNumbers			= false;
 		this.Positions			= [];
 		this.IsUnicodeBracket	= false;
-		this.style				= undefined;
+
+		this.globalStyle		= undefined;
+		this.innerStyle		= undefined; // стиль последнего элемента
+		this.IsGetStyleFromFirst = true;
+
+		this.IsSetLastInner		= false;
 	}
-	MathTextAndStyles.prototype.SetStyle = function (oStyle)
+	MathTextAndStyles.prototype.IsEmpty = function ()
 	{
-		this.style = oStyle;
+		return this.arr.length === 0;
 	}
-	MathTextAndStyles.prototype.GetStyle = function ()
+
+	MathTextAndStyles.prototype.SetGlobalStyle = function (oContent, isCtrPr)
 	{
-		let oStyle = this.style;
-		this.style = undefined;
+		this.globalStyle = new MathTextAdditionalData(oContent, isCtrPr)
+	}
+	MathTextAndStyles.prototype.GetGlobalStyle = function ()
+	{
+		let oStyle = this.globalStyle;
+		this.globalStyle = undefined;
 		return oStyle;
 	}
-	MathTextAndStyles.prototype.ResetStyle = function ()
+	MathTextAndStyles.prototype.ResetGlobalStyle = function ()
 	{
-		this.style = undefined;
+		this.globalStyle = undefined;
 	}
+
+	MathTextAndStyles.prototype.GetFirstStyle = function ()
+	{
+		if (this.arr.length > 0)
+		{
+			let oLastItem = this.arr[0];
+
+			if (oLastItem instanceof MathTextAndStyles)
+				return oLastItem.GetFirstStyle(this.IsSetLastInner);
+			else
+			{
+				this.IsSetLastInner = false;
+				return oLastItem.GetAdditionalData().Copy();
+			}
+		}
+	}
+	MathTextAndStyles.prototype.SetGetInnerStyle = function (isGet)
+	{
+		this.IsSetLastInner = isGet;
+	}
+	MathTextAndStyles.prototype.GetStyleFromFirst = function (oContent)
+	{
+		if (!this.IsGetStyleFromFirst)
+		{
+			this.IsGetStyleFromFirst = true;
+			return oContent;
+		}
+
+		for (let i = 0; i < this.arr.length; i++)
+		{
+			if (this.arr[i] instanceof MathTextAndStyles && !this.arr[i].IsEmpty())
+				return this.arr[i].GetStyleFromFirst();
+			else if (this.arr[i] instanceof MathTextAndStyles)
+				continue;
+			else
+				return this.arr[i].additionalMathData;
+		}
+	}
+	MathTextAndStyles.prototype.SetNotGetStyleFromFirst = function ()
+	{
+		this.IsGetStyleFromFirst = false;
+	}
+
 	MathTextAndStyles.prototype.SetIsNumbers = function (isNumbers)
 	{
 		this.IsNumbers = isNumbers;
@@ -4090,6 +4153,17 @@
 		this.arr.push(oMathTextAndStyles);
 		return oMathTextAndStyles;
 	};
+	MathTextAndStyles.prototype.DelEmptyContainer = function()
+	{
+		if (this.arr.length > 0)
+		{
+			let lastContainer = this.arr[this.arr.length - 1];
+			if (lastContainer instanceof MathTextAndStyles && lastContainer.IsEmpty())
+			{
+				this.arr.splice(this.arr.length - 1, 1);
+			}
+		}
+	};
 	MathTextAndStyles.prototype.IsLaTeX = function()
 	{
 		return this.LaTeX;
@@ -4106,39 +4180,60 @@
 	 *
 	 * @param oContent
 	 * @param isNew {boolean} - Нужно ли отделять текущий контент в отдельный MathTextAndStyles
-	 * @param Wrap {boolean|Array|number} - 0 - not wrap; 1 - special wrap;
-	 * @return {PosInMathText}
+	 * @param [Wrap] {number|Array} Unicode: 0 - not wrap; 1 - special wrap; LaTeX: 1 - wrap
+	 * @return {PosInMathText|false}
 	 * @constructor
 	 */
 	MathTextAndStyles.prototype.Add = function(oContent, isNew, Wrap)
 	{
+		if (oContent.Content.length === 0)
+			return false;
+
 		let nPosCopy = this.nPos;
 
 		if (isNew)
 		{
 			let oMath = this.AddContainer();
-
-			this.AddReviewInfo(oContent);
 			oContent.GetTextOfElement(oMath);
+			this.DelEmptyContainer();
+
+			if (oMath.IsEmpty())
+				return false;
 
 			this.Increase();
-
 			let oPos = this.AddPosition(this.nPos - nPosCopy);
 
-			if (Wrap === 0) // notWrapAtAll
-				return oPos;
-			else if (Wrap === 1 && oContent.haveMixedContent() && !oMath.IsUnicodeBracket) // specialWrap
-				this.WrapExactElement(oPos, "〖", "〗");
-			else if (!(oContent.Parent instanceof  CDelimiter) && oContent.haveMixedContent() && !oMath.IsUnicodeBracket)
-				this.WrapExactElement(oPos, "(", ")");
+			if (this.LaTeX === false)
+			{
+				if (Array.isArray(Wrap))
+					this.WrapExactElement(oPos, Wrap[0], Wrap[1], oContent);
+				else if (Wrap === 0 || oContent instanceof ParaRun)
+					return oPos;
+				else if (Wrap === 1 && oContent.haveMixedContent() && !oMath.IsUnicodeBracket)
+					this.WrapExactElement(oPos, "〖", "〗", oContent);
+				else if (!(oContent.Parent instanceof CDelimiter) && oContent.haveMixedContent && oContent.haveMixedContent() && !oMath.IsUnicodeBracket)
+					this.WrapExactElement(oPos, "(", ")", oContent);
+			}
+			else
+			{
+				if (Array.isArray(Wrap))
+					this.WrapExactElement(oPos, Wrap[0], Wrap[1], this.GetFirstStyle());
+				else if (Wrap === 0 || oContent instanceof ParaRun)
+					return oPos;
+				else if (!(oContent instanceof CDelimiter) && oContent.haveMixedContent && oContent.haveMixedContent() || Wrap === 1)
+					this.WrapExactElement(oPos, "{", "}", this.GetStyleFromFirst(oContent));
+			}
 
 			this.ClearReviewInfo();
 			return oPos;
 		}
 		else
 		{
-			this.AddReviewInfo(oContent);
+			if (this.IsSetLastInner)
+				this.SetGetInnerStyle(true);
+
 			oContent.GetTextOfElement(this);
+
 			this.ClearReviewInfo();
 
 			if (this.nPos === nPosCopy)
@@ -4151,16 +4246,13 @@
 	{
 		let nPosCopy = this.nPos;
 
-		if (this.arr[this.arr.length - 1]
-			&& (this.arr[this.arr.length - 1] instanceof MathTextAndStyles
-				|| this.arr[this.arr.length - 1].style &&
-				!this.arr[this.arr.length - 1].style.IsEqual(oContent.style))
-		)
-		{
+		if (this.arr.length > 0 && (this.arr[this.arr.length - 1] instanceof MathTextAndStyles ||
+			!this.arr[this.arr.length - 1].IsAdditionalDataEqual(oContent.additionalMathData)
+		)) {
 			isNew = true;
 		}
-		if (this.arr[this.arr.length - 1] && this.arr[this.arr.length - 1] instanceof MathText && !isNew)
-		{
+
+		if (this.arr[this.arr.length - 1] && this.arr[this.arr.length - 1] instanceof MathText && !isNew) {
 			this.arr[this.arr.length - 1].text += oContent.text;
 		}
 		else
@@ -4210,12 +4302,6 @@
 
 		return oPos;
 	};
-	MathTextAndStyles.prototype.AddReviewInfo = function (oContent)
-	{
-		if (oContent.ReviewInfo)
-			this.reviewInfo = {reviewInfo: oContent.ReviewInfo, reviewType: oContent.ReviewType};
-		//this.arrReviewInfo.push({ReviewInfo: oContent.ReviewInfo, ReviewType: oContent.ReviewType})
-	}
 	MathTextAndStyles.prototype.ClearReviewInfo = function ()
 	{
 		this.reviewInfo = undefined;
@@ -4263,7 +4349,7 @@
 	{
 		let arrPositions = this.GetArrPos(oPos);
 		let oCurrentContainer = this.GetExact(oPos);
-		let oCurrent = !isNotCopyStyle && oCurrentContainer instanceof MathText ? oCurrentContainer.GetStyle() : undefined;
+		let oCurrent = !isNotCopyStyle && oCurrentContainer instanceof MathText ? oCurrentContainer.GetAdditionalData() : undefined;
 		let oNew = oContent instanceof MathTextAndStyles || oContent instanceof MathText ? oContent :new MathText(oContent, oCurrent);
 
 		this.arr.splice(oPos.pos, 0, oNew);
@@ -4279,8 +4365,8 @@
 
 		let arrPositions = this.GetArrPos(oPos, true);
 		let oCurrentContainer = this.GetExact(oPos);
-		let oCurrent = !isNotCopyStyle && oCurrentContainer instanceof MathText ?  oCurrentContainer.GetStyle() : undefined;
-		let oNew = oContent instanceof MathTextAndStyles || oContent instanceof MathText ? oContent :new MathText(oContent, oCurrent);
+		let oCurrent = !isNotCopyStyle && oCurrentContainer instanceof MathText ?  oCurrentContainer.GetAdditionalData() : undefined;
+		let oNew = oContent instanceof MathTextAndStyles || oContent instanceof MathText ? oContent : new MathText(oContent, oCurrent);
 		let nPos = oPos.pos - oPos.length;
 
 		this.arr.splice(nPos, 0, oNew);
@@ -4302,35 +4388,32 @@
 	{
 		return this.arr.length;
 	}
-	MathTextAndStyles.prototype.WrapExactElement = function(oPos, strOne, strTwo)
+	MathTextAndStyles.prototype.WrapExactElement = function(oPos, strOne, strTwo, oContent)
 	{
 		let oToken;
 
 		if (oPos instanceof MathTextAndStyles)
-		{
 			oToken = oPos;
-		}
 		else
-		{
 			oToken = this.GetExact(oPos);
-		}
 
 		if (strOne && strTwo)
 		{
-			let oStyle = this.GetStyle();
-			oToken.Wrap(new MathText(strOne, oStyle, this.reviewInfo), new MathText(strTwo, oStyle, this.reviewInfo));
+			if (this.IsLaTeX())
+				oToken.Wrap(new MathText(strOne, oContent), new MathText(strTwo, oContent));
+			else
+				oToken.Wrap(new MathText(strOne, this.globalStyle ? this.globalStyle : oContent), new MathText(strTwo, this.globalStyle ? this.globalStyle : oContent));
+
 			return;
 		}
 
 		if (!this.IsLaTeX())
 		{
-			let oStyle = this.GetStyle();
-			oToken.Wrap(new MathText("(", oStyle, this.reviewInfo), new MathText(")", oStyle, this.reviewInfo));
+			oToken.Wrap(new MathText("(", this.globalStyle ? this.globalStyle : oContent), new MathText(")", this.globalStyle ? this.globalStyle : oContent));
 		}
 		else
 		{
-			let oStyle = this.GetStyle();
-			oToken.Wrap(new MathText("{", oStyle, this.reviewInfo), new MathText("}", oStyle, this.reviewInfo));
+			oToken.Wrap(new MathText("{", this.globalStyle ? this.globalStyle : oContent), new MathText("}", this.globalStyle ? this.globalStyle : oContent));
 		}
 	};
 	MathTextAndStyles.prototype.Increase = function()
@@ -4378,10 +4461,6 @@
 			return this.AddText(new AscMath.MathText(str));
 		}
 	};
-	MathTextAndStyles.prototype.GetTextAndStyles = function()
-	{
-
-	};
 	MathTextAndStyles.prototype.Flat = function (oCMathContent)
 	{
 		let newArr = [];
@@ -4414,20 +4493,7 @@
 	{
 		for (let i = 0; i < newArr.length; i++)
 		{
-			let oText = newArr[i].text;
-			let style = newArr[i].style;
-
-			let oReview = newArr[i].oReviewContent;
-			let nReviewType = oReview ? oReview.reviewType : undefined;
-			let oReviewInfo = oReview ? oReview.reviewInfo : undefined;
-
-			if (oText instanceof MathText)
-			{
-				style = oText.style;
-				oText = oText.text;
-			}
-
-			oCMathContent.Add_Text(oText, undefined, undefined, style, oReview);
+			oCMathContent.Add_Text(newArr[i].text, undefined, undefined, newArr[i].additionalMathData);
 		}
 	}
 	MathTextAndStyles.prototype.DelLastSpace = function ()
@@ -4455,24 +4521,123 @@
 		return this
 	}
 
-	function MathText(str, style, oReview)
+	function MathTextAdditionalData (oContent, isCtrPr)
+	{
+		this.style = undefined;
+		this.reviewData = {
+			reviewType : undefined,
+			reviewInfo : undefined
+		}
+
+		if (oContent)
+			this.SetAdditionalDataFromContent(oContent, isCtrPr);
+	}
+	MathTextAdditionalData.prototype.Copy = function()
+	{
+		let oNewMath = new MathTextAdditionalData();
+
+		oNewMath.SetAdditionalStyleData(this.style);
+		oNewMath.SetAdditionalReviewData(this.reviewData);
+
+		return oNewMath;
+	};
+	MathTextAdditionalData.prototype.GetAdditionalStyleData = function()
+	{
+		return this.style;
+	};
+	MathTextAdditionalData.prototype.SetAdditionalStyleData = function (oStyle)
+	{
+		this.style = oStyle;
+	}
+	MathTextAdditionalData.prototype.IsAdditionalStyleData = function()
+	{
+		return this.style !== undefined;
+	};
+	MathTextAdditionalData.prototype.GetAdditionalReviewData = function()
+	{
+		return this.reviewData;
+	};
+	MathTextAdditionalData.prototype.SetAdditionalReviewData = function (oReviewData)
+	{
+		this.reviewData = oReviewData;
+	}
+	MathTextAdditionalData.prototype.GetAdditionalReviewType = function()
+	{
+		return this.reviewData.reviewType;
+	};
+	MathTextAdditionalData.prototype.SetAdditionalReviewType = function (nReviewType)
+	{
+		this.reviewData.reviewType = nReviewType;
+	};
+	MathTextAdditionalData.prototype.IsAdditionalReviewType = function ()
+	{
+		return this.reviewData.reviewType !== undefined;
+	};
+	MathTextAdditionalData.prototype.GetAdditionalReviewInfo = function()
+	{
+		return this.reviewData.reviewInfo;
+	};
+	MathTextAdditionalData.prototype.SetAdditionalReviewInfo = function (oReviewInfo)
+	{
+		this.reviewData.reviewInfo = oReviewInfo;
+	};
+	MathTextAdditionalData.prototype.IsStyleEqual = function (oStyle)
+	{
+		if (this.style === undefined)
+			return false;
+
+		if (!this.style.IsEqual)
+			debugger;
+
+		if (oStyle instanceof MathTextAdditionalData)
+			return this.style.IsEqual(oStyle.GetAdditionalStyleData());
+		else
+			return this.style.IsEqual(oStyle);
+	}
+	MathTextAdditionalData.prototype.SetAdditionalDataFromContent = function (oContent, isCtrPrp)
+	{
+		let oPr;
+
+		if (oContent instanceof ParaRun)
+			oPr = oContent.CompiledPr.Copy();
+		else if (oContent instanceof CMathContent)
+			oPr = oContent.GetCtrPrp();
+		else
+			oPr = oContent.CompiledCtrPrp;
+
+		this.SetAdditionalStyleData(oPr);
+		this.SetAdditionalReviewType(oContent.ReviewType);
+		this.SetAdditionalReviewInfo(oContent.ReviewInfo);
+	}
+
+	/**
+	 * @param {string|undefined} str text of math literal
+	 * @param [oContent] {MathTextAdditionalData|}
+	 * @param [isCtrPr] {boolean}
+	 *
+	 */
+	function MathText(str, oContent, isCtrPr)
 	{
 		this.text				= str;
-		this.style				= style;
+		this.additionalMathData	= new MathTextAdditionalData;
 		this.isWrap				= false;
-		this.oReviewContent		= oReview;
+
+		if (oContent instanceof MathTextAdditionalData)
+			this.additionalMathData = oContent;
+		else
+			this.SetAdditionalDataFromContent(oContent, isCtrPr);
+	}
+	MathText.prototype.GetAdditionalData = function ()
+	{
+		return this.additionalMathData;
 	}
 	MathText.prototype.GetText = function ()
 	{
 		return this.text;
 	};
-	MathText.prototype.GetStyle = function()
+	MathText.prototype.SetText = function (str)
 	{
-		return this.style;
-	};
-	MathText.prototype.GetReview = function ()
-	{
-		return this.oReviewContent;
+		this.text = str;
 	}
 	MathText.prototype.Check = function (func)
 	{
@@ -4487,6 +4652,14 @@
 	{
 		return this.isWrap;
 	};
+	MathText.prototype.IsAdditionalDataEqual = function (oStyle)
+	{
+		return this.additionalMathData.IsStyleEqual(oStyle);
+	}
+	MathText.prototype.SetAdditionalDataFromContent = function (oContent, isCtrPrp)
+	{
+		this.additionalMathData.SetAdditionalDataFromContent(oContent, isCtrPrp);
+	}
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window["AscMath"] = window["AscMath"] || {};
@@ -4514,6 +4687,7 @@
 	window["AscMath"].UpdateFuncCorrection 			= UpdateFuncCorrection;
 	window["AscMath"].MathStructures				= MathStructures;
 	window["AscMath"].MathText						= MathText;
+	window["AscMath"].MathTextAdditionalData		= MathTextAdditionalData;
 	window["AscMath"].ConvertMathTextToText			= ConvertMathTextToText;
 	window["AscMath"].GetOnlyText					= GetOnlyText;
 	window["AscMath"].ContentWithStylesIterator		= ContentWithStylesIterator;

@@ -3325,40 +3325,74 @@ CMathContent.prototype.Add_Element = function(Element)
     this.Internal_Content_Add(this.CurPos, Element, false);
     this.CurPos++;
 };
-CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle)
+CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAdditionalData)
 {
 	if (!text)
 		return;
-	
-	if (this.IsAddTextInLastParaRun(mathStyle))
+
+	let oMathRun = this.Content[this.Content.length - 1];
+
+	if (oMathRun && oMathRun.Content.length === 0 && this.Content.length > 1)
 	{
-		this.Add_ToPrevParaRun(text);
-		return;
+		this.Content.splice(this.Content.length - 1, 1);
+		oMathRun = this.Content[this.Content.length - 1];
 	}
-	
-	var oMathRun = new AscWord.CRun(undefined, true);
-	
+
+	if (!oMathRun || !(oMathRun instanceof ParaRun) || (oMathRun && oMathRun instanceof ParaRun && !oAdditionalData.IsStyleEqual(oMathRun instanceof ParaRun ? oMathRun.Pr : oMathRun.CtrPrp)))
+		oMathRun = new AscWord.CRun(undefined, true);
+
 	AscWord.TextToMathRunElements(text, function(item)
 	{
 		oMathRun.Add(item, true);
 	});
 
-	oMathRun.Set_RFont_ForMathRun();
+	if (this.Content[this.Content.length - 1] === oMathRun)
+		return true;
 	
 	if (mathStyle)
 		oMathRun.Math_Apply_Style(mathStyle);
 
-	this.AddToContent(this.CurPos, oMathRun, false);
+	if (oAdditionalData)
+	{
+		if (oAdditionalData.IsAdditionalStyleData())
+			oMathRun.SetPr(oAdditionalData.GetAdditionalStyleData());
+
+		if (oAdditionalData.reviewData.reviewInfo)
+		{
+			oMathRun.SetReviewTypeWithInfo(
+				oAdditionalData.reviewData.reviewType,
+				oAdditionalData.reviewData.reviewInfo,
+			);
+		}
+	}
+
+	oMathRun.Set_RFont_ForMathRun();
+
+	if (this.Content[this.Content.length - 1] !== oMathRun)
+		this.AddToContent(this.CurPos, oMathRun, false);
+
 	this.CurPos++;
 };
 CMathContent.prototype.Add_ToPrevParaRun = function(text)
 {
 	let run = this.Content[this.Content.length - 1];
+	let isAdd = false;
+	if (!run)
+	{
+		run = new AscWord.CRun(undefined, true);
+		isAdd = true;
+	}
+
+	let nCount = this.Content.length;
 
 	AscWord.TextToMathRunElements(text, function(item)
 	{
 		run.Add(item, true);
 	});
+
+	let nCurrentCount = this.Content.length - nCount;
+	if (nCurrentCount === 0)
+		return true;
 }
 CMathContent.prototype.Add_TextOnPos = function(nPos, sText, MathStyle)
 {
@@ -3422,7 +3456,7 @@ CMathContent.prototype.Add_MathStyleText = function(nPos, oMathText)
 		if (oCurrentElement instanceof AscMath.MathText)
 		{
 			let strElement = oCurrentElement.GetText();
-			let MathStyle = oCurrentElement.GetStyle();
+			let MathStyle = oCurrentElement.GetAdditionalData();
 
 			MathRun = new ParaRun(this.Paragraph, true);
 
@@ -3441,8 +3475,8 @@ CMathContent.prototype.Add_MathStyleText = function(nPos, oMathText)
 
 			MathRun.Set_RFont_ForMathRun();
 
-			if (undefined !== MathStyle && null !== MathStyle)
-				MathRun.Apply_Pr(MathStyle);
+			if (MathStyle instanceof AscMath.MathTextAdditionalData)
+				MathRun.Apply_Pr(MathStyle.GetAdditionalStyleData());
 
 			this.Internal_Content_Add(nPos.pos, MathRun, false);
 			this.CurPos++;
@@ -6662,7 +6696,7 @@ ContentIterator.prototype.CheckRules = function ()
 		["(", "_", true, ")", true],
 		["(", "^", true, ")", true],
 
-		[true, true, "⁡", true], // funcapply
+		[true, "⁡", true], // funcapply
 
 		["^", true, "_", true],
 		["_", true, "^", true],
@@ -7169,20 +7203,14 @@ CMathContent.prototype.CheckIsEmpty = function(strAtom)
 };
 CMathContent.prototype.GetTextOfElement = function(oMathText)
 {
-	let isReturn = false;
-
-	if (!(oMathText instanceof AscMath.MathTextAndStyles)) {
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
-		isReturn = true;
-	}
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	for (let i = 0; i < this.Content.length; i++)
     {
-        oMathText.Add(this.Content[i]);
+        oMathText.Add(this.Content[i], true);
 	}
 
-    if (isReturn)
-        return oMathText;
+	return oMathText;
 };
 CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX, isOnlyText)
 {

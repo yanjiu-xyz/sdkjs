@@ -1083,13 +1083,11 @@ CMathText.prototype.ToSearchElement = function(oProps)
 };
 CMathText.prototype.GetTextOfElement = function(oMathText)
 {
-    if (!(oMathText instanceof AscMath.MathTextAndStyles)) {
-        oMathText = new AscMath.MathTextAndStyles(oMathText);
-    }
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
     if (this.value && this.value !== 11034)
     {
-        let oText = new AscMath.MathText(AscCommon.encodeSurrogateChar(this.value), this.Parent ? this.Parent.Pr.Copy() : undefined)
+        let oText = new AscMath.MathText(AscCommon.encodeSurrogateChar(this.value), this.Parent)
         oMathText.AddText(oText);
     }
 

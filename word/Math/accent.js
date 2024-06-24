@@ -715,19 +715,23 @@ CAccent.prototype.Get_InterfaceProps = function()
  */
 CAccent.prototype.GetTextOfElement = function(oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	let oBase = this.getBase();
 
 	let strAccent = this.Pr.chr
 		? String.fromCharCode(this.Pr.chr)
 		: String.fromCharCode(this.operator.code);
-
-	let oPr = this.Pr.GetRPr();
 	
 	if (oMathText.IsLaTeX())
 	{
+		let oStartPos;
+
+		if (this.Pr.chr === 831)
+			oStartPos = oMathText.Add(oBase, true, 0);
+		else
+			oStartPos = oMathText.Add(oBase, true, 1);
+
 		switch (this.Pr.chr)
 		{
 			case 0:		strAccent = '\\hat'; 				break;
@@ -748,27 +752,15 @@ CAccent.prototype.GetTextOfElement = function(oMathText)
 			case 8417:	strAccent = '\\overleftrightarrow';	break;
 			default:	strAccent = '\\hat';				break;
 		}
-
-		let oNameAccent = oMathText.AddText(new AscMath.MathText(strAccent, oPr), false);
-
-		if (this.Pr.chr === 831)
-		{
-			oMathText.Add(oBase, true, 0);
-		}
-		else
-		{
-			oMathText.Add(oBase, true);
-		}
+		oMathText.AddBefore(oStartPos, new AscMath.MathText(strAccent, oMathText.GetStyleFromFirst()));
 
 		if (this.Pr.chr === 831)
-		{
-			oMathText.AddText(new AscMath.MathText('}}', oPr), false);
-		}
+			oStartPos = oMathText.AddText(new AscMath.MathText('}}', this));
 	}
 	else
 	{
 		oMathText.Add(oBase, true);
-		let oAccentText = new AscMath.MathText(strAccent, oPr);
+		let oAccentText = new AscMath.MathText(strAccent, this);
 		oMathText.AddText(oAccentText);
 	}
 	return oMathText;
