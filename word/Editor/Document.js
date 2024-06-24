@@ -26567,7 +26567,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 							NewContent.content.push(oNewParagraph);
 							break;
 						default:
-							oText = new AscWord.CRunText(oProps.separator);
+							oText = AscWord.codePointToRunElement(oProps.separator);
 							break;
 					}
 					if (oText)
