@@ -689,6 +689,7 @@
 		this.restrictions = val;
 		this.onUpdateRestrictions(additionalSettings);
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestriction", this.restrictions);
 	};
 	baseEditorsApi.prototype.getViewMode                     = function()
 	{
@@ -699,12 +700,14 @@
 		this.restrictions |= val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestriction", this.restrictions);
 	};
 	baseEditorsApi.prototype.asc_removeRestriction           = function(val)
 	{
 		this.restrictions &= ~val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestriction", this.restrictions);
 	};
 	baseEditorsApi.prototype.asc_setCanSendChanges           = function(canSend)
 	{
