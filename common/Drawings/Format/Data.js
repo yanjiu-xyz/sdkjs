@@ -5642,7 +5642,7 @@ Because of this, the display is sometimes not correct.
     function Rule() {
       CBaseFormatObject.call(this);
       this.fact = null;
-      this.for = null;
+      this.for = AscFormat.Constr_for_self;
       this.forName = null;
       this.max = null;
       this.type = null;
@@ -7688,6 +7688,7 @@ Because of this, the display is sometimes not correct.
 			  case "trBgShp":
 			  case "bgShp":
 			  case "dkBgShp":
+			  case "fgSibTrans2D1":
 					return true;
 			  default:
 				  return false;
@@ -7724,8 +7725,7 @@ Because of this, the display is sometimes not correct.
 					const truthIndex = index % lst.length;
 					const uniColor = lst[truthIndex];
 
-					if ((isConnector && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) ||
-						this.checkTransparent(uniColor)
+					if (this.checkTransparent(uniColor)
 						|| shadowShape.shape.hideGeom || this.checkNoLn()) {
 						return AscFormat.CreateNoFillLine();
 					}
@@ -9934,6 +9934,9 @@ Because of this, the display is sometimes not correct.
         drawing.addToSpTree(0, shapes[i]);
       }
     };
+	  SmartArt.prototype.findConnector = function (x, y) {
+		  return null;
+	  };
 	  SmartArt.prototype.getAllRasterImages = function (arrImages)
 	  {
 			const oBgFormat = this.getBg();
