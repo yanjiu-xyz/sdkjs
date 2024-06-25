@@ -15913,27 +15913,30 @@ CParaPr.prototype.Merge = function(ParaPr)
 
 	if (undefined != ParaPr.Shd && (!this.Shd || !ParaPr.Shd.IsNil()))
 		this.Shd = ParaPr.Shd.Copy();
-
-	if (undefined != ParaPr.Brd.First)
-		this.Brd.First = ParaPr.Brd.First;
-
-	if (undefined != ParaPr.Brd.Last)
-		this.Brd.Last = ParaPr.Brd.Last;
-
-	if (undefined != ParaPr.Brd.Between)
-		this.Brd.Between = ParaPr.Brd.Between.Copy();
-
-	if (undefined != ParaPr.Brd.Bottom)
-		this.Brd.Bottom = ParaPr.Brd.Bottom.Copy();
-
-	if (undefined != ParaPr.Brd.Left)
-		this.Brd.Left = ParaPr.Brd.Left.Copy();
-
-	if (undefined != ParaPr.Brd.Right)
-		this.Brd.Right = ParaPr.Brd.Right.Copy();
-
-	if (undefined != ParaPr.Brd.Top)
-		this.Brd.Top = ParaPr.Brd.Top.Copy();
+	
+	if (ParaPr.Brd)
+	{
+		if (undefined != ParaPr.Brd.First)
+			this.Brd.First = ParaPr.Brd.First;
+		
+		if (undefined != ParaPr.Brd.Last)
+			this.Brd.Last = ParaPr.Brd.Last;
+		
+		if (undefined != ParaPr.Brd.Between)
+			this.Brd.Between = ParaPr.Brd.Between.Copy();
+		
+		if (undefined != ParaPr.Brd.Bottom)
+			this.Brd.Bottom = ParaPr.Brd.Bottom.Copy();
+		
+		if (undefined != ParaPr.Brd.Left)
+			this.Brd.Left = ParaPr.Brd.Left.Copy();
+		
+		if (undefined != ParaPr.Brd.Right)
+			this.Brd.Right = ParaPr.Brd.Right.Copy();
+		
+		if (undefined != ParaPr.Brd.Top)
+			this.Brd.Top = ParaPr.Brd.Top.Copy();
+	}
 
 	if (undefined != ParaPr.WidowControl)
 		this.WidowControl = ParaPr.WidowControl;
