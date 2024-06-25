@@ -5460,9 +5460,7 @@ PasteProcessor.prototype =
 					presentation.FinalizeAction();
 					presentation.UpdateInterface();
 
-					//пока не показываю значок специальной вставки после copy/paste слайдов
-					var bSlideObjects = aContents[nIndex] && aContents[nIndex].SlideObjects && aContents[nIndex].SlideObjects.length > 0;
-					if (specialOptionsArr.length >= 1 /*&& !bSlideObjects*/ && bPaste) {
+					if (specialOptionsArr.length >= 1 && bPaste) {
 						if (presentationSelectedContent && presentationSelectedContent.DocContent) {
 							specialOptionsArr.push(Asc.c_oSpecialPasteProps.keepTextOnly);
 						}
