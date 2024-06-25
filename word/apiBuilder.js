@@ -21265,7 +21265,7 @@
 
 	function private_GetDrawingDocument()
 	{
-		return editor.WordControl.m_oLogicDocument.DrawingDocument;
+		return Asc.editor.getDrawingDocument();
 	}
 
 	function private_PushElementToParagraph(oPara, oElement)
