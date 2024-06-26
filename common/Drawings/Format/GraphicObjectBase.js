@@ -2786,8 +2786,8 @@
 			nParentType = this.parent.getObjectType();
 		}
 		let bCanAdd = false;
-		if(this.isPlaceholder() &&
-			(nParentType === AscDFH.historyitem_type_SlideMaster || nParentType === AscDFH.historyitem_type_SlideLayout)) {
+		let bMasterLtPh = (this.isPlaceholder() && (nParentType === AscDFH.historyitem_type_SlideMaster || nParentType === AscDFH.historyitem_type_SlideLayout))
+		if(bMasterLtPh) {
 			bCanAdd = true;
 		}
 		else {
@@ -2799,10 +2799,11 @@
 		if (!bCanAdd) {
 			return;
 		}
-		var phType = this.getPlaceholderType();
-		var aButtons = [];
-		var isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsSupportMedia"] && window["AscDesktopEditor"]["IsSupportMedia"]();
+		let phType = this.getPlaceholderType();
+		let aButtons = [];
+		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsSupportMedia"] && window["AscDesktopEditor"]["IsSupportMedia"]();
 		const oRect = {x: 0, y: 0, w: this.extX, h: this.extY};
+		let isDisabled = bMasterLtPh;
 		switch (phType) {
 			case null: {
 				aButtons.push(AscCommon.PlaceholderButtonType.Table);
@@ -2897,7 +2898,7 @@
 			nPageNum = this.Get_AbsolutePage() || 0;
 		}
 		if (aButtons.length > 0) {
-			aControls.push(AscCommon.CreateDrawingPlaceholder(this.Id, aButtons, nPageNum, oRect, this.transform));
+			aControls.push(AscCommon.CreateDrawingPlaceholder(this.Id, aButtons, nPageNum, oRect, this.transform, isDisabled));
 		}
 	};
 	CGraphicObjectBase.prototype.onSlicerUpdate = function (sName) {
