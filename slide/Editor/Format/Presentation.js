@@ -2878,6 +2878,8 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 					else {
 						oDrawingObject.recalculate();
 						if (oDrawingObject instanceof AscCommonSlide.MasterSlide) {
+							b_check_layout = true;
+							bAttack = true;
 							isUpdateThemes = true;
 							if(oDrawingObject.needRecalc()) {
 								for (let nIdx = 0; nIdx < this.Slides.length; ++nIdx) {
@@ -2923,6 +2925,8 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 							}
 						}
 						if (oDrawingObject instanceof AscCommonSlide.SlideLayout) {
+							b_check_layout = true;
+							bAttack = true;
 							let nIdx = this.GetSlideIndex(oDrawingObject);
 							if(nIdx !== -1) {
 								if (redrawSlideIndexMap[nIdx] !== true) {
