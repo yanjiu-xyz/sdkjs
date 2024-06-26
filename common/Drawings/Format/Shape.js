@@ -3159,7 +3159,8 @@
 					|| phldrType == AscFormat.phType_media) {
 					return true;
 				}
-				if (phldrType == AscFormat.phType_pic) {
+				if (phldrType == AscFormat.phType_pic
+					|| phldrType == AscFormat.phType_tbl) {
 					var _b_empty_text = true;
 					if (this.txBody) {
 						if (this.txBody.content) {
