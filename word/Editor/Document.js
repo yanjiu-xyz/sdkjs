@@ -22355,39 +22355,8 @@ CDocument.prototype.RemoveContentControl = function(Id)
 	
 	// TODO: По хорошему надо сделать метод у CStdBase и перенести реализации в соответствующие классы
 	this.RemoveSelection();
-	if (oContentControl.IsBlockLevel())
-	{
-		if (!oContentControl.Parent)
-			return;
-		
-		var oDocContent = oContentControl.Parent;
-		oDocContent.Update_ContentIndexing();
-		var nIndex = oContentControl.GetIndex();
-
-		var nCurPos = oDocContent.CurPos.ContentPos;
-		oDocContent.Remove_FromContent(nIndex, 1);
-
-		if (nIndex === nCurPos)
-		{
-			if (nIndex >= oDocContent.GetElementsCount())
-			{
-				oDocContent.MoveCursorToEndPos();
-			}
-			else
-			{
-				oDocContent.CurPos.ContentPos = Math.max(0, Math.min(oDocContent.GetElementsCount() - 1, nIndex));;
-				oDocContent.Content[oDocContent.CurPos.ContentPos].MoveCursorToStartPos();
-			}
-		}
-		else if (nIndex < nCurPos)
-		{
-			oDocContent.CurPos.ContentPos = Math.max(0, Math.min(oDocContent.GetElementsCount() - 1, nCurPos - 1));
-		}
-	}
-	else if (oContentControl.IsInlineLevel())
-	{
+	if (oContentControl.IsBlockLevel() || oContentControl.IsInlineLevel())
 		oContentControl.RemoveThisFromParent(true);
-	}
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
 {
