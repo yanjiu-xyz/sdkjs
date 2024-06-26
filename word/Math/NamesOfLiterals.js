@@ -185,6 +185,7 @@
 	{
 		this.Unicode = {};
 		this.LaTeX = {};
+		this.isUseLaTeXBrackets = false;
 
 		this.Init();
 	}
@@ -245,8 +246,13 @@
 		let strFunc = "\\";
 
 		// remove regexp
-		for (let index = 1; arrStr[index] && /[a-zA-Z]/.test(arrStr[index]); index++)
-			strFunc += arrStr[index];
+
+		if (this.isUseLaTeXBrackets)
+			for (let index = 1; arrStr[index] && /[a-zA-Z{}]/.test(arrStr[index]); index++)
+				strFunc += arrStr[index];
+		else
+			for (let index = 1; arrStr[index] && /[a-zA-Z]/.test(arrStr[index]); index++)
+				strFunc += arrStr[index];
 
 		return strFunc;
 	};
@@ -279,9 +285,6 @@
 
 		if (typeof word === "string" && this.IsLaTeXInclude(word))
 			return word;
-
-		else if (this.IsUnicodeInclude(str[0]))
-			return str[0];
 
 		else if (this.IsLaTeXInclude(str[0]))
 			return str[0];
@@ -878,9 +881,30 @@
 		this.Unicode = {};
 		this.LaTeX = {
 			"\\matrix" : "■",
-			"\\eqarray" : "█"
+			"\\eqarray" : "█",
+
+			"\\begin{cases}" : 1,
+			"\\begin{pmatrix}" : 1,
+			"\\begin{matrix}" : 1,
+			"\\begin{bmatrix}" : 1,
+			"\\begin{Bmatrix}" : 1,
+			"\\begin{vmatrix}" : 1,
+			"\\begin{Vmatrix}" : 1,
+			"\\begin{array}" : 1,
+			"\\begin{equation}" : 1,
+
+			"\\end{cases}" : 2,
+			"\\end{pmatrix}" : 2,
+			"\\end{matrix}" : 2,
+			"\\end{bmatrix}" : 2,
+			"\\end{Bmatrix}" : 2,
+			"\\end{vmatrix}" : 2,
+			"\\end{Vmatrix}" : 2,
+			"\\end{array}" : 2,
+			"\\end{equation}" : 2,
 		};
 		this.Init();
+		this.isUseLaTeXBrackets = true;
 	}
 	TokenMatrix.prototype = Object.create(LexerLiterals.prototype);
 	TokenMatrix.prototype.constructor = TokenMatrix;
@@ -1141,6 +1165,23 @@
 	TokenOf.prototype = Object.create(LexerLiterals.prototype)
 	TokenOf.prototype.constructor = TokenOf;
 
+	function TokenArrayMatrix()
+	{
+		this.id = 33;
+		this.Unicode = {};
+		this.LaTeX = {
+			"\\\\" : "1",
+		};
+		this.Init();
+	}
+	TokenArrayMatrix.prototype = Object.create(LexerLiterals.prototype)
+	TokenArrayMatrix.prototype.constructor = TokenArrayMatrix;
+	TokenArrayMatrix.prototype.GetLaTeXToken = function (str)
+	{
+		if (str[0] === "\\" && str[1] === "\\")
+			return "\\\\"
+	}
+
 	//---------------------------------------Initialize data for Tokenizer----------------------------------------------
 
 	// List of tokens types for parsers processing
@@ -1172,7 +1213,8 @@
 		of:				new TokenOf(),
 		delimiter:		new TokenDelimiter(),
 		char:			new TokenChars(),
-		horizontal: 	new TokenHorizontalStretch()
+		horizontal: 	new TokenHorizontalStretch(),
+		arrayMatrix:	new TokenArrayMatrix()
 	};
 
 	// The array defines the sequence in which the tokens are checked by the lexer
@@ -1203,7 +1245,8 @@
 		MathLiterals.radical,
 		MathLiterals.other,
 		MathLiterals.alphanumeric,
-		MathLiterals.subSup
+		MathLiterals.subSup,
+		MathLiterals.arrayMatrix,
 	];
 
 	//-------------------------------------Generating AutoCorrection Rules----------------------------------------------
@@ -2264,7 +2307,12 @@
 					FuncName.Add_Element(Limit);
 
 					let LimitName = Limit.getFName();
-					LimitName.Add_Text(oTokens.value, Paragraph, STY_PLAIN);
+
+					UnicodeArgument(
+						oTokens.value,
+						undefined,
+						LimitName
+					);
 
 					if (oTokens.up || oTokens.down) {
 						UnicodeArgument(
@@ -2453,7 +2501,7 @@
 					}
 
 					let oMatrix = oContext.Add_Matrix(
-						oTokens.style.head,
+						oTokens.style.head.style,
 						rows,
 						cols,
 						false,
@@ -4402,7 +4450,10 @@
 			if (this.IsLaTeX())
 				oToken.Wrap(new MathText(strOne, oContent), new MathText(strTwo, oContent));
 			else
-				oToken.Wrap(new MathText(strOne, this.globalStyle ? this.globalStyle : oContent), new MathText(strTwo, this.globalStyle ? this.globalStyle : oContent));
+				oToken.Wrap(
+					new MathText(strOne, this.globalStyle ? this.globalStyle : oContent),
+					new MathText(strTwo, this.globalStyle ? this.globalStyle : oContent)
+				);
 
 			return;
 		}
@@ -4599,9 +4650,15 @@
 		let oPr;
 
 		if (oContent instanceof ParaRun)
-			oPr = oContent.CompiledPr.Copy();
-		else if (oContent instanceof CMathContent)
+			oPr = oContent.Pr.Copy();
+		else if (oContent instanceof CMathContent && !oContent.CtrPrp.IsEmpty())
 			oPr = oContent.GetCtrPrp();
+		else if (oContent instanceof CMathContent && oContent.CtrPrp.IsEmpty() && oContent.Content.length > 0)
+		{
+			let oItem = oContent.Content[0];
+			if (oItem instanceof ParaRun)
+				oPr = oItem.Pr.Copy();
+		}
 		else
 			oPr = oContent.CompiledCtrPrp;
 

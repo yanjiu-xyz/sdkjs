@@ -267,8 +267,13 @@
 			middle_styles = [],
 			endStyle;
 
+		let isRightAndLeft = false;
+
 		if (this.oLookahead.data === "├" || this.oLookahead.data === "\\left")
 		{
+			if (this.oLookahead.data === "\\left")
+				isRightAndLeft = true;
+
 			this.EatToken(this.oLookahead.class);
 
 			if (this.oLookahead.class === Literals.lBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id)
@@ -281,6 +286,11 @@
 
 			if (this.oLookahead.data === "┤" || this.oLookahead.data === "\\right")
 			{
+				if (this.oLookahead.data === "\\right" && isRightAndLeft)
+					isRightAndLeft = true;
+				else
+					isRightAndLeft = false;
+
 				this.EatToken(this.oLookahead.class);
 				if (this.oLookahead.class === Literals.rBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id)
 				{
@@ -322,6 +332,9 @@
 			}
 		}
 
+		if (strLeftSymbol === "{" && strRightSymbol === "}" && !isRightAndLeft)
+			return arrBracketContent;
+
 		return {
 			type: Struc.bracket_block,
 			left: strLeftSymbol,
@@ -353,7 +366,7 @@
 					this.SkipFreeSpace();
 				}
 
-				let oToken = [this.GetExpressionLiteral(strLeftSymbol)];
+				let oToken = [this.GetExpressionLiteral([strLeftSymbol])];
 				if ((oToken && !Array.isArray(oToken)) || Array.isArray(oToken) && oToken.length > 0)
 				{
 					arrContent.push(oToken)
@@ -401,7 +414,8 @@
 			this.IsTextLiteral() ||
 			this.IsSpecialSymbol() ||
 			this.oLookahead.class === Literals.other.id ||
-			this.oLookahead.class === Literals.operand.id
+			this.oLookahead.class === Literals.operand.id ||
+			this.oLookahead.class === Literals.horizontal.id
 		);
 	};
 	CLaTeXParser.prototype.IsSpecialSymbol = function ()
@@ -440,6 +454,10 @@
 		else if (this.oLookahead.class === Literals.char.id)
 		{
 			return this.GetCharLiteral();
+		}
+		else if (this.oLookahead.class === Literals.horizontal.id)
+		{
+			return this.ReadTokensWhileEnd(Literals.horizontal, Struc.char);
 		}
 		else if (this.oLookahead.class === Literals.char.id)
 		{
@@ -539,9 +557,10 @@
 	}
 	CLaTeXParser.prototype.GetBelowAboveLiteral = function(base)
 	{
-		let isBelow = true;
+		let oStyle = this.oLookahead.style;
+		let isBelow = false;
 		if (this.oLookahead.data === "\\above")
-			isBelow = false;
+			isBelow = true;
 
 		this.EatToken(this.oLookahead.class);
 		let oContent = this.GetArguments(1);
@@ -553,9 +572,10 @@
 			return {
 				type: Struc.func_lim,
 				value: base.value,
-				up: !isBelow ? oContent : undefined,
-				down: isBelow ? oContent : undefined,
+				up: isBelow ? oContent : undefined,
+				down: !isBelow ? oContent : undefined,
 				third: third,
+				style: base.style,
 			}
 		}
 
@@ -564,6 +584,7 @@
 			base: base,
 			value: oContent,
 			isBelow: isBelow,
+			style: oStyle
 		};
 	}
 	CLaTeXParser.prototype.IsTextLiteral = function ()
@@ -658,11 +679,13 @@
 	};
 	CLaTeXParser.prototype.GetRectLiteral = function ()
 	{
+		let oCtrPr = this.oLookahead.style;
 		this.EatToken(this.oLookahead.class);
 		let oContent = this.GetArguments(1);
 		return {
 			type: Struc.rect,
 			value: oContent,
+			style: oCtrPr,
 		}
 	};
 	CLaTeXParser.prototype.IsOverUnderBarLiteral = function ()
@@ -957,7 +980,7 @@
 		if (this.oLookahead.data === "[")
 		{
 			this.EatToken(this.oLookahead.class);
-			oIndexContent = this.GetExpressionLiteral("]");
+			oIndexContent = this.GetExpressionLiteral(["]"]);
 			if (this.oLookahead.data === "]")
 			{
 				this.EatToken(this.oLookahead.class);
@@ -999,12 +1022,16 @@
 	CLaTeXParser.prototype.IsMatrixLiteral = function ()
 	{
 		return (
-			this.oLookahead.class === Literals.matrix.id ||
+			this.oLookahead.class === Literals.matrix.id && !this.IsEndMatrixLiteral() ||
 			this.oLookahead.data === "█" ||
 			this.oLookahead.data === "■" ||
 			this.oLookahead.data === "\\substack"
 		)
 	};
+	CLaTeXParser.prototype.IsEndMatrixLiteral = function ()
+	{
+		return this.oLookahead.class === Literals.matrix.id && Literals.matrix.LaTeX[this.oLookahead.data] === 2;
+	}
 	CLaTeXParser.prototype.IsAlignBlockForArray = function ()
 	{
 		if (this.oLookahead.data !== "{")
@@ -1045,7 +1072,8 @@
 	{
 		let strMatrixType;
 
-		switch (this.oLookahead.data) {
+		switch (this.oLookahead.data)
+		{
 			case "\\begin{cases}":
 				strMatrixType = "{";
 				break
@@ -1072,6 +1100,7 @@
 				strMatrixType = "‖";
 				break;
 			case "\\begin{array}":
+			case "\\begin{matrix}":
 			case "\\begin{equation}":
 			case "\\substack":
 			case "■":
@@ -1106,9 +1135,14 @@
 
 		let arrMatrixContent = [];
 
-		while (this.oLookahead.data !== "}" && this.oLookahead.class !== "endOfMatrix")
+		let styles = {};
+		styles.head = this.oLookahead.style;
+		styles.cols = {};
+		styles.rows = {};
+
+		while (this.oLookahead.data !== "}" && !this.IsEndMatrixLiteral())
 		{
-			arrMatrixContent.push(this.GetRayOfMatrixLiteral());
+			arrMatrixContent.push(this.GetRayOfMatrixLiteral(styles.cols, styles.rows));
 		}
 
 		let intMaxLengthOfMatrixRow = -Infinity;
@@ -1135,7 +1169,7 @@
 			}
 		}
 
-		if (this.oLookahead.data === "}" || this.oLookahead.class === "endOfMatrix")
+		if (this.IsEndMatrixLiteral())
 		{
 			this.EatToken(this.oLookahead.class)
 		}
@@ -1144,18 +1178,24 @@
 
 		return {
 			type: Struc.matrix,
-			value: arrMatrixContent
+			value: arrMatrixContent,
+			style: styles,
 		}
 	};
-	CLaTeXParser.prototype.GetRayOfMatrixLiteral = function ()
+	CLaTeXParser.prototype.GetRayOfMatrixLiteral = function (cols, rows)
 	{
 		let arrRayContent;
+		let nRow = 0;
 
-		while (this.oLookahead.data !== "\\\\" && this.oLookahead.data !== "}" && this.oLookahead.class !== "endOfMatrix") {
-			arrRayContent = this.GetElementOfMatrix();
+		while (this.oLookahead.class !== Literals.arrayMatrix.id && this.oLookahead.data !== "}" && !this.IsEndMatrixLiteral()) {
+			rows[nRow] = {}
+			arrRayContent = this.GetElementOfMatrix(rows[nRow]);
+			nRow++;
 		}
 
-		if (this.oLookahead.data === "\\\\") {
+		if (this.oLookahead.class === Literals.arrayMatrix.id)
+		{
+			cols[nRow] = this.oLookahead.style;
 			this.EatToken(this.oLookahead.class)
 		}
 
@@ -1163,23 +1203,27 @@
 
 		return arrRayContent
 	};
-	CLaTeXParser.prototype.GetElementOfMatrix = function ()
+	CLaTeXParser.prototype.GetElementOfMatrix = function (oStyle)
 	{
 		let arrRow = [];
 		let intLength = 0;
 		let intCount = 0;
 		let isAlredyGetContent = false;
 
-		while (this.IsElementLiteral() || this.oLookahead.data === "&") {
+		while (this.IsElementLiteral() || this.oLookahead.data === "&" ) {
 			let intCopyOfLength = intLength;
 
+			if (this.oLookahead.data === "\\\\")
+				break;
+
 			if (this.oLookahead.data !== "&") {
-				arrRow.push(this.GetExpressionLiteral("&"));
+				arrRow.push(this.GetExpressionLiteral(["&", "\\\\"]));
 				intLength++;
 				isAlredyGetContent = true;
 				this.SkipFreeSpace();
 			}
 			else {
+				oStyle[intCount] = this.oLookahead.style;
 				this.EatToken(this.oLookahead.class);
 
 				if (isAlredyGetContent === false) {
@@ -1203,22 +1247,29 @@
 
 		return arrRow;
 	};
-	CLaTeXParser.prototype.IsExpressionLiteral = function(strBreak)
+	CLaTeXParser.prototype.IsExpressionLiteral = function(arrBreak)
 	{
 		const arrEndOfExpression = ["}", "\\endgroup", "\\end", "┤"];
 
+		let isEnd = false;
+
+		if (Array.isArray(arrBreak))
+			isEnd = !arrBreak.includes(this.oLookahead.data);
+		else
+			isEnd = this.oLookahead.data !== arrBreak;
+
 		//todo refactor
 		return 	this.IsElementLiteral() &&
-				this.oLookahead.data !== strBreak &&
+				isEnd &&
 				this.oLookahead.data !== this.EscapeSymbol &&
 				!arrEndOfExpression.includes(this.oLookahead.data)
 	};
-	CLaTeXParser.prototype.GetExpressionLiteral = function (strBreakSymbol)
+	CLaTeXParser.prototype.GetExpressionLiteral = function (arrBreakSymbol)
 	{
-		this.EscapeSymbol = strBreakSymbol;
+		this.EscapeSymbol = arrBreakSymbol;
 		const arrExpList = [];
 
-		while (this.IsExpressionLiteral(strBreakSymbol))
+		while (this.IsExpressionLiteral(arrBreakSymbol))
 		{
 			if (this.IsPreScript())
 				arrExpList.push(this.GetPreScriptLiteral());

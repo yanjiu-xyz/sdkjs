@@ -4665,8 +4665,8 @@ CGroupCharacter.prototype.GetTextOfElement = function(oMathText)
 		else
 		{
 			strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
-			oMathText.AddText(strStart);
-			oMathText.Add(oBase, false);
+			oPos = oMathText.Add(oBase, true, 1);
+			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
 		}
 	}
 	else

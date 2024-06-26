@@ -349,12 +349,10 @@ CLimit.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		let text = oFuncName.GetTextOfElement();
-		if (AscMath.functionNames.includes(text.GetText()))
-			oMathText.AddText(new AscMath.MathText('\\', this));
-
+		oMathText.ResetGlobalStyle();
 		oMathText.Add(oFuncName, false);
-		oMathText.AddText(new AscMath.MathText((this.Pr.type == 1) ? "\\above" : "\\below", this));
+		oMathText.AddText(new AscMath.MathText((this.Pr.type == 1) ? "\\above" : "\\below", oMathText.GetStyleFromFirst()));
+		oMathText.SetNotGetStyleFromFirst();
 		oMathText.Add(oArgument, true, 1);
 	}
 	else
@@ -522,9 +520,9 @@ CMathFunc.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		oMathText.AddText(new AscMath.MathText("\\", this));
 		let oPosFuncName = oMathText.Add(oFuncName, false);
 		let oStrContent = oMathText.GetExact(oPosFuncName, true);
+		oMathText.AddBefore(oPosFuncName, new AscMath.MathText("\\", oMathText.GetStyleFromFirst()))
 
 		oMathText.Add(oArgument, true, 1);
 	}

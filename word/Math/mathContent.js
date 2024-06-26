@@ -5777,7 +5777,6 @@ CMathContent.prototype.ConvertContentView = function(intStart, intEnd, nInputTyp
         }
         else
         {
-            let strContent = MathText.GetText();
             let oTempContent = new CMathContent();
 
             if (nInputType === Asc.c_oAscMathInputType.Unicode)
@@ -7228,17 +7227,12 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX, isOnlyT
 		EndPos   = (this.Selection.Use == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
 	}
 
-
-    let oMathText = new AscMath.MathTextAndStyles(isLaTeX, isOnlyText);
+    let oMathText = new AscMath.MathTextAndStyles(isLaTeX);
 
 	for (let i = StartPos; i <= EndPos; i++)
     {
         let oElement = this.Content[i];
-
-        if (!oElement)
-            continue;
-
-        oMathText.Add(oElement);
+        oMathText.Add(oElement, false);
 	}
 
     if (isOnlyText)

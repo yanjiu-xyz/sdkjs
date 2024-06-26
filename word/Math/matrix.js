@@ -1003,41 +1003,53 @@ CMathMatrix.prototype.Get_DeletedItemsThroughInterface = function () {
  */
 CMathMatrix.prototype.GetTextOfElement = function (oMathText)
 {
-	if (!(oMathText instanceof AscMath.MathTextAndStyles))
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
+
+	let strMatrixSymbol,
+		oDelimiterParent;
+
+	if (this.Parent instanceof CDelimiter)
+		oDelimiterParent = this.Parent;
+	else if (this.Parent.Parent instanceof CDelimiter)
+		oDelimiterParent = this.Parent.Parent;
+
+	let strBrackets = oDelimiterParent
+		? String.fromCharCode(oDelimiterParent.Pr.begChr) + String.fromCharCode(oDelimiterParent.Pr.endChr)
+		: undefined;
 
 	if (oMathText.IsLaTeX())
 	{
 		// switch (strBrackets) {
 		// 	case undefined:
-		// 		strMatrixSymbol = "\\matrix";
+		// 		strMatrixSymbol = "matrix";
 		// 		break;
 		// 	case "()":
-		// 		strMatrixSymbol = "\\pmatrix";
+		// 		strMatrixSymbol = "pmatrix";
 		// 		break;
 		// 	case "[]":
-		// 		strMatrixSymbol = "\\bmatrix";
+		// 		strMatrixSymbol = "bmatrix";
 		// 		break;
 		// 	case "{}":
-		// 		strMatrixSymbol = "\\Bmatrix";
+		// 		strMatrixSymbol = "Bmatrix";
 		// 		break;
 		// 	case "||":
-		// 		strMatrixSymbol = "\\vmatrix";
+		// 		strMatrixSymbol = "vmatrix";
 		// 		break;
 		// 	case "||":
-		// 		strMatrixSymbol = "\\vmatrix";
+		// 		strMatrixSymbol = "vmatrix";
 		// 		break;
 		// 	case "‖‖":
-		// 		strMatrixSymbol = "\\Vmatrix";
+		// 		strMatrixSymbol = "Vmatrix";
 		// 		break;
 		// }
+		strMatrixSymbol = strBrackets === "()" ? "pmatrix" : "matrix";
+		oMathText.AddText(new AscMath.MathText("\\begin{" + strMatrixSymbol + "}", this.Content[0]))
 	}
 	else
 	{
 		oMathText.AddText(new AscMath.MathText("■(", this.Pr.GetRPr()));
 	}
 
-	//todo
 	// 	Word поддерживает несколько типов ввода для матриц LaTeX:
 	// 		1. Команды матриц с заданными скобками (matrix, pmatrix, bmatrix, Bmatrix, vmatrix, Vmatrix). В Word поддерживается только matrix и pmatrix.
 	// 			- При получении линейного вида для матрицы pmatrix в Word мы будем получать так же pmatrix, однако если
@@ -1050,7 +1062,6 @@ CMathMatrix.prototype.GetTextOfElement = function (oMathText)
 	//
 	// 	На данный момент делаем получение линейного формата всегда в режиме pmatrix, если это возможно (используем обычные скобки)
 
-
 	let oLastPos;
 
 	for (let nRow = 0; nRow < this.nRow; nRow++)
@@ -1062,17 +1073,21 @@ CMathMatrix.prototype.GetTextOfElement = function (oMathText)
 
 			if (nCol < this.nCol - 1)
 			{
-				let oText = new AscMath.MathText("&", oPos.CtrPrp);
+				let oText = new AscMath.MathText("&", this.Content[0]);
 				oLastPos = oMathText.AddAfter(oLastPos, oText);
 			}
 			else if (nRow < this.nRow - 1)
 			{
-				let oText = new AscMath.MathText(oMathText.IsLaTeX() ? "\\\\" : '@', oPos.CtrPrp);
+				let oText = new AscMath.MathText(oMathText.IsLaTeX() ? "\\\\" : '@', this.Content[0]);
 				oLastPos = oMathText.AddAfter(oLastPos, oText);
 			}
 		}
 	}
-	oMathText.AddAfter(oLastPos,")");
+
+	if (oMathText.IsLaTeX())
+		oMathText.AddText(new AscMath.MathText("\\\\\\end{" + strMatrixSymbol + "}", this.Content[0]));
+	else
+		oMathText.AddAfter(oLastPos,new AscMath.MathText(")", this.Content[0]));
 };
 
 /**
