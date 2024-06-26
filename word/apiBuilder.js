@@ -2993,6 +2993,36 @@
 		
 		return oRange;
 	};
+	
+	/**
+	 * Returns the start page number of current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @return {Number}
+	 * @since 8.2.0
+	 */
+	ApiRange.prototype.GetStartPage = function()
+	{
+		let oDoc = private_GetLogicDocument();
+		let oPosXY = oDoc.private_GetXYByDocumentPosition(this.StartPos);
+		
+		return oPosXY.Page;
+	};
+
+	/**
+	 * Returns the end page number of current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @return {Number}
+	 * @since 8.2.0
+	 */
+	ApiRange.prototype.GetEndPage = function()
+	{
+		let oDoc = private_GetLogicDocument();
+		let oPosXY = oDoc.private_GetXYByDocumentPosition(this.EndPos);
+		
+		return oPosXY.Page;
+	};
 
 	/**
 	 * Class representing a document.
@@ -20383,6 +20413,8 @@
 	ApiRange.prototype["ToJSON"]                     = ApiRange.prototype.ToJSON;
 	ApiRange.prototype["AddComment"]                 = ApiRange.prototype.AddComment;
 	ApiRange.prototype["GetRange"]                   = ApiRange.prototype.GetRange;
+	ApiRange.prototype["GetStartPage"]               = ApiRange.prototype.GetStartPage;
+	ApiRange.prototype["GetEndPage"]                 = ApiRange.prototype.GetEndPage;
 
 	ApiDocument.prototype["GetClassType"]                = ApiDocument.prototype.GetClassType;
 	ApiDocument.prototype["CreateNewHistoryPoint"]       = ApiDocument.prototype.CreateNewHistoryPoint;
