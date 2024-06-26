@@ -10856,66 +10856,6 @@
 		}
 		return arrTables;
 	};
-	/**
-     * Returns the next table if exists.
-     * @memberof ApiTable
-	 * @typeofeditors ["CDE"]
-     * @return {ApiTable | null} - returns null if table is last.  
-     */
-    ApiTable.prototype.GetNext = function()
-    {
-		var oDocument = editor.GetDocument();
-
-		var absEndPage = this.Table.GetAbsolutePage(this.Table.Pages.length - 1); // страница, на которой заканчивается таблица
-        
-		for (var curPage = absEndPage; curPage < oDocument.Document.Pages.length; curPage++)
-		{
-			var curPageTables = oDocument.Document.GetAllTablesOnPage(curPage); // все таблицы на странице 
-			for (var Index = 0; Index < curPageTables.length; Index++)
-			{
-				if (curPageTables[Index].Table.Id === this.Table.Id)
-				{
-					if (curPageTables[Index + 1])
-					{
-						return new ApiTable(curPageTables[Index + 1].Table)
-					}
-				}
-				else 
-					return new ApiTable(curPageTables[Index].Table);
-			}
-		}
-		
-		return null; 
-	};
-	/**
-     * Returns the previous table if exists.
-     * @memberof ApiTable
-	 * @typeofeditors ["CDE"]
-     * @return {ApiTable | null} - returns null if table is first.  
-     */
-    ApiTable.prototype.GetPrevious = function()
-    {
-		var oDocument = editor.GetDocument();
-
-		var absEndPage = this.Table.GetAbsolutePage(0); // страница, на которой заканчивается таблица
-        
-		for (var curPage = absEndPage; curPage >= 0; curPage--)
-		{
-			var curPageTables = oDocument.Document.GetAllTablesOnPage(curPage); // все таблицы на странице 
-			for (var Index = curPageTables.length - 1; Index >= 0; Index--)
-			{
-				if (curPageTables[Index].Table.Id === this.Table.Id)
-				{
-					if (curPageTables[Index - 1])
-						return new ApiTable(curPageTables[Index - 1].Table)
-				}
-				else 
-					return new ApiTable(curPageTables[Index].Table);
-			}
-		}
-		
-		return null; 
-    };
     /**
      * Returns a table cell that contains the current table.
      * @memberof ApiTable
@@ -20561,8 +20501,6 @@
 	ApiTable.prototype["InsertInContentControl"]     = ApiTable.prototype.InsertInContentControl;
 	ApiTable.prototype["GetParentTable"]    		 = ApiTable.prototype.GetParentTable;
 	ApiTable.prototype["GetTables"]     			 = ApiTable.prototype.GetTables;
-	ApiTable.prototype["GetNext"]    				 = ApiTable.prototype.GetNext;
-	ApiTable.prototype["GetPrevious"]    			 = ApiTable.prototype.GetPrevious;
 	ApiTable.prototype["GetParentTableCell"]   	 	 = ApiTable.prototype.GetParentTableCell;
 	ApiTable.prototype["Delete"]    				 = ApiTable.prototype.Delete;
 	ApiTable.prototype["Clear"]    					 = ApiTable.prototype.Clear;
