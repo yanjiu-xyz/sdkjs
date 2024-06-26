@@ -3971,15 +3971,19 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
 		var _img;
         if ( !AscCommon.isNullOrEmptyString(objectProperties.ImageUrl) ) {
-            _img = api.ImageLoader.LoadImage(objectProperties.ImageUrl, 1);
-
-            if (null != _img) {
+            if (window['IS_NATIVE_EDITOR']) {
                 _this.controller.setGraphicObjectProps( objectProperties );
-            }
-            else {
-                _this.asyncImageEndLoaded = function(_image) {
+            } else {
+                _img = api.ImageLoader.LoadImage(objectProperties.ImageUrl, 1);
+
+                if (null != _img) {
                     _this.controller.setGraphicObjectProps( objectProperties );
-                    _this.asyncImageEndLoaded = null;
+                }
+                else {
+                    _this.asyncImageEndLoaded = function(_image) {
+                        _this.controller.setGraphicObjectProps( objectProperties );
+                        _this.asyncImageEndLoaded = null;
+                    }
                 }
             }
         }

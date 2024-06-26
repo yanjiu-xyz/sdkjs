@@ -1864,6 +1864,9 @@ CopyProcessor.prototype =
 			//подменяем Document для копирования(если не подменить, то commentId будет не соответствовать)
 			this.oBinaryFileWriter.Document = elementsContent[0].Element.LogicDocument;
 
+			if (!this.oBinaryFileWriter.Document)
+				this.oBinaryFileWriter.Document = this.oDocument;
+
 			this.oBinaryFileWriter.CopyStart();
 			this.CopyDocument2(null, oDocument, elementsContent);
 			this.oBinaryFileWriter.CopyEnd();
