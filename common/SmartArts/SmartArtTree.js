@@ -4324,7 +4324,6 @@ function HierarchyAlgorithm() {
 			radiusCoefficient *= constrRadius / adaptRadius;
 		}
 		this.calcValues.radiusCoefficient = radiusCoefficient;
-		this.parentNode.setDiamScale(coefficient);
 		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
 			const child = this.parentNode.childs[i];
 			child.setSizesScale(coefficient, coefficient);
@@ -4916,12 +4915,12 @@ function HierarchyAlgorithm() {
 
 			let startConnectionVector;
 			let endConnectionVector;
-			if (this.isClockwise()) {
-				startConnectionVector = CVector.getVectorByAngle(startAngle + angle * startCoefficient);
-				endConnectionVector = CVector.getVectorByAngle(endAngle - angle * endCoefficient);
-			} else {
+			if (this.isClockwise() === this.isLongCurve()) {
 				startConnectionVector = CVector.getVectorByAngle(startAngle - angle * startCoefficient);
 				endConnectionVector = CVector.getVectorByAngle(endAngle + angle * endCoefficient);
+			} else {
+				startConnectionVector = CVector.getVectorByAngle(startAngle + angle * startCoefficient);
+				endConnectionVector = CVector.getVectorByAngle(endAngle - angle * endCoefficient);
 			}
 			result.start = new CCoordPoint(centerPoint.x + startConnectionVector.x * radius, centerPoint.y + startConnectionVector.y * radius);
 			result.end = new CCoordPoint(centerPoint.x + endConnectionVector.x * radius, centerPoint.y + endConnectionVector.y * radius);
@@ -5055,11 +5054,12 @@ function HierarchyAlgorithm() {
 	ConnectorAlgorithm.prototype.getCycleRadius = function () {
 		const radiusCoefficient = this.parentAlgorithm.calcValues.radiusCoefficient || 1;
 		if (this.parentAlgorithm instanceof CycleAlgorithm) {
-			return this.parentAlgorithm.calcValues.radius * radiusCoefficient;
+			const diamScale = Math.abs(this.diameterScale);
+			return this.parentAlgorithm.calcValues.radius * radiusCoefficient * diamScale;
 		}
-		const constrRadius = this.parentNode.getConstr(AscFormat.Constr_type_diam, true, true);
-		if (constrRadius !== undefined) {
-			return Math.abs(constrRadius) / 2;
+		const constrDiam = this.parentNode.getConstr(AscFormat.Constr_type_diam, true, true);
+		if (constrDiam !== undefined) {
+			return Math.abs(constrDiam) / 2;
 		}
 
 	};
@@ -5400,20 +5400,21 @@ function HierarchyAlgorithm() {
 		let stemThick;
 		let adjArrowHeight;
 		let truthSide;
+		// todo: increase accuracy in Continuous Cycle
 		if (constrArrowWidth !== undefined && constrStemThick !== undefined && constrArrowHeight !== undefined) {
-			const diamScale = Math.abs(this.diameterScale);
-			adjArrowWidth = constrArrowWidth / (radius / 1.0446);
 			const diam = radius * 2;
-			const scaledDiam = diam * diamScale;
-			adjArrowWidth = 0.5 - radius / scaledDiam;
-			const defConnectorHeight = connectorHeight || 0;
-			truthSide = (scaledDiam + scaledDiam / constrArrowWidth / this.diameterScale) / 0.966 + defConnectorHeight *0.6357;
-			adjArrowWidth = 0.5 - (scaledDiam / 2.005) / truthSide;
-			const a = constrArrowWidth / this.parentAlgorithm.calcValues.radius;
-			const b = a * this.diameterScale;
-
-			console.log(a, b);
-			adjArrowHeight = constrArrowHeight / 4.1;
+			const diamScale = Math.abs(this.diameterScale);
+			if (connectorHeight !== undefined) {
+				adjArrowWidth = constrArrowWidth / radius * 0.6195;
+				stemThick = adjArrowWidth / 1.16666;
+				adjArrowHeight = (constrArrowHeight / radius) * 28.65983;
+				truthSide = (diam / (1 - adjArrowWidth * 2)) * 0.98999;
+			} else {
+				adjArrowWidth = 1 / (diamScale) * 0.0598728;
+				stemThick = adjArrowWidth * 0.963;
+				adjArrowHeight = (1 / diamScale) * 5.731787;
+				truthSide = (diam / (1 - adjArrowWidth * 2)) * 0.9965;
+			}
 		} else if (connectorHeight !== undefined) {
 			const addValue = connectorHeight * 0.15;
 			truthSide = ((radius + addValue) * 2 + connectorHeight);
@@ -5994,20 +5995,6 @@ function PresNode(presPoint, contentNode) {
 	this.moveWith = null;
 	this._isTxXfrm = null;
 }
-PresNode.prototype.setDiamScale = function (coefficient) {
-/*	let scale = this.getSummaryScale(AscFormat.Constr_type_diam);
-	let newCoef = coefficient / scale;
-	this.setParentScale(AscFormat.Constr_type_diam, newCoef);
-	scale = this.getSummaryScale(AscFormat.Constr_type_wArH);
-	newCoef = coefficient / scale;
-	this.setParentScale(AscFormat.Constr_type_wArH, newCoef);
-	scale = this.getSummaryScale(AscFormat.Constr_type_hArH);
-	newCoef = coefficient / scale;
-	this.setParentScale(AscFormat.Constr_type_hArH, newCoef);
-	scale = this.getSummaryScale(AscFormat.Constr_type_stemThick);
-	newCoef = coefficient / scale;
-	this.setParentScale(AscFormat.Constr_type_stemThick, newCoef);*/
-};
 PresNode.prototype.setSizesScale = function (widthCoefficient, heightCoefficient) {
 	const aspectRatio = this.getAspectRatio();
 	if (aspectRatio) {
@@ -6560,12 +6547,8 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 	function setRelationConstraints(constrNode, refNode, constr) {
 		switch (constr.type) {
-			case AscFormat.Constr_type_diam:
 			case AscFormat.Constr_type_w:
 			case AscFormat.Constr_type_h:
-			case AscFormat.Constr_type_wArH:
-			case AscFormat.Constr_type_hArH:
-			case AscFormat.Constr_type_stemThick:
 				constrNode.setRelationConstr(refNode, constr);
 				break;
 			default:
@@ -6678,10 +6661,6 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 		if (isAdapt) {
 			switch (constr.type) {
-/*				case AscFormat.Constr_type_diam:
-				case AscFormat.Constr_type_wArH:
-				case AscFormat.Constr_type_hArH:
-				case AscFormat.Constr_type_stemThick:*/
 				case AscFormat.Constr_type_w:
 				case AscFormat.Constr_type_h: {
 					const summaryScale = this.getSummaryScale(constr.type);
