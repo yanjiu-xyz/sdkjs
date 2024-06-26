@@ -10014,6 +10014,30 @@
 		else if ("nextPage" === sType)
 			this.Section.Set_Type(c_oAscSectionBreakType.NextPage);
 	};
+
+	/**
+	 * Returns the section type.
+	 * @memberof ApiSection
+	 * @typeofeditors ["CDE"]
+	 * @returns {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} - The section break type.
+	 * @since 8.2.0
+	 */
+	ApiSection.prototype.GetType = function()
+	{
+		switch (this.Section.GetType()) {
+			case c_oAscSectionBreakType.OddPage:
+				return "oddPage";
+			case c_oAscSectionBreakType.EvenPage:
+				return "evenPage";
+			case c_oAscSectionBreakType.Continuous:
+				return "continuous";
+			case c_oAscSectionBreakType.Column:
+				return "nextColumn";
+			case c_oAscSectionBreakType.NextPage:
+				return "nextPage";
+		}
+	};
+
 	/**
 	 * Specifies that all the text columns in the current section are of equal width.
 	 * @memberof ApiSection
@@ -20625,6 +20649,7 @@
 
 	ApiSection.prototype["GetClassType"]             = ApiSection.prototype.GetClassType;
 	ApiSection.prototype["SetType"]                  = ApiSection.prototype.SetType;
+	ApiSection.prototype["GetType"]                  = ApiSection.prototype.GetType;
 	ApiSection.prototype["SetEqualColumns"]          = ApiSection.prototype.SetEqualColumns;
 	ApiSection.prototype["SetNotEqualColumns"]       = ApiSection.prototype.SetNotEqualColumns;
 	ApiSection.prototype["SetPageSize"]              = ApiSection.prototype.SetPageSize;
