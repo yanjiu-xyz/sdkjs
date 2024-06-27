@@ -3693,14 +3693,34 @@
 		this.checkDrawingBaseCoords();
 	};
 	CGraphicObjectBase.prototype.checkPlaceholders = function(oPlaceholders) {
+		if(this.isDependentPlaceholder(oPlaceholders)) {
+			this.setRecalculateInfo();
+			this.recalculate();
+			this.handleUpdateTheme();
+			return true;
+		}
+		return false;
+	};
+	CGraphicObjectBase.prototype.isDependentPlaceholder = function(oPlaceholders) {
+		if(!this.isPlaceholder()) return false;
 		let aHierarchy = this.getHierarchy();
 		for(let nIdx = 0; nIdx < aHierarchy.length; ++nIdx) {
 			let oDrawing = aHierarchy[nIdx];
 			if(oDrawing && oPlaceholders[oDrawing.Id]) {
-				this.setRecalculateInfo();
-				this.recalculate();
 				return true;
 			}
+		}
+		return false;
+	};
+	CGraphicObjectBase.prototype.handleUpdateTheme = function() {
+
+	};
+	CGraphicObjectBase.prototype.checkOnDeletePlaceholder = function(oPlaceholders) {
+		if(this.isDependentPlaceholder(oPlaceholders)) {
+			if(!(this.spPr && this.spPr.xfrm && this.spPr.xfrm.isNotNull())) {
+				AscFormat.CheckSpPrXfrm(this, true);
+			}
+			return true;
 		}
 		return false;
 	};

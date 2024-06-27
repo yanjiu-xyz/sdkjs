@@ -2887,6 +2887,25 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 									if (oCalcSlide.Layout.Master === oDrawingObject) {
 										oCalcSlide.checkSlideTheme();
 										oCalcSlide.recalculate();
+										let nIdx = this.GetSlideIndex(oCalcSlide);
+										if(nIdx !== -1) {
+											if (redrawSlideIndexMap[nIdx] !== true) {
+												redrawSlideIndexMap[nIdx] = true;
+												aToRedrawSlides.push(nIdx);
+											}
+										}
+									}
+								}
+								for(let nLt = 0; nLt < oDrawingObject.sldLayoutLst.length; ++nLt) {
+									let oLt = oDrawingObject.sldLayoutLst[nLt];
+									oLt.checkSlideTheme();
+									oLt.recalculate();
+									let nIdx = this.GetSlideIndex(oLt);
+									if(nIdx !== -1) {
+										if (redrawSlideIndexMap[nIdx] !== true) {
+											redrawSlideIndexMap[nIdx] = true;
+											aToRedrawSlides.push(nIdx);
+										}
 									}
 								}
 							}
@@ -9214,7 +9233,6 @@ CPresentation.prototype.GetCurrentTheme = function() {
 	}
 	return this.slideMasters[0] || null;
 };
-
 CPresentation.prototype.changeLayout = function (_array, layout_index) {
 	if(this.IsMasterMode()) return;
 	let aLayouts = this.GetAllLayouts();
