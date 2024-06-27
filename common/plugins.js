@@ -689,7 +689,7 @@
 					continue;
 
 				var pluginData = new CPluginData();
-				pluginData.setAttribute("guid", plugin.guid);
+				pluginData.setAttribute("guid", guid);
 				pluginData.setAttribute("type", "updateOptions");
 				pluginData.setAttribute("options", this.getPluginOptions(guid));
 
