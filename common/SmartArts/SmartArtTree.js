@@ -556,22 +556,23 @@
 						offY = custCenterPoint.y - shape.height / 2 - shape.y;
 						shape.custCenterPoint = centerPoint;
 					}
-				} else {
-					if (prSet.custLinFactNeighborX) {
-						const width = neighborWidth !== null ? neighborWidth : shape.cleanParams.width;
-						offX += width * prSet.custLinFactNeighborX * coefficient;
-					}
-					if (prSet.custLinFactX) {
-						offX += shape.cleanParams.width * prSet.custLinFactX * coefficient;
-					}
-					if (prSet.custLinFactNeighborY) {
-						const height = neighborHeight !== null ? neighborHeight : shape.cleanParams.height;
-						offY += height * prSet.custLinFactNeighborY * coefficient;
-					}
-					if (prSet.custLinFactY) {
-						offY += shape.cleanParams.height * prSet.custLinFactY * coefficient;
-					}
 				}
+
+				if (prSet.custLinFactNeighborX) {
+					const width = neighborWidth !== null ? neighborWidth : shape.cleanParams.width;
+					offX += width * prSet.custLinFactNeighborX * coefficient;
+				}
+				if (prSet.custLinFactX) {
+					offX += shape.cleanParams.width * prSet.custLinFactX * coefficient;
+				}
+				if (prSet.custLinFactNeighborY) {
+					const height = neighborHeight !== null ? neighborHeight : shape.cleanParams.height;
+					offY += height * prSet.custLinFactNeighborY * coefficient;
+				}
+				if (prSet.custLinFactY) {
+					offY += shape.cleanParams.height * prSet.custLinFactY * coefficient;
+				}
+
 				const smartart = this.smartart;
 				const smartartHeight = smartart.spPr.xfrm.extY;
 				const smartartWidth = smartart.spPr.xfrm.extX;
@@ -1437,7 +1438,7 @@
 		if (!parentObjects) {
 			return null;
 		}
-		const shapeTrack = new AscFormat.NewShapeTrack("", this.x, this.y, AscFormat.GetDefaultTheme(), parentObjects.theme, parentObjects.master, parentObjects.layout, parentObjects.slide, initObjects.page);
+		const shapeTrack = new AscFormat.NewShapeTrack("", this.x, this.y, parentObjects.theme || AscFormat.GetDefaultTheme(), parentObjects.master, parentObjects.layout, parentObjects.slide, initObjects.page);
 		shapeTrack.track({}, this.x + this.width, this.y + this.height);
 		const shape = shapeTrack.getShape(false, initObjects.drawingDocument, null);
 		const spPr = shape.spPr;
@@ -1563,7 +1564,7 @@
 		const contentNodes = !presNode.isTxXfrm() ? presNode.contentNodes : [];
 		shapeSmartArtInfo.setShapePoint(presNode.presPoint);
 		editorShape.setShapeSmartArtInfo(shapeSmartArtInfo);
-		let sumRot = this.rot;
+		let sumRot = this.rot + presNode.moveRot;
 		const prSet = presNode.getPrSet();
 		if (prSet) {
 			if (prSet.custAng) {
@@ -1774,14 +1775,18 @@
 			node.moveTo(offX, offY, isCalculateCoefficients, true);
 		});
 	};
+	BaseAlgorithm.prototype.getParentConnectionNode = function () {
+		return this.parentNode;
+	};
 	BaseAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
-		if (connectorAlgorithm && childNode.algorithm) {
+		const parentConnNode = this.getParentConnectionNode();
+		if (connectorAlgorithm && childNode.algorithm && parentConnNode) {
 			let srcNode;
 			let dstNode;
 			if (connectorAlgorithm.params[AscFormat.Param_type_srcNode]) {
-				srcNode = this.parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
+				srcNode = parentConnNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
 			} else {
-				srcNode = this.parentNode.getDefaultConnectionNode();
+				srcNode = parentConnNode.getDefaultConnectionNode();
 			}
 			if (connectorAlgorithm.params[AscFormat.Param_type_dstNode]) {
 				dstNode = childNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
@@ -4059,13 +4064,8 @@ function HierarchyAlgorithm() {
 			return this.parentNode.childs[this.calcValues.centerNodeIndex];
 		}
 	};
-	CycleAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
-		const centerShape = this.getCenterNode();
-		if (centerShape && connectorAlgorithm && childNode) {
-			connectorAlgorithm.setParentAlgorithm(this);
-			connectorAlgorithm.setFirstConnectorNode(centerShape);
-			connectorAlgorithm.setLastConnectorNode(childNode);
-		}
+	CycleAlgorithm.prototype.getParentConnectionNode = function () {
+		return this.getCenterNode();
 	};
 	CycleAlgorithm.prototype.isClockwise = function () {
 		return this.calcValues.stepAngle > 0;
@@ -4388,7 +4388,7 @@ function HierarchyAlgorithm() {
 			const centerNode = this.getCenterNode();
 			const shape = centerNode && centerNode.getShape(false);
 			if  (shape) {
-				shape.moveTo(-shape.width / 2, -shape.height / 2);
+				shape.moveTo(-(shape.x + shape.width / 2), -(shape.y + shape.height / 2));
 				container.push(shape);
 			}
 			startIndex = this.calcValues.centerNodeIndex + 1;
@@ -4405,11 +4405,11 @@ function HierarchyAlgorithm() {
 					const radiusGuideVector = CVector.getVectorByAngle(currentAngle);
 					radiusGuideVector.multiply(radius);
 					shape.setRadialInfo(radiusGuideVector, incAngle);
-					const bounds = shape.getBounds(true);
+					const bounds = shape.getBounds();
 					const width = bounds.r - bounds.l;
 					const height = bounds.b - bounds.t;
-					const offX = radiusGuideVector.x - width / 2;
-					const offY = radiusGuideVector.y - height / 2;
+					const offX = radiusGuideVector.x - (bounds.l + width / 2);
+					const offY = radiusGuideVector.y - (bounds.t + height / 2);
 
 					shape.rot = this.getAlongRot(currentAngle);
 					shape.moveTo(offX, offY);
@@ -5994,6 +5994,7 @@ function PresNode(presPoint, contentNode) {
 	this.parentScale = {};
 	this.moveWith = null;
 	this._isTxXfrm = null;
+	this.moveRot = 0;
 }
 PresNode.prototype.setSizesScale = function (widthCoefficient, heightCoefficient) {
 	const aspectRatio = this.getAspectRatio();
@@ -7135,7 +7136,9 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.getConstraints = function (isAdapt) {
 		return isAdapt ? this.adaptConstr : this.constr;
 	};
-
+	PresNode.prototype.setMoveRot = function (rot) {
+		this.moveRot = rot;
+	}
 	PresNode.prototype.createShadowShapeFromConstraints = function (layoutShape, isCalculateCoefficients) {
 		const isChildInSpaceAlgorithm = this.parent && this.parent.algorithm instanceof SpaceAlgorithm;
 		const constrNode = isChildInSpaceAlgorithm ? this.parent : this;
@@ -7176,6 +7179,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 		shape.x += offX;
 		shape.y += offY;
 
+		let moveRot = 0;
+		const prSet = this.getPrSet();
+
+		if (prSet && prSet.custAng) {
+			moveRot = prSet.custAng;
+		}
 		for (let i = 0; i < this.moveWithNodes.length; i += 1) {
 			const moveNode = this.moveWithNodes[i];
 			if (moveNode.isInitShape(isCalculateCoefficients)) {
@@ -7192,6 +7201,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			} else {
 				moveNode.setMoveScaleCoefficients(widthCoef, heightCoef);
 			}
+			moveNode.setMoveRot(moveRot);
 		}
 
 		shape.cleanParams = {
