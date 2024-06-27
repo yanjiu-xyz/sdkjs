@@ -728,15 +728,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 } else {
                     if (bNeedResetTransform) {
                         if (shape.spPr && shape.spPr.xfrm && shape.spPr.xfrm.isNotNull()) {
-                            if (shape.getObjectType() !== AscDFH.historyitem_type_GraphicFrame) {
+                            if (shape.getObjectType() !== AscDFH.historyitem_type_GraphicFrame
+                                && shape.getObjectType() !== AscDFH.historyitem_type_SmartArt
+                                && shape.getObjectType() !== AscDFH.historyitem_type_ChartSpace) {
                                 shape.spPr.setXfrm(null);
                             } else {
-                                if (oNotNullPH) {
-                                    if (!shape.spPr && oNotNullPH.spPr) {
+                                if (oNotNullPH && oNotNullPH.spPr && oNotNullPH.spPr.xfrm) {
+                                    if (!shape.spPr) {
                                         shape.setSpPr(oNotNullPH.spPr.createDuplicate());
                                         shape.spPr.setParent(shape);
                                     }
-                                    if (!shape.spPr.xfrm && oNotNullPH.spPr && oNotNullPH.spPr.xfrm) {
+                                    else {
                                         shape.spPr.setXfrm(oNotNullPH.spPr.xfrm.createDuplicate());
                                     }
                                 }
