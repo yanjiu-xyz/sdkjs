@@ -1243,6 +1243,15 @@
 		return oController.getPluginSelectionInfo();
 	};
 
+	PDFEditorApi.prototype.SetShowTextSelectPanel = function(bShow) {
+		this.showTextSelectPanel = bShow;
+		
+		this.getPDFDoc().UpdateSelectionTrackPos();
+	};
+	PDFEditorApi.prototype.NeedShowTextSelectPanel = function() {
+		return this.showTextSelectPanel;
+	};
+
 	/////////////////////////////////////////////////////////////
 	///////// For text
 	////////////////////////////////////////////////////////////
@@ -2453,7 +2462,8 @@
 	PDFEditorApi.prototype['remove_Hyperlink']						= PDFEditorApi.prototype.remove_Hyperlink;
 	PDFEditorApi.prototype['change_Hyperlink']						= PDFEditorApi.prototype.change_Hyperlink;
 	PDFEditorApi.prototype['sync_HyperlinkClickCallback']			= PDFEditorApi.prototype.sync_HyperlinkClickCallback;
-
+	PDFEditorApi.prototype['SetShowTextSelectPanel']				= PDFEditorApi.prototype.SetShowTextSelectPanel;
+	PDFEditorApi.prototype['NeedShowTextSelectPanel']				= PDFEditorApi.prototype.NeedShowTextSelectPanel;
 
 	// table
 	PDFEditorApi.prototype['put_Table']						= PDFEditorApi.prototype.put_Table;
