@@ -813,6 +813,22 @@
         }
     };
 
+	/**
+	 * Set options for all plugins. This method can be used only in connectors.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias SetPluginsOptions
+	 * @param {object} options - Object with properties ({ all : { key, value }, plugin_giud : { keyForSpecificPlugin : valueForSpecificPlugin } }
+	 */
+	Api.prototype["pluginMethod_SetPluginsOptions"] = function(options)
+	{
+		let guid = window.g_asc_plugins.getCurrentPluginGuid();
+		let runObject = window.g_asc_plugins.runnedPluginsMap[guid];
+		if (!runObject.isConnector)
+			return;
+		this.setPluginsOptions(options);
+	};
+
     /**
      * Shows the input helper.
      * @memberof Api
