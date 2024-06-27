@@ -9176,7 +9176,7 @@
 		oCapPr.Label = sLabel;
 		oCapPr.Before = bBefore;
 		oCapPr.ExcludeLabel = bExludeLabel;
-		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Format = nNumFormat;
 		oCapPr.Separator = sCaptionSep;
 		oCapPr.Additional = sAdditional;
 
@@ -11358,7 +11358,7 @@
 		oCapPr.Label = sLabel;
 		oCapPr.Before = bBefore;
 		oCapPr.ExcludeLabel = bExludeLabel;
-		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Format = nNumFormat;
 		oCapPr.Separator = sCaptionSep;
 		oCapPr.Additional = sAdditional;
 
@@ -17983,7 +17983,7 @@
 		oCapPr.Label = sLabel;
 		oCapPr.Before = bBefore;
 		oCapPr.ExcludeLabel = bExludeLabel;
-		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Format = nNumFormat;
 		oCapPr.Separator = sCaptionSep;
 		oCapPr.Additional = sAdditional;
 
