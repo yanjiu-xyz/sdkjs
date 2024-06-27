@@ -3498,8 +3498,19 @@
 
 
 					var scale_scale_coefficients = this.group.getResultScaleCoefficients();
-					this.x = scale_scale_coefficients.cx * (xfrm.offX - this.group.spPr.xfrm.chOffX);
-					this.y = scale_scale_coefficients.cy * (xfrm.offY - this.group.spPr.xfrm.chOffY);
+
+					let offX = xfrm.offX;
+					let offY = xfrm.offY;
+					let oGrXfrm = null;
+					if(this.group.spPr) {
+						oGrXfrm = this.group.spPr.xfrm;
+						if(oGrXfrm) {
+							offX -= oGrXfrm.chOffX;
+							offY -= oGrXfrm.chOffY;
+						}
+					}
+					this.x = scale_scale_coefficients.cx * offX;
+					this.y = scale_scale_coefficients.cy * offY;
 					this.extX = scale_scale_coefficients.cx * xfrm.extX;
 					this.extY = scale_scale_coefficients.cy * xfrm.extY;
 					this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;
