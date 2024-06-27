@@ -840,6 +840,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.OnMouseDown = function(x, y, e) {
         Asc.editor.sendEvent('asc_onHidePdfFormsActions');
+        Asc.editor.SetShowTextSelectPanel(true);
 
         let oViewer = this.Viewer;
         if (!oViewer.canInteract()) {
