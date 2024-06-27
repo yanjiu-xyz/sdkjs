@@ -1037,11 +1037,8 @@
 	{
 		this.sendEvent("asc_onPrint");
 	};
-	// Open
-	baseEditorsApi.prototype.asc_LoadDocument                    = function(versionHistory, isRepeat)
+	baseEditorsApi.prototype._getOpenCmd = function(versionHistory)
 	{
-		// Меняем тип состояния (на открытие)
-		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
 		var rData                  = null;
 		if (!(this.DocInfo && this.DocInfo.get_OfflineApp()))
 		{
@@ -1078,15 +1075,25 @@
 			if (versionHistory)
 			{
 				rData["serverVersion"] = versionHistory.serverVersion;
-                rData["closeonerror"] = versionHistory.isRequested;
+				rData["closeonerror"] = versionHistory.isRequested;
 				rData["tokenHistory"] = versionHistory.token;
 				//чтобы результат пришел только этому соединению, а не всем кто в документе
 				rData["userconnectionid"] = this.CoAuthoringApi.getUserConnectionId();
 			}
 		}
+		return rData;
+	}
+	// Open
+	baseEditorsApi.prototype.asc_LoadDocument                    = function(versionHistory, isRepeat)
+	{
+		// Меняем тип состояния (на открытие)
+		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
+
+		let rData = this._getOpenCmd(versionHistory);
 		if (versionHistory) {
 			this.CoAuthoringApi.versionHistory(rData);
 		} else {
+			//todo auth on connection
 			this.CoAuthoringApi.auth(this.getViewMode(), rData);
 		}
 
@@ -1611,6 +1618,7 @@
 			if (!t.isOnLoadLicense) {
 				t._onEndPermissions();
 			} else {
+				//todo auth on connection
 				if (t.CoAuthoringApi.get_isAuth()) {
 					t.CoAuthoringApi.auth(t.getViewMode(), undefined, t.isIdle());
 				} else {
@@ -1909,7 +1917,9 @@
 		};
 
 		this._coAuthoringInitEnd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc);
+
+		let openCmd = this._getOpenCmd();
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc, openCmd);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
