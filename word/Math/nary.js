@@ -911,6 +911,8 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 			let oBaseText = oMathText.GetExact(oLastPos);
 		}
 	}
+
+	return oMathText;
 };
 
 /**

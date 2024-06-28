@@ -189,7 +189,7 @@
 
 		this.Init();
 	}
-	LexerLiterals.prototype.Init = function ()
+	LexerLiterals.prototype.Init = function (isUseUnicodeInLaTeX)
 	{
 		let names = Object.keys(this.LaTeX);
 
@@ -200,7 +200,13 @@
 		{
 			let name = names[i];
 			let data = this.LaTeX[name];
-			this.SetUnicodeFromLaTeX(data, name);
+
+			if (typeof(data) === "string")
+			{
+				this.SetUnicodeFromLaTeX(data, name);
+				if (isUseUnicodeInLaTeX)
+					this.private_AddToLaTeX(data, data);
+			}
 		}
 
 		return true;
@@ -240,19 +246,70 @@
 	};
 	LexerLiterals.prototype.private_GetLaTeXWord = function (arrStr)
 	{
-		if (!arrStr || !arrStr[0] || arrStr[0] !== "\\")
+		if (!arrStr || !arrStr[0])
 			return;
 
-		let strFunc = "\\";
+		let strFunc = ""
+		//"\\";
 
 		// remove regexp
 
 		if (this.isUseLaTeXBrackets)
-			for (let index = 1; arrStr[index] && /[a-zA-Z{}]/.test(arrStr[index]); index++)
+		{
+			let isStartBracket = false;
+			let isEndBracket = false;
+			let isSlashes = false;
+			for (let index = 0; arrStr[index] && /[a-zA-Z{}\\]/.test(arrStr[index]); index++)
+			{
+				if (arrStr[index] === "{")
+				{
+					if (!isStartBracket)
+						isStartBracket = true;
+					else
+						return strFunc;
+				}
+				else if (arrStr[index] === "}")
+				{
+					if (!isEndBracket && isStartBracket)
+						isEndBracket = true;
+					else
+						return strFunc;
+				}
+				else if (arrStr[index] === "\\")
+				{
+					if (!isSlashes)
+						isSlashes = true;
+					else
+						return strFunc;
+				}
+
 				strFunc += arrStr[index];
+
+				if (this.LaTeX && this.LaTeX[strFunc])
+					return strFunc;
+			}
+		}
 		else
-			for (let index = 1; arrStr[index] && /[a-zA-Z]/.test(arrStr[index]); index++)
-				strFunc += arrStr[index];
+		{
+			let isSlashes = false;
+
+
+			for (let index = 0; arrStr[index] && /[a-zA-Z\\]/.test(arrStr[index]); index++)
+			{
+				if (arrStr[index] === "\\")
+				{
+					if (!isSlashes)
+						isSlashes = true;
+					else
+						return strFunc;
+				}
+
+				strFunc += arrStr[index]
+
+				if (this.LaTeX && this.LaTeX[strFunc])
+					return strFunc;
+			}
+		};
 
 		return strFunc;
 	};
@@ -464,7 +521,7 @@
 			"≶" : 1,
 			"≷" : 1,
 		};
-		this.Init();
+		this.Init(true);
 	}
 	TokenOperators.prototype = Object.create(LexerLiterals.prototype);
 	TokenOperators.prototype.constructor = TokenOperators;
@@ -574,11 +631,27 @@
 			"\\lbbrack" : "⟦",
 			"\\lmoust" : "⎰",
 			"\\bra" : "⟨",
+			"{" : "{",
+			"(" : "(",
+			"⟨" : "⟨",
+			"[" : "[",
+			"⌈" : "⌈",
+			"⌊" : "⌊",
+			"⟦" : "⟦",
+			"⎰" : "⎰",
+			"\\left" : "\\left",
 		};
 		this.Init();
 	}
 	TokenOpenBrackets.prototype = Object.create(LexerLiterals.prototype);
 	TokenOpenBrackets.prototype.constructor = TokenOpenBrackets;
+	TokenOpenBrackets.prototype.IsSimple = function (str)
+	{
+		return str === "(" ||
+			str === "[" ||
+			str === "{" ||
+			str === "|"
+	}
 
 	function TokenSpecialBrackets()
 	{
@@ -610,11 +683,27 @@
 			"\\rbrack" : "]",
 			"\\rceil" : "⌉",
 			"\\rfloor" : "⌋",
+			"\\Rbrack" : "⟧",
+			"\\right" : "\\right",
+			"}" : "}",
+			")" : ")",
+			"⟩" : "⟩",
+			"]" : "]",
+			"⌉" : "⌉",
+			"⌋" : "⌋",
+			"⟧" : "⟧",
 		};
 		this.Init();
 	}
 	TokenCloseBrackets.prototype = Object.create(LexerLiterals.prototype);
 	TokenCloseBrackets.prototype.constructor = TokenCloseBrackets;
+	TokenCloseBrackets.prototype.IsSimple = function (str)
+	{
+		return str === ")" ||
+			str === "]" ||
+			str === "}" ||
+			str === "|"
+	}
 
 	function TokenOpenCloseBrackets()
 	{
@@ -624,6 +713,8 @@
 			"\\norm" : "‖",
 			"\\Vert" : "‖",
 			"\\vert" : "|",
+			"‖"	:	"‖",
+			"|"	:	"|",
 		};
 		this.Init();
 	}
@@ -698,7 +789,7 @@
 	{
 		this.id = 12;
 		this.LaTeX = {
-			"\\eqarray" : "■",
+			"\\substack" : "\\substack",
 		};
 		this.Unicode = {};
 		this.Init();
@@ -728,6 +819,8 @@
 			"\\ppprime" : "‴",
 			"\\pprime" : "″",
 			"\\prime" : "′",
+			"_" : "_",
+			"^" : "^",
 		};
 		this.Unicode = {
 			"_" : 1,
@@ -904,10 +997,10 @@
 			"\\end{equation}" : 2,
 		};
 		this.Init();
-		this.isUseLaTeXBrackets = true;
 	}
 	TokenMatrix.prototype = Object.create(LexerLiterals.prototype);
 	TokenMatrix.prototype.constructor = TokenMatrix;
+	TokenMatrix.prototype.isUseLaTeXBrackets = true;
 
 	function TokenRect()
 	{
@@ -971,12 +1064,12 @@
 	TokenFunctionLiteral.prototype.constructor = TokenFunctionLiteral;
 	TokenFunctionLiteral.prototype.IsLaTeXInclude = function (str)
 	{
-		if (MathAutoCorrectionFuncNames.includes(str.slice(1)) || limitFunctions.includes(str.slice(1)) || (str.length > 0 && str[0] === "\\"))
+		if (MathAutoCorrectionFuncNames.includes(str.slice(1)) || limitFunctions.includes(str.slice(1)) || (str.length > 1 && str[0] === "\\"))
 			return str;
 	};
 	TokenFunctionLiteral.prototype.IsLaTeXIncludeNormal = function (str)
 	{
-		if (MathAutoCorrectionFuncNames.includes(str.slice(1)) || (str.length > 0 && str[0] === "\\"))
+		if (MathAutoCorrectionFuncNames.includes(str.slice(1)) || (str.length > 1 && str[0] === "\\"))
 			return str;
 	}
 	TokenFunctionLiteral.prototype.IsLaTeXIncludeLimit = function (str)
@@ -1017,7 +1110,6 @@
 	function TokenSpecialLiteral()
 	{
 		this.id = 26;
-		this.isClassEqalData = true;
 		this.Unicode = {
 			// "┬" : 1,
 			// "┴" : 1,
@@ -1170,7 +1262,7 @@
 		this.id = 33;
 		this.Unicode = {};
 		this.LaTeX = {
-			"\\\\" : "1",
+			"\\\\" : "\\\\",
 		};
 		this.Init();
 	}
@@ -1214,7 +1306,8 @@
 		delimiter:		new TokenDelimiter(),
 		char:			new TokenChars(),
 		horizontal: 	new TokenHorizontalStretch(),
-		arrayMatrix:	new TokenArrayMatrix()
+		arrayMatrix:	new TokenArrayMatrix(),
+		eqArray:		new TokenEqArray(),
 	};
 
 	// The array defines the sequence in which the tokens are checked by the lexer
@@ -1247,6 +1340,7 @@
 		MathLiterals.alphanumeric,
 		MathLiterals.subSup,
 		MathLiterals.arrayMatrix,
+		MathLiterals.eqArray,
 	];
 
 	//-------------------------------------Generating AutoCorrection Rules----------------------------------------------
@@ -2101,7 +2195,7 @@
 				case MathStructures.sub_sub:
 					if (oTokens.value && oTokens.value.type === MathStructures.func)
 					{
-						let oFunc = oContext.Add_Function({ctrPrp: oTokens.value.style}, null, null);
+						let oFunc = oContext.Add_Function({ctrPrp: oTokens.value.style.style}, null, null);
 						let oFuncName = oFunc.getFName();
 
 						let Pr = (oTokens.up && oTokens.down)
@@ -2151,11 +2245,11 @@
 						// Set styles
 						let oUpper = SubSup.getUpperIterator();
 						if (oUpper && oTokens.style.supStyle)
-							oUpper.CtrPrp.Merge(oTokens.style.supStyle);
+							oUpper.CtrPrp.Merge(oTokens.style.supStyle.style);
 
 						let oLower = SubSup.getLowerIterator();
 						if (oLower && oTokens.style.subStyle)
-							oLower.CtrPrp.Merge(oTokens.style.subStyle);
+							oLower.CtrPrp.Merge(oTokens.style.subStyle.style);
 					}
 					else if (oTokens.value && oTokens.value.type === MathStructures.func_lim)
 					{
@@ -2399,7 +2493,7 @@
 							);
 
 							//Last content
-							if (intCount === oTokens.value.length - 1)
+							if (intCount === oTokens.value.length - 1 && oTokens.style.endStyle)
 							{
 								let oCon = oBracket.getElementMathContent(intCount);
 								oCon.setCtrPrp(oTokens.style.endStyle.style);
@@ -2444,7 +2538,6 @@
 				case MathStructures.func:
 					let oFunc = oContext.Add_Function({ctrPrp: oTokens.style.style}, null, null);
 
-					oTokens.value.type = 0;
 					ConvertTokens(
 						oTokens.value,
 						oFunc.getFName(),
@@ -3710,18 +3803,17 @@
 				break;
 		}
 
+		let oCurrentEl = oContent.GetCurrentEl();
 		let nSlash = oContent.Next();
 		if (nSlash === 47)
 		{
 			str = "/" + str;
+			oCurrentEl = oContent.GetCurrentEl();
 		}
 
 		let strCorrection = ConvertWord(str, IsLaTeX);
 		if (strCorrection)
 		{
-			let oCurrentEl = oContent.GetCurrentEl();
-			let oCurrentElPr = oCurrentEl.Parent.Pr;
-
 			let oRun = RemoveCountFormMathContent(oCMathContent, oContent.counter - 1, isLastOperator);
 			let nPos = isLastOperator ? oRun.Content.length - 1 : oRun.Content.length;
 
@@ -3730,7 +3822,8 @@
 
 			for (let i = 0; i < strCorrection.length; i++)
 			{
-				oCMathContent.Add_Text(strCorrection[i], undefined, undefined, oCurrentElPr)
+				let oAddMath = new MathTextAdditionalData(oCurrentEl.Parent);
+				oCMathContent.Add_Text(strCorrection[i], undefined, undefined, oAddMath);
 			}
 			isConvert = true;
 		}
@@ -4224,6 +4317,13 @@
 			return oContentElement.arr.length > 1;
 		}
 	};
+	MathTextAndStyles.prototype.GetLastPos = function ()
+	{
+		if (this.Positions.length > 0)
+			return this.Positions[this.Positions.length - 1];
+		else
+			return false;
+	}
 	/**
 	 *
 	 * @param oContent
@@ -4234,10 +4334,16 @@
 	 */
 	MathTextAndStyles.prototype.Add = function(oContent, isNew, Wrap)
 	{
-		if (oContent.Content.length === 0)
-			return false;
+		if (!(oContent instanceof MathTextAndStyles) && oContent.Content.length === 0)
+			return this.GetLastPos();
 
 		let nPosCopy = this.nPos;
+
+		if (oContent instanceof MathTextAndStyles)
+		{
+			this.arr.push(oContent);
+			return this.AddPosition(this.nPos - nPosCopy);
+		}
 
 		if (isNew)
 		{
@@ -4246,7 +4352,7 @@
 			this.DelEmptyContainer();
 
 			if (oMath.IsEmpty())
-				return false;
+				return this.GetLastPos();
 
 			this.Increase();
 			let oPos = this.AddPosition(this.nPos - nPosCopy);
@@ -4448,12 +4554,19 @@
 		if (strOne && strTwo)
 		{
 			if (this.IsLaTeX())
-				oToken.Wrap(new MathText(strOne, oContent), new MathText(strTwo, oContent));
+			{
+				if (strOne instanceof MathText && strTwo instanceof MathText)
+					oToken.Wrap(strOne, strTwo);
+				else
+					oToken.Wrap(new MathText(strOne, oContent), new MathText(strTwo, oContent));
+			}
 			else
+			{
 				oToken.Wrap(
 					new MathText(strOne, this.globalStyle ? this.globalStyle : oContent),
 					new MathText(strTwo, this.globalStyle ? this.globalStyle : oContent)
 				);
+			}
 
 			return;
 		}
@@ -4637,9 +4750,6 @@
 		if (this.style === undefined)
 			return false;
 
-		if (!this.style.IsEqual)
-			debugger;
-
 		if (oStyle instanceof MathTextAdditionalData)
 			return this.style.IsEqual(oStyle.GetAdditionalStyleData());
 		else
@@ -4650,17 +4760,27 @@
 		let oPr;
 
 		if (oContent instanceof ParaRun)
+		{
 			oPr = oContent.Pr.Copy();
+		}
 		else if (oContent instanceof CMathContent && !oContent.CtrPrp.IsEmpty())
+		{
 			oPr = oContent.GetCtrPrp();
+		}
 		else if (oContent instanceof CMathContent && oContent.CtrPrp.IsEmpty() && oContent.Content.length > 0)
 		{
 			let oItem = oContent.Content[0];
 			if (oItem instanceof ParaRun)
 				oPr = oItem.Pr.Copy();
 		}
+		else if (oContent instanceof CMathMatrix)
+		{
+			oPr = oContent.TextPrControlLetter.Copy();
+		}
 		else
+		{
 			oPr = oContent.CompiledCtrPrp;
+		}
 
 		this.SetAdditionalStyleData(oPr);
 		this.SetAdditionalReviewType(oContent.ReviewType);

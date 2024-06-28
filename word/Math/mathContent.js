@@ -5764,6 +5764,9 @@ CMathContent.prototype.ConvertContentView = function(intStart, intEnd, nInputTyp
                 MathText.Add(oElement);
         }
 
+        if (MathText.IsEmpty())
+        	return;
+
         if ((isToLinear || undefined === nInputType || null === nInputType))
         {
             this.Remove_FromContent(intStart, intCount);

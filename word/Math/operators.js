@@ -4067,31 +4067,37 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 CDelimiter.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
-
-	oMathText.IsBracket  = true;
+	oMathText.IsBracket = true;
 
 	let strSeparatorSymbol	= oMathText.IsLaTeX() ? "\\mid" : "∣";
-	let strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
-	let strEndSymbol = this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
+	let strStartSymbol;
+	let strEndSymbol;
+
+	if (oMathText.IsLaTeX())
+	{
+		strStartSymbol		= this.Pr.begChr === -1 ? "." : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
+		strEndSymbol		= this.Pr.endChr === -1 ? "." : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
+	}
+	else
+	{
+		strStartSymbol		= this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
+		strEndSymbol		= this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
+	}
 
 	if (strStartSymbol === "(" && strEndSymbol === ")")
 		oMathText.IsUnicodeBracket = true;
 
 	if (oMathText.IsLaTeX())
 	{
-		if (strStartSymbol)
+		if (strStartSymbol && !AscMath.MathLiterals.lBrackets.IsSimple(strStartSymbol))
 		{
 			let tempStrSymbol = strStartSymbol;
 			strStartSymbol = AscMath.MathLiterals.lBrackets.GetLaTeXWordFromSymbol(strStartSymbol);
 			if (strStartSymbol === undefined)
 				strStartSymbol = tempStrSymbol;
 		}
-		else
-		{
-			strStartSymbol = "\\left";
-		}
-		let oText = new AscMath.MathText(strStartSymbol === "\\left" ? "\\left. " : "\\left" + strStartSymbol, this);
-		oMathText.AddText(oText);
+		oMathText.AddText(new AscMath.MathText("\\left" + strStartSymbol, this), true);
+		oMathText.SetGlobalStyle(this);
 	}
 	else
 	{
@@ -4123,19 +4129,14 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		if (strEndSymbol)
+		if (strEndSymbol && !AscMath.MathLiterals.rBrackets.IsSimple(strEndSymbol))
 		{
 			let tempStrSymbol = strEndSymbol;
 			strEndSymbol = AscMath.MathLiterals.rBrackets.GetLaTeXWordFromSymbol(strEndSymbol);
 			if (strEndSymbol === undefined)
 				strEndSymbol = tempStrSymbol;
 		}
-		else
-		{
-			strEndSymbol = "\\right";
-		}
-
-		oMathText.AddText(new AscMath.MathText(strEndSymbol === "\\right" ? "\\right. " : "\\right" + strEndSymbol, this.Content[this.Content.length - 1]), true);
+		oMathText.AddText(new AscMath.MathText("\\right" + strEndSymbol, this), true);
 	}
 	else
 	{

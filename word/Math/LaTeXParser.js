@@ -276,7 +276,7 @@
 
 			this.EatToken(this.oLookahead.class);
 
-			if (this.oLookahead.class === Literals.lBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id)
+			if (this.oLookahead.class === Literals.lBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id || this.oLookahead.class === Literals.rBrackets.id)
 			{
 				startStyle = this.oLookahead.style;
 				strLeftSymbol = this.EatToken(this.oLookahead.class).data;
@@ -292,7 +292,7 @@
 					isRightAndLeft = false;
 
 				this.EatToken(this.oLookahead.class);
-				if (this.oLookahead.class === Literals.rBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id)
+				if (this.oLookahead.class === Literals.rBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id || this.oLookahead.class === Literals.lBrackets.id)
 				{
 					endStyle = this.oLookahead.style;
 					strRightSymbol = this.EatToken(this.oLookahead.class).data;
@@ -666,7 +666,7 @@
 				value: {
 					type: Struc.char,
 					value: name.slice(1),
-					style: oFuncContent.style,
+					style: oPr,
 				},
 				style: oPr,
 				third: oThirdContent,
@@ -1030,7 +1030,7 @@
 	};
 	CLaTeXParser.prototype.IsEndMatrixLiteral = function ()
 	{
-		return this.oLookahead.class === Literals.matrix.id && Literals.matrix.LaTeX[this.oLookahead.data] === 2;
+		return this.oLookahead.class === Literals.matrix.id && Literals.matrix.LaTeX[this.oLookahead.data] === 2 || this.oLookahead.data === "}";
 	}
 	CLaTeXParser.prototype.IsAlignBlockForArray = function ()
 	{
@@ -1134,15 +1134,20 @@
 		}
 
 		let arrMatrixContent = [];
-
 		let styles = {};
 		styles.head = this.oLookahead.style;
 		styles.cols = {};
 		styles.rows = {};
+		let nRow = 0;
 
 		while (this.oLookahead.data !== "}" && !this.IsEndMatrixLiteral())
 		{
-			arrMatrixContent.push(this.GetRayOfMatrixLiteral(styles.cols, styles.rows));
+			let oContent = this.GetRayOfMatrixLiteral(styles.cols, styles.rows, nRow)
+			if (oContent)
+				arrMatrixContent.push(oContent);
+			else if (this.IsEndMatrixLiteral())
+				arrMatrixContent.push({}, {});
+			nRow++;
 		}
 
 		let intMaxLengthOfMatrixRow = -Infinity;
@@ -1157,11 +1162,9 @@
 
 		for (let i = 0; i < arrMatrixContent.length; i++)
 		{
-
-			if (i !== intIndexOfMaxMatrixRow) {
-
+			if (i !== intIndexOfMaxMatrixRow)
+			{
 				let arrMatrix = arrMatrixContent[i];
-
 				for (let j = arrMatrix.length; j < intMaxLengthOfMatrixRow; j++)
 				{
 					arrMatrix.push({});
@@ -1182,12 +1185,12 @@
 			style: styles,
 		}
 	};
-	CLaTeXParser.prototype.GetRayOfMatrixLiteral = function (cols, rows)
+	CLaTeXParser.prototype.GetRayOfMatrixLiteral = function (cols, rows, nRow)
 	{
 		let arrRayContent;
-		let nRow = 0;
 
-		while (this.oLookahead.class !== Literals.arrayMatrix.id && this.oLookahead.data !== "}" && !this.IsEndMatrixLiteral()) {
+		while (this.oLookahead.class !== Literals.arrayMatrix.id && !this.IsEndMatrixLiteral())
+		{
 			rows[nRow] = {}
 			arrRayContent = this.GetElementOfMatrix(rows[nRow]);
 			nRow++;
@@ -1200,7 +1203,6 @@
 		}
 
 		this.SkipFreeSpace();
-
 		return arrRayContent
 	};
 	CLaTeXParser.prototype.GetElementOfMatrix = function (oStyle)
@@ -1210,27 +1212,33 @@
 		let intCount = 0;
 		let isAlredyGetContent = false;
 
-		while (this.IsElementLiteral() || this.oLookahead.data === "&" ) {
+		while (this.IsElementLiteral() || this.oLookahead.data === "&" )
+		{
 			let intCopyOfLength = intLength;
 
 			if (this.oLookahead.data === "\\\\")
 				break;
 
-			if (this.oLookahead.data !== "&") {
+			if (this.oLookahead.data !== "&")
+			{
 				arrRow.push(this.GetExpressionLiteral(["&", "\\\\"]));
 				intLength++;
 				isAlredyGetContent = true;
 				this.SkipFreeSpace();
 			}
-			else {
+			else
+			{
 				oStyle[intCount] = this.oLookahead.style;
 				this.EatToken(this.oLookahead.class);
 
-				if (isAlredyGetContent === false) {
+				if (isAlredyGetContent === false)
+				{
 					arrRow.push({});
 					intCount++;
 					intLength++;
-				} else if (intCopyOfLength === intLength) {
+				}
+				else if (intCopyOfLength === intLength)
+				{
 					intCount++;
 				}
 
@@ -1239,8 +1247,10 @@
 
 		}
 
-		if (intLength !== intCount + 1) {
-			for (let j = intLength; j <= intCount; j++) {
+		if (intLength !== intCount + 1)
+		{
+			for (let j = intLength; j <= intCount; j++)
+			{
 				arrRow.push({});
 			}
 		}

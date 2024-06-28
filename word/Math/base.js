@@ -2810,9 +2810,10 @@ CMathBase.prototype.ConvertOperatorToStr = function(operator)
     }
     return OPERATOR_EMPTY === operator ? "" : AscCommon.convertUnicodeToUTF16([operator]);
 };
-CMathBase.prototype.GetTextOfElement = function()
+CMathBase.prototype.GetTextOfElement = function(oMathText)
 {
-	return "";
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
+	return oMathText;
 };
 
 CMathBase.prototype.GetStartBracetForGetTextContent = function(isLaTeX) {

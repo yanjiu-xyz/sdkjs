@@ -1225,14 +1225,11 @@ CMathAmp.prototype.Read_FromBinary = function(Reader)
 };
 CMathAmp.prototype.GetTextOfElement = function(oMathText)
 {
-    if (!(oMathText instanceof AscMath.MathTextAndStyles))
-        oMathText = new AscMath.MathTextAndStyles(oMathText);
-
-    oMathText.AddText("&");
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText.AddText(new AscMath.MathText("&", this.Parent));
 
 	return oMathText;
 };
-
 
 function CMathInfoTextPr(InfoTextPr)
 {

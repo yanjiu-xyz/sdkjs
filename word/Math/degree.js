@@ -1237,16 +1237,16 @@ CDegreeSubSup.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-    let oBase                = this.getBase();
-    let oLowerIterator       = this.getLowerIterator();
-    let oUpperIterator       = this.getUpperIterator();
-    let isPreScript = this.Pr.type === -1;
+    let oBase					= this.getBase();
+    let oLowerIterator			= this.getLowerIterator();
+    let oUpperIterator			= this.getUpperIterator();
+    let isPreScript				= this.Pr.type === -1;
 
     if (isPreScript)
     {
-        let oPosLowerIterator  = oMathText.Add(oLowerIterator, true);
-        let oPosUpperIterator  = oMathText.Add(oUpperIterator, true);
-        let oPosBase           = oMathText.Add(oBase, true, false);
+        let oPosLowerIterator	= oMathText.Add(oLowerIterator, true);
+        let oPosUpperIterator	= oMathText.Add(oUpperIterator, true);
+        let oPosBase			= oMathText.Add(oBase, true, false);
 
         oMathText.AddBefore(oPosLowerIterator, "(_");
         oMathText.AddAfter(oPosLowerIterator, "^");

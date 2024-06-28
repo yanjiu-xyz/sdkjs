@@ -1043,11 +1043,11 @@ CMathMatrix.prototype.GetTextOfElement = function (oMathText)
 		// 		break;
 		// }
 		strMatrixSymbol = strBrackets === "()" ? "pmatrix" : "matrix";
-		oMathText.AddText(new AscMath.MathText("\\begin{" + strMatrixSymbol + "}", this.Content[0]))
+		oMathText.AddText(new AscMath.MathText("\\begin{" + strMatrixSymbol + "}", this))
 	}
 	else
 	{
-		oMathText.AddText(new AscMath.MathText("■(", this.Pr.GetRPr()));
+		oMathText.AddText(new AscMath.MathText("■(", this));
 	}
 
 	// 	Word поддерживает несколько типов ввода для матриц LaTeX:
@@ -1073,21 +1073,23 @@ CMathMatrix.prototype.GetTextOfElement = function (oMathText)
 
 			if (nCol < this.nCol - 1)
 			{
-				let oText = new AscMath.MathText("&", this.Content[0]);
+				let oText = new AscMath.MathText("&", this);
 				oLastPos = oMathText.AddAfter(oLastPos, oText);
 			}
 			else if (nRow < this.nRow - 1)
 			{
-				let oText = new AscMath.MathText(oMathText.IsLaTeX() ? "\\\\" : '@', this.Content[0]);
+				let oText = new AscMath.MathText(oMathText.IsLaTeX() ? "\\\\" : '@', this);
 				oLastPos = oMathText.AddAfter(oLastPos, oText);
 			}
 		}
 	}
 
 	if (oMathText.IsLaTeX())
-		oMathText.AddText(new AscMath.MathText("\\\\\\end{" + strMatrixSymbol + "}", this.Content[0]));
+		oMathText.AddText(new AscMath.MathText("\\\\\\end{" + strMatrixSymbol + "}", this));
 	else
-		oMathText.AddAfter(oLastPos,new AscMath.MathText(")", this.Content[0]));
+		oMathText.AddAfter(oLastPos,new AscMath.MathText(")", this));
+
+	return oMathText;
 };
 
 /**
@@ -1658,31 +1660,33 @@ CEqArray.prototype.IsEqArray = function () {
  */
 CEqArray.prototype.GetTextOfElement = function (oMathText)
 {
-	if (oMathText === undefined || !oMathText instanceof AscMath.MathTextAndStyles)
-		oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
 	if (oMathText.IsLaTeX())
 	{
-		oMathText.AddText("\\substack(", true);
+		oMathText.AddText(new AscMath.MathText("\\substack{", this.Content[0]), true);
 	}
 	else
 	{
-		let oMatrix = new AscMath.MathText("■(", this.Pr.GetRPr());
+		let oMatrix = new AscMath.MathText("■(", this.Content[0]);
 		oMathText.AddText(oMatrix, true);
 	}
 
 	for (let i = 0; i < this.Pr.row; i++)
 	{
-		oMathText.Add(this.getElement(i), true, 0);
+		let oItem = this.getElement(i)
+		oMathText.Add(oItem, true, 0);
 
 		if (i !== this.Pr.row - 1)
 		{
-			let oSep = new AscMath.MathText(oMathText.IsLaTeX() ? "\\\\" : "@", this.Pr.GetRPr());
+			let oSep = new AscMath.MathText(oMathText.IsLaTeX() ? "\\\\" : "@", this.Content[0]);
 			oMathText.AddText(oSep, true);
 		}
 	}
 
-	oMathText.AddText(new AscMath.MathText(")", this.Pr.GetRPr()), true);
+	oMathText.AddText(new AscMath.MathText(oMathText.IsLaTeX() ? "}" : ")", this.Content[0]), true);
+
+	return oMathText;
 };
 
 /**
