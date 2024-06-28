@@ -18704,13 +18704,14 @@
 			if (typeof(sImageSrc) !== "string" || sImageSrc === "")
 				return false;
 			
-			var oImg;
+			var oImg, paraDrawing;
 			var allDrawings = this.Sdt.GetAllDrawingObjects();
 			for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
 			{
 				if (allDrawings[nDrawing].IsPicture())
 				{
 					oImg = allDrawings[nDrawing].GraphicObj;
+					paraDrawing = allDrawings[nDrawing];
 					break;
 				}
 			}
@@ -18746,7 +18747,15 @@
 				}
 				
 				oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
+				
+				let paragraph   = this.Sdt.GetParagraph();
+				let parentShape = paragraph && paragraph.GetParent() ? paragraph.GetParent().Is_DrawingShape(true) : null;
+				if (parentShape && parentShape.recalculate)
+					parentShape.recalculate();
+				
 				this.OnChangeValue();
+				this.Sdt.SetShowingPlcHdr(false);
+				this.Sdt.UpdatePictureFormLayout(private_EMU2MM(nWidth), private_EMU2MM(nHeight));
 				return true;
 			}
 	

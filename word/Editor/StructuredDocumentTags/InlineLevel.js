@@ -3443,12 +3443,12 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 	if (Math.abs(nNewFontSize - nFontSize) > 0.001)
 		oRun.SetFontSize(nNewFontSize);
 };
-CInlineLevelSdt.prototype.UpdatePictureFormLayout = function()
+CInlineLevelSdt.prototype.UpdatePictureFormLayout = function(nOriginW, nOriginH)
 {
 	var oBounds = this.GetFixedFormBounds();
-	this.private_UpdatePictureFormLayout(oBounds.W, oBounds.H);
+	this.private_UpdatePictureFormLayout(oBounds.W, oBounds.H, nOriginW, nOriginH);
 };
-CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH)
+CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH, _nOriginW, _nOriginH)
 {
 	var arrDrawings = this.GetAllDrawingObjects();
 	if (1 !== arrDrawings.length || nW < 0.001 || nH < 0.001)
@@ -3471,16 +3471,25 @@ CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH)
 		var oDrawingProps = oLogicDocument.GetDrawingObjects().getDrawingPropsFromArray([oDrawing.GraphicObj]);
 		if (!oDrawingProps || !oDrawingProps.imageProps)
 			return;
-
-		var oProps = new Asc.asc_CImgProperty();
-		oProps.ImageUrl = oDrawingProps.imageProps.ImageUrl;
-
-		var oOriginSize = oProps.asc_getOriginSize(oLogicDocument.GetApi());
-		if (!oOriginSize.asc_getIsCorrect())
-			return;
-
-		var nOriginW = oOriginSize.asc_getImageWidth();
-		var nOriginH = oOriginSize.asc_getImageHeight();
+		
+		let nOriginW = _nOriginW;
+		let nOriginH = _nOriginH;
+		if (undefined === nOriginW
+			|| undefined === nOriginH
+			|| nOriginW < 0.001
+			|| nOriginH < 0.001)
+		{
+			
+			var oProps      = new Asc.asc_CImgProperty();
+			oProps.ImageUrl = oDrawingProps.imageProps.ImageUrl;
+			
+			var oOriginSize = oProps.asc_getOriginSize(oLogicDocument.GetApi());
+			if (!oOriginSize.asc_getIsCorrect())
+				return;
+			
+			nOriginW = oOriginSize.asc_getImageWidth();
+			nOriginH = oOriginSize.asc_getImageHeight();
+		}
 
 		var oPictureFormPr = this.GetPictureFormPr();
 		if (!oPictureFormPr || nOriginW < 0.001 || nOriginH < 0.001)
