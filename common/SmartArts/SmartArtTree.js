@@ -6932,7 +6932,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 					break;
 				}
 				case AscFormat.Constr_type_t: {
-					const height = constrObj[AscFormat.Constr_type_h];
+					const height = this.getConstrForCalculating(AscFormat.Constr_type_h, isAdapt);
 					if (height !== undefined) {
 						const ctrY = this.getConstrForCalculating(AscFormat.Constr_type_ctrY, isAdapt);
 						const bottom = this.getConstrForCalculating(AscFormat.Constr_type_b, isAdapt);
@@ -6977,10 +6977,17 @@ PresNode.prototype.addChild = function (ch, pos) {
 					break;
 				}
 				case AscFormat.Constr_type_b: {
-					const top = this.getConstrForCalculating(AscFormat.Constr_type_t, isAdapt) || 0;
-					const height = constrObj[AscFormat.Constr_type_h];
+					const height = this.getConstrForCalculating(AscFormat.Constr_type_h, isAdapt);
 					if (AscFormat.isRealNumber(height)) {
-						result = top + height;
+						const top = this.getConstrForCalculating(AscFormat.Constr_type_t, isAdapt);
+						const ctrY = this.getConstrForCalculating(AscFormat.Constr_type_ctrY, isAdapt);
+						if (AscFormat.isRealNumber(top)) {
+							result = top + height;
+						} else if (AscFormat.isRealNumber(ctrY)) {
+							result = ctrY + height / 2;
+						} else {
+							result = height;
+						}
 					}
 					break;
 				}
