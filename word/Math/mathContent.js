@@ -3343,7 +3343,7 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 
 	AscWord.TextToMathRunElements(text, function(item)
 	{
-		oMathRun.Add(item, true);
+		oMathRun.private_AddItemToRun(oMathRun.State.ContentPos, item);
 	});
 
 	if (this.Content[this.Content.length - 1] === oMathRun)
@@ -6030,12 +6030,13 @@ CMathContent.prototype.CheckWhileOperatorContent = function(arrOperatorsList, nI
         return;
 
     let arrContentTypes = [];
-    let isSpace = false;
-
+    let oSpace;
     if (this.GetLastTextElement() === " ")
     {
-        isSpace = this.DeleteEndSpace();
-        for (let i = 0; i < this.Content.length; i++) {
+		oSpace = this.DeleteEndSpace();
+
+        for (let i = 0; i < this.Content.length; i++)
+        {
             arrContentTypes.push(this.Content[i].Type);
         }
     }
@@ -6049,7 +6050,7 @@ CMathContent.prototype.CheckWhileOperatorContent = function(arrOperatorsList, nI
         this.CutConvertAndPaste([Position[2], Position[0]], nInputType);
     }
 
-    if (isSpace)
+    if (oSpace)
     {
         let prevLen = arrContentTypes.length - 1;
         let isEqual = true;
@@ -6069,7 +6070,9 @@ CMathContent.prototype.CheckWhileOperatorContent = function(arrOperatorsList, nI
         }
 
         if (isEqual)
-           this.Add_TextOnPos(this.Content.length,' ');
+		{
+			this.Add_Text(oSpace.GetText(), undefined, undefined, oSpace.GetStyleFromFirst());
+		}
     }
 };
 CMathContent.prototype.DeleteContentForAutoCorrection = function(arrDeleteData)
@@ -6875,12 +6878,13 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
 {
     const oRuleIterator = new ContentIterator(this);
     let prev = [];
-    let isSpace = false;
+    let oSpace;
     let lastOperator;
 
     if (this.IsLastElement(AscMath.MathLiterals.operator))
     {
-        lastOperator = this.GetLastTextElement();
+        lastOperator = this.GetLastContent().GetTextOfElement();
+
         let lastContent = this.Content[this.Content.length - 1];
         if (lastContent && lastContent.Content.length >= 1)
         {
@@ -6889,7 +6893,8 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
     }
     else if (this.GetLastTextElement() === " ")
     {
-        isSpace = this.DeleteEndSpace();
+		oSpace = this.DeleteEndSpace();
+
         for (let i = 0; i < this.Content.length; i++) {
             prev.push([this.Content[i].constructor.name, this.Content[i].Content ? this.Content[i].Content.length : 0]);
         }
@@ -6915,7 +6920,7 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
         now.push([this.Content[i].constructor.name, this.Content[i].Content ? this.Content[i].Content.length : 0]);
     }
 
-	if (isSpace)
+	if (oSpace)
 	{
 		let counter = 0;
 		let isEqual = true;
@@ -6948,11 +6953,15 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
 
 			counter++;
 		}
-		if (isEqual) this.Add_TextOnPos(this.Content.length, ' ');
+
+		if (isEqual)
+		{
+			this.Add_Text(oSpace.GetText(), undefined, undefined, oSpace.GetStyleFromFirst());
+		}
 	}
 	if (lastOperator)
 	{
-		this.Add_TextOnPos(this.Content.length, lastOperator);
+		this.Add_Text(lastOperator.GetText(), undefined, undefined, lastOperator.GetStyleFromFirst());
 	}
 	return true
 };
@@ -7055,12 +7064,14 @@ CMathContent.prototype.DeleteEndSpace = function()
 
     if (oLastContent instanceof ParaRun)
     {
-        const isReturn = oLastContent.MathAutoCorrection_DeleteLastSpace();
-        if (isReturn)
-            return oLastContent;
+		let oSpace = this.GetLastContent().GetTextOfElement();
+		const isReturn = oLastContent.MathAutoCorrection_DeleteLastSpace();
 
-        return false;
-    }
+		if (isReturn)
+		return oSpace;
+
+		return false;
+	}
 };
 CMathContent.prototype.IsStartAutoCorrection = function(nInputType, intCode)
 {

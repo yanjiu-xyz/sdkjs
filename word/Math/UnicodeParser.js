@@ -761,9 +761,9 @@
 	};
 	CUnicodeParser.prototype.IsBracketLiteral = function ()
 	{
-		return AscMath.MathLiterals.rBrackets.SearchU(this.oLookahead.data)
-		|| AscMath.MathLiterals.lBrackets.SearchU(this.oLookahead.data)
-		|| AscMath.MathLiterals.lrBrackets.SearchU(this.oLookahead.data)
+		return Literals.rBrackets.SearchU(this.oLookahead.data)
+		|| Literals.lBrackets.SearchU(this.oLookahead.data)
+		|| Literals.lrBrackets.SearchU(this.oLookahead.data)
 	}
 	CUnicodeParser.prototype.IsExpBracketLiteral = function ()
 	{
@@ -855,8 +855,9 @@
 			if (!strClose)
 			{
 				return [{
-					type:  oLiteralNames.charLiteral[num],
+					type: Struc.char,
 					value: strOpen,
+					style: startStyle,
 				}, oExp]
 			}
 
@@ -1661,7 +1662,7 @@
 		const arrDiacriticList = [];
 
 		arrDiacriticList.push(this.oLookahead.data);
-		this.EatToken(MathLiteral.accent.id);
+		this.EatToken(this.oLookahead.class);
 
 		return this.GetContentOfLiteral(arrDiacriticList);
 	};
@@ -1858,7 +1859,7 @@
 					value: oDiacritic,
 				};
 
-				if (this.oLookahead.class === MathLiteral.space.id)
+				if (this.oLookahead.class === Literals.space.id)
 					this.EatToken(this.oLookahead.class);
 			}
 
