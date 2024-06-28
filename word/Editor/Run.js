@@ -546,6 +546,14 @@ ParaRun.prototype.GetTextOfElement = function(oMathText)
 	for (let i = 0; i < this.Content.length; i++)
 	{
 		let oCurrentElement = this.Content[i];
+
+		// for now
+		// todo check what's wrong
+		if (oCurrentElement instanceof CMathAmp && !oCurrentElement.Parent)
+		{
+			oCurrentElement.Parent = this;
+		}
+
 		let strCurrentElement = oCurrentElement.GetTextOfElement(isLatex).GetText();
 
 		if (AscMath.MathLiterals.operator.SearchU(strCurrentElement) || AscMath.MathLiterals.horizontal.SearchU(strCurrentElement))

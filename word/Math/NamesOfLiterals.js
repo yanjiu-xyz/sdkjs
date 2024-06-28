@@ -1694,42 +1694,7 @@
 		horizontal: 24,
 		array: 25,
 	};
-	const limitFunctions = [];
-	const UnicodeSpecialScript = {
-		"⁰": "0",
-		"¹": "1",
-		"²": "2",
-		"³": "3",
-		"⁴": "4",
-		"⁵": "5",
-		"⁶": "6",
-		"⁷": "7",
-		"⁸": "8",
-		"⁹": "9",
-		"ⁱ": "i",
-		"ⁿ": "n",
-		"⁺": "+",
-		"⁻": "-",
-		"⁼": "=",
-		"⁽": "(",
-		"⁾": ")",
 
-		"₀": "0",
-		"₁": "1",
-		"₂": "2",
-		"₃": "3",
-		"₄": "4",
-		"₅": "5",
-		"₆": "6",
-		"₇": "7",
-		"₈": "8",
-		"₉": "9",
-		"₊": "+",
-		"₋": "-",
-		"₌": "=",
-		"₍": "(",
-		"₎": ")",
-	};
 	const oNamesOfLiterals = {
 		fractionLiteral: 			[0, "FractionLiteral"],
 		spaceLiteral: 				[1, "SpaceLiteral", MathLiterals.space],
@@ -4248,11 +4213,8 @@
 		let strCorrection = ConvertWord(str, IsLaTeX);
 		if (strCorrection)
 		{
-			// if (MathLiterals.accent.IsInUnicode(strCorrection))
-			// 	strCorrection = String.fromCharCode(160) + strCorrection; //add nbsp before accent, like word
-			//
-			// let oRun = RemoveCountFormMathContent(oCMathContent, str.length + 1, isLastOperator);
-			let oRun = RemoveCountFormMathContent(oCMathContent, oContent.counter - 1, isLastOperator);
+			let oRun = RemoveCountFormMathContent(oCMathContent, str.length + 1, isLastOperator);
+			//let oRun = RemoveCountFormMathContent(oCMathContent, oContent.counter - 1, isLastOperator);
 			let nPos = isLastOperator ? oRun.Content.length - 1 : oRun.Content.length;
 
 			if (MathLiterals.accent.SearchU(strCorrection))
