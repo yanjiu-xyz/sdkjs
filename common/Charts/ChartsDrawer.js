@@ -2527,12 +2527,15 @@ CChartsDrawer.prototype =
 		this.calcProp.xaxispos = null;
 		this.calcProp.yaxispos = null;
 
+		const isChartEx = chartSpace.isChartEx();
+
+		if (!isChartEx) {
+			this.calcProp.type = this._getChartType(chartSpace.chart.plotArea.chart);
+			this.calcProp.subType = this.getChartGrouping(chartSpace.chart.plotArea.chart);
+		}
 
 		if (!notCalcExtremum) {
-			const isChartEx = chartSpace.isChartEx();
 			if (!isChartEx) {
-				this.calcProp.type = this._getChartType(chartSpace.chart.plotArea.chart);
-				this.calcProp.subType = this.getChartGrouping(chartSpace.chart.plotArea.chart);
 				//calculate calcProp -> /min/max/ymax/ymin/
 				this._calculateExtremumAllCharts(chartSpace);
 			} else {
