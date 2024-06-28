@@ -56,6 +56,12 @@
 	const intDelta = 1e-2;
 	const bulletFontSizeCoefficient = 51 / 65;
 
+	const factRuleState = {
+		default: 0,
+		enabled: 1,
+		disabled: 2
+	};
+
 	function isClockwisePoints(centerPoint, edgePoint1, edgePoint2) {
 		const rectSum = (centerPoint.x - edgePoint1.x) * (edgePoint2.y - edgePoint1.y) -
 			(edgePoint2.x - edgePoint1.x) * (centerPoint.y - edgePoint1.y);
@@ -513,8 +519,12 @@
 		this.connectorAlgorithmStack = [];
 		this.moveShapeSettings = [];
 		this.forEachMap = null;
+		this.factRuleState = factRuleState.default;
 		this.initDataTree();
 	}
+	SmartArtAlgorithm.prototype.setFactRuleState = function (pr) {
+		this.factRuleState = pr;
+	};
 	SmartArtAlgorithm.prototype.addSettingsForMove = function (settings) {
 		this.moveShapeSettings.push(settings);
 	};
@@ -741,10 +751,26 @@
 		this.calcConstraints();
 		this.cleanRules();
 		this.calcScaleCoefficients();
+		if (this.factRuleState === factRuleState.disabled) {
+			this.cleanCalcValues();
+			this.calcConstraints();
+			this.calcScaleCoefficients();
+		}
 		this.calcAdaptedConstraints();
 
 		this.executeAlgorithms();
 	};
+	SmartArtAlgorithm.prototype.cleanCalcValues = function () {
+		this.forEachPresFromTop(function (presNode) {
+			presNode.cleanRules();
+			presNode.cleanConstraints();
+			presNode.cleanScales();
+			presNode.cleanPosition();
+		});
+		this.presRoot.initRootConstraints(this.smartart, this);
+	};
+
+
 	SmartArtAlgorithm.prototype.calcScaleCoefficients = function () {
 		const oThis = this;
 		this.forEachPresFromBottom(function (presNode) {
@@ -752,14 +778,22 @@
 		});
 	};
 	SmartArtAlgorithm.prototype.calcAdaptedConstraints = function () {
+		const oThis = this;
+		const isNeedSetRules = this.factRuleState !== factRuleState.disabled;
 		this.forEachPresFromTop(function (presNode) {
-			presNode.setRules();
+			if (isNeedSetRules) {
+				presNode.setRules(oThis);
+			}
 			presNode.setConstraints(true);
 		});
 	};
 	SmartArtAlgorithm.prototype.calcConstraints = function () {
+		const oThis = this;
+		const isNeedSetRules = this.factRuleState !== factRuleState.disabled;
 		this.forEachPresFromTop(function (presNode) {
-			presNode.setRules();
+			if (isNeedSetRules) {
+				presNode.setRules(oThis);
+			}
 			presNode.setConstraints();
 		});
 	};
@@ -1832,10 +1866,6 @@
 	};
 	BaseAlgorithm.prototype.isHierarchy = function () {return false;};
 	BaseAlgorithm.prototype.moveToHierarchyOffsets = function () {};
-
-	BaseAlgorithm.prototype.getNodeConstraints = function (node) {
-		return node.nodeConstraints;
-	};
 	BaseAlgorithm.prototype.isRootHierarchy = function () {
 		return false;
 	};
@@ -1925,9 +1955,7 @@
 		return this._isHideLastChild;
 	};
 
-	BaseAlgorithm.prototype.calcScaleCoefficients = function () {
-		this.parentNode.calcNodeConstraints();
-	};
+	BaseAlgorithm.prototype.calcScaleCoefficients = function () {};
 	BaseAlgorithm.prototype.setConnectionDistance = function (value, isStart) {
 
 	};
@@ -2008,12 +2036,12 @@
 		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficient);
 		shapeContainer.applyCenterAlign(parentHeight, parentWidth, isCalculateScaleCoefficient, this);
 	};
-	
+
 	PositionAlgorithm.prototype.calcScaleCoefficients = function () {
 
 	};
 	PositionAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm) {
-		
+
 	};
 
 
@@ -3959,7 +3987,7 @@ function HierarchyAlgorithm() {
 			return;
 		}
 		if (isCalculateScaleCoefficients) {
-			this.calcScaleCoefficients();
+			this.calcScaleCoefficients(smartartAlgorithm);
 		} else {
 			this._calculateShapePositions();
 			this.applyParamOffsets();
@@ -4220,7 +4248,7 @@ function HierarchyAlgorithm() {
 		}
 		return sibSp;
 	}
-	CycleAlgorithm.prototype.calcScaleCoefficients = function () {
+	CycleAlgorithm.prototype.calcScaleCoefficients = function (smartartAlgorithm) {
 		const startAngle = this.calcValues.startAngle;
 		const stepAngle = this.calcValues.stepAngle;
 		const mainElements = this.calcValues.mainElements;
@@ -4311,7 +4339,11 @@ function HierarchyAlgorithm() {
 		const parentHeight = this.getParentNodeHeight();
 		const cycleHeight = cycleBounds.b - cycleBounds.t;
 		const cycleWidth = cycleBounds.r - cycleBounds.l;
-		const coefficient = Math.min(1,parentWidth / cycleWidth, parentHeight / cycleHeight);
+		let coefficient = Math.min(1, parentWidth / cycleWidth, parentHeight / cycleHeight);
+		if (coefficient === 1 && smartartAlgorithm.factRuleState === factRuleState.enabled) {
+			smartartAlgorithm.setFactRuleState(factRuleState.disabled);
+			return;
+		}
 		let radiusCoefficient = coefficient;
 		const scaleFactor = this.getOffsetScaleFactor(radiusBounds, cycleBounds);
 		if (scaleFactor > 1) {
@@ -4357,7 +4389,7 @@ function HierarchyAlgorithm() {
 	CycleAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
 		this.calculateStartValues();
 		if (isCalculateScaleCoefficients) {
-			this.calcScaleCoefficients();
+			this.calcScaleCoefficients(smartartAlgorithm);
 		} else {
 			this._calculateShapePositions();
 			this.applyAlgorithmAligns(isCalculateScaleCoefficients);
@@ -5896,7 +5928,7 @@ function HierarchyAlgorithm() {
 		BaseAlgorithm.call(this);
 	}
 	AscFormat.InitClassWithoutType(SpaceAlgorithm, BaseAlgorithm);
-	
+
 	SpaceAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
 		this.createShadowShape(isCalculateScaleCoefficients);
 		if (!isCalculateScaleCoefficients) {
@@ -5951,9 +5983,6 @@ function PresNode(presPoint, contentNode) {
 	this.parent = null;
 	this.presPoint = presPoint || null;
 	this.childs = [];
-	this.factRules = {};
-	this.valRules = {};
-	this.constr = {};
 	this.algorithm = null;
 	this.node = contentNode;
 	this.contentNodes = [];
@@ -5962,40 +5991,35 @@ function PresNode(presPoint, contentNode) {
 		ruleLst: null,
 		shape: null
 	};
-	this.adaptConstr = {};
-	this.nodeConstraints = null;
+
 	this.shape = null;
 	this.moveWithNodes = [];
 
-	this.moveScaleCoefficients = {
-		width: 1,
-		height: 1
-	};
 	this.isHideLastTrans = true;
 	this.connectionDistanceResolver = null;
 	this.bounds = {
 		constraints: null
 	};
 	this.namedNodes = null;
-	this.relations = {};
-	this.equationRelations = {
-		adapt: {},
-		nonAdapt: {}
-	};
-
-	this.equationRelations.nonAdapt[AscFormat.Constr_op_equ] = {};
-	this.equationRelations.nonAdapt[AscFormat.Constr_op_gte] = {};
-	this.equationRelations.nonAdapt[AscFormat.Constr_op_lte] = {};
-	this.equationRelations.nonAdapt[AscFormat.Constr_op_none] = {};
-	this.equationRelations.adapt[AscFormat.Constr_op_equ] = {};
-	this.equationRelations.adapt[AscFormat.Constr_op_gte] = {};
-	this.equationRelations.adapt[AscFormat.Constr_op_lte] = {};
-	this.equationRelations.adapt[AscFormat.Constr_op_none] = {};
-	this.parentScale = {};
 	this.moveWith = null;
 	this._isTxXfrm = null;
-	this.moveRot = 0;
+
+	this.cleanRules();
+	this.cleanConstraints();
+	this.cleanScales();
+	this.cleanPosition();
 }
+	PresNode.prototype.cleanPosition = function () {
+		this.position = null;
+	};
+PresNode.prototype.cleanScales = function () {
+	this.moveScaleCoefficients = {
+		width: 1,
+		height: 1
+	};
+	this.moveRot = 0;
+	this.parentScale = {};
+};
 PresNode.prototype.setSizesScale = function (widthCoefficient, heightCoefficient) {
 	const aspectRatio = this.getAspectRatio();
 	if (aspectRatio) {
@@ -6028,10 +6052,10 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 	};
 	PresNode.prototype.getShape = function (isCalculateCoefficients) {
 		if (isCalculateCoefficients) {
-			if (!this.nodeConstraints) {
-				this.nodeConstraints = new Position(this);
+			if (!this.position) {
+				this.position = new Position(this);
 			}
-			return this.nodeConstraints;
+			return this.position;
 		}
 		if (!this.shape) {
 			this.shape = new ShadowShape(this);
@@ -6365,7 +6389,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			}
 		}
 	};
-	PresNode.prototype.setRules = function () {
+	PresNode.prototype.setRules = function (smartartAlgorithm) {
 		const ruleLst = this.layoutInfo.ruleLst;
 		if (!ruleLst) {
 			return;
@@ -6379,12 +6403,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 			}
 			const nodes = cacheFor[rule.for];
 			for (let j = 0; j < nodes.length; j++) {
-				nodes[j].setRule(rule);
+				nodes[j].setRule(rule, smartartAlgorithm);
 			}
 		}
 	};
 	PresNode.prototype.getFactRule = function (constr) {
-		const ruleFactor = this.factRules[constr.type]
+		const ruleFactor = this.factRules[constr.type];
 		if (ruleFactor === undefined || ruleFactor > constr.fact) {
 			return constr.fact;
 		}
@@ -6394,12 +6418,31 @@ PresNode.prototype.addChild = function (ch, pos) {
 		this.factRules = {};
 		this.valRules = {};
 	};
-	PresNode.prototype.setRule = function (rule) {
+	PresNode.prototype.cleanConstraints = function () {
+		this.relations = {};
+		this.equationRelations = {
+			adapt: {},
+			nonAdapt: {}
+		};
+
+		this.equationRelations.nonAdapt[AscFormat.Constr_op_equ] = {};
+		this.equationRelations.nonAdapt[AscFormat.Constr_op_gte] = {};
+		this.equationRelations.nonAdapt[AscFormat.Constr_op_lte] = {};
+		this.equationRelations.nonAdapt[AscFormat.Constr_op_none] = {};
+		this.equationRelations.adapt[AscFormat.Constr_op_equ] = {};
+		this.equationRelations.adapt[AscFormat.Constr_op_gte] = {};
+		this.equationRelations.adapt[AscFormat.Constr_op_lte] = {};
+		this.equationRelations.adapt[AscFormat.Constr_op_none] = {};
+		this.adaptConstr = {};
+		this.constr = {};
+	};
+	PresNode.prototype.setRule = function (rule, smartartAlgorithm) {
 		const node = this.getConstraintNode(rule.forName, rule.ptType.getVal());
 		if (node) {
 			if (AscFormat.isRealNumber(rule.fact)) {
 				if (rule.val !== rule.val) {
 					node.factRules[rule.type] = rule.fact;
+					smartartAlgorithm.setFactRuleState(factRuleState.enabled);
 				}
 			}
 			if (typeof rule.val === "number" && rule.val === rule.val) {
@@ -7212,7 +7255,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		};
 	};
 	PresNode.prototype.isInitShape = function (isCalculateScaleCoefficient) {
-		return !!(isCalculateScaleCoefficient ? this.nodeConstraints : this.shape);
+		return !!(isCalculateScaleCoefficient ? this.position : this.shape);
 	};
 	PresNode.prototype.setMoveScaleCoefficients = function (widthCoefficient, heightCoefficient) {
 		this.moveScaleCoefficients.width = widthCoefficient;

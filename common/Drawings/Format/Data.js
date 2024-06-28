@@ -7726,7 +7726,7 @@ Because of this, the display is sometimes not correct.
 					const uniColor = lst[truthIndex];
 
 					if (this.checkTransparent(uniColor)
-						|| shadowShape.shape.hideGeom || this.checkNoLn()) {
+						|| shadowShape.shape.hideGeom || this.checkNoLn() || shadowShape.node.isParNode() && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) {
 						return AscFormat.CreateNoFillLine();
 					}
 
