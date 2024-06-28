@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -356,11 +356,11 @@
 		return false;
 	};
 	/**
-	 * return {AscWord.BidiType}
+	 * return {AscBidi.TYPE}
 	 */
 	CRunElementBase.prototype.getBidiType = function()
 	{
-		return AscWord.BidiType.neutral;
+		return AscBidi.TYPE.ON;
 	};
 	/**
 	 * @return {number}

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -609,9 +609,9 @@ CStyle.prototype =
 		this.Name = Value;
 	},
 
-    Get_Name : function()
+    Get_Name : function(isSimplify)
     {
-        return this.Name;
+        return isSimplify ? this.Name.toLowerCase().replace(/\s/g,"") : this.Name;
     },
 
 	Set_BasedOn : function(Value)
@@ -5891,10 +5891,10 @@ CStyle.prototype =
 
     },
 
-    isEqual: function(cStyles)
+    isEqual: function(cStyles, isSimplifyName)
     {
         var result = false;
-        if(this.BasedOn == cStyles.BasedOn && this.Name == cStyles.Name && this.Next == cStyles.Next && this.Type == cStyles.Type && this.hidden == cStyles.hidden)
+        if(this.BasedOn == cStyles.BasedOn && this.GetName(isSimplifyName) == cStyles.GetName(isSimplifyName) && this.Next == cStyles.Next && this.Type == cStyles.Type && this.hidden == cStyles.hidden)
         {
             if(this.qFormat == cStyles.qFormat && this.semiHidden == cStyles.semiHidden && this.uiPriority == cStyles.uiPriority && this.unhideWhenUsed == cStyles.unhideWhenUsed)
             {
@@ -6574,9 +6574,9 @@ CStyle.prototype.GetUnhideWhenUsed = function()
 {
 	return this.unhideWhenUsed;
 };
-CStyle.prototype.GetName = function()
+CStyle.prototype.GetName = function(isSimplify)
 {
-	return this.Get_Name();
+	return this.Get_Name(isSimplify);
 };
 CStyle.prototype.GetBasedOn = function()
 {
@@ -6652,20 +6652,6 @@ CStyle.prototype.CreateNoList = function()
 	this.SetUiPriority(99);
 	this.SetSemiHidden(true);
 	this.SetUnhideWhenUsed(true);
-};
-/**
- * Дефолтовые настройки для стиля Hyperlink
- */
-CStyle.prototype.CreateHyperlink = function()
-{
-	this.SetUiPriority(99);
-	this.SetUnhideWhenUsed(true);
-
-	this.SetTextPr({
-		Color     : {r : 0x00, g : 0x00, b : 0xFF},
-		Underline : true,
-		Unifill   : AscFormat.CreateUniFillSchemeColorWidthTint(11, 0)
-	});
 };
 CStyle.prototype.CreateTOC = function(nLvl, nType)
 {
@@ -7250,6 +7236,7 @@ function CStyles(bCreateDefault)
 			Header            : null,
 			Footer            : null,
 			Hyperlink         : null,
+			FollowedHyperlink : null,
 			FootnoteText      : null,
 			FootnoteTextChar  : null,
 			FootnoteReference : null,
@@ -7289,6 +7276,7 @@ function CStyles(bCreateDefault)
 		// Создаем стиль для таблиц, который будет применяться к новым таблицам
 		var Style_TableGrid = new CStyle("Table Grid", this.Default.Table, null, styletype_Table);
 		Style_TableGrid.Create_TableGrid();
+		this.Add(Style_TableGrid);
 
         var Style_TableGridLight = new CStyle("Table Grid Light", this.Default.Table, null, styletype_Table);
 		Style_TableGridLight.Create_TableGrid_Light(fUF(EThemeColor.themecolorText1, 0x50, null));
@@ -7807,11 +7795,6 @@ function CStyles(bCreateDefault)
 		
 		this.AddStylesFromObject(AscWord.DEFAULT_STYLES);
 		this.UpdateDefaultStyleLinks();
-		
-		
-        // Создаем стиль гиперссылки
-        var oHyperlink = new CStyle("Hyperlink", null, null, styletype_Character );
-		oHyperlink.CreateHyperlink();
 
 		for (var nLvl = 0; nLvl <= 8; ++nLvl)
 		{
@@ -7850,6 +7833,7 @@ function CStyles(bCreateDefault)
 			Header            : null,
 			Footer            : null,
 			Hyperlink         : null,
+			FollowedHyperlink : null,
 			FootnoteText      : null,
 			FootnoteTextChar  : null,
 			FootnoteReference : null,
@@ -8624,14 +8608,15 @@ CStyles.prototype.GetRelatedStyles = function(styleId)
  * Получаем идентификатор стиля по его имени
  * @param {string} sName
  * @param {boolean} [isReturnParaDefault=false] Возвращать ли дефолтовый стиль для параграфа, если стиль не найден
+ * @param {boolean} [isOnlyCharChecking=false] Проверять ли имя стиля только по символам
  * @returns {?string}
  */
-CStyles.prototype.GetStyleIdByName = function(sName, isReturnParaDefault)
+CStyles.prototype.GetStyleIdByName = function(sName, isReturnParaDefault, isSimplify)
 {
 	for (var sId in this.Style)
 	{
 		var oStyle = this.Style[sId];
-		if (sName === oStyle.GetName())
+		if (sName === oStyle.GetName(isSimplify))
 			return sId;
 	}
 
@@ -8803,9 +8788,9 @@ CStyles.prototype.Remove_AllCustomStylesFromInterface = function()
 		}
 	}
 };
-CStyles.prototype.IsStyleDefaultByName = function(styleName)
+CStyles.prototype.IsStyleDefaultByName = function(styleName, isSimplify)
 {
-	var styleId = this.GetStyleIdByName(styleName);
+	var styleId = this.GetStyleIdByName(styleName, false, isSimplify);
 	if (!styleId)
 		return false;
 
@@ -8919,7 +8904,8 @@ CStyles.prototype.UpdateDefaultStyleLinks = function()
 	// TODO: Если данный метод будет слишком часто вызываться, то нужно переделать, чтобы реальное обновление срабатывало
 	//       при запросе к одному из дефолтовых стилей GetDefaultParagraph, например
 	
-	let localHyperlink = AscCommon.translateManager.getValue("Hyperlink").toLowerCase().replace(/\s/g,"");
+	let localHyperlink  = AscCommon.translateManager.getValue("Hyperlink").toLowerCase().replace(/\s/g,"");
+	let localFHyperlink = AscCommon.translateManager.getValue("FollowedHyperlink").toLowerCase().replace(/\s/g,"");
 	for (let styleId in this.Style)
 	{
 		let name = this.Style[styleId].GetName().toLowerCase().replace(/\s/g,"");
@@ -8979,6 +8965,10 @@ CStyles.prototype.UpdateDefaultStyleLinks = function()
 			case "hyperlink":
 			case localHyperlink:
 				this.Default.Hyperlink = styleId;
+				break;
+			case "followedhyperlink":
+			case localFHyperlink:
+				this.Default.FollowedHyperlink = styleId;
 				break;
 			case "footnotetext":
 				this.Default.FootnoteText = styleId;
@@ -9090,6 +9080,10 @@ CStyles.prototype.GetDefaultTOF = function()
 CStyles.prototype.GetDefaultHyperlink = function()
 {
 	return this.Default.Hyperlink;
+};
+CStyles.prototype.GetDefaultFollowedHyperlink = function()
+{
+	return this.Default.FollowedHyperlink;
 };
 CStyles.prototype.GetDefaultHeading = function(nLvl)
 {
@@ -12255,9 +12249,31 @@ CRFonts.prototype.Is_Equal = function(oRFonts)
 {
 	return this.IsEqual(oRFonts);
 };
-CRFonts.prototype.Compare = function(oRFonts)
+CRFonts.prototype.Compare = function(rFonts)
 {
-	return this.IsEqual(oRFonts);
+	if (!this.private_IsEqual(this.Ascii, rFonts.Ascii))
+		this.Ascii = {Name : undefined, Index : -1};
+	
+	if (!this.private_IsEqual(this.EastAsia, rFonts.EastAsia))
+		this.EastAsia = {Name : undefined, Index : -1};;
+	
+	if (!this.private_IsEqual(this.HAnsi, rFonts.HAnsi))
+		this.HAnsi = {Name : undefined, Index : -1};;
+	
+	if (!this.private_IsEqual(this.CS, rFonts.CS))
+		this.CS = {Name : undefined, Index : -1};;
+	
+	if (this.AsciiTheme !== rFonts.AsciiTheme)
+		this.AsciiTheme = undefined;
+	
+	if (this.EastAsiaTheme !== rFonts.EastAsiaTheme)
+		this.EastAsiaTheme = undefined;
+	
+	if (this.HAnsiTheme !== rFonts.HAnsiTheme)
+		this.HAnsiTheme = undefined;
+	
+	if (this.CSTheme !== rFonts.CSTheme)
+		this.CSTheme = undefined;
 };
 CRFonts.prototype.Write_ToBinary = function(oWriter)
 {
@@ -15710,6 +15726,7 @@ CCalculatedFrame.prototype.GetFramePr = function()
 
 function CParaPr()
 {
+	this.Bidi              = undefined;
 	this.ContextualSpacing = undefined;          // Удалять ли интервал между параграфами одинакового стиля
 	this.Ind               = new CParaInd();     // Отступы
 	this.Jc                = undefined;          // Прилегание параграфа
@@ -15754,6 +15771,7 @@ CParaPr.prototype.Copy = function(bCopyPrChange, oPr)
 {
 	var ParaPr = new CParaPr();
 
+	ParaPr.Bidi = this.Bidi;
 	ParaPr.ContextualSpacing = this.ContextualSpacing;
 
 	if (undefined != this.Ind)
@@ -15870,6 +15888,9 @@ CParaPr.prototype.createDuplicateForSmartArt = function (bCopyPrChange, oPr) {
 };
 CParaPr.prototype.Merge = function(ParaPr)
 {
+	if (undefined !== ParaPr.Bidi)
+		this.Bidi = ParaPr.Bidi;
+	
 	if (undefined != ParaPr.ContextualSpacing)
 		this.ContextualSpacing = ParaPr.ContextualSpacing;
 
@@ -16020,6 +16041,7 @@ CParaPr.prototype.Merge = function(ParaPr)
 };
 CParaPr.prototype.InitDefault = function(nCompatibilityMode)
 {
+	this.Bidi                      = false;
 	this.ContextualSpacing         = false;
 	this.Ind                       = new CParaInd();
 	this.Ind.Left                  = 0;
@@ -16061,6 +16083,7 @@ CParaPr.prototype.InitDefault = function(nCompatibilityMode)
 };
 CParaPr.prototype.Set_FromObject = function(ParaPr)
 {
+	this.Bidi              = ParaPr.Bidi;
 	this.ContextualSpacing = ParaPr.ContextualSpacing;
 
 	this.Ind = new CParaInd();
@@ -16193,6 +16216,9 @@ CParaPr.prototype.Compare = function(ParaPr)
 	// При сравнении добавляем 1 элемент Locked
 	var Result_ParaPr    = new CParaPr();
 	Result_ParaPr.Locked = false;
+	
+	if (ParaPr.Bidi === this.Bidi)
+		Result_ParaPr.Bidi = ParaPr.Bidi;
 
 	if (ParaPr.ContextualSpacing === this.ContextualSpacing)
 		Result_ParaPr.ContextualSpacing = ParaPr.ContextualSpacing;
@@ -16473,6 +16499,12 @@ CParaPr.prototype.Write_ToBinary = function(Writer)
 		Writer.WriteBool(this.SuppressLineNumbers);
 		Flags |= 16777216;
 	}
+	
+	if (undefined !== this.Bidi)
+	{
+		Writer.WriteBool(this.Bidi);
+		Flags |= (1 << 25);
+	}
 
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
@@ -16605,6 +16637,9 @@ CParaPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & 16777216)
 		this.SuppressLineNumbers = Reader.GetBool();
+	
+	if (Flags & (1 << 25))
+		this.Bidi = Reader.GetBool();
 };
 CParaPr.prototype.isEqual = function(ParaPrUOld,ParaPrNew)
 {
@@ -16651,7 +16686,9 @@ CParaPr.prototype.Is_Equal = function(ParaPr)
 		|| this.PStyle !== ParaPr.PStyle
 		|| true !== IsEqualStyleObjects(this.FramePr, ParaPr.FramePr)
 		|| this.OutlineLvl !== ParaPr.OutlineLvl
-		|| this.SuppressLineNumbers !== ParaPr.SuppressLineNumbers);
+		|| this.SuppressLineNumbers !== ParaPr.SuppressLineNumbers
+		|| this.Bidi !== ParaPr.Bidi
+	);
 };
 CParaPr.prototype.IsEqual = function(paraPr)
 {
@@ -16728,6 +16765,9 @@ CParaPr.prototype.GetDiff = function(oParaPr)
 
 	if (this.SuppressLineNumbers !== oParaPr.SuppressLineNumbers)
 		oResultParaPr.SuppressLineNumbers = this.SuppressLineNumbers;
+	
+	if (this.Bidi !== oParaPr.Bidi)
+		oResultParaPr.Bidi = this.Bidi;
 
 	return oResultParaPr;
 };
@@ -16859,7 +16899,9 @@ CParaPr.prototype.Is_Empty = function(oPr)
 		|| undefined !== this.NumPr
 		|| undefined !== this.PStyle
 		|| undefined !== this.OutlineLvl
-		|| undefined !== this.SuppressLineNumbers);
+		|| undefined !== this.SuppressLineNumbers
+		|| undefined !== this.Bidi
+	);
 };
 CParaPr.prototype.IsEmpty = function()
 {
@@ -16950,6 +16992,14 @@ CParaPr.prototype.RemovePrChange = function()
 {
 	delete this.PrChange;
 	delete this.ReviewInfo;
+};
+CParaPr.prototype.GetBidi = function()
+{
+	return this.Bidi;
+};
+CParaPr.prototype.SetBidi = function(isBidi)
+{
+	this.Bidi = isBidi;
 };
 CParaPr.prototype.GetContextualSpacing = function()
 {
@@ -17143,6 +17193,8 @@ CParaPr.prototype.CheckBorderSpaces = function()
 //----------------------------------------------------------------------------------------------------------------------
 // CParaPr Export
 //----------------------------------------------------------------------------------------------------------------------
+CParaPr.prototype['get_Bidi']                     = CParaPr.prototype.get_Bidi                     = CParaPr.prototype['Get_Bidi']                     = CParaPr.prototype.GetBidi;
+CParaPr.prototype['put_Bidi']                     = CParaPr.prototype.put_Bidi                     = CParaPr.prototype.SetBidi;
 CParaPr.prototype['get_ContextualSpacing']        = CParaPr.prototype.get_ContextualSpacing        = CParaPr.prototype['Get_ContextualSpacing']        = CParaPr.prototype.GetContextualSpacing;
 CParaPr.prototype['put_ContextualSpacing']        = CParaPr.prototype.put_ContextualSpacing        = CParaPr.prototype.SetContextualSpacing;
 CParaPr.prototype['get_IndLeft']                  = CParaPr.prototype.get_IndLeft                  = CParaPr.prototype['Get_IndLeft']                  = CParaPr.prototype.GetIndLeft;

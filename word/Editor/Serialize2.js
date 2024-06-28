@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -279,7 +279,10 @@ var c_oSerProp_pPrType = {
 	Spacing_AfterTwips: 41,
 	Tab_Item_PosTwips: 42,
 	Tab_Item_Val: 43,
-	SuppressLineNumbers: 44
+	SuppressLineNumbers: 44,
+	CnfStyle: 45,
+	SnapToGrid: 46,
+	Bidi: 47
 };
 var c_oSerProp_rPrType = {
     Bold:0,
@@ -2449,6 +2452,12 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 			this.memory.WriteByte(c_oSerProp_pPrType.SuppressLineNumbers);
 			this.memory.WriteByte(c_oSerPropLenType.Byte);
 			this.memory.WriteBool(pPr.SuppressLineNumbers);
+		}
+		if(null != pPr.Bidi)
+		{
+			this.memory.WriteByte(c_oSerProp_pPrType.Bidi);
+			this.memory.WriteByte(c_oSerPropLenType.Byte);
+			this.memory.WriteBool(pPr.Bidi);
 		}
     };
     this.WriteInd = function(Ind)
@@ -5176,7 +5185,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
         {
             //sectPr
             this.bs.WriteItem(c_oSerParType.sectPr, function(){oThis.bpPrs.WriteSectPr(oThis.Document.SectPr, oThis.Document);});
-			if (oThis.Document.Background) {
+			if (oThis.Document.Background && !oThis.Document.Background.isDefault()) {
 				this.bs.WriteItem(c_oSerParType.Background, function(){oThis.WriteBackground(oThis.Document.Background);});
 			}
 			var macros = this.Document.DrawingDocument.m_oWordControl.m_oApi.macros.GetData();
@@ -8389,13 +8398,13 @@ function BinaryFileReader(doc, openParams)
 
 			var tryAddStyle = function (_stylePaste, _elem, _basedOnElems) {
 				var isEqualName = null, isAlreadyContainsStyle;
-
+				const isDefaultStyleName = oDocumentStyles.IsStyleDefaultByName(_stylePaste.style.GetName(true), true);
 				for (var j in oDocumentStyles.Style) {
 					var styleDoc = oDocumentStyles.Style[j];
-					isAlreadyContainsStyle = styleDoc.isEqual(_stylePaste.style);
+					isAlreadyContainsStyle = styleDoc.isEqual(_stylePaste.style, isDefaultStyleName);
 
 					//TODO пока закомментировал, поскольку всегда добавляем новый стиль
-					if (styleDoc.Name === _stylePaste.style.Name /*|| (styleDoc.Custom === false && stylePaste.style.Custom === false && styleDoc.Name.toLowerCase() === stylePaste.style.Name.toLowerCase())*/) {
+					if (styleDoc.GetName(isDefaultStyleName) === _stylePaste.style.GetName(isDefaultStyleName) /*|| (styleDoc.Custom === false && stylePaste.style.Custom === false && styleDoc.Name.toLowerCase() === stylePaste.style.Name.toLowerCase())*/) {
 						isEqualName = j;
 					}
 
@@ -9074,6 +9083,9 @@ function Binary_pPrReader(doc, oReadResult, stream)
         var pPr = this.pPr;
         switch(type)
         {
+			case c_oSerProp_pPrType.Bidi:
+				pPr.Bidi = this.stream.GetBool();
+				break;
             case c_oSerProp_pPrType.contextualSpacing:
 				pPr.ContextualSpacing = this.stream.GetBool();
                 break;
@@ -11221,7 +11233,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 			Content.push(oSdt);
 		} else if ( c_oSerParType.Background === type ) {
-			oThis.Document.Background = {Color: null, Unifill: null, shape: null};
 			res = this.bcr.Read2(length, function(t, l){
 				return oThis.ReadBackground(t,l, oThis.Document.Background);
 			});
@@ -17241,7 +17252,7 @@ DocReadResult.prototype = {
 	isDocumentPasting: function(){
 		var api = window["Asc"]["editor"] || editor;
 		if(api) {
-			return this.bCopyPaste && AscCommon.c_oEditorId.Word === api.getEditorId();
+			return !Asc.editor.isPdfEditor() && this.bCopyPaste && AscCommon.c_oEditorId.Word === api.getEditorId();
 		}
 		return false;
 	},

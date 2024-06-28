@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -640,10 +640,14 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             var _new_used_half_height;
             var _temp;
 
-            if (Asc.editor.isPdfEditor() && this.originalObject.getPresetGeom() == "line" && this.numberHandle == 4) {
-                let oXY = this.correctKDForPdfFreeText(kd1, kd2);
-                kd1 = oXY.kd1;
-                kd2 = oXY.kd2;
+            if (Asc.editor.isPdfEditor()) {
+                let isFreeText = this.originalObject.group && this.originalObject.group.IsAnnot() && this.originalObject.group.IsFreeText();
+
+                if (isFreeText && this.originalObject.getPresetGeom() == "line" && this.numberHandle == 4) {
+                    let oXY = this.correctKDForPdfFreeText(kd1, kd2);
+                    kd1 = oXY.kd1;
+                    kd2 = oXY.kd2;
+                }
             }
 
            if(this.originalObject.getObjectType && this.originalObject.getObjectType() === AscDFH.historyitem_type_GraphicFrame){

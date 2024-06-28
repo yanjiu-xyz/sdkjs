@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1403,6 +1403,25 @@
 			}
 		}
 	};
+	ApiRange.prototype.private_GetTextPr = function()
+	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+		
+		let logicDocument = private_GetLogicDocument();
+		let docState = logicDocument.SaveDocumentState();
+		
+		this.Select(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			logicDocument.LoadDocumentState(docState);
+			return;
+		}
+		
+		let textPr = logicDocument.GetCalculatedTextPr();
+		logicDocument.LoadDocumentState(docState);
+		return textPr;
+	};
 	
 	/**
 	 * Returns a type of the ApiRange class.
@@ -2736,6 +2755,19 @@
 	};
 
 	/**
+	 * Returns the merged text properties of entire range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTextPr}
+	 * @since 8.2.0
+	 */
+	ApiRange.prototype.GetTextPr = function()
+	{
+		let oTextPr = this.private_GetTextPr();
+		return new ApiRangeTextPr(this, oTextPr);
+	};
+	
+	/**
 	 * Deletes all the contents from the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
@@ -2992,6 +3024,36 @@
 			return null;
 		
 		return oRange;
+	};
+	
+	/**
+	 * Returns the start page number of current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @return {Number}
+	 * @since 8.2.0
+	 */
+	ApiRange.prototype.GetStartPage = function()
+	{
+		let oDoc = private_GetLogicDocument();
+		let oPosXY = oDoc.private_GetXYByDocumentPosition(this.StartPos);
+		
+		return oPosXY.Page;
+	};
+
+	/**
+	 * Returns the end page number of current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @return {Number}
+	 * @since 8.2.0
+	 */
+	ApiRange.prototype.GetEndPage = function()
+	{
+		let oDoc = private_GetLogicDocument();
+		let oPosXY = oDoc.private_GetXYByDocumentPosition(this.EndPos);
+		
+		return oPosXY.Page;
 	};
 
 	/**
@@ -5805,6 +5867,7 @@
 	 * @property {ReviewReportRecordType} Type - Review record type.
 	 * @property {string} [Value=undefined] - Review change value that is set for the "TextAdd" and "TextRem" types only.
 	 * @property {number} Date - The time when this change was made.
+	 * @property {ApiParagraph | ApiTable} ReviewedElement - Element that has been reviewed
 	 */
 	
 	/**
@@ -5813,10 +5876,10 @@
 	 * @typedef {Object.<string, Array.<ReviewReportRecord>>} ReviewReport
 	 * @example
 	 * 	{
-	 * 	  "John Smith" : [{Type: 'TextRem', Value: 'Hello, Mark!', Date: 1679941734161},
-	 * 	                {Type: 'TextAdd', Value: 'Dear Mr. Pottato.', Date: 1679941736189}],
-	 * 	  "Mark Pottato" : [{Type: 'ParaRem', Date: 1679941755942},
-	 * 	                  {Type: 'TextPr', Date: 1679941757832}]
+	 * 	  "John Smith" : [{Type: 'TextRem', Value: 'Hello, Mark!', Date: 1679941734161, Element: ApiParagraph},
+	 * 	                {Type: 'TextAdd', Value: 'Dear Mr. Pottato.', Date: 1679941736189, Element: ApiParagraph}],
+	 * 	  "Mark Pottato" : [{Type: 'ParaRem', Date: 1679941755942, ReviewedElement: ApiParagraph},
+	 * 	                  {Type: 'TextPr', Date: 1679941757832, ReviewedElement: ApiParagraph}]
 	 * 	}
 	 */
 	
@@ -5887,6 +5950,8 @@
 					};
 				}
 				oElement["Date"] = oChange.get_DateTime();
+				oElement["ReviewedElement"] = private_GetReviewedElement(oChange.GetElement());
+				
 				oResult[sUserName].push(oElement);
 			}
 		}
@@ -7277,6 +7342,86 @@
 		});
 
 		return aApiStyles;
+	};
+	/**
+	 * Returns the document information:
+	 * * <b>Application</b> - the application the document has been created with.
+	 * * <b>CreatedRaw</b> - the date and time when the file was created.
+	 * * <b>Created</b> - the parsed date and time when the file was created.
+	 * * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * * <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * * <b>Autrors</b> - the persons who has created the file.
+	 * * <b>Title</b> - this property allows you to simplify your documents classification.
+	 * * <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * * <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {object}
+	 */
+	ApiDocument.prototype.GetDocumentInfo = function()
+	{
+		const oDocInfo = {
+			Application: '',
+			CreatedRaw: null,
+			Created: '',
+			LastModifiedRaw: null,
+			LastModified: '',
+			LastModifiedBy: '',
+			Autrors: [],
+			Title: '',
+			Tags: '',
+			Subject: '',
+			Comment: ''
+		};
+		const api = this.Document.Api;
+
+		let props = (api) ? api.asc_getAppProps() : null;
+		oDocInfo.Application = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
+
+		let langCode = 1033; // en-US
+		let langName = 'en-us';
+		if (api.asc_getLocale) {
+			langName = api.asc_getLocale().replace('_', '-').toLowerCase();
+		} else if (this.Document.GetDefaultLanguage && window['Common']) {
+			langCode = this.Document.GetDefaultLanguage();
+			langName = window['Common']['util']['LanguageInfo']['getLocalLanguageName'](langCode)[0].toLowerCase();
+
+		}
+
+		props = api.asc_getCoreProps();
+		oDocInfo.CreatedRaw = props.asc_getCreated();
+		oDocInfo.LastModifiedRaw = props.asc_getModified();
+
+		try {
+			if (oDocInfo.CreatedRaw)
+				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' +oDocInfo. CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			
+			if (oDocInfo.LastModifiedRaw)
+				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+		} catch (e) {
+			langName = 'en';
+			if (oDocInfo.CreatedRaw)
+				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+
+			if (oDocInfo.LastModifiedRaw)
+				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+		}
+
+		const LastModifiedBy = props.asc_getLastModifiedBy();
+		oDocInfo.LastModifiedBy = AscCommon.UserInfoParser.getParsedName(LastModifiedBy);
+
+		oDocInfo.Title = (props.asc_getTitle() || '');
+		oDocInfo.Tags = (props.asc_getKeywords() || '');
+		oDocInfo.Subject = (props.asc_getSubject() || '');
+		oDocInfo.Comment = (props.asc_getDescription() || '');
+
+		const authors = props.asc_getCreator();
+		if (authors)
+			oDocInfo.Autrors = authors.split(/\s*[,;]\s*/);
+
+		return oDocInfo;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -9063,7 +9208,7 @@
 		oCapPr.Label = sLabel;
 		oCapPr.Before = bBefore;
 		oCapPr.ExcludeLabel = bExludeLabel;
-		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Format = nNumFormat;
 		oCapPr.Separator = sCaptionSep;
 		oCapPr.Additional = sAdditional;
 
@@ -9904,6 +10049,30 @@
 		else if ("nextPage" === sType)
 			this.Section.Set_Type(c_oAscSectionBreakType.NextPage);
 	};
+
+	/**
+	 * Returns the section type.
+	 * @memberof ApiSection
+	 * @typeofeditors ["CDE"]
+	 * @returns {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} - The section break type.
+	 * @since 8.2.0
+	 */
+	ApiSection.prototype.GetType = function()
+	{
+		switch (this.Section.GetType()) {
+			case c_oAscSectionBreakType.OddPage:
+				return "oddPage";
+			case c_oAscSectionBreakType.EvenPage:
+				return "evenPage";
+			case c_oAscSectionBreakType.Continuous:
+				return "continuous";
+			case c_oAscSectionBreakType.Column:
+				return "nextColumn";
+			case c_oAscSectionBreakType.NextPage:
+				return "nextPage";
+		}
+	};
+
 	/**
 	 * Specifies that all the text columns in the current section are of equal width.
 	 * @memberof ApiSection
@@ -11221,7 +11390,7 @@
 		oCapPr.Label = sLabel;
 		oCapPr.Before = bBefore;
 		oCapPr.ExcludeLabel = bExludeLabel;
-		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Format = nNumFormat;
 		oCapPr.Separator = sCaptionSep;
 		oCapPr.Additional = sAdditional;
 
@@ -16161,6 +16330,24 @@
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
+	/**
+	 * Returns the value of color in RGB format
+	 * @memberof ApiUniColor
+	 * @typeofeditors ["CDE"]
+	 * @returns {number}
+	 */
+	ApiUniColor.prototype.GetRGB = function()
+	{
+		if (!this.Unicolor || !this.Unicolor.RGBA)
+			return 0;
+		
+		let logicDocument = private_GetLogicDocument();
+		if (this.Unicolor.check && logicDocument)
+			this.Unicolor.check(logicDocument.GetTheme(), logicDocument.GetColorMap());
+		
+		let c = this.Unicolor.RGBA;
+		return (c.R << 16) | (c.G << 8) | c.B;
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -17828,7 +18015,7 @@
 		oCapPr.Label = sLabel;
 		oCapPr.Before = bBefore;
 		oCapPr.ExcludeLabel = bExludeLabel;
-		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Format = nNumFormat;
 		oCapPr.Separator = sCaptionSep;
 		oCapPr.Additional = sAdditional;
 
@@ -20281,10 +20468,13 @@
 	ApiRange.prototype["SetFontFamily"]              = ApiRange.prototype.SetFontFamily;
 	ApiRange.prototype["SetStyle"]                   = ApiRange.prototype.SetStyle;
 	ApiRange.prototype["SetTextPr"]                  = ApiRange.prototype.SetTextPr;
+	ApiRange.prototype["GetTextPr"]                  = ApiRange.prototype.GetTextPr;
 	ApiRange.prototype["Delete"]                     = ApiRange.prototype.Delete;
 	ApiRange.prototype["ToJSON"]                     = ApiRange.prototype.ToJSON;
 	ApiRange.prototype["AddComment"]                 = ApiRange.prototype.AddComment;
 	ApiRange.prototype["GetRange"]                   = ApiRange.prototype.GetRange;
+	ApiRange.prototype["GetStartPage"]               = ApiRange.prototype.GetStartPage;
+	ApiRange.prototype["GetEndPage"]                 = ApiRange.prototype.GetEndPage;
 
 	ApiDocument.prototype["GetClassType"]                = ApiDocument.prototype.GetClassType;
 	ApiDocument.prototype["CreateNewHistoryPoint"]       = ApiDocument.prototype.CreateNewHistoryPoint;
@@ -20342,6 +20532,7 @@
 	ApiDocument.prototype["GetStatistics"]               = ApiDocument.prototype.GetStatistics;
 	ApiDocument.prototype["GetPageCount"]                = ApiDocument.prototype.GetPageCount;
 	ApiDocument.prototype["GetAllStyles"]                = ApiDocument.prototype.GetAllStyles;
+	ApiDocument.prototype["GetDocumentInfo"]             = ApiDocument.prototype.GetDocumentInfo;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceCurrentImage"]         = ApiDocument.prototype.ReplaceCurrentImage;
@@ -20494,6 +20685,7 @@
 
 	ApiSection.prototype["GetClassType"]             = ApiSection.prototype.GetClassType;
 	ApiSection.prototype["SetType"]                  = ApiSection.prototype.SetType;
+	ApiSection.prototype["GetType"]                  = ApiSection.prototype.GetType;
 	ApiSection.prototype["SetEqualColumns"]          = ApiSection.prototype.SetEqualColumns;
 	ApiSection.prototype["SetNotEqualColumns"]       = ApiSection.prototype.SetNotEqualColumns;
 	ApiSection.prototype["SetPageSize"]              = ApiSection.prototype.SetPageSize;
@@ -20862,6 +21054,7 @@
 
 	ApiUniColor.prototype["GetClassType"]            = ApiUniColor.prototype.GetClassType;
 	ApiUniColor.prototype["ToJSON"]                  = ApiUniColor.prototype.ToJSON;
+	ApiUniColor.prototype["GetRGB"]                  = ApiUniColor.prototype.GetRGB;
 
 	ApiRGBColor.prototype["GetClassType"]            = ApiRGBColor.prototype.GetClassType;
 	ApiRGBColor.prototype["ToJSON"]                  = ApiRGBColor.prototype.ToJSON;
@@ -21175,6 +21368,39 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * @param oApiRange
+	 * @param oTextPr
+	 * @constructor
+	 */
+	function ApiRangeTextPr(oApiRange, oTextPr)
+	{
+		ApiTextPr.call(this, oApiRange, oTextPr);
+	}
+	ApiRangeTextPr.prototype = Object.create(ApiTextPr.prototype);
+	ApiRangeTextPr.prototype.constructor = ApiRangeTextPr;
+	ApiRangeTextPr.prototype.private_Update = function()
+	{
+		if (!this.Parent)
+			return;
+		
+		this.TextPr.Set_FromObject(this.Parent.private_GetTextPr());
+	};
+	(function(prototype) {
+		for (let key in prototype)
+		{
+			if (typeof(prototype[key]) === 'function' && key.startsWith('Get'))
+			{
+				prototype[key] = function()
+				{
+					this.private_Update();
+					return ApiTextPr.prototype[key].apply(this, arguments);
+				};
+			}
+		}
+	})(ApiRangeTextPr.prototype);
+
+
 	function ToApiForm(oForm)
 	{
 		if (!oForm)
@@ -21278,6 +21504,27 @@
 			return (new ApiInlineLvlSdt(oElement)).GetForm();
 		else
 			return new ApiUnsupported();
+	}
+	function private_GetSupportedDocContentElement(oElement)
+	{
+		if (oElement instanceof AscWord.Paragraph)
+			return new ApiParagraph(oElement);
+		else if (oElement instanceof AscWord.Table)
+			return new ApiTable(oElement);
+		else if (oElement instanceof AscWord.CBlockLevelSdt)
+			return new ApiBlockLvlSdt(oElement);
+		else
+			return new ApiUnsupported();
+	}
+	function private_GetReviewedElement(oElement)
+	{
+		if (oElement instanceof AscWord.Paragraph)
+			return new ApiParagraph(oElement);
+		else if (oElement instanceof AscWord.Table)
+			return new ApiTable(oElement);
+		
+		// Такого не должно быть (возможно стоит выбросить исключение)
+		return null;
 	}
 
 	function private_CheckForm(oSdt)
@@ -22128,6 +22375,11 @@
 	{
 		let oComment = new ApiComment(this.Comment);
 		oComment.private_OnChange();
+	};
+
+	ApiRange.prototype.OnChangeTextPr = function(oApiTextPr)
+	{
+		this.SetTextPr(oApiTextPr);
 	};
 
 	Api.prototype.private_CreateApiParagraph = function(oParagraph){

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -73,7 +73,8 @@ CDocumentContentBase.prototype.GetLogicDocument = function()
 };
 CDocumentContentBase.prototype.getDrawingDocument = function()
 {
-	return this.GetApi().getDrawingDocument();
+	let api = this.GetApi();
+	return api && api.getDrawingDocument();
 };
 /**
  * Получаем тип активной части документа.
@@ -2852,4 +2853,17 @@ CDocumentContentBase.prototype.getSelectionInfo = function()
 CDocumentContentBase.prototype.getDocumentContentPosition = function(isSelection, isStart)
 {
 	return this.GetContentPosition(isSelection, isStart);
+};
+CDocumentContentBase.prototype.GetCurrentRun = function()
+{
+	let paragraph = this.GetCurrentParagraph(false, false);
+	if (!paragraph || !paragraph.IsParagraph())
+		return null;
+	
+	let paraPos = paragraph.Get_ParaContentPos(false);
+	let run = paragraph.GetElementByPos(paraPos);
+	if (!run || !(run instanceof AscWord.CRun))
+		return null;
+	
+	return run;
 };

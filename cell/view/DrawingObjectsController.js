@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -692,7 +692,7 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
                     {
                         oItem = new AscWord.CRunText(Code);
                     }
-                    this.paragraphAdd(oItem, false);
+                    this.paragraphAdd(oItem, true);
                 }
             }
             else
@@ -706,7 +706,7 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
                 {
                     oItem = new AscWord.CRunText(Code);
                 }
-                this.paragraphAdd(oItem, false);
+                this.paragraphAdd(oItem, true);
             }
             this.checkMobileCursorPosition();
             this.recalculateCurPos(true, true);

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -785,8 +785,6 @@
             endStyle,
 			oExp;
 
-		this.SaveTokensWhileReturn();
-
 		if (this.oLookahead.class === Literals.lBrackets.id || this.oLookahead.class === Literals.lrBrackets.id || this.oLookahead.data === "├")
 		{
 			if (this.oLookahead.data === "├")
@@ -856,7 +854,10 @@
 
 			if (!strClose)
 			{
-				return this.WriteSavedTokens();
+				return [{
+					type:  oLiteralNames.charLiteral[num],
+					value: strOpen,
+				}, oExp]
 			}
 
 			return {
@@ -1659,10 +1660,8 @@
 	{
 		const arrDiacriticList = [];
 
-		while (this.IsDiacriticsLiteral())
-		{
-            arrDiacriticList.push(this.EatToken(Literals.accent.id));
-		}
+		arrDiacriticList.push(this.oLookahead.data);
+		this.EatToken(MathLiteral.accent.id);
 
 		return this.GetContentOfLiteral(arrDiacriticList);
 	};
@@ -1831,12 +1830,12 @@
 			if (this.oLookahead.data === " ")
 				this.EatToken(this.oLookahead.class);
 
-			if (this.IsDiacriticsLiteral())
+			while (this.IsDiacriticsLiteral())
 			{
 				const oDiacritic = this.GetDiacriticsLiteral();
 				if (oDiacritic === "''" || oDiacritic === "'")
 				{
-					return {
+					oEntity = {
 						type: Struc.sub_sub,
 						value: oEntity,
 						up: oDiacritic,
@@ -1844,7 +1843,7 @@
 				}
 				else if (oDiacritic === "̅" && this.IsGetOneBarLiteral(oEntity))
 				{
-					return this.GetOneBarLiteral(oEntity, oDiacritic);
+					oEntity = this.GetOneBarLiteral(oEntity, oDiacritic);
 				}
 
 				//nbsp processing for accents
@@ -1858,8 +1857,12 @@
 					base: oEntity,
 					value: oDiacritic,
 				};
+
+				if (this.oLookahead.class === MathLiteral.space.id)
+					this.EatToken(this.oLookahead.class);
 			}
-			else if (this.IsHBracketLiteral())
+
+			if (this.IsHBracketLiteral())
 			{
 				return this.GetSpecialHBracket(oEntity);
 			}
