@@ -1679,7 +1679,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 		return false;
 	};
     Slide.prototype.getTheme = function(){
-        return this.Layout && this.Layout.Master && this.Layout.Master.Theme || null;
+        return this.Layout && this.Layout.getTheme() || null;
     };
     Slide.prototype.getMaster = function(){
         return this.getParentObjects().master;

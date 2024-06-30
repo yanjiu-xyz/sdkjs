@@ -166,6 +166,9 @@ MasterSlide.prototype.getDrawingDocument = function() {
 MasterSlide.prototype.getTheme = function(){
     return  this.Theme || null;
 };
+MasterSlide.prototype.getColorMap = function() {
+    return AscFormat.GetDefaultColorMap();
+};
 MasterSlide.prototype.getMaster = function(){
     return this.getParentObjects().master;
 };
