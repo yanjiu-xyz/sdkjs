@@ -1051,7 +1051,7 @@
 				}
 			}
 			let convertToOrigin = '';
-			if (!!this.DocInfo.get_DirectUrl() && this["asc_isSupportFeature"]("ooxml")) {
+			if (!!(this.DocInfo && this.DocInfo.get_DirectUrl()) && this["asc_isSupportFeature"]("ooxml")) {
 				convertToOrigin = '.docx.xlsx.pptx';
 			}
 
