@@ -837,12 +837,18 @@
 
 		this.curMarkerType	= value ? nType : undefined;
 		let oDoc			= this.getPDFDoc();
+		let oActiveObj		= oDoc.GetActiveObject();
 		let oViewer			= oDoc.Viewer;
 		let oDrDoc			= oDoc.GetDrawingDocument();
 		
 		if (value == true) {
-			oDoc.BlurActiveObject();
-			oDoc.UpdateInterface();
+			if (oActiveObj) {
+				oDoc.BlurActiveObject();
+				oDoc.UpdateInterface();
+			}
+		}
+		else {
+			oViewer.onUpdateOverlay();
 		}
 
 		if (this.isMarkerFormat) {
@@ -881,6 +887,9 @@
 			oDoc.bOffMarkerAfterUsing = true;
 		}
 	};
+	PDFEditorApi.prototype.IsCommentMarker = function() {
+        return this.curMarkerType !== undefined;
+    };
 
 	PDFEditorApi.prototype.get_PageWidth  = function(nPage) {
 		let oDoc = this.getPDFDoc();
