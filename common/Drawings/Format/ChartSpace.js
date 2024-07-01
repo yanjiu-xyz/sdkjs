@@ -7257,7 +7257,6 @@ function(window, undefined) {
 		}
 
 		if (bMerge) {
-
 			var oParaPr = oCopy.txPr.content.Content[0].Pr.Copy();
 			var oParaPr2 = new CParaPr();
 			var oCopyTextPr = oTextPr.Copy();
@@ -7810,13 +7809,13 @@ function(window, undefined) {
 			let style = CHART_STYLE_MANAGER.getStyleByIndex(this.style);
 			let parents = this.getParentObjects();
 			let RGBA = {R: 0, G: 0, B: 0, A: 255};
-			let nMaxSeriesIdx = this.chart.plotArea.getMaxSeriesIdx();
+			let nColorsCount = this.chart.plotArea.getMaxSeriesIdx() + 1;
 			let oChartSpace = this;
 			function defaultCalculateSeriesColors(aSeries) {
-				let base_fills = getArrayFillsFromBase(style.fill2, nMaxSeriesIdx);
+				let base_fills = getArrayFillsFromBase(style.fill2, nColorsCount);
 				let base_line_fills = null;
 				if (style.line1 === EFFECT_SUBTLE && oChartSpace.style === 34)
-					base_line_fills = getArrayFillsFromBase(style.line2, nMaxSeriesIdx);
+					base_line_fills = getArrayFillsFromBase(style.line2, nColorsCount);
 				for (let nSer = 0; nSer < aSeries.length; ++nSer) {
 					let oSeries = aSeries[nSer];
 					var compiled_brush = new AscFormat.CUniFill();
@@ -7915,7 +7914,6 @@ function(window, undefined) {
 			}
 			else {
 				let aCharts = this.chart.plotArea.charts;
-				let nMaxSeriesIdx = this.chart.plotArea.getMaxSeriesIdx();
 				for (let nChart = 0; nChart < aCharts.length; ++nChart) {
 					let oChart = aCharts[nChart];
 					let series = oChart.series;
@@ -8063,7 +8061,7 @@ function(window, undefined) {
 						var nChartType = oChart.getObjectType();
 						if (nChartType === AscDFH.historyitem_type_LineChart ||
 							(nChartType === AscDFH.historyitem_type_RadarChart && (oChart.radarStyle === AscFormat.RADAR_STYLE_STANDARD || oChart.radarStyle === AscFormat.RADAR_STYLE_MARKER))) {
-							var base_line_fills = getArrayFillsFromBase(style.line4, nMaxSeriesIdx);
+							var base_line_fills = getArrayFillsFromBase(style.line4, nColorsCount);
 							if (!AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(this)) {
 								for (var i = 0; i < series.length; ++i) {
 									var default_line = parents.theme.themeElements.fmtScheme.lnStyleLst[0];
@@ -8097,13 +8095,14 @@ function(window, undefined) {
 										}
 										pts[j].brush = null;
 										pts[j].pen = compiled_line;
+										pts[j].pen.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, this.clrMapOvr);
 									}
 								}
 							} else {
-								var base_fills = getArrayFillsFromBase(style.fill2, nMaxSeriesIdx);
+								var base_fills = getArrayFillsFromBase(style.fill2, nColorsCount);
 								var base_line_fills = null;
 								if (style.line1 === EFFECT_SUBTLE && this.style === 34)
-									base_line_fills = getArrayFillsFromBase(style.line2, nMaxSeriesIdx);
+									base_line_fills = getArrayFillsFromBase(style.line2, nColorsCount);
 								for (var i = 0; i < series.length; ++i) {
 									var ser = series[i];
 									var compiled_brush = new AscFormat.CUniFill();
@@ -8184,7 +8183,7 @@ function(window, undefined) {
 								}
 							}
 						} else if (nChartType === AscDFH.historyitem_type_ScatterChart) {
-							var base_line_fills = getArrayFillsFromBase(style.line4, nMaxSeriesIdx);
+							var base_line_fills = getArrayFillsFromBase(style.line4, nColorsCount);
 							for (var i = 0; i < series.length; ++i) {
 								var default_line = parents.theme.themeElements.fmtScheme.lnStyleLst[0];
 								var ser = series[i];
@@ -8218,12 +8217,12 @@ function(window, undefined) {
 												if (ser.dPt[k].spPr) {
 													pts[j].pen = ser.compiledSeriesPen.createDuplicate();
 													pts[j].pen.merge(ser.dPt[k].spPr.ln);
-													pts[j].pen.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, this.clrMapOvr);
 												}
 												break;
 											}
 										}
 									}
+									pts[j].pen.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, this.clrMapOvr);
 								}
 							}
 						} else if (nChartType === AscDFH.historyitem_type_SurfaceChart) {
