@@ -3320,7 +3320,9 @@
 
 			if (e.KeyCode === 8) // BackSpace
 			{
-				oDoc.Remove(-1, e.CtrlKey == true);
+				oDoc.DoAction(function() {
+					oDoc.Remove(-1, e.CtrlKey == true);
+				}, AscDFH.historydescription_Document_BackSpaceButton);
 			}
 			else if (e.KeyCode === 9) // Tab
 			{
@@ -3329,7 +3331,6 @@
 				let oActiveObj = oDoc.GetActiveObject();
 				if (oActiveObj && oActiveObj.IsDrawing()) {
 					if (oActiveObj.IsGraphicFrame()) {
-						oDoc.CreateNewHistoryPoint({objects: [oActiveObj]});
 						oActiveObj.graphicObject.MoveCursorToCell(e.ShiftKey ? false : true);
 						if (false == AscCommon.History.Is_LastPointEmpty()) {
 							oActiveObj.SetNeedRecalc(true);
@@ -3338,7 +3339,6 @@
 						oDrDoc.showTarget(true);
 						oDoc.SetNeedUpdateTarget(true);
 						this._checkTargetUpdate();
-						oDoc.TurnOffHistory();
 					}
 					else {
 						oDoc.AddToParagraph(new AscWord.CRunTab());
@@ -3505,7 +3505,9 @@
 			}
 			else if (e.KeyCode === 46) // Delete
 			{
-				oDoc.Remove(1, e.CtrlKey == true);
+				oDoc.DoAction(function() {
+					oDoc.Remove(1, e.CtrlKey == true);
+				}, AscDFH.historydescription_Document_DeleteButton);
 			}
 			else if ( e.KeyCode == 65 && true === e.CtrlKey ) // Ctrl + A
 			{
