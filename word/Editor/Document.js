@@ -8317,15 +8317,11 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 					arrParagraphs[0].AddTrackMoveMark(true, true, this.TrackMoveId);
 				}
 			}
-
-            // Если надо удаляем выделенную часть (пересчет отключаем на время удаления)
-            if (true !== bCopy)
-            {
-                this.TurnOff_Recalculate();
-                this.TurnOff_InterfaceEvents();
-                this.Remove(1, false, false, true);
-                this.TurnOn_Recalculate(false);
-                this.TurnOn_InterfaceEvents(false);
+			
+			if (!bCopy)
+			{
+				// TODO: Проверить, зачем тут посылается isOnAddText=true. Когда выделены ячейки таблицы точно нужно посылать false
+				this.Remove(1, false, false, !this.IsTableCellSelection());
 
                 if (false === Para.IsUseInDocument())
                 {
