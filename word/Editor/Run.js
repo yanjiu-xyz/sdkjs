@@ -194,9 +194,8 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 
 	var isCopyReviewPr = oPr.CopyReviewPr;
 
-    var bMath = this.Type == para_Math_Run ? true : false;
-
-    var NewRun = new ParaRun(this.Paragraph, bMath);
+	let isMathRun = this.IsMathRun();
+	let NewRun = new AscWord.Run(undefined, isMathRun);
 
 	NewRun.Set_Pr(this.Pr.Copy(isCopyReviewPr, oPr));
 
@@ -218,9 +217,9 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 	{
 		NewRun.SetReviewType(reviewtype_Add);
 	}
-
-    if(true === bMath)
-        NewRun.Set_MathPr(this.MathPrp.Copy());
+	
+	if (isMathRun)
+		NewRun.Set_MathPr(this.MathPrp.Copy());
 
 
 

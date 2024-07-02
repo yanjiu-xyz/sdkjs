@@ -6259,14 +6259,8 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 			Cell.Content.SelectAll();
 			Cell.Content.Remove(Count, bOnlyText, bRemoveOnlySelection, true, false);
 
+			this.RemoveSelection();
 			this.CurCell = Cell;
-
-			this.Selection.Use   = false;
-			this.Selection.Start = false;
-
-			this.Selection.StartPos.Pos = {Row : Cell.Row.Index, Cell : Cell.Index};
-			this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
-
 			this.Document_SetThisElementCurrent(true);
 		}
 		else
