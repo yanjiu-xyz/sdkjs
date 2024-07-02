@@ -114,7 +114,7 @@ var CPresentation = CPresentation || function(){};
 
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
-        this.styles                 = AscCommonWord.DEFAULT_STYLES.Copy();
+        this.styles                 = AscWord.DEFAULT_STYLES.Copy();
         this.TableStylesIdMap       = {};
         this.InitDefaultTextListStyles();
         this.InitDefaultTableStyles();

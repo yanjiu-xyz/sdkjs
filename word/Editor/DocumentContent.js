@@ -459,7 +459,7 @@ CDocumentContent.prototype.GetStyles = function(nLvl)
 	if (this.LogicDocument)
 		return this.LogicDocument.GetStyles();
 
-	return AscCommonWord.DEFAULT_STYLES;
+	return AscWord.DEFAULT_STYLES;
 };
 CDocumentContent.prototype.Get_TableStyleForPara = function()
 {

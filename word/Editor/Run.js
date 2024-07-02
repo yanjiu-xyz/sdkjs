@@ -7538,8 +7538,8 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 	// Получим настройки текста, для данного параграфа
 	var TextPr = this.Paragraph.Get_CompiledPr2(false).TextPr.Copy();
 	
-	let logicDocument = this.Paragraph.GetLogicDocument();
-	let Styles        = logicDocument ? logicDocument.GetStyles() : null;
+	let paraParent = this.Paragraph.GetParent();
+	let Styles     = paraParent && paraParent.Get_Styles() ? paraParent.Get_Styles() : null;
 
 	// Мержим настройки стиля.
 	// Одно исключение, когда задан стиль Hyperlink внутри класса Hyperlink внутри поля TOC, то стиль

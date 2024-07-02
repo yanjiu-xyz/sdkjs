@@ -4741,8 +4741,11 @@ CPresentation.prototype.setVert = function (align) {
 };
 
 CPresentation.prototype.Get_Styles = function () {
-	var styles = new CStyles();
+	var styles = AscWord.DEFAULT_STYLES;
 	return {styles: styles, lastId: styles.Get_Default_Paragraph()}
+};
+CPresentation.prototype.GetStyles = function () {
+	return this.Get_Styles();
 };
 
 CPresentation.prototype.IsTableCellContent = function (isReturnCell) {

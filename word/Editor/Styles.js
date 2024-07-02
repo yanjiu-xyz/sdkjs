@@ -7263,7 +7263,7 @@ function CStyles(bCreateDefault)
 
         this.Style = [];
 		
-		// TODO: Сейчас почти все стили параграфа и текста заданы в AscWord.DEFAULT_STYLES
+		// TODO: Сейчас почти все стили параграфа и текста заданы в AscWord.DEFAULT_STYLE_LIST
 		//       Стили таблиц нужно переделать также
 		
 		// Создаем стандартный стиль для таблиц
@@ -7793,7 +7793,7 @@ function CStyles(bCreateDefault)
 		this.Add( Style_Table_Bordered_Accent_6 );
 		
 		
-		this.AddStylesFromObject(AscWord.DEFAULT_STYLES);
+		this.AddStylesFromObject(AscWord.DEFAULT_STYLE_LIST);
 		this.UpdateDefaultStyleLinks();
 
 		for (var nLvl = 0; nLvl <= 8; ++nLvl)
@@ -17400,7 +17400,7 @@ AscWord.WHITE_COLOR = new AscWord.CDocumentColor(255, 255, 255, false);
 var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
 var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);
 
-window["AscCommonWord"].DEFAULT_STYLES                = new CStyles(false);
+window["AscWord"].DEFAULT_STYLES = new CStyles(false);
 window["AscCommonWord"].g_oDocumentDefaultFillColor   = g_oDocumentDefaultFillColor;
 window["AscCommonWord"].g_oDocumentDefaultStrokeColor = g_oDocumentDefaultStrokeColor;
 
