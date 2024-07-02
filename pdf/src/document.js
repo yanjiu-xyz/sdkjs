@@ -114,7 +114,7 @@ var CPresentation = CPresentation || function(){};
 
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
-        this.styles                 = AscCommonWord.DEFAULT_STYLES.Copy();
+        this.styles                 = AscWord.DEFAULT_STYLES.Copy();
         this.TableStylesIdMap       = {};
         this.InitDefaultTextListStyles();
         this.InitDefaultTableStyles();
@@ -1711,7 +1711,6 @@ var CPresentation = CPresentation || function(){};
         // если рисование или добавление шейпа то просто заканчиваем его
         else if (IsOnDrawer || IsOnAddAddShape) {
             oController.OnMouseUp(e, X, Y, pageObject.index);
-            e.IsLocked = false;
             return;
         }
 
@@ -1743,8 +1742,6 @@ var CPresentation = CPresentation || function(){};
             oViewer.navigateToLink(oMouseUpLink);
         }
         
-        e.IsLocked = false;
-
         this.UpdateInterface();
         oViewer.onUpdateOverlay();
         oViewer.file.onUpdateSelection();

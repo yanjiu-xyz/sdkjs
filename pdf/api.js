@@ -471,7 +471,7 @@
 		let docContent = textController.GetDocContent();
 		let result = textController.EnterText(codePoints);
 		
-		if (null == drController.getTargetTextObject()) {
+		if (null == drController.getTargetTextObject() && false == textController.IsForm()) {
 			drController.selection.textSelection = textController;
 		}
 
@@ -499,6 +499,7 @@
 			return oSmartArt;
 		});
 	};
+	PDFEditorApi.prototype.asc_undoAllChanges = function() {};
 	PDFEditorApi.prototype.asc_addChartDrawingObject = function(chartBinary, Placeholder) {
 		let oDoc	= this.getPDFDoc();
 		let oViewer	= this.getDocumentRenderer();
@@ -2392,6 +2393,7 @@
 	PDFEditorApi.prototype['asc_AddPage']                  = PDFEditorApi.prototype.asc_AddPage;
 	PDFEditorApi.prototype['asc_RemovePage']			   = PDFEditorApi.prototype.asc_RemovePage;
 	PDFEditorApi.prototype['asc_createSmartArt']		   = PDFEditorApi.prototype.asc_createSmartArt;
+	PDFEditorApi.prototype['asc_undoAllChanges']		   = PDFEditorApi.prototype.asc_undoAllChanges;
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
@@ -2409,8 +2411,8 @@
 	PDFEditorApi.prototype['Paste']                        = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['asc_PasteData']                = PDFEditorApi.prototype.asc_PasteData;
 
-	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
-	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
+	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.getSelectionState;
+	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.getSpeechDescription;
 
 	PDFEditorApi.prototype['asc_ShowDocumentOutline']      = PDFEditorApi.prototype.asc_ShowDocumentOutline;
 	PDFEditorApi.prototype['asc_HideDocumentOutline']      = PDFEditorApi.prototype.asc_HideDocumentOutline;
