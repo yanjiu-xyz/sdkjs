@@ -7537,18 +7537,19 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 
 	// Получим настройки текста, для данного параграфа
 	var TextPr = this.Paragraph.Get_CompiledPr2(false).TextPr.Copy();
+	
+	let logicDocument = this.Paragraph.GetLogicDocument();
+	let Styles        = logicDocument ? logicDocument.GetStyles() : null;
 
 	// Мержим настройки стиля.
 	// Одно исключение, когда задан стиль Hyperlink внутри класса Hyperlink внутри поля TOC, то стиль
 	// мержить не надо и, более того, цвет и подчеркивание из прямых настроек тоже не используется.
-	if (undefined !== this.Pr.RStyle)
+	if (Styles
+		&& this.Pr.RStyle
+		&& (!this.IsStyleHyperlink() || !this.IsInHyperlinkInTOC()))
 	{
-		if (!this.IsStyleHyperlink() || !this.IsInHyperlinkInTOC())
-		{
-			var Styles      = this.Paragraph.Parent.Get_Styles();
-			var StyleTextPr = Styles.Get_Pr(this.Pr.RStyle, styletype_Character).TextPr;
-			TextPr.Merge(StyleTextPr);
-		}
+		var StyleTextPr = Styles.Get_Pr(this.Pr.RStyle, styletype_Character).TextPr;
+		TextPr.Merge(StyleTextPr);
 	}
 
 	if (this.Type === para_Math_Run)
@@ -7563,10 +7564,9 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 			return TextPr;
 		}
 
-		if (!this.IsNormalText()) // math text
+		if (!this.IsNormalText() && Styles) // math text
 		{
 			// выставим дефолтные текстовые настройки  для математических Run
-			var Styles  = this.Paragraph.Parent.Get_Styles();
 			var StyleId = this.Paragraph.Style_Get();
 			// скопируем текстовые настройки прежде чем подменим на пустые
 
