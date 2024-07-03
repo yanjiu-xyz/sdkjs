@@ -11969,8 +11969,20 @@ Paragraph.prototype.private_CorrectNearestPos = function(ContentPos, Anchor, Dra
 				this.Set_ParaContentPos(ContentPos, false, -1, -1);
 			}
 		}
+		
+		// TODO: Пока сделаем так, чтобы картинка перемещался в заданный параграф. По-хорошему нужно найти ближайшую
+		//  позицию за пределами формы или другого запрещенного элемента
+		let classes = this.GetClassesByPos(ContentPos);
+		for (let index = 0; index < classes.length; ++index)
+		{
+			if (classes[index] instanceof AscWord.CInlineLevelSdt && classes[index].IsForm())
+			{
+				ContentPos = this.GetStartPos();
+				break;
+			}
+		}
 	}
-
+	
 	return ContentPos;
 };
 Paragraph.prototype.Check_NearestPos = function(NearPos)
