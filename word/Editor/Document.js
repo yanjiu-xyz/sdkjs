@@ -19832,7 +19832,9 @@ CDocument.prototype.controller_MoveCursorUp = function(AddToSelect)
 };
 CDocument.prototype.controller_MoveCursorDown = function(AddToSelect)
 {
-	if (true === this.IsSelectionUse() && true !== AddToSelect)
+	if (this.IsSelectionUse()
+		&& !AddToSelect
+		&& !this.IsTableCellSelection())
 	{
 		var oCurParagraph = this.GetCurrentParagraph(true);
 		this.MoveCursorRight(false, false);
