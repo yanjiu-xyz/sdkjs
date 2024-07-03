@@ -970,11 +970,14 @@ RotateState.prototype =
                     var i, j, page_index, para_drawing;
                     for(i = 0; i < aTracks.length; ++i)
                     {
-                        aDrawings[i] = aTracks[i].originalObject.parent;
-                        bounds = aTracks[i].getBounds();
+                        let oTrack = aTracks[i];
+                        let oDrawing = oTrack.originalObject;
+                        let oParaDrawing = oDrawing.GetParaDrawing()
+                        aDrawings[i] = oParaDrawing;
+                        bounds = oTrack.getBounds();
                         aBounds.push(bounds);
-                        page_index = AscFormat.isRealNumber(aTracks[i].pageIndex) ? aTracks[i].pageIndex : aTracks[i].originalObject.parent.pageIndex;
-                        nearest_pos = this.drawingObjects.document.Get_NearestPos(page_index, bounds.min_x, bounds.min_y, true, aTracks[i].originalObject.parent);
+                        page_index = AscFormat.isRealNumber(oTrack.pageIndex) ? oTrack.pageIndex : oParaDrawing.pageIndex;
+                        nearest_pos = this.drawingObjects.document.Get_NearestPos(page_index, bounds.min_x, bounds.min_y, true, oParaDrawing);
                         nearest_pos.Paragraph.MoveCursorToAnchorPos(nearest_pos);
                         aNearestPos.push(nearest_pos);
                         aParentParagraphs.push(aDrawings[i].Get_ParentParagraph());
