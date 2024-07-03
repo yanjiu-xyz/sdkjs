@@ -9039,6 +9039,52 @@
 			AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_HF_SetSldNum, this.sldNum, pr));
 			this.sldNum = pr;
 		};
+		HF.prototype.applySettings = function (oSettings) {
+			if(!oSettings) return;
+			if (oSettings.get_ShowSlideNum()) {
+				if (this.sldNum !== null) {
+					this.setSldNum(null);
+				}
+			}
+			else {
+				if (this.sldNum !== false) {
+					this.setSldNum(false);
+				}
+			}
+
+			if (oSettings.get_ShowFooter()) {
+				if (this.ftr !== null) {
+					this.setFtr(null);
+				}
+			}
+			else {
+				if (this.ftr !== false) {
+					this.setFtr(false);
+				}
+			}
+
+			if (oSettings.get_ShowHeader()) {
+				if (this.hdr !== null) {
+					this.setHdr(null);
+				}
+			}
+			else {
+				if (this.hdr !== false) {
+					this.setHdr(false);
+				}
+			}
+
+			if (oSettings.get_ShowDateTime()) {
+				if (this.dt !== null) {
+					this.setDt(null);
+				}
+			}
+			else {
+				if (this.dt !== false) {
+					this.setDt(false);
+				}
+			}
+		};
 
 		function CBgPr() {
 			CBaseNoIdObject.call(this)
