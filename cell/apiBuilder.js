@@ -13493,83 +13493,66 @@
 			return this.GetRowFields();
 		}
 	});
-
 	/**
 	 * Adds row, column, and page fields to a PivotTable report or PivotChart report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {[number | string]} rows - Specifies an array of field names or ids to be added as rows or added to the category axis.
-	 * @param {[number | string]} cols - Specifies an array of field names or ids to be added as columns or added to the series axis.
-	 * @param {[number | string]} pages - Specifies an array of field names or ids to be added as pages or added to the page area.
-	 * @param {boolean} addToTable - Applies only to PivotTable reports. True to add the specified fields to the report (none of the existing fields are replaced). False to replace existing fields with the new fields. The default value is False.
+	 * @param {Object} options 
+	 * @param {number | string | Array.<number | string> | undefined} options.rows - Specifies an array of field names or ids to be added as rows or added to the category axis.
+	 * @param {number | string | Array.<number | string> | undefined} options.cols - Specifies an array of field names or ids to be added as columns or added to the series axis.
+	 * @param {number | string | Array.<number | string> | undefined} options.pages - Specifies an array of field names or ids to be added as pages or added to the page area.
+	 * @param {boolean | undefined} options.addToTable - Applies only to PivotTable reports. True to add the specified fields to the report (none of the existing fields are replaced). False to replace existing fields with the new fields. The default value is False.
 	 */
-	ApiPivotTable.prototype.AddFields = function (rows, cols, pages, addToTable) {
-		var fields = this.pivot.asc_getCacheFields();
-		if (!addToTable)
-			this.Clear();
+	ApiPivotTable.prototype.AddFields = function (options) {
+		options.rows = options.rows != null ? options.rows : [];
+		options.cols = options.cols != null ? options.cols : [];
+		options.pages = options.pages != null ? options.pages : [];
 
-		for (var i = 0; i < fields.length ; i++) {
-			var skip = false;
-			if (Array.isArray(rows) && rows.length) {
-				for (var k = rows.length - 1; k >= 0 ; k--) {
-					var el = rows[k];
-					var index = null;
-					if ( typeof el == "number" && el >= 0 && el < fields.length ) {
-						index = el;
-					} else if ( typeof el == "string" && el.trim().toLowerCase() == fields[i].asc_getName().toLowerCase() ) {
-						index = i;
-					}
-
-					if (index !== null) {
-						this.pivot.asc_addRowField(this.api, index);
-						skip = true;
-						rows.splice(k, 1)
-						break;
-					}
+		const rows = Array.isArray(options.rows) ? options.rows : [options.rows];
+		const cols = Array.isArray(options.cols) ? options.cols : [options.cols];
+		const pages = Array.isArray(options.pages) ? options.pages : [options.pages];
+		const cacheFields = this.pivot.asc_getCacheFields();
+		const t = this;
+		function processField(field, callback) {
+			let index = null;
+			if (typeof field == "number" && field >= 0 && field < cacheFields.length) {
+				index = field;
+			} else if (typeof field == "string") {
+				index = t.pivot.asc_getFieldIndexByName(field);
+				if (index < 0) {
+					index = null;
 				}
 			}
-
-			if (skip) continue;
-
-			if (Array.isArray(cols) && cols.length) {
-				for (var k = cols.length - 1; k >= 0 ; k--) {
-					var el = cols[k];
-					var index = null;
-					if ( typeof el == "number" && el >= 0 && el < fields.length ) {
-						index = el;
-					} else if ( typeof el == "string" && el.trim().toLowerCase() == fields[i].asc_getName().toLowerCase() ) {
-						index = i;
-					}
-
-					if (index !== null) {
-						this.pivot.asc_addColField(this.api, index);
-						skip = true;
-						cols.splice(k, 1);
-						break;
-					}
-				}
+			if (index !== null) {
+				callback(index);
+			} else {
+				private_MakeError("There is no field with such an identifier.");
 			}
-
-			if (skip) continue;
-
-			if (Array.isArray(pages) && pages.length) {
-				for (var k = pages.length - 1; k >= 0 ; k--) {
-					var el = pages[k];
-					var index = null;
-					if ( typeof el == "number" && el >= 0 && el < fields.length ) {
-						index = el;
-					} else if ( typeof el == "string" && el.trim().toLowerCase() == fields[i].asc_getName().toLowerCase() ) {
-						index = i;
-					}
-
-					if (index !== null) {
-						this.pivot.asc_addPageField(this.api, index);
-						pages.splice(k, 1);
-						break;
-					}
+		}
+		if (!options.addToTable) {
+			const pivotFields = this.pivot.asc_getPivotFields();
+			for (let i = 0; i < pivotFields.length; i += 1) {
+				if (!pivotFields[i].dataField) {
+					this.pivot.asc_removeField(this.api, i);
 				}
 			}
 		}
+		
+		rows.forEach(function(row) {
+			processField(row, function(index) {
+				t.pivot.asc_addRowField(t.api, index);
+			});
+		});
+		cols.forEach(function(col) {
+			processField(col, function(index) {
+				t.pivot.asc_addColField(t.api, index);
+			});
+		});
+		pages.forEach(function(page) {
+			processField(page, function(index) {
+				t.pivot.asc_addPageField(t.api, index);
+			});
+		});
 	};
 
 	/**
@@ -15813,7 +15796,6 @@
 	// 		private_MakeError("It is not possible from this field.");
 	// 	}
 	// };
-
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
