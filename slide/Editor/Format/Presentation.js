@@ -10540,6 +10540,7 @@ CPresentation.prototype.SetLayoutFooter = function (bVal) {
 		let oSp = oCurSlide.getMatchingShape(nType, null, false, {});
 		if(!bVal) {
 			if(oSp) {
+				oCurSlide.graphicObjects.deselectObject(oSp);
 				oCurSlide.removeFromSpTreeById(oSp.Get_Id());
 			}
 		}
