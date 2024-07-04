@@ -3657,7 +3657,12 @@
 		let oSpParent = this.parent;
 		let oXfrm = this.spPr.xfrm;
 		AscFormat.CheckSpPrXfrm3(this);
+		let scaleX = 1.0;
+		let scaleY = 1.0;
+		let oldExtX = oXfrm.extX;
+		let oldExtY = oXfrm.extY;
 		if (!props.SizeRelH && AscFormat.isRealNumber(props.Width)) {
+			scaleX = props.Width / oXfrm.extX;
 			oXfrm.setExtX(props.Width);
 			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
 				oSpParent.SetSizeRelH({
@@ -3667,6 +3672,7 @@
 			}
 		}
 		if (!props.SizeRelV && AscFormat.isRealNumber(props.Height)) {
+			scaleY = props.Height / oXfrm.extY;
 			oXfrm.setExtY(props.Height);
 			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
 				oSpParent.SetSizeRelV({
@@ -3690,6 +3696,11 @@
 			}
 		}
 		this.ResetParametersWithResize(true);
+		if(this.isGroup()) {
+			oXfrm.setExtX(oldExtX);
+			oXfrm.setExtY(oldExtY);
+			this.changeSize(scaleX, scaleY);
+		}
 		this.checkDrawingBaseCoords();
 	};
 	CGraphicObjectBase.prototype.checkPlaceholders = function(oPlaceholders) {
@@ -3714,6 +3725,9 @@
 	};
 	CGraphicObjectBase.prototype.handleUpdateTheme = function() {
 
+	};
+	CGraphicObjectBase.prototype.changeSize = function (kw, kh) {
+		AscFormat.CShape.prototype.changeSize.call(this, kw, kh);
 	};
 	CGraphicObjectBase.prototype.checkOnDeletePlaceholder = function(oPlaceholders) {
 		if(this.isDependentPlaceholder(oPlaceholders)) {
