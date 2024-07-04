@@ -1141,7 +1141,7 @@ ParaRun.prototype.CheckRunBeforeAdd = function(oItem)
 	oNewRun = this.private_CheckTrackRevisionsBeforeAdd(oNewRun);
 
 	if (oNewRun)
-		oNewRun.Make_ThisElementCurrent();
+		oNewRun.SetThisElementCurrentInParagraph();
 
 	return oNewRun;
 };
