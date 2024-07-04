@@ -1710,10 +1710,15 @@ function CEditorPage(api)
 		if (false === oThis.m_oApi.bInit_word_control)
 			return;
 
-		var oWordControl = oThis;
-		if (0 < oWordControl.m_oDrawingDocument.SlideCurrent)
+		let oWordControl = oThis;
+		let nCurrentSlide = oWordControl.m_oDrawingDocument.SlideCurrent;
+		if (oWordControl.DemonstrationManager.Mode)
 		{
-			oWordControl.GoToPage(oWordControl.m_oDrawingDocument.SlideCurrent - 1);
+			nCurrentSlide = oWordControl.DemonstrationManager.SlideNum;
+		}
+		if (0 < nCurrentSlide)
+		{
+			oWordControl.GoToPage(nCurrentSlide - 1);
 		}
 		else
 		{
@@ -1725,12 +1730,17 @@ function CEditorPage(api)
 		if (false === oThis.m_oApi.bInit_word_control)
 			return;
 
-		var oWordControl = oThis;
-
+		let oWordControl = oThis;
+		let nCurrentSlide = oWordControl.m_oDrawingDocument.SlideCurrent;
 		let SlidesCount = this.GetSlidesCount();
-		if ((SlidesCount - 1) > oWordControl.m_oDrawingDocument.SlideCurrent)
+		if (oWordControl.DemonstrationManager.Mode)
 		{
-			oWordControl.GoToPage(oWordControl.m_oDrawingDocument.SlideCurrent + 1);
+			nCurrentSlide =  oWordControl.DemonstrationManager.SlideNum;
+			SlidesCount = oWordControl.m_oLogicDocument.Slides.length;
+		}
+		if ((SlidesCount - 1) > nCurrentSlide)
+		{
+			oWordControl.GoToPage(nCurrentSlide + 1);
 		}
 		else if (SlidesCount > 0)
 		{
