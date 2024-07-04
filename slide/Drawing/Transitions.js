@@ -3081,6 +3081,15 @@ function CDemonstrationManager(htmlpage)
             oSlide.getAnimationPlayer().pause();
         }
     };
+    this.IsPausedAnimation = function(nSlideNum)
+    {
+        var oSlide = this.GetSlide(nSlideNum);
+        if(oSlide)
+        {
+            return oSlide.getAnimationPlayer().isPaused();
+        }
+        return false;
+    };
 
     this.OnAnimMainSeqFinished = function(nSlideNum)
     {
@@ -3650,19 +3659,20 @@ function CDemonstrationManager(htmlpage)
     this.Play = function(isNoSendFormReporter)
     {
         this.IsPlayMode = true;
-        if (-1 == this.CheckSlideDuration)
+        if(this.IsPausedAnimation(this.SlideNum) || -1 !== this.CheckSlideDuration)
         {
-            this.NextSlide(isNoSendFormReporter);
+            this.StartAnimation(this.SlideNum);
         }
         else
         {
-            this.StartAnimation(this.SlideNum);
+            this.NextSlide(isNoSendFormReporter);
         }
     };
 
     this.Pause = function()
     {
         this.IsPlayMode = false;
+        this.StopTransition();
         this.PauseAnimation(this.SlideNum);
     };
 
