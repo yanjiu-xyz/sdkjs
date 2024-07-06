@@ -3126,6 +3126,10 @@
 	};
 	CGraphicObjectBase.prototype.getBoundsByDrawing = function (bMorph) {
 		const oCopy = this.bounds.copy();
+		if(this.shdwSp) {
+			this.shdwSp.recalculateBounds();
+			oCopy.checkByOther(this.shdwSp.bounds);
+		}
 		if(!bMorph) {
 			oCopy.l -= 3;
 			oCopy.r += 3;
