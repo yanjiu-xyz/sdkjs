@@ -2467,6 +2467,13 @@
 			}
 			return null;
 		};
+		CUniColor.prototype.getTransparency = function () {
+			let nAlphaVal = this.getModValue("alpha");
+			if(nAlphaVal === null) {
+				return 0;
+			}
+			return (100000 - nAlphaVal) / 1000;
+		};
 		CUniColor.prototype.checkWordMods = function () {
 			return this.Mods && this.Mods.Mods.length === 1
 				&& (this.Mods.Mods[0].name === "wordTint" || this.Mods.Mods[0].name === "wordShade");
@@ -4086,11 +4093,7 @@
 			if(!this.color) {
 				return 0;
 			}
-			let nAlphaVal = this.color.getModValue("alpha");
-			if(nAlphaVal === null) {
-				return 0;
-			}
-			return (100000 - nAlphaVal) / 1000;
+			return this.color.getTransparency();
 		};
 		asc_CShadowProperty.prototype.putTransparency = function(nVal) {
 			if(!this.color) {

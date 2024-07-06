@@ -1099,8 +1099,16 @@
 					oSpPr.setGeometry(geometry.createDuplicate());
 				}
 				let oShadowFill;
+				let nTransparency = null;
 				if (outerShdw.color) {
 					oShadowFill = AscFormat.CreateUniFillByUniColorCopy(outerShdw.color);
+					nTransparency = outerShdw.color.getTransparency();
+					if(nTransparency === 0) {
+						oShadowFill.transparent = null;
+					}
+					else {
+						oShadowFill.transparent = 255 - 255 * nTransparency / 100
+					}
 				} else {
 					oShadowFill = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(0, 0, 0));
 				}
