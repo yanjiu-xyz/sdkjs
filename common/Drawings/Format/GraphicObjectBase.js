@@ -1242,9 +1242,8 @@
 				oTransform.ty += this.shdwSp.extY;
 			}
 			global_MatrixTransformer.MultiplyAppend(oTransform, this.transform);
-			this.shdwSp.bounds.x = this.bounds.x + this.shdwSp.bounds.l;
-			this.shdwSp.bounds.y = this.bounds.y + this.shdwSp.bounds.t;
 			this.shdwSp.transform = oTransform;
+			this.shdwSp.recalculateBounds();
 			this.shdwSp.draw(graphics);
 		}
 	};
