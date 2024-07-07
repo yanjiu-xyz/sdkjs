@@ -4767,7 +4767,7 @@ function CThumbnailsManager()
 			// это трек
 			oThis.MouseDownTrack.SetPosition(oThis.ConvertCoords2(global_mouseEvent.X, global_mouseEvent.Y));
 
-			if (-1 !== oThis.MouseDownTrack.GetPosition() && !oThis.MouseDownTrack.IsSamePos())
+			if (-1 !== oThis.MouseDownTrack.GetPosition() && (!oThis.MouseDownTrack.IsSamePos() || AscCommon.global_mouseEvent.CtrlKey))
 			{
 				// вызвать функцию апи для смены слайдов местами
 				var _array = oThis.GetSelectedArray();
