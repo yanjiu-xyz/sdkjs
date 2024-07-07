@@ -5646,10 +5646,13 @@ CDocument.prototype.Draw                                     = function(nPageInd
 	this.HdrFtr.Draw(nPageIndex, pGraphics);
 
 	// Рисуем содержимое документа на данной странице
-	if (docpostype_HdrFtr === this.CurPos.Type)
-		pGraphics.put_GlobalAlpha(true, 0.4);
-	else if (!this.IsViewMode())
-		pGraphics.End_GlobalAlpha();
+	if (pGraphics.isSupportEditFeatures())
+	{
+		if (docpostype_HdrFtr === this.CurPos.Type)
+			pGraphics.put_GlobalAlpha(true, 0.4);
+		else if (!this.IsViewMode())
+			pGraphics.End_GlobalAlpha();
+	}
 	
     this.DrawingObjects.drawBehindDoc(nPageIndex, pGraphics);
 
