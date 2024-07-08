@@ -2721,6 +2721,10 @@ function PivotTableChanged() {
 	this.style = false;
 	this.data = false;
 }
+
+/**
+ * @constructor
+ */
 function CT_pivotTableDefinition(setDefaults) {
 //Attributes
 	this.name = null;
@@ -7782,10 +7786,10 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 	const rowItems = this.getRowItems();
 	const colItems = this.getColItems();
 	const dataFields = this.asc_getDataFields();
-	const cacheFieds = this.asc_getCacheFields();
+	const cacheFileds = this.asc_getCacheFields();
 	const indexes = this.getItemsIndexesByActiveCell(row, col);
 	const dataIndex = Math.max(rowItems[indexes.rowItemIndex].i, colItems[indexes.colItemIndex].i);
-	const dataFieldName = dataFields.length === 1 ? cacheFieds[dataFields[dataIndex].fld].asc_getName() : dataFields[dataIndex].asc_getName();
+	const dataFieldName = dataFields.length === 1 ? cacheFileds[dataFields[dataIndex].fld].asc_getName() : dataFields[dataIndex].asc_getName();
 	const itemMapArray = this.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex);
 	if (!itemMapArray){
 		return null;
@@ -7798,7 +7802,7 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 	itemMapArray.forEach(function(item) {
 		const fieldIndex = item[0];
 		const fieldItemIndex = item[1];
-		const cacheField = cacheFieds[fieldIndex];
+		const cacheField = cacheFileds[fieldIndex];
 		const result = t.getGetPivotParam(cacheField, fieldItemIndex);
 		resultOptParams.push(cacheField.asc_getName(), result.value);
 		resultOptParamsFormula.push('"' + cacheField.asc_getName() + '"', result.formulaValue);
@@ -8280,6 +8284,68 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 CT_pivotTableDefinition.prototype.getFormatting = function(query) {
 	return this.formatsManager.get(query);
 };
+/**
+ * @param {string} itemString
+ * @return {number}
+ */
+CT_pivotTableDefinition.prototype.findFieldByItem = function(itemString) {
+	const cacheFields = this.asc_getCacheFields();
+	const pivotFields = this.asc_getPivotFields();
+	for (let i = 0; i < cacheFields.length; i += 1) {
+		const cacheField = cacheFields[i];
+		const pivotField = pivotFields[i];
+		if (pivotField.findFieldItemByTextValue(cacheField, itemString)) {
+			return i;
+		}
+	}
+	return null;
+};
+/**
+ * @param {string[]} items 
+ * @return {GetPivotDataParams}
+ */
+CT_pivotTableDefinition.prototype.getDataToGetPivotData = function(items) {
+	const getPivotDataParams = {
+		dataFieldName: null,
+		optParams: []
+	};
+	const optParamsMap = new Map();
+	const cacheFields = this.asc_getCacheFields();
+	for (let i = 0; i < items.length; i += 1) {
+		const reg = /^(\w+)\[(\w+)\]/;
+		const match = reg.exec(items[i]);
+		if (match !== null && match[1] && match[2]) {
+			const fieldIndex = this.cacheDefinition.cacheFields.getIndexByName(match[1]);
+			if (fieldIndex === null || optParamsMap.has(fieldIndex)) {
+				return null;
+			}
+			optParamsMap.set(fieldIndex, items[i]);
+			getPivotDataParams.optParams.push(cacheFields[fieldIndex].name, match[2]);
+			continue;
+		}
+		if (this.dataFields.getIndexByName(items[i]) !== -1 || this.findDataFieldByFldName(items[i]) !== -1) {
+			if (getPivotDataParams.dataFieldName !== null) {
+				return null;
+			}
+			getPivotDataParams.dataFieldName = items[i];
+		} else {
+			const fieldIndex = this.findFieldByItem(items[i]);
+			if (fieldIndex === null || optParamsMap.has(fieldIndex)) {
+				return null;
+			}
+			optParamsMap.set(fieldIndex, items[i]);
+			getPivotDataParams.optParams.push(cacheFields[fieldIndex].name, items[i]);
+		}
+	}
+	if (!getPivotDataParams.dataFieldName) {
+		const dataFields = this.asc_getDataFields();
+		if (dataFields.length > 1) {
+			return null;
+		}
+		getPivotDataParams.dataFieldName = dataFields[0] && dataFields[0].name;
+	} 
+	return getPivotDataParams;
+}
 
 /**
  * @typedef PivotFormatsCollectionItem
