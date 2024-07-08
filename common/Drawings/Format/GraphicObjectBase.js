@@ -1172,6 +1172,12 @@
 	CGraphicObjectBase.prototype.clearLang = function () {
 	};
 
+	CGraphicObjectBase.prototype.editTxStyleLst = function (ParaPr, bSelect) {
+	};
+	CGraphicObjectBase.prototype.checkEditTextStyle = function (fDocContentMethod, params) {
+		return false;
+	};
+
 	CGraphicObjectBase.prototype.isObjectInSmartArt = function () {
 		if (this.group && this.group.isSmartArtObject()) {
 			return true;

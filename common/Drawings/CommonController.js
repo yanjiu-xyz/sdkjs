@@ -2563,9 +2563,9 @@
 					this.applyDocContentFunction(AscFormat.CDrawingDocContent.prototype.ClearParagraphFormatting, [isClearParaPr, isClearTextPr], CTable.prototype.ClearParagraphFormatting);
 				},
 
-				applyDocContentFunction: function (f, args, tableFunction) {
-					var oThis = this;
-					var isIncreaseDecreaseFunction = f === CDocumentContent.prototype.IncreaseDecreaseFontSize;
+				applyDocContentFunction: function (f, args, tableFunction, fOrigDocContentMethod) {
+					let oThis = this;
+					let isIncreaseDecreaseFunction = f === CDocumentContent.prototype.IncreaseDecreaseFontSize;
 
 					function applyToArrayDrawings(arr) {
 						var ret = false, ret2;
@@ -2593,29 +2593,31 @@
 									arr[i].paragraphIncDecFontSize(args[0]);
 								}
 							} else if (arr[i].getDocContent) {
-								var content = arr[i].getDocContent();
-								if (content) {
-									content.SetApplyToAll(true);
-									f.apply(content, args);
-									content.SetApplyToAll(false);
-									ret = true;
-									if (isIncreaseDecreaseFunction && arr[i].isObjectInSmartArt()) {
-										arr[i].setCustT(true);
-									}
-								} else {
-									if (arr[i].getObjectType() === AscDFH.historyitem_type_Shape) {
-										if (arr[i].canEditText()) {
-											if (arr[i].bWordShape) {
-												arr[i].createTextBoxContent();
-											} else {
-												arr[i].createTextBody();
-											}
-											content = arr[i].getDocContent();
-											if (content) {
-												content.SetApplyToAll(true);
-												f.apply(content, args);
-												content.SetApplyToAll(false);
-												ret = true;
+								if(!arr[i].checkEditTextStyle(fOrigDocContentMethod || f, args, false)) {
+									var content = arr[i].getDocContent();
+									if (content) {
+										content.SetApplyToAll(true);
+										f.apply(content, args);
+										content.SetApplyToAll(false);
+										ret = true;
+										if (isIncreaseDecreaseFunction && arr[i].isObjectInSmartArt()) {
+											arr[i].setCustT(true);
+										}
+									} else {
+										if (arr[i].getObjectType() === AscDFH.historyitem_type_Shape) {
+											if (arr[i].canEditText()) {
+												if (arr[i].bWordShape) {
+													arr[i].createTextBoxContent();
+												} else {
+													arr[i].createTextBody();
+												}
+												content = arr[i].getDocContent();
+												if (content) {
+													content.SetApplyToAll(true);
+													f.apply(content, args);
+													content.SetApplyToAll(false);
+													ret = true;
+												}
 											}
 										}
 									}
@@ -2649,7 +2651,9 @@
 
 					if (this.selection.textSelection) {
 						if (this.selection.textSelection.getObjectType() !== AscDFH.historyitem_type_GraphicFrame) {
-							f.apply(this.selection.textSelection.getDocContent(), args);
+							if(!this.selection.textSelection.checkEditTextStyle(fOrigDocContentMethod || f, args, true)) {
+								f.apply(this.selection.textSelection.getDocContent(), args);
+							}
 							this.selection.textSelection.checkExtentsByDocContent();
 						} else {
 							tableFunction.apply(this.selection.textSelection.graphicObject, args);
@@ -2864,8 +2868,14 @@
 				},
 
 				applyTextFunction: function (docContentFunction, tableFunction, args) {
+					let bApplyTextPr = false;
+					if(docContentFunction === CDocumentContent.prototype.AddToParagraph && args[0].Type === para_TextPr) {
+						bApplyTextPr = true;
+					}
 					if (this.selection.textSelection) {
-						this.selection.textSelection.applyTextFunction(docContentFunction, tableFunction, args);
+						if(!this.selection.textSelection.checkEditTextStyle(docContentFunction, args, true)) {
+							this.selection.textSelection.applyTextFunction(docContentFunction, tableFunction, args);
+						}
 					} else if (this.selection.groupSelection) {
 						var oOldDoc = this.selection.groupSelection.document;
 						this.selection.groupSelection.document = this.document;
@@ -2877,13 +2887,13 @@
 							this.document.Recalculate();
 						}
 					} else {
-						if (docContentFunction === CDocumentContent.prototype.AddToParagraph && args[0].Type === para_TextPr || docContentFunction === CDocumentContent.prototype.PasteFormatting) {
+						if (bApplyTextPr || docContentFunction === CDocumentContent.prototype.PasteFormatting) {
 							var fDocContentCallback = function () {
 								if (this.CanEditAllContentControls()) {
 									docContentFunction.apply(this, args);
 								}
 							};
-							this.applyDocContentFunction(fDocContentCallback, args, tableFunction);
+							this.applyDocContentFunction(fDocContentCallback, args, tableFunction, docContentFunction);
 						} else if (this.selectedObjects.length === 1 && ((this.selectedObjects[0].getObjectType() === AscDFH.historyitem_type_Shape && this.selectedObjects[0].canEditText()) || this.selectedObjects[0].getObjectType() === AscDFH.historyitem_type_GraphicFrame)) {
 							this.selection.textSelection = this.selectedObjects[0];
 							if (this.selectedObjects[0].getObjectType() === AscDFH.historyitem_type_GraphicFrame) {

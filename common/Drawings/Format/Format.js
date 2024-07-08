@@ -11514,7 +11514,78 @@
 				}
 			}
 		};
+		TextListStyle.prototype.applyParaPr = function (nLvl, ParaPr, bIncreaseFontSize, oSp) {
 
+			let iN = AscFormat.isRealNumber;
+			if(bIncreaseFontSize === true || bIncreaseFontSize === false) {
+				if(!this.levels[nLvl]) {
+					this.levels[nLvl] = new AscWord.CParaPr();
+				}
+				let oLvl = this.levels[nLvl];
+				if(oLvl) {
+					if(!oLvl.DefaultRunPr) {
+						oLvl.DefaultRunPr = new AscWord.CTextPr();
+					}
+					let TextPr = oLvl.DefaultRunPr;
+					let Pr;
+					if(iN(TextPr.FontSize)) {
+						TextPr.FontSize = TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+					else {
+						let oSpStyles = oSp.Get_Styles(nLvl);
+						let Styles      = oSpStyles.styles;
+						Pr = Styles.Get_Pr(oSpStyles.lastId, styletype_Paragraph, null);
+						TextPr.FontSize = Pr.TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+					if(iN(TextPr.FontSizeCS)) {
+						TextPr.FontSizeCS = TextPr.GetIncDecFontSizeCS(bIncreaseFontSize)
+					}
+
+					else {
+						if(!Pr) {
+							let oSpStyles = oSp.Get_Styles(nLvl);
+							let Styles      = oSpStyles.styles;
+							Pr = Styles.Get_Pr(oSpStyles.lastId, styletype_Paragraph, null);
+						}
+						TextPr.FontSize = Pr.TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+				}
+				return;
+			}
+			if(!ParaPr) {
+				this.levels[nLvl] = null;
+				return;
+			}
+			if(!this.levels[nLvl]) {
+				this.levels[nLvl] = new AscWord.CParaPr();
+			}
+			let oLvl = this.levels[nLvl];
+			oLvl.Merge(ParaPr);
+			if(!oLvl.DefaultRunPr) {
+				oLvl.DefaultRunPr = new AscWord.CTextPr();
+			}
+
+			if(ParaPr.DefaultRunPr) {
+				let TextPr = ParaPr.DefaultRunPr;
+				if (TextPr.FontFamily) {
+					let FName = TextPr.FontFamily.Name;
+					let FIndex = TextPr.FontFamily.Index;
+					TextPr.RFonts = new CRFonts();
+					TextPr.RFonts.SetAll(FName, FIndex);
+				}
+				oLvl.DefaultRunPr.Apply(ParaPr.DefaultRunPr);
+			}
+		};
+		TextListStyle.prototype.changeFontSize = function (nLvl, bIncrease) {
+			if(!this.levels[nLvl]) {
+				this.levels[nLvl] = new AscWord.CParaPr();
+			}
+			let oLvl = this.levels[nLvl];
+			if(oLvl.DefaultRunPr) {
+				oLvl.DefaultRunPr = new AscWord.CTextPr();
+			}
+
+		};
 
 		function CBaseAttrObject() {
 			CBaseNoIdObject.call(this);
