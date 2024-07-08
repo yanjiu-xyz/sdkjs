@@ -17333,8 +17333,11 @@ Paragraph.prototype.RemoveTabsForTOC = function()
  * Проверяем лежит ли данный параграф в таблице
  * @returns {boolean}
  */
-Paragraph.prototype.IsTableCellContent = function()
+Paragraph.prototype.IsTableCellContent = function(bReturnCell)
 {
+	if (bReturnCell)
+		return (this.Parent ? this.Parent.IsTableCellContent(true) : null);
+	
 	return !!(this.Parent && this.Parent.IsTableCellContent());
 };
 /**
