@@ -10521,9 +10521,9 @@ Paragraph.prototype.Get_CompiledPr = function()
 	}
 	else if (null === PrevEl)
 	{
-		if (true === this.Parent.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
+		if (true === this.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
 		{
-			var Cell = this.Parent.IsTableCellContent(true);
+			var Cell = this.IsTableCellContent(true);
 			if (Cell)
 			{
 				var PrevEl = Cell.GetLastElementInPrevCell();
@@ -10627,9 +10627,9 @@ Paragraph.prototype.Get_CompiledPr = function()
 	}
 	else
 	{
-		if (true === this.Parent.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
+		if (true === this.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
 		{
-			var Cell = this.Parent.IsTableCellContent(true);
+			var Cell = this.IsTableCellContent(true);
 			if (Cell)
 			{
 				var NextEl = Cell.GetFirstElementInNextCell();
@@ -10639,7 +10639,7 @@ Paragraph.prototype.Get_CompiledPr = function()
 				}
 			}
 		}
-		else if (true === this.Parent.IsTableCellContent() && true === Pr.ParaPr.Spacing.AfterAutoSpacing)
+		else if (true === this.IsTableCellContent() && true === Pr.ParaPr.Spacing.AfterAutoSpacing)
 		{
 			Pr.ParaPr.Spacing.After = 0;
 		}
@@ -12102,7 +12102,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			var Bottom_Margin = Y_Bottom_Margin;
 			var Page_H        = Page_Height;
 
-			if (true === this.Parent.IsTableCellContent() && undefined != Drawing && true == Drawing.Use_TextWrap())
+			if (true === this.IsTableCellContent() && undefined != Drawing && true == Drawing.Use_TextWrap())
 			{
 				Top_Margin    = 0;
 				Bottom_Margin = 0;
@@ -12110,7 +12110,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			}
 
 			var PageLimitsOrigin = this.Parent.Get_PageLimits(PageRel);
-			if (true === this.Parent.IsTableCellContent() && false === Drawing.IsLayoutInCell())
+			if (true === this.IsTableCellContent() && false === Drawing.IsLayoutInCell())
 			{
 				PageLimitsOrigin     = LogicDocument.Get_PageLimits(PageAbs);
 				var PageFieldsOrigin = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
@@ -17335,7 +17335,7 @@ Paragraph.prototype.RemoveTabsForTOC = function()
  */
 Paragraph.prototype.IsTableCellContent = function()
 {
-	return (this.Parent && this.Parent.IsTableCellContent() ? true : false);
+	return !!(this.Parent && this.Parent.IsTableCellContent());
 };
 /**
  * Проверяем является ли данный параграф последним в ячейке (возвращаем false, если параграф не лежит в таблице вообще)
