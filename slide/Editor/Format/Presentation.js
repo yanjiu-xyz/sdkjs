@@ -1025,9 +1025,12 @@ CPresentation.prototype.collectHFProps = function (oSlide) {
 			oContent = oDTShape.getDocContent();
 			if (oContent && oContent.CalculateAllFields) {
 				oDateTime = new AscCommonSlide.CAscDateTime();
-				oContent.SetApplyToAll(true);
-				sText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
-				oContent.SetApplyToAll(false);
+				sText = "";
+				if(oSlideHF.get_ShowDateTime()) {
+					oContent.SetApplyToAll(true);
+					sText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
+					oContent.SetApplyToAll(false);
+				}
 				oDateTime.put_CustomDateTime(sText);
 				oContent.CalculateAllFields();
 				oField = oContent.GetFieldByType2('datetime');
