@@ -2972,6 +2972,17 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			this.DrawingDocument.OnEndRecalculate();
 		}
 	}
+	
+	if (isUpdateThemes || this.bNeedUpdateThemes) {
+		this.SendThemesThumbnails();
+		this.bNeedUpdateThemes = false;
+		let oMaster = this.GetCurrentMaster();
+		if(oMaster)
+		{
+			this.Api.sendEvent("asc_onUpdateThemeIndex", oMaster.getThemeIndex());
+			this.Api.sendColorThemes(oMaster.Theme);
+		}
+	}
 	if (!oCurSlide) {
 		this.DrawingDocument.m_oWordControl.GoToPage(-1);
 		if (b_check_layout) {
@@ -3003,10 +3014,6 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			this.DrawingDocument.placeholders.update(oCurSlide.getPlaceholdersControls());
 	}
 	this.MathTrackHandler.Update();
-	if (isUpdateThemes || this.bNeedUpdateThemes) {
-		this.SendThemesThumbnails();
-		this.bNeedUpdateThemes = false;
-	}
 };
 
 CPresentation.prototype.private_RecalculateFastRunRange = function (arrChanges, nStartIndex, nEndIndex) {
@@ -8528,6 +8535,7 @@ CPresentation.prototype.SendThemesThumbnails = function () {
 		aThemeInfo[aDocumentThemes.length - 1] = theme_load_info;
 	}
 	this.Api.sync_InitEditorThemes(this.Api.ThemeLoader.Themes.EditorThemes, aDocumentThemes);
+	this.Api.sendEvent("asc_onUpdateThemeIndex", 0);
 };
 
 CPresentation.prototype.Check_CursorMoveRight = function () {
@@ -9434,11 +9442,36 @@ CPresentation.prototype.changeTheme = function (themeInfo, arrInd) {
 	for (i = 0; i < arr_ind.length; ++i) {
 		slides_array.push(this.Slides[arr_ind[i]]);
 	}
+	let oReplacedMasters = {};
+	let aReplacedMasters = [];
 	for (i = 0; i < slides_array.length; ++i) {
+		let oSlide = slides_array[i];
+		let oOldMaster = oSlide.getMaster();
+		if(oOldMaster) {
+			if(!oReplacedMasters[oOldMaster.Id]) {
+				oReplacedMasters[oOldMaster.Id] = oOldMaster;
+				aReplacedMasters.push(oOldMaster);
+			}
+		}
 		this.ChangeSlideSlideMaster(slides_array[i], _new_master);
 	}
+
+	for(let nMaster = 0; nMaster < aReplacedMasters.length; ++nMaster) {
+		let oMaster = aReplacedMasters[nMaster];
+		let bFound = false;
+		for(let nSlide = 0; nSlide < this.Slides.length; ++nSlide) {
+			if(this.Slides[nSlide].getMaster() === oMaster) {
+				bFound = true;
+				break;
+			}
+		}
+		if(!bFound) {
+			this.removeSlideMasterObject(oMaster);
+		}
+	}
+
 	History.Add(new AscDFH.CChangesDrawingChangeTheme(this, AscDFH.historyitem_Presentation_ChangeTheme, arr_ind));
-	///this.resetStateCurSlide();
+
 	this.Recalculate();
 	if(this.IsMasterMode()) {
 		let nIdx = this.GetSlideIndex(themeInfo.Master);

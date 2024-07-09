@@ -212,6 +212,7 @@ function CEditorPage(api)
 	this.m_oMasterDrawer.DrawingDocument = this.m_oDrawingDocument;
 
 	this.AllLayouts = [];
+	this.LastMaster = null;
 
 	this.m_oDrawingDocument.m_oWordControl           = this;
 	this.m_oDrawingDocument.TransitionSlide.HtmlPage = this;
@@ -4439,11 +4440,9 @@ function CEditorPage(api)
 		if(window["NATIVE_EDITOR_ENJINE"] === true){
 			return;
 		}
-		let master = null;
 		if (this.m_oLogicDocument.IsEmpty())
 			return;
 
-		master = this.m_oLogicDocument.getLayoutsMasterSlide();
 
 
 		let aAllLayouts = this.m_oLogicDocument.GetAllLayouts();
@@ -4507,12 +4506,17 @@ function CEditorPage(api)
 			}
 
 			this.m_oApi.sendEvent("asc_onUpdateLayout", arr);
-			let oMaster = this.m_oLogicDocument.GetCurrentMaster();
+		}
+
+		let oMaster = this.m_oLogicDocument.GetCurrentMaster();
+		if(this.LastMaster !== oMaster)
+		{
 			if(oMaster)
 			{
 				this.m_oApi.sendEvent("asc_onUpdateThemeIndex", oMaster.getThemeIndex());
 				this.m_oApi.sendColorThemes(oMaster.Theme);
 			}
+			this.LastMaster = oMaster;
 		}
 		this.m_oDrawingDocument.CheckGuiControlColors(bIsAttack);
 	};
