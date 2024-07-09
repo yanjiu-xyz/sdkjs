@@ -8304,7 +8304,7 @@ CT_pivotTableDefinition.prototype.findFieldByItem = function(itemString) {
  * @param {string[]} items 
  * @return {GetPivotDataParams}
  */
-CT_pivotTableDefinition.prototype.getDataToGetPivotData = function(items) {
+CT_pivotTableDefinition.prototype.asc_getDataToGetPivotData = function(items) {
 	const getPivotDataParams = {
 		dataFieldName: null,
 		optParams: []
@@ -20338,6 +20338,7 @@ prot["asc_refresh"] = prot.asc_refresh;
 prot["asc_getFieldGroupType"] = prot.asc_getFieldGroupType;
 prot["asc_canExpandCollapseByActiveCell"] = prot.asc_canExpandCollapseByActiveCell;
 prot["asc_setExpandCollapseByActiveCell"] = prot.asc_setExpandCollapseByActiveCell;
+prot["asc_getDataToGetPivotData"] = prot.asc_getDataToGetPivotData;
 
 window["Asc"]["CT_PivotTableStyle"] = window['Asc'].CT_PivotTableStyle = CT_PivotTableStyle;
 prot = CT_PivotTableStyle.prototype;

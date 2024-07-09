@@ -13444,7 +13444,7 @@
 	 * @return {number | null}
 	 */
 	ApiPivotTable.prototype.GetData = function (items) {
-		const params = this.pivot.getDataToGetPivotData(items);
+		const params = this.pivot.asc_getDataToGetPivotData(items);
 		const cell = this.pivot.getCellByGetPivotDataParams(params);
 		if (cell) {
 			return this.pivot.worksheet.getCell3(cell.row, cell.col).getValue();
