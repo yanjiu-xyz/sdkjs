@@ -13510,9 +13510,8 @@
 			return null;
 		}
 		const t = this;
-		const cacheFields = this.pivot.asc_getCacheFields();
-		return cacheFields.map(function(cacheField, i) {
-			return new ApiPivotField(t, i);
+		return pivotFields.map(function(pivotField, i) {
+			return new ApiPivotField(t, i, pivotField);
 		});
 	};
 	Object.defineProperty(ApiPivotTable.prototype, "PivotFields", {
@@ -13792,6 +13791,7 @@
 	 * @returns {[ApiPivotField] | ApiPivotField | null}
 	 */
 	ApiPivotTable.prototype.GetColumnFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
 		const colFields = this.pivot.asc_getColumnFields();
 		if (field != null) {
 			let index = -1;
@@ -13816,7 +13816,7 @@
 				}
 			}
 			if (index !== -1) {
-				return new ApiPivotField(this, index);
+				return new ApiPivotField(this, index, pivotFields[index]);
 			}
 			private_MakeError("A field with such an identifier does not exist.");
 			return null;
@@ -13824,7 +13824,7 @@
 		const t = this;
 		return colFields.map(function(colField, i) {
 			const index = colField.asc_getIndex();
-			return new ApiPivotField(t, index);
+			return new ApiPivotField(t, index, pivotFields[index]);
 		});
 	};
 
@@ -13843,6 +13843,7 @@
 	 */
 	ApiPivotTable.prototype.GetDataFields = function (field) {
 		const dataFields = this.pivot.asc_getDataFields();
+		const pivotFields = this.pivot.asc_getPivotFields();
 		let resDataField = null;
 		if (field != null) {
 			let index = -1;
@@ -13869,7 +13870,7 @@
 				}
 			}
 			if (index !== -1) {
-				return new ApiPivotField(this, index, resDataField);
+				return new ApiPivotField(this, index, pivotFields[index], resDataField);
 			}
 			private_MakeError("A field with such an identifier does not exist.");
 			return null;
@@ -13877,7 +13878,7 @@
 		const t = this;
 		return dataFields.map(function(dataField, i) {
 			const index = dataField.asc_getIndex();
-			return new ApiPivotField(t, index, dataField);
+			return new ApiPivotField(t, index, pivotFields[index], dataField);
 		});
 	};
 
@@ -13898,7 +13899,7 @@
 		var hidden = [];
 		for (var i = 0; i < fields.length; i++)
 			if (fields[i].axis === null && !fields[i].dataField)
-				hidden.push( new ApiPivotField(this, i) );
+				hidden.push( new ApiPivotField(this, i, fields[i]));
 
 		return hidden;
 	};
@@ -13920,7 +13921,7 @@
 		var visible = [];
 		for (var i = 0; i < fields.length; i++)
 			if (fields[i].axis !== null || fields[i].dataField)
-				visible.push( new ApiPivotField(this, i) );
+				visible.push( new ApiPivotField(this, i, fields[i]) );
 
 		return visible;
 	};
@@ -13940,6 +13941,7 @@
 	 * @returns {[ApiPivotField] | []}
 	 */
 	ApiPivotTable.prototype.GetPageFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
 		const pageFields = this.pivot.asc_getPageFields();
 		if (field != null) {
 			let index = -1;
@@ -13964,7 +13966,7 @@
 				}
 			}
 			if (index !== -1) {
-				return new ApiPivotField(this, index);
+				return new ApiPivotField(this, index, pivotFields[index]);
 			}
 			private_MakeError("A field with such an identifier does not exist.");
 			return null;
@@ -13972,7 +13974,7 @@
 		const t = this;
 		return pageFields.map(function(pageField, i) {
 			const index = pageField.asc_getIndex();
-			return new ApiPivotField(t, index);
+			return new ApiPivotField(t, index, pivotFields[index]);
 		});
 	};
 
@@ -13990,6 +13992,7 @@
 	 * @returns {[ApiPivotField] | ApiPivotField | null}
 	 */
 	ApiPivotTable.prototype.GetRowFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
 		const rowFields = this.pivot.asc_getRowFields();
 		if (field != null) {
 			let index = -1;
@@ -14014,7 +14017,7 @@
 				}
 			}
 			if (index !== -1) {
-				return new ApiPivotField(this, index);
+				return new ApiPivotField(this, index, pivotFields[index]);
 			}
 			private_MakeError("A field with such an identifier does not exist.");
 			return null;
@@ -14022,7 +14025,7 @@
 		const t = this;
 		return rowFields.map(function(colField, i) {
 			const index = colField.asc_getIndex();
-			return new ApiPivotField(t, index);
+			return new ApiPivotField(t, index, pivotFields[index]);
 		});
 	};
 
