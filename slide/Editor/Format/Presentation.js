@@ -9442,11 +9442,36 @@ CPresentation.prototype.changeTheme = function (themeInfo, arrInd) {
 	for (i = 0; i < arr_ind.length; ++i) {
 		slides_array.push(this.Slides[arr_ind[i]]);
 	}
+	let oReplacedMasters = {};
+	let aReplacedMasters = [];
 	for (i = 0; i < slides_array.length; ++i) {
+		let oSlide = slides_array[i];
+		let oOldMaster = oSlide.getMaster();
+		if(oOldMaster) {
+			if(!oReplacedMasters[oOldMaster.Id]) {
+				oReplacedMasters[oOldMaster.Id] = oOldMaster;
+				aReplacedMasters.push(oOldMaster);
+			}
+		}
 		this.ChangeSlideSlideMaster(slides_array[i], _new_master);
 	}
+
+	for(let nMaster = 0; nMaster < aReplacedMasters.length; ++nMaster) {
+		let oMaster = aReplacedMasters[nMaster];
+		let bFound = false;
+		for(let nSlide = 0; nSlide < this.Slides.length; ++nSlide) {
+			if(this.Slides[nSlide].getMaster() === oMaster) {
+				bFound = true;
+				break;
+			}
+		}
+		if(!bFound) {
+			this.removeSlideMasterObject(oMaster);
+		}
+	}
+
 	History.Add(new AscDFH.CChangesDrawingChangeTheme(this, AscDFH.historyitem_Presentation_ChangeTheme, arr_ind));
-	///this.resetStateCurSlide();
+
 	this.Recalculate();
 	if(this.IsMasterMode()) {
 		let nIdx = this.GetSlideIndex(themeInfo.Master);
