@@ -3162,14 +3162,14 @@
 			let oDoc	= Asc.editor.getPDFDoc();
 			let oFile	= Asc.editor.getDocumentRenderer().file;
 
-			let oTr		= oDoc.pagesTransform[pageIndex].normal.CreateDublicate();
+			let oTr		= oDoc.GetPageTransform(pageIndex, true).normal;
 			let inchC	= (25.4 / oFile.pages[pageIndex].Dpi);
 			AscCommon.global_MatrixTransformer.ScaleAppend(oTr, inchC, inchC);
 			oTr.Invert();
 
 			let oPt = oTr.TransformPoint(x, y);
 
-			return ( {x : oPt.x, y : oPt.y, w : oDoc.GetPageWidthMM(pageIndex), h: oDoc.GetPageHeightMM(pageIndex)} );
+			return ( {x : oPt.x, y : oPt.y, w : oDoc.GetPageWidthMM(pageIndex) / inchC , h: oDoc.GetPageHeightMM(pageIndex) / inchC} );
 		};
 
 		this.getPageLikeDetector = function(pageIndex)
