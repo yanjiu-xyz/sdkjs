@@ -1098,12 +1098,6 @@ var CPresentation = CPresentation || function(){};
         this.Viewer.onUpdateOverlay();
     };
     CPDFDoc.prototype.SetMouseDownObject = function(oObject) {
-        if (this.GetActiveObject() == oObject) {
-            return;
-        }
-
-        this.Viewer.file.removeSelection();
-        
         if (!oObject) {
             this.BlurActiveObject();
 
@@ -1113,6 +1107,12 @@ var CPresentation = CPresentation || function(){};
             this.mouseDownLinkObject    = null;
             return;
         }
+
+        if (this.GetActiveObject() == oObject) {
+            return;
+        }
+
+        this.Viewer.file.removeSelection();
 
         if (oObject.IsForm && oObject.IsForm()) {
             // если попали в другую форму, то выход из текущей
