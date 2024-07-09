@@ -2743,6 +2743,8 @@
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
 				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
+				let needNewPage = this.isClearPages || (page.Image && ((page.Image.requestWidth !== w) || (page.Image.requestHeight !== h)));
+
 				if (!isStretchPaint)
 				{
 					if (!this.file.cacheManager)
@@ -2788,41 +2790,51 @@
 				}
 
 				if (!this.bCachedMarkupAnnnots) {
-
 					let pageInfo = this.pagesInfo.pages[i];
-					if ((!pageInfo.drawings || pageInfo.drawings.length === 0) &&
-						(!pageInfo.annots || pageInfo.annots.length === 0))
-					{
+					let aMarkups = pageInfo.annots.filter(function(annot) {
+						return annot.IsTextMarkup();
+					});
+
+					let hasMarkups = aMarkups.length != 0;
+					let hasDrawings = pageInfo.drawings.length != 0;
+
+					if (false == hasDrawings && false == hasMarkups) {
 						oImageToDraw = page.Image;
 					}
-					else
-					{
-						let markupCanvas = page.TmpImage ? page.TmpImage : document.createElement('canvas');
-						let markupContext = markupCanvas.getContext('2d');
-
-						page.TmpImage = markupCanvas;
-						if (page.Image)
-						{
-							markupCanvas.width = page.Image.width;
-							markupCanvas.height = page.Image.height;
-						} else
-						{
-							markupCanvas.width = w;
-							markupCanvas.height = h;
+					else {
+						let tmpPageImage = page.TmpImage ? page.TmpImage : document.createElement('canvas');
+						let tmpPageCtx = tmpPageImage.getContext('2d');
+						
+						if (!page.TmpImage) {
+							page.TmpImage = tmpPageImage;
 						}
 
-						if (page.Image)
-						{
-							markupContext.drawImage(page.Image, 0, 0);
-						} else
-						{
-							markupContext.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
-							markupContext.fillRect(0, 0, w, h);
-						}
+						if (pageInfo.needRedrawDrawings || pageInfo.needRedrawMarkups || (needNewPage && !isStretchPaint)) {
+							if (page.Image) {
+								tmpPageImage.width = page.Image.width;
+								tmpPageImage.height = page.Image.height;
+							}
+							else {
+								tmpPageImage.width = w;
+								tmpPageImage.height = h;
+							}
+		
+							if (page.Image) {
+								tmpPageCtx.drawImage(page.Image, 0, 0);
+							}
+							else {
+								tmpPageCtx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
+								tmpPageCtx.fillRect(0, 0, w, h);
+							}
+		
+							this._drawDrawingsOnCtx(i, tmpPageCtx);
+							this._drawMarkupAnnotsOnCtx(i, tmpPageCtx);
 
-						this._drawDrawingsOnCtx(i, markupContext);
-						this._drawMarkupAnnotsOnCtx(i, markupContext);
-						oImageToDraw = markupCanvas;
+							pageInfo.needRedrawDrawings = false;
+							pageInfo.needRedrawMarkups = false;
+						}
+						
+						oImageToDraw = tmpPageImage;
 					}
 				}
 
@@ -3795,37 +3807,32 @@
 	};
 	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx)
 	{
-        let aAnnots = this.pagesInfo.pages[nPage].annots != null ? this.pagesInfo.pages[nPage].annots : null;
-		if (!aAnnots)
+        let aAnnots = this.pagesInfo.pages[nPage].annots.filter(function(annot) {
+			return annot.IsTextMarkup();
+		});
+
+		if (aAnnots.length == 0)
 			return;
 		
 		let page = this.drawingPages[nPage];
 		if (!page)
 			return;
 
-		// if (this.pagesInfo.pages[nPage].needRedrawMarkups)
-		if (true)
-		{
-			let widthPx		= ctx.canvas.width;
-			let heightPx	= ctx.canvas.height;
-			
-			let oGraphicsPDF = new AscPDF.CPDFGraphics();
-			oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
-			oGraphicsPDF.SetCurPage(nPage);
+		let widthPx		= ctx.canvas.width;
+		let heightPx	= ctx.canvas.height;
+		
+		let oGraphicsPDF = new AscPDF.CPDFGraphics();
+		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
+		oGraphicsPDF.SetCurPage(nPage);
 
-			if (this.pagesInfo.pages[nPage].annots != null) {
-				this.pagesInfo.pages[nPage].annots.forEach(function(annot) {
-					if (annot.IsTextMarkup()) {
-						if (false == annot.IsNeedDrawFromStream())
-							annot.Draw(oGraphicsPDF);
-						else
-							annot.DrawFromStream(oGraphicsPDF);
-					}
-				});
+		aAnnots.forEach(function(annot) {
+			if (false == annot.IsNeedDrawFromStream()) {
+				annot.Draw(oGraphicsPDF);
 			}
-			
-			this.pagesInfo.pages[nPage].needRedrawMarkups = false;
-		}
+			else {
+				annot.DrawFromStream(oGraphicsPDF);
+			}
+		});
 	};
 	CHtmlPage.prototype._paintDrawings = function() {
 		const ctx = this.canvas.getContext('2d');
@@ -4113,6 +4120,11 @@
         }
     };
 	CHtmlPage.prototype._drawDrawingsOnCtx = function(nPage, ctx, isThumbnails) {
+		let aDrawings = this.pagesInfo.pages[nPage].drawings;
+		if (aDrawings.length == 0) {
+			return;
+		}
+
 		let oDoc		= this.getPDFDoc();
 		let widthPx		= ctx.canvas.width;
 		let heightPx    = ctx.canvas.height;
@@ -4124,7 +4136,6 @@
 		oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
 		oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
 
-		let aDrawings = this.pagesInfo.pages[nPage].drawings;
 		aDrawings.forEach(function(drawing) {
 			drawing.Draw(oGraphicsWord);
 		});
