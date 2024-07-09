@@ -2788,30 +2788,42 @@
 				}
 
 				if (!this.bCachedMarkupAnnnots) {
-					let markupCanvas = page.TmpImage ? page.TmpImage : document.createElement('canvas');
-					let markupContext = markupCanvas.getContext('2d');
-					
-					page.TmpImage = markupCanvas;
-					if (page.Image) {
-						markupCanvas.width = page.Image.width;
-						markupCanvas.height = page.Image.height;
-					}
-					else {
-						markupCanvas.width = w;
-						markupCanvas.height = h;
-					}
 
-					if (page.Image) {
-						markupContext.drawImage(page.Image, 0, 0);
+					let pageInfo = this.pagesInfo.pages[i];
+					if ((!pageInfo.drawings || pageInfo.drawings.length === 0) &&
+						(!pageInfo.annots || pageInfo.annots.length === 0))
+					{
+						oImageToDraw = page.Image;
 					}
-					else {
-						markupContext.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
-						markupContext.fillRect(0, 0, w, h);
-					}
+					else
+					{
+						let markupCanvas = page.TmpImage ? page.TmpImage : document.createElement('canvas');
+						let markupContext = markupCanvas.getContext('2d');
 
-					this._drawDrawingsOnCtx(i, markupContext);
-					this._drawMarkupAnnotsOnCtx(i, markupContext);
-					oImageToDraw = markupCanvas;
+						page.TmpImage = markupCanvas;
+						if (page.Image)
+						{
+							markupCanvas.width = page.Image.width;
+							markupCanvas.height = page.Image.height;
+						} else
+						{
+							markupCanvas.width = w;
+							markupCanvas.height = h;
+						}
+
+						if (page.Image)
+						{
+							markupContext.drawImage(page.Image, 0, 0);
+						} else
+						{
+							markupContext.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
+							markupContext.fillRect(0, 0, w, h);
+						}
+
+						this._drawDrawingsOnCtx(i, markupContext);
+						this._drawMarkupAnnotsOnCtx(i, markupContext);
+						oImageToDraw = markupCanvas;
+					}
 				}
 
 				if (oImageToDraw)
