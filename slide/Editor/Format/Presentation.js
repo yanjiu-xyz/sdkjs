@@ -2972,6 +2972,17 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			this.DrawingDocument.OnEndRecalculate();
 		}
 	}
+	
+	if (isUpdateThemes || this.bNeedUpdateThemes) {
+		this.SendThemesThumbnails();
+		this.bNeedUpdateThemes = false;
+		let oMaster = this.GetCurrentMaster();
+		if(oMaster)
+		{
+			this.Api.sendEvent("asc_onUpdateThemeIndex", oMaster.getThemeIndex());
+			this.Api.sendColorThemes(oMaster.Theme);
+		}
+	}
 	if (!oCurSlide) {
 		this.DrawingDocument.m_oWordControl.GoToPage(-1);
 		if (b_check_layout) {
@@ -3003,10 +3014,6 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			this.DrawingDocument.placeholders.update(oCurSlide.getPlaceholdersControls());
 	}
 	this.MathTrackHandler.Update();
-	if (isUpdateThemes || this.bNeedUpdateThemes) {
-		this.SendThemesThumbnails();
-		this.bNeedUpdateThemes = false;
-	}
 };
 
 CPresentation.prototype.private_RecalculateFastRunRange = function (arrChanges, nStartIndex, nEndIndex) {
@@ -8528,6 +8535,7 @@ CPresentation.prototype.SendThemesThumbnails = function () {
 		aThemeInfo[aDocumentThemes.length - 1] = theme_load_info;
 	}
 	this.Api.sync_InitEditorThemes(this.Api.ThemeLoader.Themes.EditorThemes, aDocumentThemes);
+	this.Api.sendEvent("asc_onUpdateThemeIndex", 0);
 };
 
 CPresentation.prototype.Check_CursorMoveRight = function () {
