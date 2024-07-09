@@ -13444,7 +13444,7 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 
 	var oLogicDocument = this.GetLogicDocument();
 	var oStyles        = oLogicDocument && oLogicDocument.GetStyles ? oLogicDocument.GetStyles() : null;
-	if (oStyles && (TextPr.RStyle === oStyles.GetDefaultEndnoteReference() || TextPr.RStyle === oStyles.GetDefaultFootnoteReference()))
+	if (oStyles instanceof AscWord.CStyles && (TextPr.RStyle === oStyles.GetDefaultEndnoteReference() || TextPr.RStyle === oStyles.GetDefaultFootnoteReference()))
 	{
 		TextPr        = TextPr.Copy();
 		TextPr.RStyle = undefined;
