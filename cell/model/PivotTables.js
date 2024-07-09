@@ -8345,7 +8345,69 @@ CT_pivotTableDefinition.prototype.asc_getDataToGetPivotData = function(items) {
 		getPivotDataParams.dataFieldName = dataFields[0] && dataFields[0].name;
 	} 
 	return getPivotDataParams;
-}
+};
+/**
+ * @return {Range}
+ */
+CT_pivotTableDefinition.prototype.asc_getRowRange = function() {
+	let res = null;
+	if (this.getRowFieldsCount()) {
+		const range = this.getRange();
+		const location = this.location;
+		const r1 = range.r1 + location.firstDataRow - 1;
+		const r2 = range.r2;
+		const c1 = range.c1;
+		const c2 = range.c1 + location.firstDataCol - 1;
+		res = this.worksheet.getRange3(r1, c1, r2, c2);
+	}
+	return res;
+};
+/**
+ * @return {Range}
+ */
+CT_pivotTableDefinition.prototype.asc_getColumnRange = function() {
+	let res = null;
+	if (this.getColumnFieldsCount()) {
+		const range = this.getRange();
+		const location = this.location;
+		const c1 = range.c1 + location.firstDataCol - 1;
+		const c2 = range.c2;
+		const r1 = range.r1;
+		const r2 = range.r1 + location.firstDataRow - 1;
+		res = this.worksheet.getRange3(r1, c1, r2, c2)
+	}
+	return res;
+};
+/**
+ * @return {Range}
+ */
+CT_pivotTableDefinition.prototype.asc_getDataBodyRange = function() {
+	const range = this.getRange();
+	const location = this.location;
+	const r1 = range.r1 + location.firstDataRow;
+	const r2 = range.r2;
+	const c1 = range.c1 + location.firstDataCol;
+	const c2 = range.c2;
+	return this.worksheet.getRange3(r1, c1, r2, c2);
+};
+/**
+ * Return fieldIndex by Pivot Field name.
+ * @param {string} index
+ * @return {number}
+ */
+CT_pivotTableDefinition.prototype.getFieldIndexByValue = function(value) {
+	const pivotFields = this.asc_getPivotFields();
+	const cacheFields = this.asc_getCacheFields();
+	for (let i = 0; i < pivotFields.length; i += 1) {
+		const pivotField = pivotFields[i];
+		const cacheField = cacheFields[i];
+		const name = pivotField.name || cacheField.name;
+		if (value.toLowerCase() === name.toLowerCase()) {
+			return i;
+		}
+	}
+	return -1;
+};
 
 /**
  * @typedef PivotFormatsCollectionItem
@@ -12832,6 +12894,10 @@ CT_Tuples.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+
+/**
+ * @constructor
+ */
 function CT_PivotField(setDefaults) {
 //Attributes
 	this.name = null;
@@ -20339,6 +20405,10 @@ prot["asc_getFieldGroupType"] = prot.asc_getFieldGroupType;
 prot["asc_canExpandCollapseByActiveCell"] = prot.asc_canExpandCollapseByActiveCell;
 prot["asc_setExpandCollapseByActiveCell"] = prot.asc_setExpandCollapseByActiveCell;
 prot["asc_getDataToGetPivotData"] = prot.asc_getDataToGetPivotData;
+prot["asc_getColumnRange"] = prot.asc_getColumnRange;
+prot["asc_getDataBodyRange"] = prot.asc_getDataBodyRange;
+prot["asc_getRowRange"] = prot.asc_getRowRange;
+
 
 window["Asc"]["CT_PivotTableStyle"] = window['Asc'].CT_PivotTableStyle = CT_PivotTableStyle;
 prot = CT_PivotTableStyle.prototype;

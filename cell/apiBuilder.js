@@ -388,6 +388,7 @@
 	 * @property {[ApiPivotField] | []} RowFields - Returns array that are currently showing as row fields in PivotTable.
 	 */
 	function ApiPivotTable(pivot, api) {
+		/** @type {CT_pivotTableDefinition} */
 		this.pivot = pivot;
 		this.api = api;
 	}
@@ -423,9 +424,15 @@
 	 * @property {string | null} NumberFormat - Returns or sets a value that represents the format code for the object.
 	 * @property {string | number} CurrentPage - Returns the current page showing for the page field (valid only for page fields).
 	 */
-	function ApiPivotField(table, index) {
+	function ApiPivotField(table, index, pivotField, dataField) {
+		/** @type {ApiPivotTable} */
 		this.table = table;
+		/** @type {number} */
 		this.index = index;
+		/** @type {CT_PivotField} */
+		this.pivotField = pivotField;
+		/** @type {CT_DataField | undefined} */
+		this.dataField = dataField;
 	}
 
 	/**
@@ -433,10 +440,9 @@
 	 * @constructor
 	 * @property {todo} todo - todo
 	 */
-	function ApiPivotItem(field, index, value) {
+	function ApiPivotItem(field, item) {
 		this.field = field;
-		this.index = index;
-		this.value = value;
+		this.pivotItem = item;
 	}
 
 
@@ -13337,12 +13343,12 @@
 		if (type == 'number' && identifier > 0  && identifier - 1 < fields.length) {
 			index = identifier - 1;
 		} else if (type == "string") {
-			index = this.pivot.asc_getFieldIndexByName(identifier.trim());
+			index = this.pivot.getFieldIndexByValue(identifier.trim());
 		}
-
-		if (index !== -1 && !this.pivot.asc_getPivotFields()[index].dataField) {
+		var pivotField = this.pivot.asc_getPivotFields()[index];
+		if (pivotField && !pivotField.dataField) {
 			this.pivot.asc_addDataField(this.api, index);
-			var field = new ApiPivotField(this, index);
+			var field = this.GetDataFields(this.pivot.dataFields.find(index));
 			if (typeof func == "number")
 				field.Formula = func;
 
@@ -13356,7 +13362,7 @@
 	 * Adds row, column, and page fields to a PivotTable report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {Object} options 
+	 * @param {Object} options
 	 * @param {number | string | Array.<number | string> | undefined} options.rows - Specifies an array of field names or ids to be added as rows or added to the category axis.
 	 * @param {number | string | Array.<number | string> | undefined} options.cols - Specifies an array of field names or ids to be added as columns or added to the series axis.
 	 * @param {number | string | Array.<number | string> | undefined} options.pages - Specifies an array of field names or ids to be added as pages or added to the page area.
@@ -13378,7 +13384,7 @@
 			if (typeof field == "number" && field > 0 && field - 1 < cacheFields.length) {
 				index = field - 1;
 			} else if (typeof field == "string") {
-				index = t.pivot.asc_getFieldIndexByName(field.trim());
+				index = t.pivot.getFieldIndexByValue(field.trim());
 				if (index < 0) {
 					index = null;
 				}
@@ -13434,7 +13440,7 @@
 			if (pivotFields[i].axis !== null) {
 				this.pivot.asc_removeField(this.api, i);
 			}
-		}			
+		}
 	};
 	/**
 	 * Returns the value for the data filed in a PivotTable.
@@ -13479,15 +13485,26 @@
 	 * @returns {ApiPivotField[] | ApiPivotField | null}
 	 */
 	ApiPivotTable.prototype.GetPivotFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
 		if (field != null) {
 			let index = -1;
+			let resDataField = null;
 			if (typeof field === 'number') {
 				index = field - 1;
 			} else if (typeof field === 'string') {
-				index = this.pivot.asc_getFieldIndexByName(field.trim());
+				index = this.pivot.getFieldIndexByValue(field.trim());
+				if (index === -1) {
+					const dataFields = this.pivot.asc_getDataFields();
+					const dataFieldIndex = this.pivot.dataFields.getIndexByName(field.trim());
+					if (dataFieldIndex !== -1) {
+						const dataField = dataFields[dataFieldIndex];
+						index = dataField.asc_getIndex();
+						resDataField = dataField;
+					}
+				}
 			}
 			if (index !== -1) {
-				return new ApiPivotField(this, index);
+				return new ApiPivotField(this, index, pivotFields[index], resDataField);
 			}
 			private_MakeError("A field with such an identifier does not exist.");
 			return null;
@@ -13629,7 +13646,7 @@
 		if (type == 'number' && identifier > 0  && identifier - 1 < fields.length) {
 			index = identifier - 1;
 		} else if (type == "string") {
-			index = this.pivot.asc_getFieldIndexByName(identifier.trim());
+			index = this.pivot.getFieldIndexByValue(identifier.trim());
 		}
 
 		if ( index !== -1 && (pivFields[index].axis !== null || pivFields[index].dataField) ) {
@@ -13660,7 +13677,7 @@
 		if (typeId == 'number' && identifier > 0  && identifier - 1 < fields.length) {
 			pivotIndex = identifier - 1;
 		} else if (typeId == "string") {
-			pivotIndex = this.pivot.asc_getFieldIndexByName(identifier.trim());
+			pivotIndex = this.pivot.getFieldIndexByValue(identifier.trim());
 		}
 
 		if (pivotIndex !== null) {
@@ -13787,7 +13804,7 @@
 					index = -1;
 				}
 			} else if (typeof field === 'string') {
-				const pivotIndex = this.pivot.asc_getFieldIndexByName(field.trim());
+				const pivotIndex = this.pivot.getFieldIndexByValue(field.trim());
 				if (pivotIndex != null) {
 					for (let i = 0; i < colFields.length; i += 1) {
 						const colField = colFields[i];
@@ -13826,22 +13843,25 @@
 	 */
 	ApiPivotTable.prototype.GetDataFields = function (field) {
 		const dataFields = this.pivot.asc_getDataFields();
+		let resDataField = null;
 		if (field != null) {
 			let index = -1;
 			if (typeof field === 'number') {
 				index = field - 1;
 				const dataField = dataFields[index];
 				if (dataField) {
+					resDataField = dataField;
 					index = dataField.asc_getIndex();
 				} else {
 					index = -1;
 				}
 			} else if (typeof field === 'string') {
-				const pivotIndex = this.pivot.asc_getFieldIndexByName(field.trim());
+				const pivotIndex = this.pivot.getFieldIndexByValue(field.trim());
 				if (pivotIndex != null) {
 					for (let i = 0; i < dataFields.length; i += 1) {
 						const dataField = dataFields[i];
 						if (dataField.asc_getIndex() === pivotIndex) {
+							resDataField = dataField;
 							index = pivotIndex;
 							continue;
 						}
@@ -13849,7 +13869,7 @@
 				}
 			}
 			if (index !== -1) {
-				return new ApiPivotField(this, index);
+				return new ApiPivotField(this, index, resDataField);
 			}
 			private_MakeError("A field with such an identifier does not exist.");
 			return null;
@@ -13857,7 +13877,7 @@
 		const t = this;
 		return dataFields.map(function(dataField, i) {
 			const index = dataField.asc_getIndex();
-			return new ApiPivotField(t, index);
+			return new ApiPivotField(t, index, dataField);
 		});
 	};
 
@@ -13932,7 +13952,7 @@
 					index = -1;
 				}
 			} else if (typeof field === 'string') {
-				const pivotIndex = this.pivot.asc_getFieldIndexByName(field.trim());
+				const pivotIndex = this.pivot.getFieldIndexByValue(field.trim());
 				if (pivotIndex != null) {
 					for (let i = 0; i < pageFields.length; i += 1) {
 						const pageField = pageFields[i];
@@ -13982,7 +14002,7 @@
 					index = -1;
 				}
 			} else if (typeof field === 'string') {
-				const pivotIndex = this.pivot.asc_getFieldIndexByName(field.trim());
+				const pivotIndex = this.pivot.getFieldIndexByValue(field.trim());
 				if (pivotIndex != null) {
 					for (let i = 0; i < rowFields.length; i += 1) {
 						const rowField = rowFields[i];
@@ -14477,17 +14497,11 @@
 	 * @returns {ApiRange | null}
 	 */
 	ApiPivotTable.prototype.GetColumnRange = function () {
-		let res = null;
-		if (this.pivot.getColumnFieldsCount()) {
-			const range = this.pivot.getRange();
-			const location = this.pivot.location;
-			const c1 = range.c1 + location.firstDataCol - 1;
-			const c2 = range.c2;
-			const r1 = range.r1;
-			const r2 = range.r1 + location.firstDataRow - 1;
-			res = new ApiRange(this.pivot.worksheet.getRange3(r1, c1, r2, c2));
+		const res = this.pivot.asc_getColumnRange();
+		if (res) {
+			return new ApiRange(res);
 		}
-		return res;
+		return null;
 	};
 
 	Object.defineProperty(ApiPivotTable.prototype, "ColumnRange", {
@@ -14503,17 +14517,11 @@
 	 * @returns {ApiRange | null}
 	 */
 	ApiPivotTable.prototype.GetRowRange = function () {
-		let res = null;
-		if (this.pivot.getRowFieldsCount()) {
-			const range = this.pivot.getRange();
-			const location = this.pivot.location;
-			const r1 = range.r1 + location.firstDataRow - 1;
-			const r2 = range.r2;
-			const c1 = range.c1;
-			const c2 = range.c1 + location.firstDataCol - 1;
-			res = new ApiRange( this.pivot.worksheet.getRange3(r1, c1, r2, c2));
+		const res = this.pivot.asc_getRowRange();
+		if (res) {
+			return new ApiRange(res);
 		}
-		return res;
+		return null;
 	};
 
 	Object.defineProperty(ApiPivotTable.prototype, "RowRange", {
@@ -14529,13 +14537,11 @@
 	 * @returns {ApiRange}
 	 */
 	ApiPivotTable.prototype.GetDataBodyRange = function () {
-		const range = this.pivot.getRange();
-		const location = this.pivot.location;
-		const r1 = range.r1 + location.firstDataRow;
-		const r2 = range.r2;
-		const c1 = range.c1 + location.firstDataCol;
-		const c2 = range.c2;
-		return new ApiRange( this.pivot.worksheet.getRange3(r1, c1, r2, c2));
+		const res = this.pivot.asc_getDataBodyRange();
+		if (res) {
+			return new ApiRange(res);
+		}
+		return null;
 	};
 
 	Object.defineProperty(ApiPivotTable.prototype, "DataBodyRange", {
@@ -14678,7 +14684,39 @@
 	//
 	//------------------------------------------------------------------------------------------------------------------
 
+	/** Methods */
 
+	/**
+	 * Calling this method deletes all filters currently applied to the PivotField.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 */
+	ApiPivotField.prototype.ClearAllFilters  = function () {
+		// TODO
+	};
+	/**
+	 * This method deletes all label filters or all date filters in the PivotFilters collection.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 */
+	ApiPivotField.prototype.ClearLabelFilters  = function () {
+		// TODO
+	};
+	/**
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 */
+	ApiPivotField.prototype.ClearManualFilters  = function () {
+		// TODO
+	};
+	/**
+	 * Calling this method deletes all value filters in the PivotFilters collection of the PivotField.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 */
+	ApiPivotField.prototype.ClearValueFilters  = function () {
+		// TODO
+	};
 	/**
 	 * Moves field inside category.
 	 * @memberof ApiPivotField
@@ -14691,9 +14729,53 @@
 		else
 			private_MakeError('Invalid "type" or invalid value.');
 	};
+	/**
+	 * Removes field from PivotTable.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 */
+	ApiPivotField.prototype.Remove = function () {
+		this.table.RemoveField(this.index);
+	};
+	/**
+	 * Returns an object that represents either a single PivotTable item (a PivotItem object)
+	 * or a collection of all the visible and hidden items (a PivotItems object) in the specified field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {number | undefined} index
+	 * @returns {ApiPivotItem[] | ApiPivotItem | null }
+	 */
+	ApiPivotField.prototype.GetPivotItems = function (index) {
+		const pivotFields = this.table.pivot.asc_getPivotFields();
+		const pivotField = pivotFields[this.index];
+		if (index != null) {
+			const item = pivotField[index];
+			if (item && item.t === Asc.c_oAscItemType.Data) {
+				return new ApiPivotItem(this.index, item);
+			}
+			private_MakeError('Invalid item index.');
+			return null;
+		}
+		const items = pivotField.getItems();
+		const t = this;
+		return items.filter(function (item) {
+			return Asc.c_oAscItemType.Data === item.t;
+		}).map(function (item, index) {
+			return new ApiPivotItem(t.index, item);
+		})
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "PivotItems", {
+		get: function (index) {
+			return this.GetPivotItems(index);
+		}
+	});
+
+	/** Attributes */
 
 	/**
-	 * Returns a value that represents the position of the field (first, second, third, and so on) among all the fields in its orientation (Rows, Columns, Pages, Data).
+	 * Returns a value that represents the position of the field (first, second, third, and so on)
+	 * among all the fields in its orientation (Rows, Columns, Pages, Data).
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
@@ -14711,11 +14793,12 @@
 			if (check.res)
 				return ++check.index;
 		}
-		private_MakeError("This fied isn't in PivotTable.");
+		private_MakeError("This field isn't in PivotTable.");
 	};
 
 	/**
-	 * Sets a value that represents the position of the field (first, second, third, and so on) among all the fields in its orientation (Rows, Columns, Pages, Data).
+	 * Sets a value that represents the position of the field (first, second, third, and so on)
+	 * among all the fields in its orientation (Rows, Columns, Pages, Data).
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @param {number} position - Position.
@@ -14774,7 +14857,8 @@
 	});
 
 	/**
-	 * Returns a pivot field orientation value that represents the location of the field in the specified PivotTable report.
+	 * Returns a pivot field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @return {number} (1 - rows, 2 - columns, 3 - values, 4 - filters, 5 - hidden).
@@ -14786,10 +14870,11 @@
 	};
 
 	/**
-	 * Sets a pivot field orientation value that represents the location of the field in the specified PivotTable report.
+	 * Sets a pivot field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {number} type - The type of the field to move (1 - to rows, 2 - to columns, 3 - to values, 4 - to filters, 5 - to hidden).
+	 * @param {number} type - The type of the field to move (1 - to rows, 2 - to columns,3 - to values, 4 - to filters, 5 - to hidden).
 	 */
 	ApiPivotField.prototype.SetOrientation = function (type) {
 		if ( (typeof type == "number") && type > 0 && type < 6 ) {
@@ -14811,104 +14896,6 @@
 			this.SetOrientation(type);
 		}
 	});
-
-	/**
-	 * Removes field from PivotTable.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 */
-	ApiPivotField.prototype.Remove = function () {
-		this.table.RemoveField(this.index);
-	};
-
-	/**
-	 * Returns a value that represents the label text for the pivot field.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @returns {string}
-	 */
-	ApiPivotField.prototype.GetCaption = function () {
-		// todo поправить опредление на values
-
-		var vals = this.table.pivot.asc_getDataFields();
-		var check = private_PivotCheckField( this.table.pivot, this.index, (vals || []) );
-		return Common.Utils.String.htmlEncode( ( check.res ? check.field.asc_getName() : this.table.pivot.getPivotFieldName(this.index) ) );
-	};
-
-	/**
-	 * Sets a value that represents the label text for the pivot field.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @param {string} caption - Caption.
-	 */
-	ApiPivotField.prototype.SetCaption = function (caption) {
-		// todo поправить опредление на values
-
-		if (typeof caption == "string" && caption.trim().length > 0) {
-			var vals = this.table.pivot.asc_getDataFields();
-			var check = private_PivotCheckField(this.table.pivot, this.index, vals);
-			var newField = check.res ? new Asc.CT_DataField() : new Asc.CT_PivotField();
-			var curField = check.res ? check.field : this.table.pivot.asc_getPivotFields()[this.index];
-			var index = check.res ? check.index : this.index;
-			newField.asc_setName(caption.trim());
-			curField.asc_set(this.table.api, this.table.pivot, index, newField);
-		} else {
-			private_MakeError('Invalid type of "caption" or "caption" is empty.')
-		}
-	};
-
-	Object.defineProperty(ApiPivotField.prototype, "Caption", {
-		get: function () {
-			return this.GetCaption();
-		},
-		set: function (caption) {
-			this.SetCaption(caption);
-		}
-	});
-
-	/**
-	 * Returns a value representing the name of the object.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @returns {string}
-	 */
-	ApiPivotField.prototype.GetName = function () {
-		// todo поправить опредление на values
-
-		return this.GetCaption();
-	};
-
-	/**
-	 * Sets a value representing the name of the object.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @param {string} name - Name.
-	 */
-	ApiPivotField.prototype.SetName = function (name) {
-		// todo поправить опредление на values
-
-		if (typeof name == "string" && name.trim().length > 0) {
-			var vals = this.table.pivot.asc_getDataFields();
-			var check = private_PivotCheckField(this.table.pivot, this.index, vals);
-			var newField = check.res ? new Asc.CT_DataField() : new Asc.CT_PivotField();
-			var curField = check.res ? check.field : this.table.pivot.asc_getPivotFields()[this.index];
-			var index = check.res ? check.index : this.index;
-			newField.asc_setName(name.trim());
-			curField.asc_set(this.table.api, this.table.pivot, index, newField);
-		} else {
-			private_MakeError('Invalid type of "name" or "name" is empty.')
-		}
-	};
-
-	Object.defineProperty(ApiPivotField.prototype, "Name", {
-		get: function () {
-			return this.GetName();
-		},
-		set: function (name) {
-			this.SetName(name);
-		}
-	});
-
 	/**
 	 * Returns a value representing the name of the object.
 	 * @memberof ApiPivotField
@@ -14916,7 +14903,7 @@
 	 * @returns {string}
 	 */
 	ApiPivotField.prototype.GetValue = function () {
-		return this.GetCaption();
+		return this.GetName();
 	};
 
 	/**
@@ -14937,6 +14924,89 @@
 			this.SetValue(name);
 		}
 	});
+	/**
+	 * Returns a value that represents the label text for the pivot field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotField.prototype.GetCaption = function () {
+		return this.GetName();
+	};
+	/**
+	 * Set value that represents the label text for the pivot field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} caption
+	 */
+	ApiPivotField.prototype.SetCaption = function (caption) {
+		return this.SetName(caption);
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Caption", {
+		get: function () {
+			return this.GetCaption();
+		},
+		set: function(caption) {
+			this.SetCaption(caption);
+		}
+	});
+
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotField.prototype.GetName = function () {
+		if (this.dataField) {
+			return Common.Utils.String.htmlEncode(this.dataField.asc_getName());
+		}
+		return Common.Utils.String.htmlEncode(this.pivotField.asc_getName() || this.GetSourceName());
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 */
+	ApiPivotField.prototype.SetName = function (name) {
+		if (typeof name === 'string' && name.length > 0) {
+			if (this.dataField) {
+				this.dataField.asc_setName(name);
+			} else {
+				this.pivotField.asc_setName(name);
+			}
+		} else {
+			private_MakeError('Bad name type or empty.');
+		}
+
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		},
+		set: function (name) {
+			this.SetName(name);
+		}
+	});
+	/**
+	 * Returns source name
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotField.prototype.GetSourceName = function () {
+		return Common.Utils.String.htmlEncode(this.table.pivot.getCacheFieldName(this.index));
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "SourceName", {
+		get: function () {
+			return this.GetSourceName();
+		}
+	});
 
 	/**
 	 * Returns a value that represents the format code for the object.
@@ -14954,22 +15024,6 @@
 			return this.GetNumberFormat();
 		}
 		// TODO for set number format we must know this field range in PivotTable
-	});
-
-	/**
-	 * Returns source name
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @returns {string}
-	 */
-	ApiPivotField.prototype.GetSourceName = function () {
-		return Common.Utils.String.htmlEncode(this.table.pivot.getCacheFieldName(this.index));
-	};
-
-	Object.defineProperty(ApiPivotField.prototype, "SourceName", {
-		get: function () {
-			return this.GetSourceName();
-		}
 	});
 
 	/**
@@ -15822,40 +15876,6 @@
 			return this.GetCurrentPage();
 		}
 	});
-
-	/**
-	 * Returns an object that represents either a single PivotTable item (a PivotItem object) or a collection of all the visible and hidden items (a PivotItems object) in the specified field. Read-only.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @returns {[ApiPivotItem] || []}
-	 */
-	ApiPivotField.prototype.GetPivotItems = function () {
-		// todo поправить опредление на values
-		// todo поправить определение index (так как через простой перебор не корректно работает определение индекса)
-		// _updatePivotTableCellsRowColLables - вот в этой функции есть алгоритм как определить индекс и range тоже можно от туда достать (подумать над тем, как обновлять этот индекс при изменении)
-		// может быть хранить какой-то индекс, чтобы можно было найди это поле хоть где-то и оно постоянно, а из него уже искать там, где может поменяться позиция
-
-		if (this.table.pivot.asc_getPivotFields()[this.index].axis !== null) {
-			var items = [];
-			var cacheField = this.table.pivot.asc_getCacheFields()[this.index];
-			var count = cacheField.getGroupOrSharedSize();
-			for (var i = 0; i < count; i++) {
-				var item = cacheField.getGroupOrSharedItems().Items.get(i);
-				items.push( new ApiPivotItem(this, i, item.val ) );
-			}
-			return items;
-		} else {
-			private_MakeError('It is not possible from this field.')
-		}
-
-	};
-
-	Object.defineProperty(ApiPivotField.prototype, "PivotItems", {
-		get: function () {
-			return this.GetPivotItems();
-		}
-	});
-
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
