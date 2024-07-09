@@ -6384,6 +6384,10 @@ function CSlideDrawer()
 		if (4 * _need_pix_width * _need_pix_height < this.CONST_MAX_SLIDE_CACHE_SIZE)
 			this.IsCached = true;
 
+		// See bug 68871
+		if (this.m_oWordControl.m_oApi.isMobileVersion)
+			this.IsCached = false;
+
 		if (this.IsCached)
 		{
 			// кэш используется. теперь нужно решить, нужно ли создать картинку, или управимся и старой
