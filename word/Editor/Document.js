@@ -22141,6 +22141,9 @@ CDocument.prototype.IsInFormField = function(isAllowComplexForm, isCheckCurrentU
 	var oInlineSdt    = oSelectedInfo.GetInlineLevelSdt();
 	var oBlockSdt     = oSelectedInfo.GetBlockLevelSdt();
 	
+	if (oInlineSdt && oInlineSdt.IsContentControlEquation())
+		return false;
+	
 	if (isCheckCurrentUser
 		&& oInlineSdt
 		&& (!oInlineSdt.IsComplexForm() || isAllowComplexForm))
