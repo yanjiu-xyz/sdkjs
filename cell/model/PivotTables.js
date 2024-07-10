@@ -14509,6 +14509,10 @@ CT_PageField.prototype.asc_getName = function () {
 CT_PageField.prototype.asc_getIndex = function () {
 	return this.fld || 0;
 };
+
+/**
+ * @constructor
+ */
 function CT_DataField(setDefaults) {
 //Attributes
 	this.name = null;
