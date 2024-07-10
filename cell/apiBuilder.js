@@ -13503,7 +13503,7 @@
 			if (typeof field === 'number') {
 				pivotIndex = field - 1;
 				if (pivotFields[pivotIndex]) {
-					return new ApiPivotField(this, index, pivotFields[pivotIndex]);
+					return new ApiPivotField(this, pivotIndex, pivotFields[pivotIndex]);
 				}
 			} else if (typeof field === 'string') {
 				pivotIndex = this.pivot.getFieldIndexByValue(field.trim());
@@ -13635,144 +13635,34 @@
 		}
 	});
 	/**
-	 * Removes field from PivotTable.
+	 * Removes field from all PivotTable categories.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string} identifier - The index number or name of the field.
 	 */
 	ApiPivotTable.prototype.RemoveField = function (identifier) {
-		var type = typeof identifier;
-		var fields = this.pivot.asc_getCacheFields();
-		var index = -1;
-		var pivFields = this.pivot.asc_getPivotFields();
-
-		if (type == 'number' && identifier > 0  && identifier - 1 < fields.length) {
-			index = identifier - 1;
-		} else if (type == "string") {
-			index = this.pivot.getFieldIndexByValue(identifier.trim());
-		}
-
-		if ( index !== -1 && (pivFields[index].axis !== null || pivFields[index].dataField) ) {
-			this.pivot.asc_removeField(this.api, index);
-		} else {
-			private_MakeError("A field with such an identifier does not exist or has already removed.");
+		const pivotField = this.GetPivotFields(identifier);
+		if (pivotField) {
+			this.pivot.asc_removeField(this.api, pivotField.index);
 		}
 	};
+
+	/**
+	 * @typedef {"Rows" | "Columns" | "Filters" | "Values" | "Up" | "Down" | "Begin" | "End" } PivotMoveFieldType
+	 */
+
 	/**
 	 * Moves field from one category to another.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string} identifier - The index number or name of the field.
-	 * @param {number} type - The type of the field to move (1 - to rows, 2 - to columns, 3 - to values, 4 - to filters, 5 - up, 6 - down, 7 - to beginning, 8 - to end).
-	 * @param {number} index - The index of the field in new category.
+	 * @param {PivotMoveFieldType} type - The type of the field to move.
+	 * @param {number | undefined} index - The index of the field in new category.
 	 */
 	ApiPivotTable.prototype.MoveField = function (identifier, type, index) {
-		if ( !type || typeof type !== "number" || (type < 0 && type > 9) ) {
-			private_MakeError('"type" is undefinded or contains an invalid value.');
-			return;
-		}
-		index--;
-
-		var typeId = typeof identifier;
-		var fields = this.pivot.asc_getCacheFields();
-		var pivotIndex = -1;
-
-		if (typeId == 'number' && identifier > 0  && identifier - 1 < fields.length) {
-			pivotIndex = identifier - 1;
-		} else if (typeId == "string") {
-			pivotIndex = this.pivot.getFieldIndexByValue(identifier.trim());
-		}
-
-		if (pivotIndex !== null) {
-			var arrFields = [
-				this.pivot.asc_getRowFields(),
-				this.pivot.asc_getColumnFields(),
-				this.pivot.asc_getPageFields(),
-				this.pivot.asc_getDataFields()
-			];
-			if (type < 5) {
-				var filts = arrFields[3] || [];
-				var	dataIndex = private_PivotCheckField(this.pivot, pivotIndex, filts).index;
-				var pivField = this.pivot.asc_getPivotFields()[pivotIndex];
-
-				switch (type) {
-					case 1:
-						if (pivField.axis != 0)
-							this.pivot.asc_moveToRowField(this.api, pivotIndex, dataIndex, index);
-						else
-							private_MakeError("A field with such an identifier has already added.");
-						break;
-					case 2:
-						if (pivField.axis != 1)
-							this.pivot.asc_moveToColField(this.api, pivotIndex, dataIndex, index);
-						else
-							private_MakeError("A field with such an identifier has already added.");
-						break;
-					case 3:
-						if (!pivField.dataField)
-							this.pivot.asc_moveToDataField(this.api, pivotIndex, dataIndex, index);
-						else
-							private_MakeError("A field with such an identifier has already added.");
-						break;
-					case 4:
-						if (pivField.axis != 2)
-							this.pivot.asc_moveToPageField(this.api, pivotIndex, null, index);
-						else
-							private_MakeError("A field with such an identifier has already added.");
-						break;
-				}
-
-			} else {
-				// fieldType: 0 - rows, 1 - columns, 2 - values, 3 - filters
-				var fieldType = null;
-				var indexFrom = null;
-				var indexTo = null;
-
-				for (var i = 0; i < arrFields.length; i++) {
-					var check = private_PivotCheckField(this.pivot, pivotIndex, ( arrFields[i] || [] ) );
-					if (check.res) {
-						fieldType = i;
-						indexFrom = check.index;
-						break;
-					}
-				}
-
-				switch (type) {
-					case 5:
-						indexTo = (indexFrom > 0) ? indexFrom - 1 : indexFrom;
-						break;
-					case 6:
-						indexTo = (indexFrom < arrFields[fieldType].length - 1) ? indexFrom + 1 : arrFields[fieldType].length - 1;
-						break;
-					case 7:
-						indexTo = 0;
-						break;
-					case 8:
-						indexTo = arrFields[fieldType].length - 1;
-						break;
-				}
-
-				if (indexFrom !== indexTo) {
-					switch (fieldType) {
-						case 0:
-							this.pivot.asc_moveRowField(this.api, indexFrom, indexTo);
-							break;
-						case 1:
-							this.pivot.asc_moveColField(this.api, indexFrom, indexTo);
-							break;
-						case 2:
-							this.pivot.asc_movePageField(this.api, indexFrom, indexTo);
-							break;
-						case 3:
-							this.pivot.asc_moveDataField(this.api, indexFrom, indexTo);
-							break;
-					}
-				} else {
-					private_MakeError("This position is not available for this field.");
-				}
-			}
-		} else {
-			private_MakeError("A field with such an identifier does not exist.");
+		const pivotField = this.GetPivotFields(identifier);
+		if (pivotField) {
+			pivotField.Move(type, index)
 		}
 	};
 	/**
@@ -14597,8 +14487,101 @@
 	ApiPivotDataField.prototype.SetConsolidateFunction = function (func) {
 		//TODO
 	};
+	/**
+	 * Removes dataFeild from values category.
+	 * @memberof ApiPivotDataField
+	 */
+	ApiPivotDataField.prototype.Remove = function () {
+		const pivotIndex = this.dataField.asc_getIndex();
+		this.table.pivot.asc_removeDataField(this.table.api, pivotIndex, this.index);
+	};
+	/**
+	 * @memberof ApiPivotDataField
+	 * @param {PivotMoveFieldType} type - The type of the field to move.
+	 * @param {number | undefined} index - The index of the field in new category.
+	 */
+	ApiPivotDataField.prototype.Move = function (type, index) {
+		function getIndexTo(type, indexFrom, fields) {
+			switch (type) {
+				case "Up":
+					return (indexFrom > 0) ? indexFrom - 1 : indexFrom;
+				case "Down":
+					return (indexFrom < fields.length - 1) ? indexFrom + 1 : fields.length - 1;
+				case "Begin":
+					return 0;
+				case "End":
+					return fields.length - 1;
+				default:
+					return null;
+			}
+		}
+		const pivotIndex = this.dataField.asc_getIndex();
+		const pivotField = this.table.pivot.asc_getPivotFields()[pivotIndex];
+		switch (type) {
+			case "Rows":
+				this.table.pivot.asc_moveToRowField(this.table.api, pivotIndex, this.index, index);
+				break;
+			case "Columns":
+				this.table.pivot.asc_moveToColField(this.table.api, pivotIndex, this.index, index);
+				break;
+			case "Filters":
+				this.table.pivot.asc_moveToPageField(this.table.api, pivotIndex, this.index, index);
+				break;
+			case "Values":
+				this.SetPosition(index);
+				break;
+			default:
+				const fields = this.table.pivot.asc_getDataFields();
+				let indexFrom = this.index;
+				let indexTo = getIndexTo(type, indexFrom, fields);
+				if (indexTo != null) {
+					this.SetPosition(indexTo + 1);
+				} else {
+					private_MakeError("Bad move type.");
+				}
+				break;
+		}
+	}
 
 	/** Properties */
+
+	/**
+	 * Returns a value that represents the position of the field in category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 */
+	ApiPivotDataField.prototype.GetPosition = function () {
+		return this.index + 1;
+	};
+
+	/**
+	 * Sets a value that represents the position of the field in dataField category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {number} position - Position.
+	 */
+	ApiPivotDataField.prototype.SetPosition = function (position) {
+		const dataFields = this.table.pivot.asc_getDataFields();
+		if (typeof position === "number") {
+			if (dataFields[position] && this.index !== position - 1) {
+				this.table.pivot.asc_moveDataField(this.table.api, this,index, position - 1);
+			} else {
+				private_MakeError('Invalid position (out of range or the same).');
+			}
+		} else {
+			private_MakeError('Invalid type of "position".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Position", {
+		get: function () {
+			return this.GetPosition();
+		},
+		set: function (position) {
+			this.SetPosition(position);
+		}
+	});
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -14676,13 +14659,70 @@
 	 * Moves field inside category.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {number} type - The type of the field to move (5 - up, 6 - down, 7 - to beginning, 8 - to end).
+	 * @param {PivotMoveFieldType} type - The type of the field to move.
+	 * @param {number | undefined}
 	 */
-	ApiPivotField.prototype.Move = function (type) {
-		if ( (typeof type == "number") && type > 4 && type < 9 )
-			this.table.MoveField(this.index, type);
-		else
-			private_MakeError('Invalid "type" or invalid value.');
+	ApiPivotField.prototype.Move = function (type, index) {
+		function getIndexTo(type, indexFrom, fields) {
+			switch (type) {
+				case "Up":
+					return (indexFrom > 0) ? indexFrom - 1 : indexFrom;
+				case "Down":
+					return (indexFrom < fields.length - 1) ? indexFrom + 1 : fields.length - 1;
+				case "Begin":
+					return 0;
+				case "End":
+					return fields.length - 1;
+				default:
+					return null;
+			}
+		}
+		switch (type) {
+			case "Rows":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
+					this.table.pivot.asc_moveToRowField(this.table.api, this.index, undefined, index - 1);
+				} else {
+					this.SetPosition(index)
+				}
+				break;
+			case "Columns":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
+					this.table.pivot.asc_moveToColField(this.table.api, this.index, undefined, index - 1);
+				} else {
+					this.SetPosition(index)
+				}
+				break;
+			case "Filters":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
+					this.table.pivot.asc_moveToPageField(this.api, this.index, undefined, index - 1);
+				} else {
+					this.SetPosition(index)
+				}
+				break;
+			case "Values":
+				this.table.pivot.asc_moveToDataField(this.table.api, this.index, undefined, index - 1);
+				break;
+			default:
+				const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
+				if (fields) {
+					let indexFrom = null;
+					for (let i = 0; i < fields.length; i += 1) {
+						if (fields[i].asc_getIndex() === this.index) {
+							indexFrom = i;
+							break;
+						}
+					}
+					let indexTo = getIndexTo(type, indexFrom, fields);
+					if (indexTo != null) {
+						this.SetPosition(indexTo + 1);
+					} else {
+						private_MakeError("Bad move type.");
+					}
+				} else {
+					private_MakeError("Field is hidden.");
+				}
+				break;
+		}
 	};
 	/**
 	 * Removes field from PivotTable.
@@ -14690,32 +14730,30 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiPivotField.prototype.Remove = function () {
-		this.table.RemoveField(this.index);
+		this.table.pivot.asc_removeNoDataField(this.table.api, this.index);
 	};
 
 	/** Attributes */
 
 	/**
-	 * Returns a value that represents the position of the field (first, second, third, and so on)
-	 * among all the fields in its orientation (Rows, Columns, Pages, Data).
+	 * Returns a value that represents the position of the field in category.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
 	 */
 	ApiPivotField.prototype.GetPosition = function () {
-		var arrFields = [
-			this.table.pivot.asc_getRowFields(),
-			this.table.pivot.asc_getColumnFields(),
-			this.table.pivot.asc_getPageFields(),
-			this.table.pivot.asc_getDataFields()
-		];
-
-		for (var i = 0; i < arrFields.length; i++) {
-			var check = private_PivotCheckField( null, this.index, ( arrFields[i] || [] ) );
-			if (check.res)
-				return ++check.index;
+		const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
+		if (fields) {
+			for (let i = 0; i < fields.length; i += 1) {
+				if (fields[i].asc_getIndex() === this.index) {
+					return i + 1;
+				}
+			}
 		}
-		private_MakeError("This field isn't in PivotTable.");
+		private_MakeError('The field is hidden or it is data field.\n' +
+		'If you need to change the position of the data field then use ApiPivotDataField.SetPosition.\n' +
+		'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ' +
+		'ApiPivotDataField object');
 	};
 
 	/**
@@ -14727,41 +14765,14 @@
 	 */
 	ApiPivotField.prototype.SetPosition = function (position) {
 		if (typeof position == "number") {
-			position--;
-			var arrFields = [
-				this.table.pivot.asc_getRowFields(),
-				this.table.pivot.asc_getColumnFields(),
-				this.table.pivot.asc_getPageFields(),
-				this.table.pivot.asc_getDataFields()
-			];
-			// fieldType: 0 - rows, 1 - columns, 2 - values, 3 - filters
-			var curPos = null,
-				fieldType = null;
-
-			for (var i = 0; i < arrFields.length; i++) {
-				var check = private_PivotCheckField( null, this.index, ( arrFields[i] || [] ) );
-				if (check.res) {
-					curPos = check.index;
-					fieldType = i;
-					break;
-				}
+			if (this.pivotField.axis === null) {
+				private_MakeError('The field is hidden or it is data field.\n' +
+					'If you need to change the position of the data field then use ApiPivotDataField.SetPosition.\n' +
+					'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ' +
+					'ApiPivotDataField object');
+				return;
 			}
-			if ( position >= 0 && position < arrFields[fieldType].length  && position !== curPos ) {
-				switch (fieldType) {
-					case 0:
-						this.table.pivot.asc_moveRowField(this.table.api, curPos, position);
-						break;
-					case 1:
-						this.table.pivot.asc_moveColField(this.table.api, curPos, position);
-						break;
-					case 2:
-						this.table.pivot.asc_movePageField(this.table.api, curPos, position);
-						break;
-					case 3:
-						this.table.pivot.asc_moveDataField(this.table.api, curPos, position);
-						break;
-				}
-			} else {
+			if (!this.table.pivot.moveFieldInAxis(this.table.api, this.index, this.pivotField.axis, position - 1)) {
 				private_MakeError('Invalid position (out of range or the same).')
 			}
 		} else {
@@ -14783,11 +14794,12 @@
 	 * of the field in the specified PivotTable report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @return {number} (1 - rows, 2 - columns, 3 - values, 4 - filters, 5 - hidden).
+	 * @return {number} (0 - hidden, 2 - columns, 3 - values, 4 - filters, 5 - hidden).
 	 */
 	ApiPivotField.prototype.GetOrientation = function () {
-		var field = this.table.pivot.asc_getPivotFields()[this.index];
-		var res = field.axis !== null ? (field.axis < 2 ? ++field.axis : 4) : field.dataField ? 3 : 5;
+		if (this.pivotField.axis != null) {
+
+		}
 		return res;
 	};
 
@@ -14796,11 +14808,11 @@
 	 * of the field in the specified PivotTable report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {number} type - The type of the field to move (1 - to rows, 2 - to columns, 3 - to values, 4 - to filters, 5 - to hidden).
+	 * @param {number} type - The type of the field to move (0 - hidder, 1 - to rows, 2 - to columns, 3 - to filters, 4 - to values).
 	 */
 	ApiPivotField.prototype.SetOrientation = function (type) {
-		if ( (typeof type == "number") && type > 0 && type < 6 ) {
-			if (type == 5)
+		if ( (typeof type == "number") && type >= 0 && type < 5 ) {
+			if (!type)
 				this.Remove();
 			else
 				this.table.MoveField(this.index, type);

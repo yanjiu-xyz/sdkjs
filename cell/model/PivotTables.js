@@ -8408,6 +8408,59 @@ CT_pivotTableDefinition.prototype.getFieldIndexByValue = function(value) {
 	}
 	return -1;
 };
+/**
+ * @param {c_oAscAxis} axis
+ * @return {CT_Field[] | CT_PageField[] | null}
+ */
+CT_pivotTableDefinition.prototype.getAxisFields = function(axis) {
+	if (axis != null) {
+		switch (axis) {
+			case c_oAscAxis.AxisCol:
+				return this.asc_getColumnFields();
+			case c_oAscAxis.AxisRow:
+				return this.asc_getRowFields();
+			case c_oAscAxis.AxisPage:
+				return this.asc_getPageFields();
+			default:
+				return null;
+		}
+	}
+	return null;
+};
+/**
+ * @param {spreadsheet_api} api
+ * @param {number} pivotIndex
+ * @param {c_oAscAxis} axis
+ * @param {number} position
+ * @return {boolean}
+ */
+CT_pivotTableDefinition.prototype.moveFieldInAxis = function(api, pivotIndex, axis, position) {
+	function getCurPos(fields) {
+		for (let i = 0; i < fields.length; i += 1) {
+			if (fields[i].asc_getIndex() === pivotIndex) {
+				return i;
+			}
+		}
+	}
+	const fields = this.getAxisFields(axis);
+	const curPos = getCurPos(fields);
+	if (fields[position] && curPos !== position) {
+		switch (axis) {
+			case c_oAscAxis.AxisCol:
+				this.asc_moveColField(api, curPos, position);
+				return true;
+			case c_oAscAxis.AxisRow:
+				this.asc_moveRowField(api, curPos, position);
+				return true;
+			case c_oAscAxis.AxisPage:
+				this.asc_movePageField(api, curPos, position);
+				return true;
+			default:
+				return false;
+		}
+	}
+	return false;
+};
 
 /**
  * @typedef PivotFormatsCollectionItem
