@@ -13621,7 +13621,7 @@ CDocument.prototype.EditComment = function(Id, CommentData)
 CDocument.prototype.RemoveComment = function(Id, bSendEvent, bRecalculate)
 {
 	if (null === Id)
-		return;
+		return false;
 
 	if (true === this.Comments.Remove_ById(Id))
 	{
@@ -13634,7 +13634,11 @@ CDocument.prototype.RemoveComment = function(Id, bSendEvent, bRecalculate)
 
 		if (true === bSendEvent)
 			this.Api.sync_RemoveComment(Id);
+
+		return true;
 	}
+
+	return false;
 };
 CDocument.prototype.CanAddComment = function()
 {
