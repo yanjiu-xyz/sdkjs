@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -104,7 +104,6 @@
 		
 		this.collPrChangeColor = null;
 		
-		this.rtl      = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
 	ParagraphLineDrawState.prototype.init = function()
@@ -152,7 +151,7 @@
 		this.X      = x;
 		this.Spaces = spaces;
 		
-		this.bidiFlow.begin(this.rtl);
+		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
 		
 		this.paraLineRange = this.Paragraph.Lines[this.Line].Ranges[this.Range];
 	};
@@ -305,7 +304,7 @@
 		if (form)
 		{
 			if (form.IsFormRequired() && this.logicDocument.IsHighlightRequiredFields() && !this.Graphics.isPrintMode)
-				formBorder= this.logicDocument.GetRequiredFieldsBorder();
+				formBorder = this.logicDocument.GetRequiredFieldsBorder();
 			else if (form.GetFormPr().GetBorder())
 				formBorder = form.GetFormPr().GetBorder();
 			

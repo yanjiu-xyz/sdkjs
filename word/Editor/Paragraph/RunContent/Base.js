@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -106,7 +106,7 @@
 	};
 	CRunElementBase.prototype.Copy = function()
 	{
-		return new CRunElementBase();
+		return new this.constructor();
 	};
 	CRunElementBase.prototype.Write_ToBinary = function(Writer)
 	{
@@ -277,6 +277,14 @@
 		return false;
 	};
 	/**
+	 * Является ли данный элемент текстовым элементом внутри математического выражения
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsMathText = function()
+	{
+		return false;
+	};
+	/**
 	 * @returns {boolean}
 	 */
 	CRunElementBase.prototype.IsTab = function()
@@ -348,11 +356,11 @@
 		return false;
 	};
 	/**
-	 * return {AscWord.BidiType}
+	 * return {AscBidi.TYPE}
 	 */
 	CRunElementBase.prototype.getBidiType = function()
 	{
-		return AscWord.BidiType.neutral;
+		return AscBidi.TYPE.ON;
 	};
 	/**
 	 * @return {number}

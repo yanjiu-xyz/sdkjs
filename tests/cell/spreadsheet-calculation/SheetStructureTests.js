@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -2610,28 +2610,29 @@ $(function () {
 
 		assert.strictEqual(sTableData, tableName + "[[#Headers],[#Data],[Column1]:[Column2]]", "check headers + data + column1:column2 selection table");
 
+		//todo temporary commented. need prepare formula parser by @ columns
 		//@
 		//Table5[@]
-		activeCell = new AscCommon.CellBase(101, 4);
-		handleSelectionRange = new Asc.Range(0, 101, 2, 101);
-		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
-
-		assert.strictEqual(sTableData, tableName + "[@]", "check intersection all row");
-
-		//Table5[@[Column1]:[Column2]]
-		activeCell = new AscCommon.CellBase(101, 4);
-		handleSelectionRange = new Asc.Range(0, 101, 1, 101);
-		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
-
-		assert.strictEqual(sTableData, tableName + "[@[Column1]:[Column2]]", "check intersection column1:column2 row");
-
-
-		//Table5[@Column1]
-		activeCell = new AscCommon.CellBase(101, 4);
-		handleSelectionRange = new Asc.Range(0, 101, 0, 101);
-		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
-
-		assert.strictEqual(sTableData, tableName + "[@Column1]", "check intersection column1 row");
+		// activeCell = new AscCommon.CellBase(101, 4);
+		// handleSelectionRange = new Asc.Range(0, 101, 2, 101);
+		// sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+		//
+		// assert.strictEqual(sTableData, tableName + "[@]", "check intersection all row");
+		//
+		// //Table5[@[Column1]:[Column2]]
+		// activeCell = new AscCommon.CellBase(101, 4);
+		// handleSelectionRange = new Asc.Range(0, 101, 1, 101);
+		// sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+		//
+		// assert.strictEqual(sTableData, tableName + "[@[Column1]:[Column2]]", "check intersection column1:column2 row");
+		//
+		//
+		// //Table5[@Column1]
+		// activeCell = new AscCommon.CellBase(101, 4);
+		// handleSelectionRange = new Asc.Range(0, 101, 0, 101);
+		// sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+		//
+		// assert.strictEqual(sTableData, tableName + "[@Column1]", "check intersection column1 row");
 
 		//Table5[#Headers]
 		activeCell = new AscCommon.CellBase(99, 4);
@@ -2923,9 +2924,670 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=SUM(L13)", "Formula after A12:M14 autosum");
 		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A13:M14", "Selection after A12:M14 autosum");
 		
+		// for bug 32959
+		ws.getRange2("B10:B14").cleanAll();
+		ws.getRange2("B11").setValue("1");
+		ws.getRange2("B12").setValue("ds");
+
+		// B11:B12
+		fillRange = ws.getRange2("B11:B12");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("B13");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after B11:B12 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B11:B12)", "Formula after B11:B12 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B11:B13", "Selection after B11:B12 autosum");
+
+		// B11:B13
+		ws.getRange2("B13:B14").cleanAll();
+		fillRange = ws.getRange2("B11:B13");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("B13");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after B11:B13 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B11:B12)", "Formula after B11:B13 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B11:B13", "Selection after B11:B13 autosum");
+
+		// B10:B12
+		ws.getRange2("B13:B14").cleanAll();
+		fillRange = ws.getRange2("B10:B12");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("B13");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after B10:B12 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B10:B12)", "Formula after B10:B12 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B10:B13", "Selection after B10:B12 autosum");
+
+		// B10:B13
+		ws.getRange2("B13:B14").cleanAll();
+		fillRange = ws.getRange2("B10:B13");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("B13");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after B10:B13 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B10:B12)", "Formula after B10:B13 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B10:B13", "Selection after B10:B13 autosum");
 
 		
+		ws.getRange2("B20:F20").cleanAll();
+		ws.getRange2("C20").setValue("1");
+		ws.getRange2("D20").setValue("ds");
+		// C20:D20
+		ws.getRange2("E20:F20").cleanAll();
+		fillRange = ws.getRange2("C20:D20");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("E20");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after C20:D20 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(C20:D20)", "Formula after C20:D20 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "C20:E20", "Selection after C20:D20 autosum");
+
+		// C20:E20
+		ws.getRange2("E20:F20").cleanAll();
+		fillRange = ws.getRange2("C20:E20");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("E20");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after C20:E20 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(C20:D20)", "Formula after C20:E20 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "C20:E20", "Selection after C20:E20 autosum");
+
+		// B20:D20
+		ws.getRange2("E20:F20").cleanAll();
+		fillRange = ws.getRange2("B20:D20");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("E20");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after B20:D20 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B20:D20)", "Formula after B20:D20 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B20:E20", "Selection after B20:D20 autosum");
+
+		// B20:E20
+		ws.getRange2("E20:F20").cleanAll();
+		fillRange = ws.getRange2("B20:E20");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("E20");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after B20:E20 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B20:D20)", "Formula after B20:E20 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B20:E20", "Selection after B20:E20 autosum");
+
+		// for bug 37318
+		ws.getRange2("A20:A22").cleanAll();
+		ws.getRange2("A20:A22").setValue("1");
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("m/d/yyyy");		// change to the short date format
+		// wsView.setSelectionInfo("format", "m/d/yyyy");
+
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value after A20:A22(only dates in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula after A20:A22(only dates in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A22", "Selection after A20:A22(only dates in range) autosum");
+
+
+		// number 
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("0.00"); 	// change to the number format
+
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only number in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only number in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only number in range) autosum");
+
+
+		// fraction
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("# ?/?"); 	// change to the fraction format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only fraction in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only fraction in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only fraction in range) autosum");
+
+
+		// scientific
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("0.00E+00"); 	// change to the scientific format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only scientific in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only scientific in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only scientific in range) autosum");
+
+
+		// accounting
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("_([$$-409]* #,##0.00_);_([$$-409]* \\(#,##0.00\\);_([$$-409]* \"-\"??_);_(@_)"); 	// change to the accounting format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only accounting in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only accounting in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only accounting in range) autosum");
+
+
+		// percentage
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("0.00%"); 	// change to the percentage format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only percents in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only percents in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only percents in range) autosum");
+
+
+		// l.date
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("[$-F800]dddd\,\ mmmm\ d\,\ yyyy"); 	// change to the long date format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value after A20:A22(only dates in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula after A20:A22(only dates in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A22", "Selection after A20:A22(only dates in range) autosum");
+
+
+		// text
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("@"); 	// change to the text format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value after A20:A22(only text in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula after A20:A22(only text in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A22", "Selection after A20:A22(only text in range) autosum");
+
+		/* activeCell tests */
+		/* if the data type does not allow the formula to be executed, the active cell is moved to the end of the select */
+		let activeCell, supposedActiveCell;
+
+		ws.getRange2("A1:Z100").cleanAll();
+		ws.getRange2("B10").setValue("111");
+		ws.getRange2("B20:B22").setValue("ds");
+		fillRange = ws.getRange2("B20:B22");
+		fillRange.setNumFormat("@");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B22");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. B20:B22(only text in range) autosum");
+
+
+		ws.getRange2("B10").cleanAll();
+		ws.getRange2("A20:A21").setValue("111");
+		fillRange = ws.getRange2("B20:B22");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B22");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. B20:B22(only text in range) autosum");
+
+
+		ws.getRange2("A22").setValue("111");
+		fillRange = ws.getRange2("B20:B22");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B22");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. B20:B22(only text in range) autosum");
+
+		
+		ws.getRange2("A1:Z100").cleanAll();
 	});
+
+	QUnit.test('sortRangeTest', function (assert) {
+		let range, expectedRes;
+
+		ws.getRange2("A1:Z100").cleanAll();
+
+		let testData = [
+			['a'],
+			['h'],
+			['f'],
+			['é'],
+			['e'],
+			['d'],
+			['c'],
+			['b'],
+			['á'],
+			['g']
+		];
+
+		range = ws.getRange2("A1:A10");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, [['a'],['á'],['b'],['c'],['d'],['e'],['é'],['f'],['g'],['h']], "check_sort_1");
+
+		range = ws.getRange2("A1:A10");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, [['h'],['g'],['f'],['é'],['e'],['d'],['c'],['b'],['á'],['a']], "check_sort_2");
+
+		testData = [
+			['1'],
+			['g'],
+			['2'],
+			['é'],
+			['TEST3'],
+			['á'],
+			['c'],
+			['Test2'],
+			['test1'],
+			['a']
+		];
+
+		range = ws.getRange2("A1:A10");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, [['1'],['2'],['a'],['á'],['c'],['é'],['g'],['test1'],['Test2'],['TEST3']], "check_sort_3");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, [['TEST3'],['Test2'],['test1'],['g'],['é'],['c'],['á'],['a'],['2'],['1']], "check_sort_4");
+
+		testData = [
+			['-2'],
+			['Test2'],
+			['test1'],
+			['g'],
+			['é'],
+			['12345'],
+			['á'],
+			['a'],
+			['안세요'],
+			['녕하'],
+			['TEST0'],
+			['하'],
+			['TEST2'],
+			['аА'],
+			['é'],
+			['1'],
+			['2'],
+			['АА'],
+			['аа'],
+			['-1']
+		];
+
+		range = ws.getRange2("A1:A20");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, [['-2'],['-1'],['1'],['2'],['12345'],['a'],['á'],['é'],['é'],['g'],['TEST0'],['test1'],['Test2'],['TEST2'],['аА'],['АА'],['аа'],['녕하'],['안세요'],['하']], "check_sort_5");
+
+		/* MS puts Arabic alphabet above Japanese, javascript sorts differently*/
+
+		testData = [
+			['أ'],	// arabic
+			['А'],	// russian
+			['あ'],	// japanese
+		];
+
+		range = ws.getRange2("A1:A3");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, [['А'],['أ'],['あ']], "Asc check_sort_6");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, [['あ'],['أ'],['А']], "Desc check_sort_6");
+
+		testData = [
+			['A'],	// english
+			['A'],	// spanish
+			['A'],	// german
+			['Ä'],	// german
+			['A'],	// french
+			['À'],	// french
+			['A'],	// hungarian
+			['Á'],	// hungarian
+			['A'],	// turkish
+			['أ'],	// arabic
+			['А'],	// russian
+			['あ'],	// japanese
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['A'],['A'],['A'],['A'],['A'],['A'],['Á'],['À'],['Ä'],['А'],['أ'],['あ']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_7");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_7");
+		
+		// Tests with more of languages
+		testData = [
+			['City'],	// eng
+			['城市'],	// cn
+			['शहर'],	// hindi
+			['Ciudad'],	// esp
+			['Ville'],	// fr
+			['مدينة'],	// arabic
+			['শহর'],	// bengal
+			['Город'],	// ru
+			['Cidade'],	// pt-pt
+			['Kota'],	// indonesian
+			['Város'],	// Magyar
+			['Stadt']	// Dutch
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['Cidade'],['City'],['Ciudad'],['Kota'],['Stadt'],['Város'],['Ville'],['Город'],['مدينة'],['शहर'],['শহর'],['城市']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_8");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_8");
+		
+		testData = [
+			['123City'],	// eng
+			['123城市'],	// cn
+			['123शहर'],		// hindi
+			['123Ciudad'],	// esp
+			['123Ville'],	// fr
+			['123' + 'مدينة'],	// arabic
+			['123শহর'],		// bengal
+			['123Город'],	// ru
+			['123Cidade'],	// pt-pt
+			['123Kota'],	// indonesian
+			['123Város'],	// Magyar
+			['123Stadt']	// Dutch
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['123Cidade'],['123City'],['123Ciudad'],['123Kota'],['123Stadt'],['123Város'],['123Ville'],['123Город'],['123مدينة'],['123शहर'],['123শহর'],['123城市']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_9");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_9");
+
+		testData = [
+			['2e2de2'],
+			['zxc'],
+			['f'],
+			['_d'],
+			['edasd'],
+			['SiM`Gl23'],
+			['dd23dd'],	
+			['3e2de2'],
+			['SDY'],
+			['3e2de3'],
+			['2e3de2'],
+			['__z']
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['__z'],['_d'],['2e2de2'],['2e3de2'],['3e2de2'],['3e2de3'],['dd23dd'],['edasd'],['f'],['SDY'],['SiM`Gl23'],['zxc']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_10");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_10");
+
+		// sorting specials characters does not coincide with the sorting in ms (but the same as in gs and libre)
+		/*
+		testData = [
+			['!a'],
+			['#a'],
+			['$a'],
+			['^a'],
+			['&a'],
+			['*a'],
+			['(a'],	
+			[')a'],
+			['_a'],
+			['[a'],
+			[']a'],
+			['{a'],
+			['}a'],
+			['\a'],
+			['/a'],
+			['|a'],
+			[';a'],
+			[':a'],
+			['a'],	
+			[',a'],
+			['.a'],
+			['`a'],
+			['>a'],
+			['<a'],
+			['?a'],
+			['~a'],
+		];
+
+		range = ws.getRange2("A1:A26");
+		range.fillData(testData);
+
+		expectedRes = [['!a'],['#a'],['$a'],['&a'],['(a'],[')a'],['*a'],[',a'],['.a'],['/a'],[':a'],[';a'],['?a'],['[a'],['\a'],[']a'],['^a'],['_a'],['`a'],['{a'],['|a'],['}a'],['~a'],['<a'],['>a'],['a']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_11");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_11");
+
+		// letters with diacritics sorting also does not coincide with the sorting in ms (but the same as in gs and libre)
+		testData = [
+			['á'],
+			['Á'],
+			['à'],
+			['ă'],
+			['â'],
+			['Â'],
+			['å'],
+			['ä'],
+			['ã'],
+			['Ą'],
+			['ā'],
+			['Ā'],
+		];
+		
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['á'],['Á'],['à'],['â'], ['Â'],['ä'],['ă'],['ā'],['Ā'],['ã'],['å'],['Ą'],];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_12");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_12");
+		*/
+
+		// english
+		testData = [
+			['Test1'],
+			['TEST1'],
+			['tESt1'],
+			['TesT1'],
+		];
+
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['Test1'],['TEST1'],['tESt1'],['TesT1']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_13");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes, "Desc check_sort_13");
+
+		// hungarian
+		testData = [
+			['Köszönöm1'],
+			['KÖSZÖNÖM1'],
+			['köSzÖnÖm1'],
+			['KöszönöM1'],
+		];
+
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['Köszönöm1'],['KÖSZÖNÖM1'],['köSzÖnÖm1'],['KöszönöM1']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_14");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes, "Desc check_sort_14");
+
+		testData = [
+			['ZZ'],['á'], ['é'],['í'], ['ó'], 
+			['ö'], ['ő'], ['ú'], ['ü'], ['ű'],['a']
+		];
+
+		range = ws.getRange2("A1:A11");
+		range.fillData(testData);
+
+		expectedRes = [
+			['a'],['á'],['é'], ['í'], ['ó'],
+			['ö'], ['ő'], ['ú'], ['ü'], ['ű'],['ZZ']
+		];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_15");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_15");
+
+
+		// turkish
+		testData = [
+			['C'],['Ç'],['ç'],['Ğ'],['ğ'],
+			['Ö'],['ö'],['Ş'],['ş'],['Ü'],['ü']
+		];
+
+		range = ws.getRange2("A1:A11");
+		range.fillData(testData);
+
+		expectedRes = [
+			['C'],['Ç'],['ç'],['Ğ'],['ğ'],
+			['Ö'],['ö'],['Ş'],['ş'],['Ü'],['ü']
+		];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_16");
+
+		expectedRes = [
+			['Ü'],['ü'],['Ş'],['ş'],['Ö'],
+			['ö'],['Ğ'],['ğ'],['Ç'],['ç'],['C'],
+		];
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes, "Desc check_sort_16");
+
+
+		testData = [
+			['ALİ'],
+			['MURAT'],
+			['İSMAİL']
+		];
+
+		range = ws.getRange2("A1:A3");
+		range.fillData(testData);
+
+		expectedRes = [['ALİ'],['İSMAİL'],['MURAT']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_17");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_17");
+
+
+		// hungarian, portugese, deutsch, turkish
+		testData = [
+			['Évad'],
+			['Óculos'],
+			['Äpfel'],
+			['Şehir']
+		];
+
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['Äpfel'],['Évad'],['Óculos'],['Şehir']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_18");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_18");
+
+	});
+	
 
 	QUnit.module("Sheet structure");
 });

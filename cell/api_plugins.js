@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -144,6 +144,85 @@
 
 		}
 		return arrResult;
+	};
+
+	const customFunctionsStorageId = "cell-custom-functions-library";
+
+	Api.prototype.registerCustomFunctionsLibrary = function(obj)
+	{
+		// DISABLE FOR NATIVE VERSION
+		if (window["NATIVE_EDITOR_ENJINE"])
+			return;
+
+		if (undefined === obj)
+			obj = AscCommon.getLocalStorageItem(customFunctionsStorageId);
+
+		if (!obj)
+			return;
+
+		this.clearCustomFunctions();
+
+		let arr = obj["macrosArray"];
+		if (arr)
+		{
+			for (let i = 0, len = arr.length; i < len; i++)
+			{
+				try
+				{
+					AscCommon.safePluginEval(arr[i]["value"]);
+				}
+				catch (err)
+				{
+				}
+			}
+		}
+
+		this.recalculateCustomFunctions();
+	};
+
+	/**
+	 * Returns a library of local custom functions.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @alias GetCustomFunctions
+	 * @return {string} A library of custom functions in JSON format.
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_GetCustomFunctions"] = function()
+	{
+		try
+		{
+			let res = window.localStorage.getItem(customFunctionsStorageId);
+			if (!res) res = "";
+			return res;
+		}
+		catch (err)
+		{
+		}
+		return "";
+	};
+
+	/**
+	 * Updates a library of local custom functions.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @alias SetCustomFunctions
+	 * @param {string} jsonString - A library of custom functions in JSON format.
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_SetCustomFunctions"] = function(jsonString)
+	{
+		try
+		{
+			let obj = JSON.parse(jsonString);
+			AscCommon.setLocalStorageItem(customFunctionsStorageId, obj);
+
+			this.registerCustomFunctionsLibrary(obj);
+		}
+		catch (err)
+		{
+			console.log("SetCustomFunctions method error! Please check your code...");
+		}
 	};
 
 })(window);

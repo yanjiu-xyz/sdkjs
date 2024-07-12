@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -163,8 +163,11 @@
 	{
 		this.ChoiceName = name;
 	};
-	CSdtCheckBoxPr.prototype.GetChoiceName = function()
+	CSdtCheckBoxPr.prototype.GetChoiceName = function(returnRaw)
 	{
+		if (returnRaw)
+			return this.ChoiceName;
+		
 		return this.ChoiceName ? this.ChoiceName : "";
 	};
 	//--------------------------------------------------------export----------------------------------------------------

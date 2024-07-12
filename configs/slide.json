@@ -59,6 +59,7 @@
 			"common/libfont/character.js",
 			"common/libfont/grapheme.js",
 			"common/libfont/textshaper.js",
+			"common/libfont/stringshaper.js",
 			"common/libfont/file.js",
 			"common/libfont/manager.js",
 
@@ -75,6 +76,7 @@
 			"word/Editor/History.js",
 
 			"common/Shapes/EditorSettings.js",
+			"common/Shapes/ColorSchemes.js",
 			"common/Shapes/Serialize.js",
 			"common/Shapes/SerializeWriter.js",
 
@@ -100,6 +102,7 @@
 			"common/Drawings/Format/Data.js",
 			"common/Drawings/Format/ChartSpace.js",
 			"common/Drawings/Format/ChartFormat.js",
+			"common/Drawings/Format/ChartEx.js",
 			"common/Drawings/Format/TextBody.js",
 			"slide/Editor/Format/TextBodyPrototype.js",
 			"common/Drawings/Format/GraphicFrame.js",
@@ -127,7 +130,11 @@
 			"common/Controls.js",
 			"common/Overlay.js",
 			"common/Drawings/HatchPattern.js",
-
+			
+			"common/bidi/bidi-common.js",
+			"common/bidi/bidi-types.js",
+			"common/bidi/unicode-data.js",
+			
 			"common/scroll.js",
 			"vendor/iscroll.js",
 			"vendor/delta.js",
@@ -280,6 +287,7 @@
 			"word/Editor/Layout/Base.js",
 			"word/Editor/Layout/PrintView.js",
 			"word/Editor/Layout/ReadView.js",
+			"word/Editor/document/document-background.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
 			"word/Editor/document-composite-input.js",
@@ -331,6 +339,7 @@
 			"word/Editor/GlossaryDocumentChanges.js",
 			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
+			"word/Editor/Styles/default-styles.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 
 			"slide/Editor/Format/ImagePrototype.js",

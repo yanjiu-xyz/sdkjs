@@ -48,84 +48,93 @@
     CPdfShape.prototype.IsTextShape = function() {
         return true;
     };
-    CPdfShape.prototype.ShouldDrawImaginaryBorder = function() {
-        let bDraw = this.spPr.hasNoFill() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill));
-        bDraw &&= this.IsFromScan();
-        
+    CPdfShape.prototype.ShouldDrawImaginaryBorder = function(graphicsWord) {
+        let bDraw = !!(this.spPr && this.spPr.hasNoFill() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)));
+        bDraw = bDraw && this.IsFromScan();
+        bDraw = bDraw && !Asc.editor.isRestrictionView();
+        bDraw = bDraw && !graphicsWord.isThumbnails;
+    
         return bDraw;
+    };
+    CPdfShape.prototype.CheckTextOnOpen = function() {
+        let oContent = this.GetDocContent();
+        if (oContent) {
+            oContent.SetApplyToAll(true);
+            AscFonts.FontPickerByCharacter.getFontsByString(oContent.GetSelectedText());
+            oContent.SetApplyToAll(false);
+        }
     };
     CPdfShape.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
 
+        if (this.txBody && this.txBody.recalcInfo.recalculateBodyPr) {
+            this.recalcTransformText();
+        }
+        
         this.recalcGeometry();
         this.recalculateContent();
-        this.checkExtentsByDocContent(true, true);
-        this.recalculate();
         this.recalculateTransform();
         this.updateTransformMatrix();
+        this.checkExtentsByDocContent();
+        this.recalculate();
         this.recalculateShdw();
         this.SetNeedRecalc(false);
     };
     CPdfShape.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
+        let oViewer             = oDoc.Viewer;
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
-        let oDrDoc              = oDoc.GetDrawingDocument();
         this.selectStartPage    = this.GetPage();
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        // координаты клика на странице в MM
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
 
-        if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
-            this.SetInTextBox(false);
-        }
-        else {
-            this.SetInTextBox(true);
-        }
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+		let docContent = this.GetDocContent();
+		if (docContent)
+			docContent.RecalculateCurPos();
     };
     CPdfShape.prototype.GetDocContent = function() {
         return this.getDocContent();
     };
-    CPdfShape.prototype.EnterText = function(aChars) {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let oRun = AscPDF.codePointToRunElement(aChars[index]);
-            if (oRun) {
-                oContent.AddToParagraph(oRun, false);
-            }
-        }
-
+    CPdfShape.prototype.createTextBody = function () {
+        AscFormat.CShape.prototype.createTextBody.call(this);
         this.SetNeedRecalc(true);
-        return true;
-    };
-    /**
-     * Removes char in current position by direction.
-     * @memberof CTextField
-     * @typeofeditors ["PDF"]
-     */
-    CPdfShape.prototype.Remove = function(nDirection, isCtrlKey) {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        let oContent = this.GetDocContent();
-        oContent.Remove(nDirection, true, false, false, isCtrlKey);
-        this.SetNeedRecalc(true);
-
-        if (AscCommon.History.Is_LastPointEmpty()) {
-            AscCommon.History.Remove_LastPoint();
-        }
-        else {
-            this.SetNeedRecalc(true);
-        }
     };
 
+    CPdfShape.prototype.getTrackGeometry = function () {
+        // заглушка для трека геометрии с клауд бордером для FreeText
+        if (this.group && this.group.IsAnnot && this.group.IsAnnot() && this.group.GetTextBoxShape() == this) {
+            return AscFormat.ExecuteNoHistory(
+                function () {
+                    var _ret = AscFormat.CreateGeometry("rect");
+                    _ret.Recalculate(this.extX, this.extY);
+                    return _ret;
+                }, this, []
+            );
+        }
+
+		const oOwnGeometry = this.getGeometry();
+		if(oOwnGeometry) {
+			return oOwnGeometry;
+		}
+		if(this.rectGeometry) {
+			return this.rectGeometry;
+		}
+		return AscFormat.ExecuteNoHistory(
+			function () {
+				var _ret = AscFormat.CreateGeometry("rect");
+				_ret.Recalculate(this.extX, this.extY);
+				return _ret;
+			}, this, []
+		);
+	};
     CPdfShape.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         
@@ -140,8 +149,10 @@
                 oContent.RemoveSelection();
         }
                 
-        if (oContent.IsSelectionEmpty())
-            oContent.RemoveSelection();
+        if (oContent.IsSelectionEmpty()) {
+			oContent.RemoveSelection();
+			oContent.RecalculateCurPos();
+		}
     };
     CPdfShape.prototype.GetAllFonts = function(fontMap) {
         let oContent = this.GetDocContent();
@@ -173,6 +184,69 @@
         return fontMap;
     };
 
+    CPdfShape.prototype.hitToAdjustment = function (x, y) {
+        if (!AscFormat.canSelectDrawing(this)) {
+            return false;
+        }
+        var oApi = Asc.editor || editor;
+        var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        let isViewerObj = oApi.getPDFDoc().IsViewerObject(this);
+
+        if (isViewerObj) {
+            isDrawHandles = true;
+        }
+
+        if (isDrawHandles === false) {
+            return {hit: false, adjPolarFlag: null, adjNum: null, warp: false};
+        }
+        var invert_transform;
+        var t_x, t_y, ret;
+        var _calcGeom = this.getGeometry();
+        var _dist;
+        if (global_mouseEvent && global_mouseEvent.AscHitToHandlesEpsilon) {
+            _dist = global_mouseEvent.AscHitToHandlesEpsilon;
+        } else {
+            _dist = this.convertPixToMM(global_mouseEvent.KoefPixToMM * AscCommon.TRACK_CIRCLE_RADIUS);
+        }
+        if (_calcGeom) {
+            invert_transform = this.getInvertTransform();
+            if (!invert_transform) {
+                return {hit: false, adjPolarFlag: null, adjNum: null, warp: false};
+            }
+            t_x = invert_transform.TransformPointX(x, y);
+            t_y = invert_transform.TransformPointY(x, y);
+            ret = _calcGeom.hitToAdj(t_x, t_y, _dist);
+            if (ret.hit) {
+                ret.warp = false;
+                return ret;
+            }
+        }
+        if (this.recalcInfo.warpGeometry && this.invertTransformTextWordArt) {
+            invert_transform = this.invertTransformTextWordArt;
+            t_x = invert_transform.TransformPointX(x, y);
+            t_y = invert_transform.TransformPointY(x, y);
+            ret = this.recalcInfo.warpGeometry.hitToAdj(t_x, t_y, _dist);
+            ret.warp = true;
+            return ret;
+        }
+
+        return {hit: false, adjPolarFlag: null, adjNum: null, warp: false};
+    };
+    CPdfShape.prototype.canMove = function () {
+		var oApi = Asc.editor || editor;
+		var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        if (oApi.getPDFDoc().IsViewerObject(this))
+            return true;
+
+		if (isDrawHandles === false) {
+			return false;
+		}
+		if (!this.canEdit()) {
+			return false;
+		}
+		return this.getNoMove() === false;
+	};
+
     //////////////////////////////////////////////////////////////////////////////
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
@@ -199,7 +273,7 @@
                         drawing_document.TargetEnd();
                     } else {
                         if (false === content.IsSelectionEmpty()) {
-                            content.DrawSelectionOnPage(0);
+                            drawing_document.Overlay && content.DrawSelectionOnPage(0);
                             drawing_document.TargetEnd();
                         } else {
                             if (true !== content.Selection.Start) {
@@ -252,6 +326,11 @@
         };
         this.compiledStyles = [];
         this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
+    };
+    CPdfShape.prototype.copy = function (oPr) {
+        let copy = new CPdfShape();
+        this.fillObject(copy, oPr);
+        return copy;
     };
     window["AscPDF"].CPdfShape = CPdfShape;
 })();

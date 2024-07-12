@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -60,8 +60,10 @@ const allTests = [
 	'word/styles/paraPr.html',
 	'word/styles/styleApplicator.html',
 	'word/plugins/pluginsApi.html',
+	'word/revisions/document-content.html',
 	'word/revisions/paragraph.html',
 	'word/merge-documents/mergeDocuments.html',
+	'word/math-autocorrection/math-autocorrection.html',
 
 	'cell/shortcuts/shortcuts.html',
 	'slide/shortcuts/shortcuts.html',

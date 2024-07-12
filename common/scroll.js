@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -622,11 +622,11 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 			this.dragMinX = this.arrowPosition;
 		}
 	};
-	ScrollObject.prototype.Repos = function ( settings, bIsHorAttack, bIsVerAttack, pos ) {
+	ScrollObject.prototype.Repos = function ( settings, bIsHorAttack, bIsVerAttack, pos, isAttack ) {
 		let dPR = AscBrowser.retinaPixelRatio;
 		let isChangeTheme = settings && this.settings.scrollBackgroundColor !== settings.scrollBackgroundColor;
 
-		if (isChangeTheme) {
+		if (isChangeTheme || isAttack) {
 			for (let i in settings) {
 				this.settings[i] = settings[i];
 			}

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -194,9 +194,8 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 
 	var isCopyReviewPr = oPr.CopyReviewPr;
 
-    var bMath = this.Type == para_Math_Run ? true : false;
-
-    var NewRun = new ParaRun(this.Paragraph, bMath);
+	let isMathRun = this.IsMathRun();
+	let NewRun = new AscWord.Run(undefined, isMathRun);
 
 	NewRun.Set_Pr(this.Pr.Copy(isCopyReviewPr, oPr));
 
@@ -218,9 +217,9 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 	{
 		NewRun.SetReviewType(reviewtype_Add);
 	}
-
-    if(true === bMath)
-        NewRun.Set_MathPr(this.MathPrp.Copy());
+	
+	if (isMathRun)
+		NewRun.Set_MathPr(this.MathPrp.Copy());
 
 
 
@@ -528,62 +527,44 @@ ParaRun.prototype.GetText = function(oText)
 	this.Get_Text(oText);
 	return oText.Text;
 };
-
-ParaRun.prototype.GetTextOfElement = function(isLaTeX)
+/**
+ *
+ * @param {MathTextAndStyles | boolean} oMathText
+ * @param {boolean} isSelectedText
+ * @constructor
+ */
+ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 {
-	let str = "";
-	let strCurrentStyleGroup = "";
-	let strCurrentTemp = "";
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
+	
+	let isLatex = oMathText.IsLaTeX();
 
-	for (let i = 0; i < this.Content.length; i++)
+	let nStartPos = (isSelectedText == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0);
+	let nEndPos   = (isSelectedText == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length);
+
+	// if (this.MathPrp.nor === true)
+	// {
+	// 	oMathText.AddText(new AscMath.MathText("\"", this));
+	// }
+
+	for (let i = nStartPos; i < nEndPos; i++)
 	{
-		if (this.Content[i])
-		{
-			let strTemp = this.Content[i].GetTextOfElement(isLaTeX);
+		let oCurrentElement = this.Content[i];
 
-			if (!isLaTeX)
-			{
-				str += strTemp;
-				continue;
-			}
-			let arrCurrentToken = window.AscMath.GetLaTeXFont[strTemp];
+		if (this.Content.length === 1 && oCurrentElement.value === 11034)
+			return oMathText;
 
-			if (!arrCurrentToken)
-			{
-				let strSymbol = AscMath.SymbolsToLaTeX[strTemp];
-				if (strSymbol)
-					strTemp = strSymbol + " ";
+		let strCurrentElement = oCurrentElement.GetTextOfElement(isLatex).GetText();
 
-				if (strCurrentStyleGroup)
-				{
-					str += strCurrentStyleGroup + "{" + strCurrentTemp + "}";
-					strCurrentStyleGroup = "";
-					strCurrentTemp = "";
-				}
-				str += strTemp;
-				continue;
-			}
-
-			let arrClassToken = arrCurrentToken[0];
-			let strNamesOfClassToken = window.AscMath.GetNamesTypeFontLaTeX(arrClassToken)[0];
-			let strDefaultLetter = arrCurrentToken[1];
-
-			if (strCurrentStyleGroup === "")
-			{
-				strCurrentStyleGroup = strNamesOfClassToken;
-				strCurrentTemp += strDefaultLetter;
-			}
-			else
-			{
-				strCurrentTemp += strDefaultLetter; 
-			}
-		}
+		oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
 	}
 
-	if (strCurrentStyleGroup)
-		return str + strCurrentStyleGroup + "{" + strCurrentTemp + "}";
-	else
-		return str;
+	// if (this.MathPrp.nor === true)
+	// {
+	// 	oMathText.AddText(new AscMath.MathText("\"", this));
+	// }
+
+	return oMathText;
 };
 ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTeX)
 {
@@ -617,13 +598,13 @@ ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTe
 			}
 		}
 
-		if (AscMath.MathLiterals.lBrackets.IsIncludes(strContent))
+		if (AscMath.MathLiterals.lBrackets.SearchU(strContent))
 			intCount = -1;
-		else if (AscMath.MathLiterals.rBrackets.IsIncludes(strContent))
+		else if (AscMath.MathLiterals.rBrackets.SearchU(strContent))
 			intCount = 1;
-		else if (AscMath.MathLiterals.lrBrackets.IsIncludes(strContent))
+		else if (AscMath.MathLiterals.lrBrackets.SearchU(strContent))
 			intCount = 0;
-		else if (AscMath.MathLiterals.operators.IsIncludes(strContent))
+		else if (AscMath.MathLiterals.operator.SearchU(strContent))
 			intCount = 2;
 
 		if (intCount === null && isOpen)
@@ -651,7 +632,7 @@ ParaRun.prototype.MathAutocorrection_GetOperatorInfo = function ()
 	{
 		let strContent = String.fromCharCode(this.Content[intCounter].value);
 
-		if (AscMath.MathLiterals.operators.IsIncludes(strContent))
+		if (AscMath.MathLiterals.operator.SearchU(strContent))
 			arrOperatorContent.push(intCounter);
 	}
 
@@ -680,7 +661,7 @@ ParaRun.prototype.MathAutocorrection_IsLastElement = function(type)
 
 	let oLastElement = this.Content[this.Content.length - 1];
 	let strLastElement = String.fromCharCode(oLastElement.value);
-	return type.IsIncludes(strLastElement);
+	return type.SearchU(strLastElement);
 }
 
 ParaRun.prototype.MathAutoCorrection_DeleteLastSpace = function()
@@ -767,12 +748,16 @@ ParaRun.prototype.IsStartFromNewLine = function()
  */
 ParaRun.prototype.Add = function(oItem)
 {
-	var oRun = this.CheckRunBeforeAdd(oItem);
+	var oRun;
+	
+	if (!this.IsMathRun() && !(oItem instanceof CMathText))
+		oRun = this.CheckRunBeforeAdd(oItem);
+	
 	if (!oRun)
 		oRun = this;
-
+	
 	oRun.private_AddItemToRun(oRun.State.ContentPos, oItem);
-
+	
 	var nFlags = 0;
 	if (para_Run === oRun.Type && (nFlags = oItem.GetAutoCorrectFlags()))
 		oRun.ProcessAutoCorrect(oRun.State.ContentPos - 1, nFlags);
@@ -1139,7 +1124,7 @@ ParaRun.prototype.CheckRunBeforeAdd = function(oItem)
 	oNewRun = this.private_CheckTrackRevisionsBeforeAdd(oNewRun);
 
 	if (oNewRun)
-		oNewRun.Make_ThisElementCurrent();
+		oNewRun.SetThisElementCurrentInParagraph();
 
 	return oNewRun;
 };
@@ -1496,7 +1481,7 @@ ParaRun.prototype.Remove = function(Direction, bOnAddText)
 					this.SetRStyle(undefined);
 
 				let oItem = this.Content[CurPos];
-				if (oItem.IsText())
+				if (oItem.IsText() || oItem.IsMathText())
 				{
 					let oInfo = this.RemoveTextCluster(CurPos);
 					oInfo.SetDocumentPositionHere();
@@ -1536,7 +1521,7 @@ ParaRun.prototype.RemoveTextCluster = function(nPos)
 	let oParagraph     = this.GetParagraph();
 	let oLogicDocument = this.GetLogicDocument();
 	let isTrack        = oLogicDocument && oLogicDocument.IsTrackRevisions() && !this.CanDeleteInReviewMode();
-	if (!oParagraph || nPos >= this.Content.length || !this.Content[nPos].IsText())
+	if (!oParagraph || nPos >= this.Content.length || (!this.Content[nPos].IsText() && !this.Content[nPos].IsMathText()))
 		return new CRunWithPosition(this, nPos);
 
 	let oCurRun = this;
@@ -1557,7 +1542,7 @@ ParaRun.prototype.RemoveTextCluster = function(nPos)
 
 	let oNextInfo = oCurRun.GetNextRunElementEx(nPos);
 	let oNext     = oNextInfo ? oNextInfo.Element : null;
-	if (!oNext || !oNext.IsText() || !oNext.IsCombiningMark())
+	if (!oNext || (!oNext.IsText() && !oNext.IsMathText()) || !oNext.IsCombiningMark())
 		return new CRunWithPosition(oCurRun, nPos);
 
 	let oContentPos = oNextInfo.Pos;
@@ -2933,7 +2918,7 @@ ParaRun.prototype.GetNextRunElements = function(oRunElements, isUseContentPos, n
 
 	for (var nCurPos = nStartPos, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
 	{
-		if (oRunElements.IsEnoughElements())
+		if (oRunElements.IsEnoughElements() || this.IsEmpty())
 			return;
 
 		oRunElements.UpdatePos(nCurPos, nDepth);
@@ -2949,7 +2934,7 @@ ParaRun.prototype.GetPrevRunElements = function(oRunElements, isUseContentPos, n
 
 	for (var nCurPos = nStartPos; nCurPos >= 0; --nCurPos)
 	{
-		if (oRunElements.IsEnoughElements())
+		if (oRunElements.IsEnoughElements() || this.IsEmpty())
 			return;
 
 		oRunElements.UpdatePos(nCurPos, nDepth);
@@ -3135,7 +3120,7 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 				if (oPr && true === oPr.NewLineParagraph)
 				{
 					var oParagraph = this.GetParagraph();
-					if (oParagraph && null === oParagraph.Get_DocumentNext() && oParagraph.Parent.IsTableCellContent())
+					if (oParagraph && null === oParagraph.Get_DocumentNext() && oParagraph.IsTableCellContent())
 					{
 						if (!oParagraph.Parent.IsLastTableCellInRow(true))
 							Str += oPr.TableCellSeparator ? oPr.TableCellSeparator : '\t';
@@ -4325,7 +4310,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             // Добавляем разрыв страницы. Если это первая страница, тогда ставим разрыв страницы в начале параграфа,
                             // если нет, тогда в начале текущей строки.
 
-                            if (null != Para.Get_DocumentPrev() && true != Para.Parent.IsTableCellContent() && 0 === CurPage)
+                            if (null != Para.Get_DocumentPrev() && true != Para.IsTableCellContent() && 0 === CurPage)
                             {
                                 Para.Recalculate_Drawing_AddPageBreak(0, 0, true);
                                 PRS.RecalcResult = recalcresult_NextPage | recalcresultflags_Page;
@@ -4378,10 +4363,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     }
                     else if (para_PageNum === ItemType)
                     {
-                        var LogicDocument = Para.LogicDocument;
-                        var SectionPage   = LogicDocument.Get_SectionPageNumInfo2(Para.Get_AbsolutePage(PRS.Page)).CurPage;
-
-                        Item.Set_Page(SectionPage);
+						let logicDocument = Para.LogicDocument;
+						let sectInfo  = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
+						let sectPr    = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+                        Item.SetValue(sectInfo.CurPage, sectPr.GetPageNumFormat());
                     }
 
                     // Если до этого было слово, тогда не надо проверять убирается ли оно, но если стояли пробелы,
@@ -4672,23 +4657,32 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								{
 									oHdrFtr.Add_PageCountElement(Item);
 
-									if (!Item.IsNumValue() && Para.LogicDocument && Para.LogicDocument.IsDocumentEditor())
-										Item.SetNumValue(Para.LogicDocument.Pages.length);
+									let logicDocument = Para.LogicDocument;
+									if (!Item.IsNumValue() && logicDocument && logicDocument.IsDocumentEditor())
+									{
+										let numFormat = oInstruction.haveNumericFormat() ? oInstruction.getNumericFormat() : Asc.c_oAscNumberingFormat.Decimal;
+										Item.SetNumValue(logicDocument.Pages.length, numFormat);
+									}
 								}
 								else if (AscWord.fieldtype_PAGE === oInstruction.GetType())
 								{
-									var LogicDocument = Para.LogicDocument;
-									var SectionPage   = LogicDocument.Get_SectionPageNumInfo2(Para.Get_AbsolutePage(PRS.Page)).CurPage;
-									Item.SetNumValue(SectionPage);
+									let logicDocument = Para.LogicDocument;
+									let sectInfo  = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
+									let sectPr    = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+									let numFormat = oInstruction.haveNumericFormat() ? oInstruction.getNumericFormat() : sectPr.GetPageNumFormat();
+									Item.SetNumValue(sectInfo.CurPage, numFormat);
 								}
 								else
 								{
+									if (oComplexField.IsHaveNestedNUMPAGES())
+										oHdrFtr.Add_PageCountElement(Item);
+									
 									var sValue = oComplexField.CalculateValue();
 									var nValue = parseInt(sValue);
 									if (isNaN(nValue))
 										nValue = 0;
 
-									Item.SetNumValue(nValue);
+									Item.SetFormulaValue(nValue);
 								}
 							}
 
@@ -5357,7 +5351,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 var X_Right_Margin  = PageLimits.XLimit - PageFields.XLimit;
                 var Y_Bottom_Margin = PageLimits.YLimit - PageFields.YLimit;
 
-                var isTableCellContent = Para.Parent.IsTableCellContent();
+                var isTableCellContent = Para.IsTableCellContent();
                 var isUseWrap          = Item.Use_TextWrap();
                 var isLayoutInCell     = Item.IsLayoutInCell();
 
@@ -5436,15 +5430,9 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 if ( true === Item.Is_Inline() || true === Para.Parent.Is_DrawingShape() )
                 {
                 	if (linerule_Exact === Para.Get_CompiledPr2(false).ParaPr.Spacing.LineRule)
-					{
-						var LineTop    = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
-						var LineBottom = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Descent;
-						Item.SetVerticalClip(LineTop, LineBottom);
-					}
+						Item.SetVerticalClip(PRSA.getLineTop(), PRSA.getLineBottom());
 					else
-					{
 						Item.SetVerticalClip(null, null);
-					}
 
                     Item.Update_Position(PRSA.Paragraph, new CParagraphLayout( PRSA.X, PRSA.Y , PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent, Para.Pages[CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine);
                     Item.Reset_SavedPosition();
@@ -5489,17 +5477,30 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                         var LDRecalcInfo  = Para.Parent.RecalcInfo;
                         if ( true === LDRecalcInfo.Can_RecalcObject() )
                         {
-                            // Обновляем позицию объекта
-                            Item.Update_Position(PRSA.Paragraph, new CParagraphLayout( PRSA.X, PRSA.Y , PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent, Para.Pages[_CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine);
-                            LDRecalcInfo.Set_FlowObject( Item, 0, recalcresult_NextElement, -1 );
-
-                            // TODO: Добавить проверку на не попадание в предыдущие колонки
-                            if (0 === PRSA.CurPage && Item.wrappingPolygon.top > PRSA.PageY + 0.001 && Item.wrappingPolygon.left > PRSA.PageX + 0.001)
-                                PRSA.RecalcResult = recalcresult_CurPagePara;
-                            else
-                                PRSA.RecalcResult = recalcresult_CurPage | recalcresultflags_Page;
-
-                            return;
+							// Обновляем позицию объекта
+							Item.Update_Position(PRSA.Paragraph, new CParagraphLayout( PRSA.X, PRSA.Y , PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent, Para.Pages[_CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine);
+							
+							if (PRSA.getCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15
+								&& 0 === CurPage
+								&& Item.Get_Bounds().Bottom >= Y_Bottom_Field
+								&& Item.IsMoveWithTextVertically())
+							{
+								// TODO: По хорошему надо пересчитать заново всю текущую страницу с условием, что заданный параграф начинается с новой страницы
+								Para.StartFromNewPage();
+								PRSA.RecalcResult = recalcresult_NextPage;
+							}
+							else
+							{
+								LDRecalcInfo.Set_FlowObject(Item, 0, recalcresult_NextElement, -1);
+								
+								// TODO: Добавить проверку на не попадание в предыдущие колонки
+								if (0 === PRSA.CurPage && Item.wrappingPolygon.top > PRSA.PageY + 0.001 && Item.wrappingPolygon.left > PRSA.PageX + 0.001)
+									PRSA.RecalcResult = recalcresult_CurPagePara;
+								else
+									PRSA.RecalcResult = recalcresult_CurPage | recalcresultflags_Page;
+							}
+							
+							return;
                         }
                         else if ( true === LDRecalcInfo.Check_FlowObject(Item) )
                         {
@@ -6457,6 +6458,20 @@ ParaRun.prototype.Cursor_Is_End = function()
         return true;
 
     return false;
+};
+ParaRun.prototype.IsStartPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	return 0 === contentPos.Get(depth);
+};
+ParaRun.prototype.IsEndPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	return contentPos.Get(depth) >= this.Content.length;
 };
 /**
  * Проверяем находится ли курсор в начале рана
@@ -7543,18 +7558,19 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 
 	// Получим настройки текста, для данного параграфа
 	var TextPr = this.Paragraph.Get_CompiledPr2(false).TextPr.Copy();
+	
+	let paraParent = this.Paragraph.GetParent();
+	let Styles     = paraParent && paraParent.Get_Styles() ? paraParent.Get_Styles() : null;
 
 	// Мержим настройки стиля.
 	// Одно исключение, когда задан стиль Hyperlink внутри класса Hyperlink внутри поля TOC, то стиль
 	// мержить не надо и, более того, цвет и подчеркивание из прямых настроек тоже не используется.
-	if (undefined !== this.Pr.RStyle)
+	if (Styles
+		&& this.Pr.RStyle
+		&& (!this.IsStyleHyperlink() || !this.IsInHyperlinkInTOC()))
 	{
-		if (!this.IsStyleHyperlink() || !this.IsInHyperlinkInTOC())
-		{
-			var Styles      = this.Paragraph.Parent.Get_Styles();
-			var StyleTextPr = Styles.Get_Pr(this.Pr.RStyle, styletype_Character).TextPr;
-			TextPr.Merge(StyleTextPr);
-		}
+		var StyleTextPr = Styles.Get_Pr(this.Pr.RStyle, styletype_Character).TextPr;
+		TextPr.Merge(StyleTextPr);
 	}
 
 	if (this.Type === para_Math_Run)
@@ -7569,10 +7585,9 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 			return TextPr;
 		}
 
-		if (!this.IsNormalText()) // math text
+		if (!this.IsNormalText() && Styles) // math text
 		{
 			// выставим дефолтные текстовые настройки  для математических Run
-			var Styles  = this.Paragraph.Parent.Get_Styles();
 			var StyleId = this.Paragraph.Style_Get();
 			// скопируем текстовые настройки прежде чем подменим на пустые
 
@@ -9323,12 +9338,25 @@ ParaRun.prototype.IsContainMathOperators = function ()
 	for (let i = 0; i < this.Content.length; i++)
 	{
 		let oCurrentMathText = this.Content[i];
-		let isNamesOFLiteralsOperator = AscMath.MathLiterals.operators.IsIncludes(String.fromCharCode(oCurrentMathText.value));
+		let strOperator = String.fromCharCode(oCurrentMathText.value);
+		let isNamesOFLiteralsOperator = AscMath.MathLiterals.operator.SearchU(strOperator);
 		if (oCurrentMathText.IsBreakOperator() || isNamesOFLiteralsOperator)
 			return true;
 	}
 	return false;
 };
+ParaRun.prototype.IsContainSpaces = function ()
+{
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		let oCurrentMathText = this.Content[i];
+		let strSpace = String.fromCharCode(oCurrentMathText.value);
+		let isSpace = AscMath.MathLiterals.space.SearchU(strSpace);
+		if (isSpace)
+			return true;
+	}
+	return false;
+}
 ParaRun.prototype.IsContainNormalText = function()
 {
 	for (let i = 0; i < this.Content.length; i++)
@@ -12013,6 +12041,7 @@ ParaRun.prototype.GetNextRunElementEx = function(nPos)
 
 	let oContentPos  = this.GetParagraphContentPosFromObject(this.Content.length);
 	let oRunElements = new CParagraphRunElements(oContentPos, 1, null, true);
+	oRunElements.SkipMath = false;
 	oRunElements.SetSaveContentPositions(true);
 	oParagraph.GetNextRunElements(oRunElements);
 

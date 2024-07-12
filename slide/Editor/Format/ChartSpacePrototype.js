@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -41,7 +41,6 @@ CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingO
 CChartSpace.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CChartSpace.prototype.getIsSingleBody = CShape.prototype.getIsSingleBody;
 CChartSpace.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
-CChartSpace.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 CChartSpace.prototype.getEditorType = function()
 {
     return 0;

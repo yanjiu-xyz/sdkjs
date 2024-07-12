@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -66,8 +66,9 @@
     */
     function CAnnotationLine(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Line, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
 
         this._popupOpen     = false;
@@ -93,7 +94,7 @@
         TurnOffHistory();
     }
 	CAnnotationLine.prototype.constructor = CAnnotationLine;
-    AscFormat.InitClass(CAnnotationLine, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationLine.prototype.SetCaptionOffset = function(array) {
@@ -186,17 +187,19 @@
         return this._points;
     };
     CAnnotationLine.prototype.onMouseDown = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
         oDrawingObjects.startEditGeometry();
     };
     CAnnotationLine.prototype.LazyCopy = function() {
@@ -217,7 +220,8 @@
 
         this.fillObject(oLine);
 
-        oLine.pen = new AscFormat.CLn();
+        let aFillColor = this.GetFillColor();
+
         oLine._apIdx = this._apIdx;
         oLine._originView = this._originView;
         oLine.SetOriginPage(this.GetOriginPage());
@@ -229,8 +233,8 @@
         oLine.SetLineStart(this.GetLineStart());
         oLine.SetLineEnd(this.GetLineEnd());
         oLine.SetContents(this.GetContents());
-        oLine.SetFillColor(this.GetFillColor());
-        oLine.recalcInfo.recalculatePen = false;
+        oLine.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oLine.SetOpacity(this.GetOpacity());
         oLine.recalcInfo.recalculateGeometry = true;
         oLine._points = this._points.slice();
         oLine.recalculate();

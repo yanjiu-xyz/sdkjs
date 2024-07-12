@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -463,6 +463,14 @@ CParagraphContentBase.prototype.Cursor_Is_NeededCorrectPos = function()
 	return true;
 };
 CParagraphContentBase.prototype.Cursor_Is_End = function()
+{
+	return true;
+};
+CParagraphContentBase.prototype.IsStartPos = function(contentPos, depth)
+{
+	return true;
+};
+CParagraphContentBase.prototype.IsEndPos = function(contentPos, depth)
 {
 	return true;
 };
@@ -3076,6 +3084,34 @@ CParagraphContentWithParagraphLikeContent.prototype.Cursor_Is_End = function()
     }
 
     return this.Content[CurPos].Cursor_Is_End();
+};
+CParagraphContentWithParagraphLikeContent.prototype.IsStartPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	let pos = contentPos.Get(depth);
+	if (!this.Content[pos])
+		return false;
+	
+	if (pos !== 0)
+		return false;
+	
+	return this.Content[pos].IsStartPos(contentPos, depth + 1);
+};
+CParagraphContentWithParagraphLikeContent.prototype.IsEndPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	let pos = contentPos.Get(depth);
+	if (!this.Content[pos])
+		return true;
+	
+	if (pos !== this.Content.length - 1)
+		return false;
+	
+	return this.Content[pos].IsEndPos(contentPos, depth + 1);
 };
 CParagraphContentWithParagraphLikeContent.prototype.MoveCursorToStartPos = function()
 {

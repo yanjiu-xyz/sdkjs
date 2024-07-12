@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -459,7 +459,7 @@ CDocumentContent.prototype.GetStyles = function(nLvl)
 	if (this.LogicDocument)
 		return this.LogicDocument.GetStyles();
 
-	return AscCommonWord.DEFAULT_STYLES;
+	return AscWord.DEFAULT_STYLES;
 };
 CDocumentContent.prototype.Get_TableStyleForPara = function()
 {
@@ -2700,7 +2700,8 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
                 var ItemReviewType = Item.GetReviewType();
                 // Создаем новый параграф
                 var NewParagraph   = new AscWord.Paragraph(this, this.bPresentation === true);
-
+	
+				let firstPara, secondPara;
 				if (Item.IsCursorAtBegin())
 				{
 					// Продолжаем (в плане настроек) новый параграф
@@ -2712,6 +2713,9 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 					var nContentPos = this.CurPos.ContentPos;
 					this.AddToContent(nContentPos, NewParagraph);
 					this.CurPos.ContentPos = nContentPos + 1;
+					
+					firstPara  = NewParagraph;
+					secondPara = Item;
 				}
 				else
 				{
@@ -2767,19 +2771,22 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 					var nContentPos = this.CurPos.ContentPos + 1;
 					this.AddToContent(nContentPos, NewParagraph);
 					this.CurPos.ContentPos = nContentPos;
+					
+					firstPara  = Item;
+					secondPara = NewParagraph;
 				}
-
-                if (true === this.IsTrackRevisions())
-                {
-                    Item.RemovePrChange();
-                    NewParagraph.SetReviewType(ItemReviewType);
-                    Item.SetReviewType(reviewtype_Add);
-                }
-                else if (reviewtype_Common !== ItemReviewType)
-                {
-                    NewParagraph.SetReviewType(ItemReviewType);
-                    Item.SetReviewType(reviewtype_Common);
-                }
+				
+				if (this.IsTrackRevisions())
+				{
+					firstPara.RemovePrChange();
+					firstPara.SetReviewType(reviewtype_Add);
+					secondPara.SetReviewType(ItemReviewType);
+				}
+				else if (reviewtype_Common !== ItemReviewType)
+				{
+					firstPara.SetReviewType(reviewtype_Common);
+					secondPara.SetReviewType(ItemReviewType);
+				}
 				NewParagraph.CheckSignatureLinesOnAdd();
             }
 
@@ -6516,12 +6523,22 @@ CDocumentContent.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent
 						{
 							if (editor.isDocumentEditor)
 							{
-								for (var PageIdx = Item.Get_AbsolutePage(0); PageIdx < Item.Get_AbsolutePage(0) + Item.Get_PagesCount(); PageIdx++)
-									this.DrawingDocument.OnRecalculatePage(PageIdx, this.DrawingDocument.m_oLogicDocument.Pages[PageIdx]);
+								if (false == editor.isPdfEditor()) {
+									for (var PageIdx = Item.Get_AbsolutePage(0); PageIdx < Item.Get_AbsolutePage(0) + Item.Get_PagesCount(); PageIdx++)
+										this.DrawingDocument.OnRecalculatePage(PageIdx, this.DrawingDocument.m_oLogicDocument.Pages[PageIdx]);
+								}
+								else {
+									if (this.Parent && this.Parent.parent && this.Parent.parent.IsDrawing()) {
+										this.Parent.parent.SetNeedRecalc(true);	
+									}
+								}
 							}
 							else
 							{
-								this.DrawingDocument.OnRecalculatePage(PageIdx, this.DrawingDocument.m_oLogicDocument.Slides[PageIdx]);
+								if(this.DrawingDocument.OnRecalculateSlide)
+								{
+									this.DrawingDocument.OnRecalculateSlide(this.GetAbsolutePage(0));
+								}
 							}
 							this.DrawingDocument.OnEndRecalculate(false, true);
 						}
@@ -9003,6 +9020,127 @@ CDocumentContent.prototype.GetSearchElementId = function(bNext, bCurrent)
 	return null;
 };
 //----------------------------------------------------------------------------------------------------------------------
+CDocumentContent.prototype.EnterText = function(value)
+{
+	if (undefined === value
+		|| null === value
+		|| (Array.isArray(value) && !value.length))
+		return false;
+	
+	let codePoints = typeof(value) === "string" ? value.codePointsArray() : value;
+	
+	if (Array.isArray(codePoints))
+	{
+		for (let index = 0, count = codePoints.length; index < count; ++index)
+		{
+			let codePoint = codePoints[index];
+			this.AddToParagraph(AscCommon.IsSpace(codePoint) ? new AscWord.CRunSpace(codePoint) : new AscWord.CRunText(codePoint));
+		}
+	}
+	else
+	{
+		let codePoint = codePoints;
+		this.AddToParagraph(AscCommon.IsSpace(codePoint) ? new AscWord.CRunSpace(codePoint) : new AscWord.CRunText(codePoint));
+	}
+	
+	return true;
+};
+CDocumentContent.prototype.CorrectEnterText = function(oldValue, newValue, checkAsYouTypeFunc)
+{
+	if (undefined === oldValue
+		|| null === oldValue
+		|| (Array.isArray(oldValue) && !oldValue.length))
+		return this.EnterText(newValue);
+	
+	let newCodePoints = typeof(newValue) === "string" ? newValue.codePointsArray() : newValue;
+	let oldCodePoints = typeof(oldValue) === "string" ? oldValue.codePointsArray() : oldValue;
+	
+	if (this.IsSelectionUse())
+		return false;
+	
+	if (!Array.isArray(oldCodePoints))
+		oldCodePoints = [oldCodePoints];
+	
+	let paragraph = this.GetCurrentParagraph();
+	if (!paragraph)
+		return false;
+	
+	let contentPos = paragraph.GetContentPosition(false, false);
+	let run, inRunPos;
+	for (let index = contentPos.length - 1; index >= 0; --index)
+	{
+		if (contentPos[index].Class instanceof AscWord.CRun)
+		{
+			run      = contentPos[index].Class;
+			inRunPos = contentPos[index].Position;
+			break;
+		}
+	}
+	
+	if (!run)
+		return false;
+	
+	if (!checkAsYouTypeFunc)
+		checkAsYouTypeFunc = AscWord.checkAsYouTypeEnterText;
+	
+	if (!checkAsYouTypeFunc(run, inRunPos, oldCodePoints[oldCodePoints.length - 1]))
+		return false;
+	
+	if (undefined === newCodePoints || null === newCodePoints)
+		newCodePoints = [];
+	else if (!Array.isArray(newCodePoints))
+		newCodePoints = [newCodePoints];
+	
+	let oldText = "";
+	for (let index = 0, count = oldCodePoints.length; index < count; ++index)
+	{
+		oldText += String.fromCodePoint(oldCodePoints[index]);
+	}
+	
+	let state     = this.GetSelectionState();
+	let startPos  = paragraph.getCurrentPos();
+	let endPos    = startPos;
+	
+	let paraSearchPos = new CParagraphSearchPos();
+	
+	let maxShifts = oldCodePoints.length;
+	let selectedText;
+	this.StartSelectionFromCurPos();
+	while (maxShifts >= 0)
+	{
+		paraSearchPos.Reset();
+		paragraph.Get_LeftPos(paraSearchPos, endPos);
+		
+		if (!paraSearchPos.IsFound())
+			break;
+		
+		endPos = paraSearchPos.GetPos().Copy();
+		
+		paragraph.SetSelectionContentPos(startPos, endPos, false);
+		selectedText = paragraph.GetSelectedText(true);
+		
+		if (!selectedText || selectedText === oldText)
+			break;
+		
+		maxShifts--;
+	}
+	
+	if (selectedText !== oldText)
+	{
+		this.SetSelectionState(state);
+		return false;
+	}
+	
+	this.Remove(1, true, false, true);
+	
+	for (let index = 0, count = newCodePoints.length; index < count; ++index)
+	{
+		let codePoint = newCodePoints[index];
+		this.AddToParagraph(AscCommon.IsSpace(codePoint) ? new AscWord.CRunSpace(codePoint) : new AscWord.CRunText(codePoint));
+	}
+	
+	return true;
+};
 
 function CDocumentContentStartState(DocContent)
 {

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -457,6 +457,7 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_sNativeViewerFormats = '.pdf.xps.oxps.djvu';
 	var c_sShardKeyName = 'shardkey';
 	var c_sWopiSrcName = 'WOPISrc';
+	var c_sUserSessionIdName = 'usid';
 
 	//files type for Saving & DownloadAs
 	var c_oAscFileType = {
@@ -3011,6 +3012,14 @@ window.AscCommon.g_cIsBeta = "false";
 		Text : 0x00,
 		Num  : 0x01
 	};
+	
+	var c_oAscChapterSep = {
+		Colon : 0,
+		EmDash : 1,
+		EnDash : 2,
+		Hyphen : 3,
+		Period : 4
+	};
 
 	var c_oAscSdtAppearance = {
 		Frame  : 1,
@@ -4246,6 +4255,44 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm",
 		"HH:mm:ss"
 	];
+	c_oAscDateTimeFormat[lcid_srCyrlRS]     = [
+		"dd.MM.yyyy.",
+		"dddd, d. MMMM yyyy.",
+		"d. MMMM yyyy.",
+		"dd.MM.yy.",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"dd/MM/yyyy",
+		"d. MMM. yy.",
+		"dd/MM/yy",
+		"MMMM yy",
+		"MMM-yy",
+		"dd.MM.yyyy. H:mm",
+		"dd.MM.yyyy. H:mm:ss",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
+	c_oAscDateTimeFormat[lcid_srLatnRS]     = [
+		"d.M.yyyy.",
+		"dddd, dd. MMMM yyyy.",
+		"dd. MMMM yyyy.",
+		"d.M.yy.",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"d/M/yyyy",
+		"dd. MMM. yy.",
+		"d/M/yy",
+		"MMMM yy",
+		"MMM-yy",
+		"d.M.yyyy. HH:mm",
+		"d.M.yyyy. HH:mm:ss",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
 	c_oAscDateTimeFormat[lcid_skSK]     = [
 		"d. M. yyyy",
 		"dddd d. MMMM yyyy",
@@ -4447,6 +4494,7 @@ window.AscCommon.g_cIsBeta = "false";
 	window['Asc']['c_sNativeViewerFormats'] = window['Asc'].c_sNativeViewerFormats = c_sNativeViewerFormats;
 	window['Asc']['c_sShardKeyName'] = window['Asc'].c_sShardKeyName = c_sShardKeyName;
 	window['Asc']['c_sWopiSrcName'] = window['Asc'].c_sWopiSrcName = c_sWopiSrcName;
+	window['Asc']['c_sUserSessionIdName'] = window['Asc'].c_sUserSessionIdName = c_sUserSessionIdName;
 	window['Asc']['c_oAscFileType'] = window['Asc'].c_oAscFileType = c_oAscFileType;
 	window['Asc'].g_oLcidNameToIdMap = g_oLcidNameToIdMap;
 	window['Asc'].availableIdeographLanguages = availableIdeographLanguages;
@@ -4953,6 +5001,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['Review']       = prot.Review;
 	prot['Eyedropper']   = prot.Eyedropper;
 	prot['Placeholder']   = prot.Placeholder;
+	prot['EffectInfo']   = prot.EffectInfo;
 
 	window['Asc']['c_oAscMaxTooltipLength'] = window['Asc'].c_oAscMaxTooltipLength = c_oAscMaxTooltipLength;
 	window['Asc']['c_oAscMaxCellOrCommentLength'] = window['Asc'].c_oAscMaxCellOrCommentLength = c_oAscMaxCellOrCommentLength;
@@ -5562,6 +5611,14 @@ window.AscCommon.g_cIsBeta = "false";
 	prot = c_oAscNumberingLvlTextType;
 	prot['Text'] = c_oAscNumberingLvlTextType.Text;
 	prot['Num']  = c_oAscNumberingLvlTextType.Num;
+	
+	window['Asc']['c_oAscChapterSep'] = window['Asc'].c_oAscChapterSep = c_oAscChapterSep;
+	prot = c_oAscChapterSep;
+	prot['Colon'] = c_oAscChapterSep.Colon;
+	prot['EmDash']  = c_oAscChapterSep.EmDash;
+	prot['EnDash']  = c_oAscChapterSep.EnDash;
+	prot['Hyphen']  = c_oAscChapterSep.Hyphen;
+	prot['Period']  = c_oAscChapterSep.Period;
 
 	prot = window['Asc']['c_oAscSdtAppearance'] = window['Asc'].c_oAscSdtAppearance = c_oAscSdtAppearance;
 	prot['Frame']  = c_oAscSdtAppearance.Frame;

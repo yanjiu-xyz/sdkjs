@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -189,7 +189,7 @@ CTableRow.prototype =
 
 	GetPrevElementEndInfo : function(CellIndex)
 	{
-		if (-1 === CellIndex || !this.Table)
+		if (-1 === CellIndex || !this.Table || !this.Content[CellIndex])
 			return null;
 
 		if (0 === CellIndex)
@@ -1170,6 +1170,25 @@ CTableRow.prototype.RejectPrChange = function()
 		this.Set_Pr(this.Pr.PrChange);
 		this.RemovePrChange();
 	}
+};
+CTableRow.prototype.HaveCellPrChange = function()
+{
+	for (let iCell = 0, nCells = this.GetCellsCount(); iCell < nCells; ++iCell)
+	{
+		if (this.GetCell(iCell).HavePrChange())
+			return true;
+	}
+	return false;
+};
+CTableRow.prototype.GetFirstCellReviewInfo = function()
+{
+	for (let iCell = 0, nCells = this.GetCellsCount(); iCell < nCells; ++iCell)
+	{
+		let reviewInfo = this.GetCell(iCell).Pr.ReviewInfo;
+		if (reviewInfo)
+			return reviewInfo;
+	}
+	return null;
 };
 CTableRow.prototype.private_CheckCurCell = function()
 {

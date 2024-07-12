@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -172,7 +172,7 @@ function CEditorPage(api)
 
 	this.ScrollsWidthPx = 14;
 
-	this.m_oDrawingDocument = new AscCommon.CDrawingDocument();
+	this.m_oDrawingDocument = Asc.editor.isPdfEditor() ? new AscPDF.CDrawingDocument() : new AscCommon.CDrawingDocument();
 	this.m_oLogicDocument   = null;
 
 	this.m_oDrawingDocument.m_oWordControl   = this;

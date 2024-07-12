@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -227,8 +227,8 @@
                 let nInsideW = nWidth - 2 * oMargins.bottom;
                 let nInsideH = nHeight - 2 * oMargins.bottom;
 
-                let nGrScale = oGraphicsPDF.GetScale();
-                let nScale = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideW * 0.2) / imgH);
+                let oTr     = oGraphicsPDF.GetTransform();
+                let nScale  = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideW * 0.2) / imgH);
 
                 let wScaled = Math.max(imgW * nScale, 1);
                 let hScaled = Math.max(imgH * nScale, 1);
@@ -240,8 +240,8 @@
                 var context = canvas.getContext('2d');
 
                 // Set the canvas dimensions to match the image
-                canvas.width = wScaled * nGrScale >> 0;
-                canvas.height = hScaled * nGrScale >> 0;
+                canvas.width = wScaled * oTr.sy >> 0;
+                canvas.height = hScaled * oTr.sy >> 0;
 
                 // Draw the image onto the canvas
                 context.drawImage(CHECKED_ICON, 0, 0, imgW, imgH, 0, 0, canvas.width, canvas.height);

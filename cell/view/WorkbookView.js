@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3078,7 +3078,7 @@
 
 				let trueName = oFormulaList[name] && oFormulaList[name].prototype && oFormulaList[name].prototype.name;
 				if (allowCompleteFunctions[trueName]) {
-					cellRange = wsView.autoCompleteFormula(trueName);
+					cellRange = wsView.autoCompleteFormula(trueName, t.isWizardMode);
 				}
 
 				t.cellEditor.insertFormula(name, null, cellRange && !cellRange.notEditCell && cellRange.text);
@@ -5760,6 +5760,36 @@
 		}
 		this.customFunctionEngine.add(func, options);
 	};
+	/**
+	 * Updates calculating settings properties
+	 * @memberof WorkbookView
+	 * @param {asc_CCalcSettings} oCalcSettings
+	 */
+	WorkbookView.prototype.updateCalcSettings = function (oCalcSettings) {
+		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+			return;
+		}
+		const oCalcPr = this.model.calcPr;
+		if (!oCalcSettings || oCalcSettings.asc_isEqual(oCalcPr)) {
+			return;
+		}
+
+		const ws = this.getWorksheet();
+		const oThis = this;
+		const callback = function (isSuccess) {
+			const g_cCalcRecursion = AscCommonExcel.g_cCalcRecursion;
+			History.Create_NewPoint();
+			History.StartTransaction();
+			oCalcPr.updateCalcProperties(oCalcSettings, oThis.model);
+			g_cCalcRecursion.initCalcProperties(oCalcPr);
+			History.EndTransaction();
+
+			ws._updateRange(new Asc.Range(0, 0, ws.model.getColsCount(), ws.model.getRowsCount()), true);
+			ws.draw();
+		};
+
+		callback();
+	};
 
 	WorkbookView.prototype.initCustomEngine = function() {
 		if (!this.customFunctionEngine) {
@@ -6028,8 +6058,12 @@
 		if (-1 !== this.CurId) {
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
-			let ws = this.wb.getActiveWS();
-			let selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
+			// it's necessary because into the docbuilder "this.wb.wsActive" is "-1" and search doesn't work
+			let ws = this.wb.model.getActiveWs();
+			if (!ws) {
+				ws = this.wb && this.wb.model && this.wb.model.getActiveWs && this.wb.model.getActiveWs();
+			}
+			let selectionRange = (this.props && this.props.selectionRange) || (ws && ws.selectionRange) || (ws && ws.copySelection);
 
 			let activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
 			if (this.props && this.props.lastSearchElem) {
@@ -6066,7 +6100,7 @@
 			let sheetArr = [];
 			let checkElem = function (indexElem, index) {
 				//нужный нам лист
-				if (ws.sName === t.Elements[indexElem].sheet) {
+				if (ws && ws.sName === t.Elements[indexElem].sheet) {
 
 					let prevNextI = bReverse ? indexArr[index - 1] : indexArr[index + 1];
 					let prevNextElemRowCol = getRowCol(t.Elements[prevNextI]);
@@ -6137,6 +6171,9 @@
 			case AscCommonExcel.docChangedType.rangeValues:
 				this.changeRangeValue(arg1, arg2);
 				break;
+			case AscCommonExcel.docChangedType.removeRows:
+				this.changeRemoveRows(arg1, arg2);
+				break;
 			case AscCommonExcel.docChangedType.sheetContent:
 				this.changeSheetContent(arg1, arg2);
 				break;
@@ -6169,6 +6206,22 @@
 			} else if (!this.modifiedDocument && cell.isEqual(this.props)) {
 				this.wb.handlers.trigger("asc_onModifiedDocument");
 				this.setModifiedDocument(true);
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.changeRemoveRows = function (ws, range) {
+		if (this.isNotEmpty()) {
+			for (let i in this.Elements) {
+				if (this.Elements[i].index === ws.index && this.Elements[i].row > range.r2) {
+					let keyOld = this.Elements[i].index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+
+					this.Elements[i].row = this.Elements[i].row - (range.r2 - range.r1 + 1);
+
+					let keyNew = this.Elements[i].index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					let oldId = this.mapFindCells[keyOld];
+					delete this.mapFindCells[keyOld];
+					this.mapFindCells[keyNew] = oldId;
+				}
 			}
 		}
 	};

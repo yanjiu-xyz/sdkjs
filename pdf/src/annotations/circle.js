@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -38,8 +38,9 @@
     */
     function CAnnotationCircle(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Circle, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
         this.spPr.setGeometry(AscFormat.CreateGeometry("ellipse"));
         this.setStyle(AscFormat.CreateDefaultShapeStyle("ellipse"));
@@ -57,7 +58,7 @@
         TurnOffHistory();
     }
 	CAnnotationCircle.prototype.constructor = CAnnotationCircle;
-    AscFormat.InitClass(CAnnotationCircle, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationCircle.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationCircle.prototype.IsCircle = function() {
@@ -81,7 +82,9 @@
 
         this.fillObject(oCircle);
 
-        oCircle.pen = new AscFormat.CLn();
+        let aStrokeColor = this.GetStrokeColor();
+        let aFillColor = this.GetFillColor();
+
         oCircle._apIdx = this._apIdx;
         oCircle._originView = this._originView;
         oCircle.SetOriginPage(this.GetOriginPage());
@@ -89,9 +92,9 @@
         oCircle.SetModDate(this.GetModDate());
         oCircle.SetCreationDate(this.GetCreationDate());
         oCircle.SetWidth(this.GetWidth());
-        oCircle.SetStrokeColor(this.GetStrokeColor().slice());
-        oCircle.SetFillColor(this.GetFillColor());
-        oCircle.recalcInfo.recalculatePen = false;
+        oCircle.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
+        oCircle.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oCircle.SetOpacity(this.GetOpacity());
         oCircle.recalcInfo.recalculateGeometry = true;
         this._rectDiff && oCircle.SetRectangleDiff(this._rectDiff.slice());
         oCircle.SetDash(this.GetDash());
@@ -178,28 +181,6 @@
 
         this.spPr.xfrm.setExtX(extX);
         this.spPr.xfrm.setExtY(extY);
-    };
-    CAnnotationCircle.prototype.SetStrokeColor = function(aColor) {
-        this._strokeColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        let oLine   = this.pen;
-        oLine.setFill(oFill);
-    };
-    CAnnotationCircle.prototype.SetFillColor = function(aColor) {
-        this._fillColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        this.setFill(oFill);
-    };
-    CAnnotationCircle.prototype.SetWidth = function(nWidthPt) {
-        this._width = nWidthPt; 
-
-        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        let oLine = this.pen;
-        oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
     };
     CAnnotationCircle.prototype.Recalculate = function() {
         let oViewer     = editor.getDocumentRenderer();

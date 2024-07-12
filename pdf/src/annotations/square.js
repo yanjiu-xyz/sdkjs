@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -38,8 +38,9 @@
     */
     function CAnnotationSquare(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Square, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
         this.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
 
@@ -57,7 +58,7 @@
         TurnOffHistory();
     }
     CAnnotationSquare.prototype.constructor = CAnnotationSquare;
-    AscFormat.InitClass(CAnnotationSquare, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationSquare, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationSquare.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationSquare.prototype.LazyCopy = function() {
@@ -78,7 +79,9 @@
 
         this.fillObject(oSquare);
 
-        oSquare.pen = new AscFormat.CLn();
+        let aStrokeColor = this.GetStrokeColor();
+        let aFillColor = this.GetFillColor();
+
         oSquare._apIdx = this._apIdx;
         oSquare._originView = this._originView;
         oSquare.SetOriginPage(this.GetOriginPage());
@@ -86,9 +89,9 @@
         oSquare.SetModDate(this.GetModDate());
         oSquare.SetCreationDate(this.GetCreationDate());
         oSquare.SetWidth(this.GetWidth());
-        oSquare.SetStrokeColor(this.GetStrokeColor().slice());
-        oSquare.SetFillColor(this.GetFillColor());
-        oSquare.recalcInfo.recalculatePen = false;
+        oSquare.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
+        oSquare.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oSquare.SetOpacity(this.GetOpacity());
         oSquare.recalcInfo.recalculateGeometry = true;
         this._rectDiff && oSquare.SetRectangleDiff(this._rectDiff.slice());
         oSquare.recalculate();
@@ -211,28 +214,6 @@
     };
     CAnnotationSquare.prototype.IsSquare = function() {
         return true;
-    };
-    CAnnotationSquare.prototype.SetStrokeColor = function(aColor) {
-        this._strokeColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        let oLine   = this.pen;
-        oLine.setFill(oFill);
-    };
-    CAnnotationSquare.prototype.SetFillColor = function(aColor) {
-        this._fillColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        this.setFill(oFill);
-    };
-    CAnnotationSquare.prototype.SetWidth = function(nWidthPt) {
-        this._width = nWidthPt; 
-
-        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        let oLine = this.pen;
-        oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
     };
     CAnnotationSquare.prototype.Recalculate = function() {
         let oViewer     = editor.getDocumentRenderer();

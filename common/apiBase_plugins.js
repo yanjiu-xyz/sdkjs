@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -152,7 +152,7 @@
 
 	/**
 	 * The OLE object properties
-	 * @typed {Object} OLEProperties
+	 * @typedef {Object} OLEProperties
 	 * @property {string} data - OLE object data (internal format).
 	 * @property {string} imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
 	 * @property {string} guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
@@ -688,7 +688,7 @@
                 }
                 case "hideContentControlTrack":
                 {
-                    if (this.editorId === AscCommon.c_oEditorId.Word && this.WordControl && this.WordControl.m_oLogicDocument)
+                    if (this.editorId === AscCommon.c_oEditorId.Word && this.WordControl && this.WordControl.m_oLogicDocument && !this.isPdfEditor())
                         this.WordControl.m_oLogicDocument.SetForceHideContentControlTrack(obj[prop]);
 
                     break;
@@ -702,7 +702,8 @@
 				{
 					if (this.editorId !== AscCommon.c_oEditorId.Word
 						|| !this.WordControl
-						|| !this.WordControl.m_oLogicDocument)
+						|| !this.WordControl.m_oLogicDocument
+						|| this.isPdfEditor())
 						break;
 
 					let oLogicDocument = this.WordControl.m_oLogicDocument;
@@ -811,6 +812,22 @@
             }
         }
     };
+
+	/**
+	 * Set options for all plugins. This method can be used only in connectors.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias SetPluginsOptions
+	 * @param {object} options - Object with properties ({ all : { key, value }, plugin_giud : { keyForSpecificPlugin : valueForSpecificPlugin } }
+	 */
+	Api.prototype["pluginMethod_SetPluginsOptions"] = function(options)
+	{
+		let guid = window.g_asc_plugins.getCurrentPluginGuid();
+		let runObject = window.g_asc_plugins.runnedPluginsMap[guid];
+		if (!runObject.isConnector)
+			return;
+		this.setPluginsOptions(options);
+	};
 
     /**
      * Shows the input helper.
@@ -973,23 +990,17 @@
 			{
 				if (!this.WordControl || !this.WordControl.m_oLogicDocument)
 					return "none";
-				var logicDoc = this.WordControl.m_oLogicDocument;
-
+				
+				let logicDoc = this.WordControl.m_oLogicDocument;
 				if (!logicDoc.IsSelectionUse())
 					return "none";
 
-				var selectionBounds = logicDoc.GetSelectionBounds();
-				var eps = 0.0001;
-				if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
-					(Math.abs(selectionBounds.Start.W) > eps) &&
-					(Math.abs(selectionBounds.End.W) > eps))
-				{
+				if (logicDoc.IsTextSelectionUse())
 					return "text";
-				}
-
+				
 				if (logicDoc.DrawingObjects.getSelectedObjectsBounds())
 					return "drawing";
-
+				
 				return "none";
 			}
 			case AscCommon.c_oEditorId.Presentation:
@@ -1001,7 +1012,7 @@
 				if (-1 === logicDoc.CurPage)
 					return "none";
 
-				var _controller = logicDoc.Slides[logicDoc.CurPage].graphicObjects;
+				var _controller = logicDoc.GetCurrentSlide().graphicObjects;
 				var _elementsCount = _controller.selectedObjects.length;
 
 				var retType = "slide";
@@ -1268,6 +1279,8 @@
 		}
 		return false;
 	}
+	AscCommon.getLocalStorageItem = getLocalStorageItem;
+	AscCommon.setLocalStorageItem = setLocalStorageItem;
 
 	function installPlugin(config, loadFuncName)
 	{
@@ -1278,7 +1291,13 @@
 				"guid" : ""
 			};
 		}
-		
+
+		window.g_asc_plugins.isUICheckOnInitMessage = true;
+		setTimeout(function(){
+			if (window.g_asc_plugins.isUICheckOnInitMessage)
+				delete window.g_asc_plugins.isUICheckOnInitMessage;
+		});
+
 		// desktop detecting (it's necessary when we work with clouds into desktop)
 		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 		if (isLocal)
@@ -1864,10 +1883,10 @@
 	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
 	{
 		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
-		for (let i = 0, len = items.tabs.length; i < len; i++)
+		for (let i = 0, len = items["tabs"].length; i < len; i++)
 		{
-			if (items.tabs[i]["items"])
-				correctItemsWithData(items.tabs[i]["items"], baseUrl);
+			if (items["tabs"][i]["items"])
+				correctItemsWithData(items["tabs"][i]["items"], baseUrl);
 		}
 
 		this.sendEvent("onPluginToolbarMenu", [items]);

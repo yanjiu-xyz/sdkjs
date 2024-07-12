@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -749,6 +749,7 @@
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetIsPhoto] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetUserDrawn] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetPh] = CChangesDrawingsObject;
+		AscDFH.changesFactory[AscDFH.historyitem_NvPr_AddExt] = CChangesDrawingsContentNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetUniMedia] = CChangesDrawingsObjectNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_Ph_SetHasCustomPrompt] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_Ph_SetIdx] = CChangesDrawingsString;
@@ -887,13 +888,22 @@
 		g_oThemeFontsName["minorHAnsi"] = true;
 
 		function isRealNumber(n) {
-			return typeof n === "number" && !isNaN(n);
+			return typeof n === "number" && !isNaN(n) && isFinite(n);
 		}
 
 		function isRealBool(b) {
 			return b === true || b === false;
 		}
 
+		// Own realization of Object.groupBy for IE11 compatibility
+		function groupBy(arr, callback) {
+			return arr.reduce(function (storage, item) {
+				let group = callback(item);
+				storage[group] = storage[group] || [];
+				storage[group].splice(0, 0, item);
+				return storage;
+			}, {});
+		}
 
 		function writeLong(w, val) {
 			w.WriteBool(isRealNumber(val));
@@ -2456,6 +2466,13 @@
 				return this.Mods.getModValue(sModName);
 			}
 			return null;
+		};
+		CUniColor.prototype.getTransparency = function () {
+			let nAlphaVal = this.getModValue("alpha");
+			if(nAlphaVal === null) {
+				return 0;
+			}
+			return (100000 - nAlphaVal) / 1000;
 		};
 		CUniColor.prototype.checkWordMods = function () {
 			return this.Mods && this.Mods.Mods.length === 1
@@ -4076,11 +4093,7 @@
 			if(!this.color) {
 				return 0;
 			}
-			let nAlphaVal = this.color.getModValue("alpha");
-			if(nAlphaVal === null) {
-				return 0;
-			}
-			return (100000 - nAlphaVal) / 1000;
+			return this.color.getTransparency();
 		};
 		asc_CShadowProperty.prototype.putTransparency = function(nVal) {
 			if(!this.color) {
@@ -6761,6 +6774,8 @@
 			this.userDrawn = null;
 			this.ph = null;
 			this.unimedia = null;
+
+			this.extLst = [];
 		}
 
 		InitClass(NvPr, CBaseFormatObject, AscDFH.historyitem_type_NvPr);
@@ -6775,6 +6790,10 @@
 		NvPr.prototype.setPh = function (ph) {
 			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_NvPr_SetPh, this.ph, ph));
 			this.ph = ph;
+		};
+		NvPr.prototype.addExt = function (ext) {
+			History.Add(new CChangesDrawingsContentNoId(this, AscDFH.historyitem_NvPr_AddExt, this.extLst.length, [ext], true));
+			this.extLst.push(ext);
 		};
 		NvPr.prototype.setUniMedia = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NvPr_SetUniMedia, this.unimedia, pr));
@@ -7015,6 +7034,7 @@
 			CBaseNoIdObject.call(this);
 			this.idx = 0;
 			this.Color = new CUniColor();
+			this.styleClr = null;
 		}
 
 		InitClass(StyleRef, CBaseNoIdObject, 0);
@@ -7038,6 +7058,9 @@
 		};
 		StyleRef.prototype.setIdx = function (idx) {
 			this.idx = idx;
+		};
+		StyleRef.prototype.setStyleClr = function (styleClr) {
+			this.styleClr = styleClr;
 		};
 		StyleRef.prototype.setColor = function (color) {
 			this.Color = color;
@@ -7944,6 +7967,12 @@
 				this.setFill(this.ln.Fill.createDuplicate());
 			}
 		};
+		CSpPr.prototype.getOuterShdw = function () {
+			if (this.effectProps && this.effectProps.EffectLst && this.effectProps.EffectLst.outerShdw) {
+				return this.effectProps.EffectLst.outerShdw;
+			}
+			return null;
+		};
 // ----------------------------------
 
 // THEME ----------------------------
@@ -8352,6 +8381,7 @@
 		};
 
 		drawingConstructorsMap[AscDFH.historyitem_ExtraClrScheme_SetClrScheme] = ClrScheme;
+		drawingConstructorsMap[AscDFH.historyitem_NvPr_AddExt] = CExtP;
 
 		function FontCollection(fontScheme) {
 			CBaseNoIdObject.call(this);
@@ -8867,6 +8897,13 @@
 			}
 			return null;
 		};
+		CTheme.prototype.GetPresentation = function () {
+			let oLogicDoc = this.GetLogicDocument();
+			if(AscCommonSlide.CPresentation && oLogicDoc instanceof AscCommonSlide.CPresentation) {
+				return oLogicDoc;
+			}
+			return null;
+		};
 		CTheme.prototype.GetAllSlideIndexes = function () {
 			let oPresentation = this.GetLogicDocument();
 			let aSlides = this.GetPresentationSlides();
@@ -8900,6 +8937,22 @@
 						let oApi = oWordGraphicObject.document.Api;
 						oApi.chartPreviewManager.clearPreviews();
 						oApi.textArtPreviewManager.clear();
+					}
+					else {
+						let oPresentation = this.GetPresentation();
+						if(oPresentation) {
+							let oThemedObjects = oPresentation.GetSlideObjectsWithTheme(this);
+							for(let nIdx = 0; nIdx < oThemedObjects.masters.length; ++nIdx) {
+								oThemedObjects.masters[nIdx].checkSlideTheme();
+							}
+							for(let nIdx = 0; nIdx < oThemedObjects.layouts.length; ++nIdx) {
+								oThemedObjects.layouts[nIdx].checkSlideTheme();
+							}
+							for(let nIdx = 0; nIdx < oThemedObjects.slides.length; ++nIdx) {
+								oThemedObjects.slides[nIdx].checkSlideTheme();
+							}
+							AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
+						}
 					}
 				}
 				else if(oData.Type === AscDFH.historyitem_ThemeSetFontScheme) {
@@ -8992,6 +9045,52 @@
 		HF.prototype.setSldNum = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_HF_SetSldNum, this.sldNum, pr));
 			this.sldNum = pr;
+		};
+		HF.prototype.applySettings = function (oSettings) {
+			if(!oSettings) return;
+			if (oSettings.get_ShowSlideNum()) {
+				if (this.sldNum !== null) {
+					this.setSldNum(null);
+				}
+			}
+			else {
+				if (this.sldNum !== false) {
+					this.setSldNum(false);
+				}
+			}
+
+			if (oSettings.get_ShowFooter()) {
+				if (this.ftr !== null) {
+					this.setFtr(null);
+				}
+			}
+			else {
+				if (this.ftr !== false) {
+					this.setFtr(false);
+				}
+			}
+
+			if (oSettings.get_ShowHeader()) {
+				if (this.hdr !== null) {
+					this.setHdr(null);
+				}
+			}
+			else {
+				if (this.hdr !== false) {
+					this.setHdr(false);
+				}
+			}
+
+			if (oSettings.get_ShowDateTime()) {
+				if (this.dt !== null) {
+					this.setDt(null);
+				}
+			}
+			else {
+				if (this.dt !== false) {
+					this.setDt(false);
+				}
+			}
 		};
 
 		function CBgPr() {
@@ -9441,7 +9540,7 @@
 		function redrawSlide(slide, presentation, arrInd, pos, direction, arr_slides) {
 			if (slide) {
 				slide.recalculate();
-				presentation.DrawingDocument.OnRecalculatePage(slide.num, slide);
+				presentation.DrawingDocument.OnRecalculateSlide(presentation.GetSlideIndex(slide));
 			}
 			if (direction === 0) {
 				if (pos > 0) {
@@ -10750,12 +10849,12 @@
 				return;
 			}
 			var _this = this;
-			AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, function (error, files) {
+			AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function (error, files) {
 					if (Asc.c_oAscError.ID.No !== error) {
 						Api.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
 					} else {
 						Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-						AscCommon.UploadImageFiles(files, Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, function (error, urls) {
+						AscCommon.UploadImageFiles(files, Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function (error, urls) {
 							if (Asc.c_oAscError.ID.No !== error) {
 								Api.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
 								Api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
@@ -11419,7 +11518,78 @@
 				}
 			}
 		};
+		TextListStyle.prototype.applyParaPr = function (nLvl, ParaPr, bIncreaseFontSize, oSp) {
 
+			let iN = AscFormat.isRealNumber;
+			if(bIncreaseFontSize === true || bIncreaseFontSize === false) {
+				if(!this.levels[nLvl]) {
+					this.levels[nLvl] = new AscWord.CParaPr();
+				}
+				let oLvl = this.levels[nLvl];
+				if(oLvl) {
+					if(!oLvl.DefaultRunPr) {
+						oLvl.DefaultRunPr = new AscWord.CTextPr();
+					}
+					let TextPr = oLvl.DefaultRunPr;
+					let Pr;
+					if(iN(TextPr.FontSize)) {
+						TextPr.FontSize = TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+					else {
+						let oSpStyles = oSp.Get_Styles(nLvl);
+						let Styles      = oSpStyles.styles;
+						Pr = Styles.Get_Pr(oSpStyles.lastId, styletype_Paragraph, null);
+						TextPr.FontSize = Pr.TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+					if(iN(TextPr.FontSizeCS)) {
+						TextPr.FontSizeCS = TextPr.GetIncDecFontSizeCS(bIncreaseFontSize)
+					}
+
+					else {
+						if(!Pr) {
+							let oSpStyles = oSp.Get_Styles(nLvl);
+							let Styles      = oSpStyles.styles;
+							Pr = Styles.Get_Pr(oSpStyles.lastId, styletype_Paragraph, null);
+						}
+						TextPr.FontSize = Pr.TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+				}
+				return;
+			}
+			if(!ParaPr) {
+				this.levels[nLvl] = null;
+				return;
+			}
+			if(!this.levels[nLvl]) {
+				this.levels[nLvl] = new AscWord.CParaPr();
+			}
+			let oLvl = this.levels[nLvl];
+			oLvl.Merge(ParaPr);
+			if(!oLvl.DefaultRunPr) {
+				oLvl.DefaultRunPr = new AscWord.CTextPr();
+			}
+
+			if(ParaPr.DefaultRunPr) {
+				let TextPr = ParaPr.DefaultRunPr;
+				if (TextPr.FontFamily) {
+					let FName = TextPr.FontFamily.Name;
+					let FIndex = TextPr.FontFamily.Index;
+					TextPr.RFonts = new CRFonts();
+					TextPr.RFonts.SetAll(FName, FIndex);
+				}
+				oLvl.DefaultRunPr.Apply(ParaPr.DefaultRunPr);
+			}
+		};
+		TextListStyle.prototype.changeFontSize = function (nLvl, bIncrease) {
+			if(!this.levels[nLvl]) {
+				this.levels[nLvl] = new AscWord.CParaPr();
+			}
+			let oLvl = this.levels[nLvl];
+			if(oLvl.DefaultRunPr) {
+				oLvl.DefaultRunPr = new AscWord.CTextPr();
+			}
+
+		};
 
 		function CBaseAttrObject() {
 			CBaseNoIdObject.call(this);
@@ -13683,6 +13853,38 @@
 		InitClass(IdEntry, CBaseNoIdObject, undefined);
 
 
+		function CExtP() {
+			this.st = null;
+			this.end = null;
+		}
+		InitClass(CExtP, CBaseNoIdObject, undefined);
+
+		CExtP.prototype.readAttribute = function (nType, pReader) {
+			switch (nType) {
+				case 0: {
+					// id. embed / link
+					pReader.stream.Skip2(4);
+					break;
+				}
+				case 1: {
+					this.st = pReader.stream.GetDouble();
+					break;
+				}
+				case 2: {
+					this.end = pReader.stream.GetDouble();
+					break;
+				}
+			}
+		};
+		CExtP.prototype.Write_ToBinary = function (w) {
+			writeDouble(w, this.st);
+			writeDouble(w, this.end);
+		};
+		CExtP.prototype.Read_FromBinary = function (r) {
+			this.st = readDouble(r);
+			this.end = readDouble(r);
+		};
+
 		function CreateSchemeUnicolorWithMods(id, aMods) {
 			let oColor = new CUniColor();
 			oColor.color = new CSchemeColor();
@@ -14749,18 +14951,29 @@
 				case "areaStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.areaStackedPer;
 				}
+				case "comboBarLine": {
+					return Asc.c_oAscChartTypeSettings.comboBarLine;
+				}
+				case "comboBarLineSecondary": {
+					return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
+				}
+				case "comboCustom": {
+					return Asc.c_oAscChartTypeSettings.comboCustom;
+				}
 			}
 			return null;
 		}
 
+
+
 		function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats) {
-			var settings = new Asc.asc_ChartSettings();
+			let settings = new Asc.asc_ChartSettings();
 			settings.type = ChartBuilderTypeToInternal(sType);
-			var aAscSeries = [];
-			var aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-			var oCat, i;
+			let aAscSeries = [];
+			let aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+			let oCat, i;
 			if (aCatNames.length > 0) {
-				var aNumCache = [];
+				let aNumCache = [];
 				for (i = 0; i < aCatNames.length; ++i) {
 					aNumCache.push({val: aCatNames[i] + ""});
 				}
@@ -14770,10 +14983,10 @@
 				};
 			}
 			for (i = 0; i < aSeries.length; ++i) {
-				var oAscSeries = new AscFormat.asc_CChartSeria();
+				let oAscSeries = new AscFormat.asc_CChartSeria();
 				oAscSeries.Val.NumCache = [];
-				var aData = aSeries[i];
-				var sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
+				let aData = aSeries[i];
+				let sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
 				oAscSeries.Val.Formula = 'Sheet1!' + '$B$' + (i + 2) + ':$' + sEndLiter + '$' + (i + 2);
 				if (aSeriesNames[i]) {
 					oAscSeries.TxCache.Formula = 'Sheet1!' + '$A$' + (i + 2);
@@ -14791,7 +15004,7 @@
 				if (Array.isArray(aNumFormats) && typeof (aNumFormats[i]) === "string")
 					oAscSeries.FormatCode = aNumFormats[i];
 
-				for (var j = 0; j < aData.length; ++j) {
+				for (let j = 0; j < aData.length; ++j) {
 					oAscSeries.Val.NumCache.push({
 						numFormatStr: oAscSeries.FormatCode !== "" ? null : "General",
 						isDateTimeFormat: false,
@@ -14802,7 +15015,7 @@
 				aAscSeries.push(oAscSeries);
 			}
 
-			var oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(aAscSeries, settings, true);
+			let oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(aAscSeries, settings, true);
 			if (!oChartSpace) {
 				return null;
 			}
@@ -17804,12 +18017,36 @@
 		}
 
 		const OBJECT_MORPH_MARKER = "!!";
+
+		function IsEqualObjects(obj1, obj2) {
+			let iO = AscCommon.isRealObject;
+			let iN = AscFormat.isRealNumber;
+			let iEN = AscFormat.fApproxEqual;
+			if(!iO(obj1) && iO(obj2) || iO(obj1) && !iO(obj2)) return false;
+			for(let sKey in obj1) {
+				if(obj1.hasOwnProperty(sKey)) {
+					let pr1 = obj1[sKey];
+					let pr2 = obj2[sKey];
+					if(iO(pr1)) {
+						if(!IsEqualObjects(pr1, pr2)) return false;
+					}
+					else if(iN(pr1)) {
+						if(!iEN(pr1, pr2)) return false;
+					}
+					else {
+						if(pr1 !== pr2) return false;
+					}
+				}
+			}
+			return true;
+		}
 //----------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CreateFontRef = CreateFontRef;
 		window['AscFormat'].CreatePresetColor = CreatePresetColor;
 		window['AscFormat'].isRealNumber = isRealNumber;
 		window['AscFormat'].isRealBool = isRealBool;
+		window['AscFormat'].groupBy = groupBy;
 		window['AscFormat'].writeLong = writeLong;
 		window['AscFormat'].readLong = readLong;
 		window['AscFormat'].writeDouble = writeDouble;
@@ -17970,22 +18207,22 @@
 		window['AscFormat'].LineJoinType = LineJoinType;
 
 //типы плейсхолдеров
-		window['AscFormat'].phType_body = 0;
-		window['AscFormat'].phType_chart = 1;
-		window['AscFormat'].phType_clipArt = 2; //(Clip Art)
-		window['AscFormat'].phType_ctrTitle = 3; //(Centered Title)
-		window['AscFormat'].phType_dgm = 4; //(Diagram)
-		window['AscFormat'].phType_dt = 5; //(Date and Time)
-		window['AscFormat'].phType_ftr = 6; //(Footer)
-		window['AscFormat'].phType_hdr = 7; //(Header)
-		window['AscFormat'].phType_media = 8; //(Media)
-		window['AscFormat'].phType_obj = 9; //(Object)
-		window['AscFormat'].phType_pic = 10; //(Picture)
-		window['AscFormat'].phType_sldImg = 11; //(Slide Image)
-		window['AscFormat'].phType_sldNum = 12; //(Slide Number)
-		window['AscFormat'].phType_subTitle = 13; //(Subtitle)
-		window['AscFormat'].phType_tbl = 14; //(Table)
-		window['AscFormat'].phType_title = 15; //(Title)
+		window['AscFormat']["phType_body"] = window['AscFormat'].phType_body = 0;
+		window['AscFormat']["phType_chart"] = window['AscFormat'].phType_chart = 1;
+		window['AscFormat']["phType_clipArt"] = window['AscFormat'].phType_clipArt = 2;
+		window['AscFormat']["phType_ctrTitle"] = window['AscFormat'].phType_ctrTitle = 3;
+		window['AscFormat']["phType_dgm"] = window['AscFormat'].phType_dgm = 4;
+		window['AscFormat']["phType_dt"] = window['AscFormat'].phType_dt = 5;
+		window['AscFormat']["phType_ftr"] = window['AscFormat'].phType_ftr = 6;
+		window['AscFormat']["phType_hdr"] = window['AscFormat'].phType_hdr = 7;
+		window['AscFormat']["phType_media"] = window['AscFormat'].phType_media = 8;
+		window['AscFormat']["phType_obj"] = window['AscFormat'].phType_obj = 9;
+		window['AscFormat']["phType_pic"] = window['AscFormat'].phType_pic = 10;
+		window['AscFormat']["phType_sldImg"] = window['AscFormat'].phType_sldImg = 11;
+		window['AscFormat']["phType_sldNum"] = window['AscFormat'].phType_sldNum = 12;
+		window['AscFormat']["phType_subTitle"] = window['AscFormat'].phType_subTitle = 13;
+		window['AscFormat']["phType_tbl"] = window['AscFormat'].phType_tbl = 14;
+		window['AscFormat']["phType_title"] = window['AscFormat'].phType_title = 15;
 
 		window['AscFormat'].fntStyleInd_none = 2;
 		window['AscFormat'].fntStyleInd_major = 0;
@@ -18123,6 +18360,7 @@
 		window['AscFormat'].CVariantVStream = CVariantVStream;
 		window['AscFormat'].fRGBAToHexString = fRGBAToHexString;
 		window['AscFormat'].RefreshContentAllFields = RefreshContentAllFields;
+		window['AscFormat'].IsEqualObjects = IsEqualObjects;
 		window['AscFormat'].szPh_full = szPh_full;
 		window['AscFormat'].szPh_half = szPh_half;
 		window['AscFormat'].szPh_quarter = szPh_quarter;

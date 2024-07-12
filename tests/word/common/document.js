@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -139,6 +139,22 @@
 	function CreateRunStyle(name)
 	{
 		return CreateStyle(styletype_Character, name);
+	}
+	function CreateMath()
+	{
+		let math = new AscWord.ParaMath();
+		let run = new AscWord.CRun(null, true);
+		math.Root.AddToContent(0, run);
+		return math;
+	}
+	function CreateDefaultHeader(sectPr)
+	{
+		if (!sectPr || !logicDocument)
+			return null;
+		
+		let header = new AscCommonWord.CHeaderFooter(logicDocument.HdrFtr, logicDocument, logicDocument.DrawingDocument, AscCommon.hdrftr_Header);
+		sectPr.Set_Header_Default(header);
+		return header.GetContent();
 	}
 	function GetParagraphText(paragraph)
 	{
@@ -452,6 +468,8 @@
 	AscTest.CreateStyle              = CreateStyle;
 	AscTest.CreateParagraphStyle     = CreateParagraphStyle;
 	AscTest.CreateRunStyle           = CreateRunStyle;
+	AscTest.CreateMath               = CreateMath;
+	AscTest.CreateDefaultHeader      = CreateDefaultHeader;
 	AscTest.GetParagraphText         = GetParagraphText;
 	AscTest.GetParagraphReviewText   = GetParagraphReviewText;
 	AscTest.RemoveTableBorders       = RemoveTableBorders;

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -5196,9 +5196,12 @@ function (window, undefined) {
 				arg1 = arg1.getElementRowCol(0, 0);
 			}
 
-			arg1 = arg1.tocString();
-			if (cElementType.string !== arg1.type) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				arg1 = arg1.getValue();
+			}
+
+			if (arg1.type === cElementType.empty) {
+				arg1 = arg1.tocNumber();
 			}
 
 			argNextDimension = arg0.getDimensions();
@@ -6241,7 +6244,7 @@ function (window, undefined) {
 		argClone[5] = argClone[5] ? argClone[5].tocNumber() : new cNumber(1);
 
 
-		argClone[0] = argClone[0].getMatrix();
+		argClone[0] = argClone[0].getMatrix && argClone[0].getMatrix();
 
 		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
@@ -8759,7 +8762,7 @@ function (window, undefined) {
 	cNORMDIST.prototype.name = 'NORMDIST';
 	cNORMDIST.prototype.argumentsMin = 4;
 	cNORMDIST.prototype.argumentsMax = 4;
-	cNORMDIST.prototype.argumentsType = [argType.number];
+	cNORMDIST.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.logical];
 	cNORMDIST.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];

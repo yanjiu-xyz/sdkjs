@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1509,7 +1509,6 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.updatePosition3(this.PageNum, this.X, this.Y, OldPageNum);
 	this.useWrap = this.Use_TextWrap();
 };
-
 ParaDrawing.prototype.GetClipRect = function ()
 {
 	if (this.Is_Inline() || this.Use_TextWrap())
@@ -2454,17 +2453,23 @@ ParaDrawing.prototype.Load_LinkData = function()
 };
 ParaDrawing.prototype.draw = function(graphics, PDSE)
 {
-	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.draw === "function")
+	let iO = AscCommon.isRealObject;
+	let iN = AscFormat.isRealNumber;
+	if (this.GraphicObj)
 	{
 		graphics.SaveGrState();
-		var bInline = this.Is_Inline();
-		if(bInline && AscCommon.isRealObject(PDSE) && AscFormat.isRealNumber(this.LineTop) && AscFormat.isRealNumber(this.LineBottom) && AscCommon.isRealObject(this.GraphicObj.bounds))
+		let bInline = this.Is_Inline();
+		let oBounds = this.GraphicObj.bounds;
+		let paragraph = this.GetParagraph();
+		let paraPr = paragraph.GetCompiledParaPr();
+		let spacing = paraPr.Spacing;
+		if(bInline && spacing.LineRule !== Asc.linerule_Exact && PDSE && iN(this.LineTop) && iN(this.LineBottom) && iO(oBounds))
 		{
-			var x, y, w, h;
-			var oEffectExtent = this.EffectExtent;
+			let x, y, w, h;
+			let oEffectExtent = this.EffectExtent;
 			x = PDSE.X;
 			y = this.LineTop;
-			w = this.GraphicObj.bounds.r - this.GraphicObj.bounds.l + AscFormat.getValOrDefault(oEffectExtent.R, 0) + AscFormat.getValOrDefault(oEffectExtent.L, 0);
+			w = oBounds.r - oBounds.l + AscFormat.getValOrDefault(oEffectExtent.R, 0) + AscFormat.getValOrDefault(oEffectExtent.L, 0);
 			h = this.LineBottom - this.LineTop;
 			graphics.AddClipRect(x, y, w, h);
 		}

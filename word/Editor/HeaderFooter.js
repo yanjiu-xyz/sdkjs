@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1396,7 +1396,7 @@ CHeaderFooter.prototype.Update_PageCountElements = function(nPageCount)
 {
 	for (var nIndex = 0, nCount = this.PageCountElements.length; nIndex < nCount; ++nIndex)
 	{
-		this.PageCountElements[nIndex].SetNumValue(nPageCount);
+		this.PageCountElements[nIndex].UpdatePageCount(nPageCount);
 	}
 };
 CHeaderFooter.prototype.ForceRecalculate = function(nPageAbs)
@@ -1623,7 +1623,8 @@ CHeaderFooterController.prototype =
 
             Pr.Locked = this.Lock.Is_Locked();
 
-			Pr.StartPageNumber = SectPr.Get_PageNum_Start();
+			Pr.StartPageNumber = SectPr.GetPageNumStart();
+			Pr.NumFormat = SectPr.GetPageNumFormat();
 
             return Pr;
         }

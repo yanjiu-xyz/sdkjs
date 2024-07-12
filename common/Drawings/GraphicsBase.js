@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -109,7 +109,12 @@
 
 	CGraphicsBase.prototype.isPdf = function()
 	{
-		return (this.type === AscCommon.RendererType.PDF || this.type === AscCommon.RendererType.NativeDrawer);
+		return (this.type === AscCommon.RendererType.PDF);
+	};
+
+	CGraphicsBase.prototype.isNativeDrawer = function()
+	{
+		return (this.type === AscCommon.RendererType.NativeDrawer);
 	};
 
 	CGraphicsBase.prototype.isTrack = function()

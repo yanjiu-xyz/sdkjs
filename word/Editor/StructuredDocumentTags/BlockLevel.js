@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -2683,6 +2683,37 @@ CBlockLevelSdt.prototype.OnContentChange = function()
 	
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
+};
+CBlockLevelSdt.prototype.RemoveThisFromParent = function(updatePosition)
+{
+	let docContent = this.Parent;
+	if (!docContent)
+		return;
+	
+	let posInParent = this.GetIndex();
+	
+	let curPos = docContent.CurPos.ContentPos;
+	docContent.RemoveFromContent(posInParent, 1);
+	
+	if (updatePosition)
+	{
+		if (posInParent === curPos)
+		{
+			if (posInParent >= docContent.GetElementsCount())
+			{
+				docContent.MoveCursorToEndPos();
+			}
+			else
+			{
+				docContent.CurPos.ContentPos = Math.max(0, Math.min(docContent.GetElementsCount() - 1, posInParent));
+				docContent.Content[docContent.CurPos.ContentPos].MoveCursorToStartPos();
+			}
+		}
+		else if (posInParent < curPos)
+		{
+			docContent.CurPos.ContentPos = Math.max(0, Math.min(docContent.GetElementsCount() - 1, curPos - 1));
+		}
+	}
 };
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

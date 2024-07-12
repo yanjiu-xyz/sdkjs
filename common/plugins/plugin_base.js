@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -622,8 +622,11 @@
 				}
 			}
 
-			if (type == "init")
+			if (type === "init")
 				window.Asc.plugin.info = pluginData;
+
+			if (type === "updateOptions" && pluginData.options)
+				window.Asc.plugin.info.options = pluginData.options;
 
 			if (undefined !== pluginData.theme)
 			{
@@ -856,6 +859,11 @@
 						}
 					}
 					break;
+				}
+				case "updateOptions":
+				{
+					if (window.Asc.plugin.onUpdateOptions)
+						window.Asc.plugin.onUpdateOptions();
 				}
 				default:
 					break;

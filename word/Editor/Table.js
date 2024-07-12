@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -251,6 +251,8 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
     this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
+	
+	this.updateTrackRevisions();
 }
 
 CTable.prototype = Object.create(CDocumentContentElementBase.prototype);
@@ -962,7 +964,7 @@ CTable.prototype.Set_Props = function(Props)
 	}
 
 	// TableLook
-	if ("undefined" != typeof(Props.TableLook))
+	if (Props.TableLook)
 	{
 		var NewLook = new AscCommon.CTableLook(Props.TableLook.FirstCol, Props.TableLook.FirstRow, Props.TableLook.LastCol, Props.TableLook.LastRow, Props.TableLook.BandHor, Props.TableLook.BandVer);
 		this.Set_TableLook(NewLook);
@@ -2730,7 +2732,7 @@ CTable.prototype.GetEndInfo = function()
 };
 CTable.prototype.GetPrevElementEndInfo = function(RowIndex)
 {
-	if (-1 === RowIndex || !this.Parent)
+	if (-1 === RowIndex || !this.Parent || !this.Content[RowIndex])
 		return null;
 
 	if (0 === RowIndex)
@@ -2820,6 +2822,11 @@ CTable.prototype.Shift = function(CurPage, Dx, Dy)
 		var oDrawingObjects = oLogicDocument.GetDrawingObjects();
 		oDrawingObjects.updateFloatTable(new CFlowTable(this, this.PageNum + CurPage));
 	}
+};
+CTable.prototype.IsMoveWithTextVertically = function()
+{
+	var oVertRelative = this.GetPositionV().RelativeFrom;
+	return (Asc.c_oAscVAnchor.Text === oVertRelative);
 };
 CTable.prototype.UpdateEndInfo = function()
 {
@@ -3095,7 +3102,8 @@ CTable.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, Colu
 	this.PageNum      = PageNum;
 	this.ColumnNum    = ColumnNum ? ColumnNum : 0;
 	this.ColumnsCount = ColumnsCount ? ColumnsCount : 1;
-
+	
+	this.private_CheckYLimitForFlowTableInHdrFtr();
 	this.private_CalculateTableWidthRange();
 	this.private_CheckRangeOnReset();
 };
@@ -3138,6 +3146,26 @@ CTable.prototype.private_CheckRangeOnReset = function()
 
 	this.X      = X;
 	this.XLimit = XLimit;
+};
+CTable.prototype.private_CheckYLimitForFlowTableInHdrFtr = function()
+{
+	// Здесь мы проверяем специальный случай, когда данная таблица находится в колонтитуле, она плавающая, и
+	// привязана к странице или к полю по вертикали, у такой таблицы мы считаем, что нет нижней границы
+	
+	// Можно добавить условие, что это только в режиме совместимости Word14 и ниже, но с 15-ой версии у всего колонтитула
+	// нижняя граница не задана
+
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument
+		|| !logicDocument.IsDocumentEditor()
+		|| this.IsInline()
+		|| this.IsMoveWithTextVertically()
+		|| !this.Parent
+		|| !this.Parent.IsHdrFtr()
+		|| this.IsInnerTable())
+		return;
+	
+	this.YLimit = AscWord.MAX_MM_VALUE;
 };
 CTable.prototype.Recalculate = function()
 {
@@ -3596,7 +3624,7 @@ CTable.prototype.UpdateCursorType = function(X, Y, CurPage)
 	{
 		// Случай, когда у нас уже есть трэк вложенной таблицы и курсор выходит во внешнюю. Чтобы трэк сразу не пропадал,
 		// пока курсор находится в области табличного трэка для вложенной таблицы.
-		if (true !== this.DrawingDocument.IsCursorInTableCur(X, Y, this.GetAbsolutePage(CurPage))
+		if (true !== this.DrawingDocument.IsCursorInTableCur(X, Y, this.GetAbsolutePage(CurPage), true)
 			&& true === this.Check_EmptyPages(CurPage - 1)
 			&& true !== this.IsEmptyPage(CurPage))
 		{
@@ -6231,14 +6259,8 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 			Cell.Content.SelectAll();
 			Cell.Content.Remove(Count, bOnlyText, bRemoveOnlySelection, true, false);
 
+			this.RemoveSelection();
 			this.CurCell = Cell;
-
-			this.Selection.Use   = false;
-			this.Selection.Start = false;
-
-			this.Selection.StartPos.Pos = {Row : Cell.Row.Index, Cell : Cell.Index};
-			this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
-
 			this.Document_SetThisElementCurrent(true);
 		}
 		else
@@ -8692,6 +8714,10 @@ CTable.prototype.SetPositionH = function(relativeFrom, align, value)
 {
 	return this.Set_PositionH(relativeFrom, align, value);
 };
+CTable.prototype.GetPositionH = function()
+{
+	return this.PositionH;
+};
 CTable.prototype.Get_PositionHValueInTwips = function() {
 	var res;
 	if(this.PositionH && null !== this.PositionH.Value && undefined !== this.PositionH.Value) {
@@ -8724,6 +8750,10 @@ CTable.prototype.Set_PositionV = function(RelativeFrom, Align, Value)
 CTable.prototype.SetPositionV = function(relativeFrom, align, value)
 {
 	return this.Set_PositionV(relativeFrom, align, value);
+};
+CTable.prototype.GetPositionV = function()
+{
+	return this.PositionV;
 };
 CTable.prototype.Get_PositionVValueInTwips = function() {
 	var res;
@@ -14790,6 +14820,7 @@ CTable.prototype.private_RemoveRow = function(nIndex)
 	this.private_CheckCurCell();
 	this.private_UpdateTableGrid();
 	this.OnContentChange();
+	this.updateTrackRevisions();
 };
 CTable.prototype.private_AddRow = function(Index, CellsCount, bReIndexing, _NewRow)
 {
@@ -14837,6 +14868,7 @@ CTable.prototype.private_AddRow = function(Index, CellsCount, bReIndexing, _NewR
 	this.private_CheckCurCell();
 	this.private_UpdateTableGrid();
 	this.OnContentChange();
+	this.updateTrackRevisions();
 
 	return NewRow;
 };
@@ -16534,6 +16566,9 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 		isAllSelected = true;
 	}
 	
+	if (isCellSelection)
+		this.RemoveSelection();
+	
 	if ((bAll || (isCellSelection && !this.ApplyToAll))
 		&& (undefined === nType
 			|| c_oAscRevisionsChangeType.TablePr === nType
@@ -16560,8 +16595,15 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 			var nCurRow = arrSelectedRows[nSelectedRowIndex];
 			var oRow    = this.GetRow(nCurRow);
 			
-			if (oRow.HavePrChange() && (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType))
+			
+			if (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType)
+			{
+				for (let iCell = 0, nCells = oRow.GetCellsCount(); iCell < nCells; ++iCell)
+				{
+					oRow.GetCell(iCell).AcceptPrChange();
+				}
 				oRow.AcceptPrChange();
+			}
 			
 			var nRowReviewType = oRow.GetReviewType();
 			if (reviewtype_Add === nRowReviewType && (undefined === nType || c_oAscRevisionsChangeType.RowsAdd === nType))
@@ -16587,12 +16629,9 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 			}
 		}
 	}
-
+	
 	if (this.GetRowsCount() <= 0)
 		return;
-	
-	if (isCellSelection)
-		this.RemoveSelection();
 	
 	if (arrSelectionArray.length <= 0)
 	{
@@ -16675,8 +16714,14 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 			var nCurRow = arrSelectedRows[nSelectedRowIndex];
 			var oRow    = this.GetRow(nCurRow);
 			
-			if (oRow.HavePrChange() && (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType))
+			if (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType)
+			{
+				for (let iCell = 0, nCells = oRow.GetCellsCount(); iCell < nCells; ++iCell)
+				{
+					oRow.GetCell(iCell).RejectPrChange();
+				}
 				oRow.RejectPrChange();
+			}
 			
 			var nRowReviewType = oRow.GetReviewType();
 			if (reviewtype_Add === nRowReviewType && (undefined === nType || c_oAscRevisionsChangeType.RowsAdd === nType))
@@ -16790,7 +16835,10 @@ CTable.prototype.GetRevisionsChangeElement = function(oSearchEngine)
 
 	while (oCell && vmerge_Restart !== oCell.GetVMerge())
 	{
-		oCell = this.private_GetPrevCell(nCurRow, nCurCell);
+		if (oSearchEngine.GetDirection() > 0)
+			oCell = this.private_GetNextCell(oCell.GetRow().GetIndex(), oCell.GetIndex());
+		else
+			oCell = this.private_GetPrevCell(oCell.GetRow().GetIndex(), oCell.GetIndex());
 	}
 
 	oCell.GetContent().GetRevisionsChangeElement(oSearchEngine);
@@ -17175,8 +17223,16 @@ CTable.prototype.CorrectBadTable = function()
 	
 	this.CorrectVMerge();
 	this.CorrectTableRows(false);
+	this.CorrectEmptyTable();
 	this.CorrectBadGrid();
 	this.CorrectHMerge();
+};
+CTable.prototype.CorrectEmptyTable = function()
+{
+	if (this.GetRowsCount() > 0)
+		return;
+	
+	this.private_AddRow(0, 1);
 };
 /**
  * Специальная функция, которая обрабатывает устаревший параметр HMerge и заменяет его на GridSpan во время открытия файла
@@ -19092,8 +19148,17 @@ CTable.prototype.CheckRevisionsChanges = function(oRevisionsManager)
 		var nRowReviewType = oRow.GetReviewType();
 		var oRowReviewInfo = oRow.GetReviewInfo();
 		
-		if (!tablePrChange && oRow.HavePrChange() && oRow.Pr.ReviewInfo)
-			private_FlushTableRowPrChange(oRow.Pr.ReviewInfo, oRow.GetIndex(), oRow.GetIndex());
+		if (!tablePrChange)
+		{
+			let rowReviewInfo = null;
+			if (oRow.HavePrChange() && oRow.Pr.ReviewInfo)
+				rowReviewInfo = oRow.Pr.ReviewInfo;
+			else if (oRow.HaveCellPrChange())
+				rowReviewInfo = oRow.GetFirstCellReviewInfo();
+			
+			if (rowReviewInfo)
+				private_FlushTableRowPrChange(rowReviewInfo, oRow.GetIndex(), oRow.GetIndex());
+		}
 
 		if (reviewtype_Common === nType)
 		{

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3523,6 +3523,12 @@
 		{
 			return x * this.shy + y * this.sy + this.ty;
 		},
+		TransformPoint : function(x, y)
+		{
+			const transformedX = x * this.sx + y * this.shx + this.tx;
+			const transformedY = x * this.shy + y * this.sy + this.ty;
+			return { x: transformedX, y: transformedY };
+		},
 		// calculate rotate angle
 		GetRotation     : function()
 		{
@@ -3604,6 +3610,18 @@
 			var x2 = this.TransformPointX(1, 1);
 			var y2 = this.TransformPointY(1, 1);
 			return Math.sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
+		},
+
+		exportToObject : function()
+		{
+			return {
+				"SX": this.sx,
+				"SHX": this.shx,
+				"SHY": this.shy,
+				"SY": this.sy,
+				"TX": this.tx,
+				"TY": this.ty
+			};
 		}
 	};
 

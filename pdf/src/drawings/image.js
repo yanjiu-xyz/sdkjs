@@ -63,19 +63,23 @@
         this.recalculate();
         this.recalculateTransform();
         this.updateTransformMatrix();
+        this.recalculateShdw();
         this.SetNeedRecalc(false);
     };
     CPdfImage.prototype.onMouseDown = function(x, y, e) {
+        let oViewer             = Asc.editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
-        let oDrDoc              = oDoc.GetDrawingDocument();
         this.selectStartPage    = this.GetPage();
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        let X = pageObject.x;
+        let Y = pageObject.y;
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     
     //////////////////////////////////////////////////////////////////////////////

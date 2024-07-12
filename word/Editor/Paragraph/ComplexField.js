@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -50,11 +50,8 @@ function ParaFieldChar(Type, LogicDocument)
 	this.Y             = 0;
 	this.PageAbs       = 0;
 
-	this.FontKoef      = 1;
-	this.NumWidths     = [];
-	this.Widths        = [];
-	this.String        = "";
-	this.NumValue      = null;
+	this.numText = null;
+	this.textPr  = null;
 }
 ParaFieldChar.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaFieldChar.prototype.constructor = ParaFieldChar;
@@ -84,37 +81,27 @@ ParaFieldChar.prototype.Copy = function()
 
 	return oChar;
 };
-ParaFieldChar.prototype.Measure = function(Context, TextPr)
+ParaFieldChar.prototype.Measure = function(Context, textPr, sectPr)
 {
-	if (this.IsSeparate())
-	{
-		this.FontKoef = TextPr.getFontCoef();
-		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
-
-		for (var Index = 0; Index < 10; Index++)
-		{
-			this.NumWidths[Index] = Context.Measure("" + Index).Width;
-		}
-
-		this.private_UpdateWidth();
-	}
+	if (!this.IsSeparate())
+		return;
+	
+	this.textPr = textPr;
+	this.sectPr = sectPr;
+	this.format = Asc.c_oAscNumberingFormat.UpperRoman;
+	
+	this.private_UpdateWidth();
 };
-ParaFieldChar.prototype.Draw = function(X, Y, Context)
+ParaFieldChar.prototype.Draw = function(x, y, context)
 {
-	if (this.IsSeparate() && null !== this.NumValue)
+	if (!this.IsSeparate() || null === this.numText)
+		return;
+	
+	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+	for (let index = 0; index < this.graphemes.length; ++index)
 	{
-		var Len = this.String.length;
-
-		var _X = X;
-		var _Y = Y;
-
-		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
-		for (var Index = 0; Index < Len; Index++)
-		{
-			var Char = this.String.charAt(Index);
-			Context.FillText(_X, _Y, Char);
-			_X += this.Widths[Index];
-		}
+		AscFonts.DrawGrapheme(this.graphemes[index], context, x, y, fontSize);
+		x += this.widths[index] * fontSize;
 	}
 };
 ParaFieldChar.prototype.IsBegin = function()
@@ -201,58 +188,113 @@ ParaFieldChar.prototype.GetTopDocumentContent = function()
 };
 /**
  * Специальная функция для работы с полями PAGE NUMPAGES в колонтитулах
- * @param nValue
+ * @param value {number}
+ * @param numFormat {Asc.c_oAscNumberingFormat}
  */
-ParaFieldChar.prototype.SetNumValue = function(nValue)
+ParaFieldChar.prototype.SetNumValue = function(value, numFormat)
 {
-	this.NumValue = nValue;
+	if (null === value)
+	{
+		this.numText = null;
+		return;
+	}
+	
+	this.numText = AscCommon.IntToNumberFormat(value, numFormat);
 	this.private_UpdateWidth();
+};
+/**
+ * Специальная функция для работы с полями FORUMULA в колонтитулах
+ * @param value {number|string}
+ */
+ParaFieldChar.prototype.SetFormulaValue = function(value)
+{
+	if (null === value)
+	{
+		this.numText = null;
+		return;
+	}
+	
+	this.numText = "" + value;
+	this.private_UpdateWidth();
+};
+ParaFieldChar.prototype.GetNumFormat = function()
+{
+	let numFormat = Asc.c_oAscNumberingFormat.Decimal;
+	let cf = this.ComplexField;
+	let instruction = cf.IsValid() ? cf.GetInstruction() : null;
+	if (instruction && instruction.haveNumericFormat())
+		numFormat = instruction.getNumericFormat();
+	
+	return numFormat;
+};
+ParaFieldChar.prototype.UpdatePageCount = function(pageCount)
+{
+	let cf = this.ComplexField;
+	if (!cf)
+		return;
+	
+	let instruction = cf.GetInstruction();
+	if (!instruction)
+		return;
+	
+	let fieldType = instruction.GetType();
+	if (fieldType === AscWord.fieldtype_FORMULA)
+	{
+		let value =  parseInt(cf.CalculateValue());
+		if (isNaN(value))
+			value = 0;
+		
+		this.SetFormulaValue(value);
+	}
+	else if (fieldType === AscWord.fieldtype_NUMPAGES)
+	{
+		this.SetNumValue(pageCount, this.GetNumFormat());
+	}
 };
 ParaFieldChar.prototype.private_UpdateWidth = function()
 {
-	if (null === this.NumValue)
+	if (null === this.numText)
 		return;
-
-	this.String = "" + this.NumValue;
-
-	var RealWidth = 0;
-	for (var Index = 0, Len = this.String.length; Index < Len; Index++)
+	
+	AscWord.stringShaper.Shape(this.numText.codePointsArray(), this.textPr);
+	
+	this.graphemes = AscWord.stringShaper.GetGraphemes();
+	this.widths    = AscWord.stringShaper.GetWidths();
+	
+	let totalWidth = 0;
+	for (let index = 0; index < this.widths.length; ++index)
 	{
-		var Char = parseInt(this.String.charAt(Index));
-
-		this.Widths[Index] = this.NumWidths[Char];
-		RealWidth += this.NumWidths[Char];
+		totalWidth += this.widths[index];
 	}
+	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+	totalWidth = (totalWidth * fontSize * AscWord.TEXTWIDTH_DIVIDER) | 0;
 
-	RealWidth = (RealWidth * AscWord.TEXTWIDTH_DIVIDER) | 0;
-
-	this.Width        = RealWidth;
-	this.WidthVisible = RealWidth;
+	this.Width        = totalWidth;
+	this.WidthVisible = totalWidth;
 };
 ParaFieldChar.prototype.IsNumValue = function()
 {
-	return (this.IsSeparate() && null !== this.NumValue ? true : false);
+	return (this.IsSeparate() && null !== this.numText);
 };
 ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 {
-	return true;
+	return this.IsNumValue();
 };
-ParaFieldChar.prototype.SaveRecalculateObject = function(Copy)
+ParaFieldChar.prototype.SaveRecalculateObject = function(isCopy)
 {
-	return new AscWord.CPageNumRecalculateObject(this.Type, this.Widths, this.String, this.Width, Copy);
+	return new AscWord.PageNumRecalculateObject(this.Type, this.graphemes, this.widths, this.Width, isCopy);
 };
-ParaFieldChar.prototype.LoadRecalculateObject = function(RecalcObj)
+ParaFieldChar.prototype.LoadRecalculateObject = function(recalcObj)
 {
-	this.Widths = RecalcObj.Widths;
-	this.String = RecalcObj.String;
-
-	this.Width        = RecalcObj.Width;
+	this.graphemes    = recalcObj.graphemes;
+	this.widths       = recalcObj.widths;
+	this.Width        = recalcObj.width;
 	this.WidthVisible = this.Width;
 };
 ParaFieldChar.prototype.PrepareRecalculateObject = function()
 {
-	this.Widths = [];
-	this.String = "";
+	this.graphemes = [];
+	this.widths    = [];
 };
 ParaFieldChar.prototype.IsValid = function()
 {
@@ -459,14 +501,14 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 	this.private_UpdateInstruction();
 
 	if (!this.Instruction || !this.IsValid())
-		return;
+		return false;
 
 	this.SelectFieldValue();
 
 	if (true === isCreateHistoryPoint)
 	{
 		if (true === this.LogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-			return;
+			return false;
 
 		this.LogicDocument.StartAction();
 	}
@@ -519,6 +561,8 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 	{
 		this.LogicDocument.FinalizeAction();
 	}
+	
+	return true;
 };
 CComplexField.prototype.CalculateValue = function()
 {
@@ -586,6 +630,20 @@ CComplexField.prototype.UpdateTIME = function(ms)
 
 	this.SelectFieldValue();
 	this.private_UpdateTIME(ms);
+};
+CComplexField.prototype.IsHaveNestedNUMPAGES = function()
+{
+	for (let index = 0, count = this.InstructionCF.length; index < count; ++index)
+	{
+		let instruction = this.InstructionCF[index].GetInstruction();
+		if (instruction && AscWord.fieldtype_NUMPAGES === instruction.GetType())
+			return true;
+		
+		if (this.InstructionCF[index].IsHaveNestedNUMPAGES())
+			return true;
+	}
+	
+	return false;
 };
 
 CComplexField.prototype.private_UpdateSEQ = function()
@@ -1181,7 +1239,16 @@ CComplexField.prototype.private_UpdateREF = function()
 };
 CComplexField.prototype.private_CalculateREF = function()
 {
-	var oSelectedContent = this.private_GetREFContent();
+	let logicDocument = this.LogicDocument;
+	
+	let state = logicDocument ? logicDocument.SaveDocumentState() : null;
+	
+	let oSelectedContent = this.private_GetREFContent();
+	oSelectedContent.GetText(null);
+	
+	if (state)
+		logicDocument.LoadDocumentState(state);
+	
 	return oSelectedContent.GetText(null);
 };
 CComplexField.prototype.private_GetMessageContent = function(sMessage, oTextPr)
@@ -1788,9 +1855,77 @@ CComplexField.prototype.IsAddin = function()
 {
 	return this.CheckType(AscWord.fieldtype_ADDIN);
 };
+
+function getRefInstruction(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator)
+{
+	if (!(typeof sBookmarkName === "string" && sBookmarkName.length > 0))
+	{
+		return;
+	}
+	var sInstr  = "";
+	var sSuffix = "";
+	if (bHyperlink)
+	{
+		sSuffix += " \\h";
+	}
+	if (bAboveBelow && nType !== Asc.c_oAscDocumentRefenceToType.AboveBelow)
+	{
+		sSuffix += " \\p";
+	}
+	if (typeof sSeparator === "string" && sSeparator.length > 0)
+	{
+		sSuffix += " \\d " + sSeparator;
+	}
+	
+	switch (nType)
+	{
+		case Asc.c_oAscDocumentRefenceToType.PageNum:
+		{
+			sInstr = " PAGEREF " + sBookmarkName;
+			sInstr += sSuffix;
+			break;
+		}
+		case Asc.c_oAscDocumentRefenceToType.Text:
+		case Asc.c_oAscDocumentRefenceToType.OnlyCaptionText:
+		case Asc.c_oAscDocumentRefenceToType.OnlyLabelAndNumber:
+		{
+			sInstr = " REF " + sBookmarkName + " ";
+			sInstr += sSuffix;
+			break;
+		}
+		case Asc.c_oAscDocumentRefenceToType.ParaNum:
+		{
+			sInstr = " REF " + sBookmarkName + " \\r ";
+			sInstr += sSuffix;
+			break;
+		}
+		case Asc.c_oAscDocumentRefenceToType.ParaNumNoContext:
+		{
+			sInstr = " REF " + sBookmarkName + " \\n ";
+			sInstr += sSuffix;
+			break;
+		}
+		case Asc.c_oAscDocumentRefenceToType.ParaNumFullContex:
+		{
+			sInstr = " REF " + sBookmarkName + " \\w ";
+			sInstr += sSuffix;
+			break;
+		}
+		case Asc.c_oAscDocumentRefenceToType.AboveBelow:
+		{
+			sInstr = " REF " + sBookmarkName + " \\p ";
+			sInstr += sSuffix;
+			break;
+		}
+	}
+	
+	return sInstr;
+}
+
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CComplexField = CComplexField;
 
 window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].getRefInstruction = getRefInstruction;
 window['AscWord'].CComplexField = CComplexField;

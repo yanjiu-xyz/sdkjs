@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -698,6 +698,10 @@ CMathText.prototype.SetPlaceholder = function()
     this.Type = para_Math_Placeholder;
     this.value = StartTextElement;
 };
+CMathText.prototype.IsAccent = function ()
+{
+	return AscMath.MathLiterals.accent.SearchU[String.fromCharCode(this.value)] != undefined;
+}
 CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 {
     /*
@@ -974,6 +978,10 @@ CMathText.prototype.IsMathText = function()
 {
     return true;
 };
+CMathText.prototype.IsCombiningMark = function()
+{
+	return AscWord.isCombiningMark(this.value);
+};
 CMathText.prototype.IsBreakOperator = function ()
 {
 	return this.private_Is_BreakOperator(this.value);
@@ -996,6 +1004,18 @@ CMathText.prototype.Is_RightBracket = function()
 {
     return this.value == 0x29 || this.value == 0x7D || this.value == 0x5D || this.value == 0x27E9 || this.value == 0x230B || this.value == 0x2309 || this.value == 0x27E7 || this.value == 0x232A;
 };
+CMathText.prototype.IsNBSP = function()
+{
+    let strValue = String.fromCharCode(this.value);
+    return AscMath.MathLiterals.space.SearchU(strValue);
+};
+CMathText.prototype.SetParent = function (oParent)
+{
+	if (!oParent)
+		return;
+
+	this.Parent = oParent;
+}
 ////
 CMathText.prototype.setCoeffTransform = function(sx, shx, shy, sy)
 {
@@ -1061,20 +1081,17 @@ CMathText.prototype.ToSearchElement = function(oProps)
 
 	return new AscCommonWord.CSearchTextItemChar(nCodePoint);
 };
-CMathText.prototype.GetTextOfElement = function(isLaTeX) {
-	var strPre = "";
+CMathText.prototype.GetTextOfElement = function(oMathText)
+{
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	if (isLaTeX && AscMath.GetIsLaTeXGetParaRun())
-	{
-		let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
-		if (str)
-			return str;
-	}
-  
-	if (this.value && this.value !== 11034)
-		return strPre + AscCommon.encodeSurrogateChar(this.value);
+    if (this.value && this.value !== 11034)
+    {
+        let oText = new AscMath.MathText(AscCommon.encodeSurrogateChar(this.value), this.Parent)
+        oMathText.AddText(oText);
+    }
 
-	return "";
+    return oMathText;
 };
 CMathText.prototype.GetCodePoint = function()
 {
@@ -1198,6 +1215,13 @@ CMathAmp.prototype.Copy = function()
 {
     return new CMathAmp();
 };
+CMathAmp.prototype.SetParent = function (oParent)
+{
+	if (!oParent)
+		return;
+
+	this.Parent = oParent;
+}
 CMathAmp.prototype.Write_ToBinary = function(Writer)
 {
     // Long : Type
@@ -1206,11 +1230,13 @@ CMathAmp.prototype.Write_ToBinary = function(Writer)
 CMathAmp.prototype.Read_FromBinary = function(Reader)
 {
 };
-CMathAmp.prototype.GetTextOfElement = function(isLaTeX)
+CMathAmp.prototype.GetTextOfElement = function(oMathText)
 {
-	return '&'
-};
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText.AddText(new AscMath.MathText("&", this.Parent ? this.Parent : oMathText.GetFirstStyle()));
 
+	return oMathText;
+};
 
 function CMathInfoTextPr(InfoTextPr)
 {

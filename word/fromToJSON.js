@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -10083,7 +10083,7 @@
 		oParsedSectPr["pgBorders"] != null && this.PageBordersFromJSON(oParsedSectPr["pgBorders"], oSectPr);
 		oParsedSectPr["pgMar"] != null && this.PageMarginsFromJSON(oParsedSectPr["pgMar"], oSectPr);
 		oParsedSectPr["pgSz"] != null && this.PageSizeFromJSON(oParsedSectPr["pgSz"], oSectPr);
-		oSectPr.Set_PageNum_Start(oParsedSectPr["pgNumType"]["start"]);
+		oSectPr.SetPageNumStart(oParsedSectPr["pgNumType"]["start"]);
 		oSectPr.SetGutterRTL(oParsedSectPr["rtlGutter"]);
 		oSectPr.Set_TitlePage(oParsedSectPr["titlePg"]);
 		oSectPr.Set_Type(nSectionType);
@@ -10419,7 +10419,7 @@
 		{
 			if (oParsedNumPr["numId"] === oPrevNumIdInfo.nNumId && oPrevNumIdInfo.sPrevCreatedNumId)
 			{
-				return new CNumPr(oPrevNumIdInfo.sPrevCreatedNumId, oParsedNumPr["ilvl"]);
+				return new AscWord.NumPr(oPrevNumIdInfo.sPrevCreatedNumId, oParsedNumPr["ilvl"]);
 			}
 		}
 		
@@ -10435,12 +10435,11 @@
 			oPrevNumIdInfo.sPrevCreatedNumId = sNumId;
 			oPrevNumIdInfo.nNumId = oParsedNumPr["numId"];
 		}
-
-		var oNumPr = new CNumPr(sNumId, nNumLvl);
+		
 		if (nNumLvl == null)
-			oNumPr.Lvl = undefined;
+			nNumLvl = undefined;
 
-		return oNumPr;
+		return new AscWord.NumPr(sNumId, nNumLvl);
 	};
 	ReaderFromJSON.prototype.ParaSpacingFromJSON = function(oParsedSpacing)
 	{

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1163,7 +1163,7 @@ CDocumentContentElementBase.prototype.GetOutlineParagraphs = function(arrOutline
 /**
  * Вплоть до заданного параграфа ищем последнюю похожую нумерацию
  * @param oContinueEngine {CDocumentNumberingContinueEngine}
- * @returns {CNumPr | null}
+ * @returns {AscWord.NumPr | null}
  */
 CDocumentContentElementBase.prototype.GetSimilarNumbering = function(oContinueEngine)
 {

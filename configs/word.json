@@ -62,6 +62,7 @@
 			"common/libfont/character.js",
 			"common/libfont/grapheme.js",
 			"common/libfont/textshaper.js",
+			"common/libfont/stringshaper.js",
 			"common/libfont/file.js",
 			"common/libfont/manager.js",
 
@@ -79,6 +80,7 @@
 			"word/Editor/History.js",
 
 			"common/Shapes/EditorSettings.js",
+			"common/Shapes/ColorSchemes.js",
 			"common/Shapes/Serialize.js",
 			"common/Shapes/SerializeWriter.js",
 
@@ -103,6 +105,7 @@
 			"common/Drawings/Format/Data.js",
 			"common/Drawings/Format/ChartSpace.js",
 			"common/Drawings/Format/ChartFormat.js",
+			"common/Drawings/Format/ChartEx.js",
 			"common/Drawings/Format/TextBody.js",
 			"common/Charts/charts.js",
 			"common/Charts/DrawingObjects.js",
@@ -128,7 +131,11 @@
 			"common/Controls.js",
 			"common/Overlay.js",
 			"common/Drawings/HatchPattern.js",
-
+			
+			"common/bidi/bidi-common.js",
+			"common/bidi/bidi-types.js",
+			"common/bidi/unicode-data.js",
+			
 			"common/scroll.js",
 			"vendor/iscroll.js",
 			"vendor/delta.js",
@@ -247,6 +254,7 @@
 			"word/Editor/Layout/Base.js",
 			"word/Editor/Layout/PrintView.js",
 			"word/Editor/Layout/ReadView.js",
+			"word/Editor/document/document-background.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
 			"word/Editor/document-composite-input.js",
@@ -305,6 +313,7 @@
 			"word/Editor/GlossaryDocumentChanges.js",
 			"word/Editor/DocumentProtection.js",
 			"word/Editor/Comparison.js",
+			"word/Editor/InsertDocumentFile.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 			"word/Editor/Merge.js",
 
@@ -338,6 +347,12 @@
 			"pdf/src/forms/pushbutton.js",
 			"pdf/src/forms/combobox.js",
 			"pdf/src/forms/textBoxContent.js",
+			"pdf/src/drawings/drawingPrototype.js",
+			"pdf/src/drawings/shape.js",
+			"pdf/src/drawings/image.js",
+			"pdf/src/drawings/chart.js",
+			"pdf/src/drawings/graphicFrame.js",
+			"pdf/src/drawings/smartArt.js",
 			"pdf/src/annotations/base.js",
 			"pdf/src/annotations/text.js",
 			"pdf/src/annotations/ink.js",
@@ -349,12 +364,8 @@
 			"pdf/src/annotations/polyLine.js",
 			"pdf/src/annotations/square.js",
 			"pdf/src/annotations/textPrTrackHandler.js",
-			"pdf/src/drawings/drawingPrototype.js",
-			"pdf/src/drawings/shape.js",
-			"pdf/src/drawings/image.js",
-			"pdf/src/drawings/chart.js",
-			"pdf/src/drawings/graphicFrame.js",
-			"pdf/src/drawings/smartArt.js",
+			"pdf/src/annotations/textSelectTrackHandler.js",
+			"pdf/src/DrawingDocument.js",
 			"pdf/src/GraphicObjects.js",
 			"common/geometry/geometry.js",
 			"pdf/src/graphics.js",
@@ -385,6 +396,7 @@
 			
 			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
+			"word/Editor/Styles/default-styles.js",
 
 			"word/apiBuilder.js",
 

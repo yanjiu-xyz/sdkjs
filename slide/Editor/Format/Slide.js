@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -728,15 +728,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 } else {
                     if (bNeedResetTransform) {
                         if (shape.spPr && shape.spPr.xfrm && shape.spPr.xfrm.isNotNull()) {
-                            if (shape.getObjectType() !== AscDFH.historyitem_type_GraphicFrame) {
+                            if (shape.getObjectType() !== AscDFH.historyitem_type_GraphicFrame
+                                && shape.getObjectType() !== AscDFH.historyitem_type_SmartArt
+                                && shape.getObjectType() !== AscDFH.historyitem_type_ChartSpace) {
                                 shape.spPr.setXfrm(null);
                             } else {
-                                if (oNotNullPH) {
-                                    if (!shape.spPr && oNotNullPH.spPr) {
+                                if (oNotNullPH && oNotNullPH.spPr && oNotNullPH.spPr.xfrm) {
+                                    if (!shape.spPr) {
                                         shape.setSpPr(oNotNullPH.spPr.createDuplicate());
                                         shape.spPr.setParent(shape);
                                     }
-                                    if (!shape.spPr.xfrm && oNotNullPH.spPr && oNotNullPH.spPr.xfrm) {
+                                    else {
                                         shape.spPr.setXfrm(oNotNullPH.spPr.xfrm.createDuplicate());
                                     }
                                 }
@@ -933,8 +935,39 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     Slide.prototype.removeFromSpTreeByPos = function(pos){
         if(pos > -1 && pos < this.cSld.spTree.length){
             var oSp = this.cSld.spTree[pos];
-            History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideRemoveFromSpTree, pos, [oSp], false));
-            this.cSld.spTree.splice(pos, 1);
+            if(oSp.isPlaceholder() || this.isMaster() || this.isLayout()) {
+                let oMap = {};
+                oMap[oSp.Id] = oSp;
+                let oPres = Asc.editor.private_GetLogicDocument();
+                let aSlides = oPres.Slides;
+                if(this.isMaster()) {
+                    for(let nLt = 0; nLt < this.sldLayoutLst.length; ++nLt) {
+                        let oLt = this.sldLayoutLst[nLt];
+                        oLt.cSld.forEachSp(function (oSp) {
+                            oSp.checkOnDeletePlaceholder(oMap);
+                        });
+                    }
+                    for(let nSld = 0; nSld < aSlides.length; ++nSld) {
+                        let oSld = aSlides[nSld];
+                        if(oSld.getMaster() === this) {
+                            oSld.cSld.forEachSp(function (oSp) {
+                                oSp.checkOnDeletePlaceholder(oMap);
+                            });
+                        }
+                    }
+                }
+                if(this.isLayout()) {
+                    for(let nSld = 0; nSld < aSlides.length; ++nSld) {
+                        let oSld = aSlides[nSld];
+                        if(oSld.Layout === this) {
+                            oSld.cSld.forEachSp(function (oSp) {
+                                oSp.checkOnDeletePlaceholder(oMap);
+                            });
+                        }
+                    }
+                }
+            }
+            this.shapeRemove(pos, 1);
             if(this.timing && !AscCommon.IsChangingDrawingZIndex) {
                 this.checkNeedCopyTimingBeforeEdit();
                 this.timing.onRemoveObject(oSp.Get_Id());
@@ -942,7 +975,10 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             if(this.collaborativeMarks) {
                 this.collaborativeMarks.Update_OnRemove(pos, 1);
             }
+
+            return oSp;
         }
+        return null;
     };
 
     Slide.prototype.removeFromSpTreeById = function(id)
@@ -1093,6 +1129,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 		this.cSld.forEachSp(function(oSp) {
 			oSp.handleUpdateTheme();
 		});
+    };
+    Slide.prototype.checkPlaceholders = function(aPlaceholders)
+    {
+        let bResult = false;
+		this.cSld.forEachSp(function(oSp) {
+			let bSpResult = oSp.checkPlaceholders(aPlaceholders);
+            if(bSpResult) {
+                bResult = true;
+            }
+		});
+        return bResult;
     };
 
     Slide.prototype.checkSlideColorScheme = function()
@@ -1311,7 +1358,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 graphics.rect(_bounds.l, _bounds.t, _bounds.w, _bounds.h);
             }
             else {
-                this.Layout.Master.draw(graphics, this);
+                this.Layout.Master.drawNoPlaceholdersShapesOnly(graphics, this);
             }
         }
         if(this.needLayoutSpDraw()) {
@@ -1320,7 +1367,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 graphics.rect(_bounds.l, _bounds.t, _bounds.w, _bounds.h);
             }
             else {
-                this.Layout.draw(graphics, this);
+                this.Layout.drawNoPlaceholdersShapesOnly(graphics, this);
             }
         }
     };
@@ -1632,7 +1679,10 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 		return false;
 	};
     Slide.prototype.getTheme = function(){
-        return this.Layout && this.Layout.Master && this.Layout.Master.Theme || null;
+        return this.Layout && this.Layout.getTheme() || null;
+    };
+    Slide.prototype.getMaster = function(){
+        return this.getParentObjects().master;
     };
 
     Slide.prototype.drawSelect = function(_type)
@@ -1746,7 +1796,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.showDrawingObjects = function()
     {
-        editor.WordControl.m_oDrawingDocument.OnRecalculatePage(this.num, this);
+        editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.num);
     };
 
     Slide.prototype.showComment = function(Id, x, y)
@@ -2013,6 +2063,27 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         }
         return oTransition.SlideAdvanceDuration;
     };
+    Slide.prototype.isSlide = function () {
+        return true;
+    };
+    Slide.prototype.isLayout = function () {
+        return false;
+    };
+    Slide.prototype.isMaster = function () {
+        return false;
+    };
+
+    Slide.prototype.IsUseInDocument = function() {
+        let oPresentation = Asc.editor.private_GetLogicDocument();
+        if(!oPresentation) return false;
+        for(let nSld = 0; nSld < oPresentation.Slides.length; ++nSld) {
+            if(oPresentation.Slides[nSld] === this) {
+                return true;
+            }
+        }
+        return false;
+    };
+
 function fLoadComments(oObject, authors)
 {
     var _comments_count = oObject.writecomments.length;
@@ -2162,19 +2233,9 @@ PropLocker.prototype = {
 
 AscFormat.CTextBody.prototype.Get_StartPage_Absolute = function()
 {
-    if(this.parent)
+    if(this.parent && this.parent.Get_StartPage_Absolute)
     {
-        if(this.parent.getParentObjects)
-        {
-            var parent_objects = this.parent.getParentObjects();
-            if(parent_objects.slide)
-            {
-                return parent_objects.slide.num;
-            }
-            if(parent_objects.notes && parent_objects.notes.slide){
-                return parent_objects.notes.slide.num;
-            }
-        }
+        return this.parent.Get_StartPage_Absolute();
     }
     return 0;
 };

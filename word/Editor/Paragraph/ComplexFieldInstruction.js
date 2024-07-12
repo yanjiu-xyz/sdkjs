@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1557,15 +1557,12 @@ CFieldInstructionParser.prototype.private_RemoveLastState = function()
 };
 CFieldInstructionParser.prototype.private_ReadGeneralFormatSwitch = function()
 {
-	if (!this.private_IsSwitch() || this.Buffer.charAt(1) !== '*')
+	if (!this.private_IsSwitch() || this.private_GetSwitchLetter() !== '*')
 		return;
-
-	if (!this.private_ReadNext() || this.private_IsSwitch())
-		return;
-
-	// TODO: Тут надо прочитать поле
-
-	//console.log("General switch: " + this.Buffer);
+	
+	let arrArguments = this.private_ReadArguments();
+	if (arrArguments.length > 0)
+		this.Result.addGeneralSwitches(arrArguments);
 };
 CFieldInstructionParser.prototype.private_ReadPAGE = function()
 {
@@ -1878,8 +1875,12 @@ CFieldInstructionParser.prototype.private_ReadNOTEREF = function()
 CFieldInstructionParser.prototype.private_ReadNUMPAGES = function()
 {
 	this.Result = new CFieldInstructionNUMPAGES();
-
-	// TODO: Switches
+	
+	while (this.private_ReadNext())
+	{
+		if (this.private_IsSwitch())
+			this.private_ReadGeneralFormatSwitch();
+	}
 };
 CFieldInstructionParser.prototype.private_ReadHYPERLINK = function()
 {

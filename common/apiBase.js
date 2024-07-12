@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -85,6 +85,7 @@
 		this.documentShardKey  = undefined;
 		this.documentWopiSrc  = undefined;
 		this.documentIsWopi = false;
+		this.documentUserSessionId = undefined;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
 
@@ -485,6 +486,12 @@
 			//чтобы в versionHistory был один documentId для auth и open
 			this.CoAuthoringApi.setDocId(this.documentId);
 
+			if (this.DocInfo.get_Wopi())
+			{
+				this.documentShardKey = this.DocInfo.get_Wopi()["WOPISrc"];
+				this.documentUserSessionId = this.DocInfo.get_Wopi()["UserSessionId"];
+				this.documentIsWopi = true;
+			}
 			if (this.documentOpenOptions)
 			{
 				if (this.documentOpenOptions["watermark"])
@@ -497,12 +504,6 @@
 				{
 					window["Asc"]["Addons"]["forms"] = false;
 					AscCommon.g_oTableId.InitOFormClasses();
-				}
-
-				if (this.documentOpenOptions[Asc.c_sWopiSrcName])
-				{
-					this.documentWopiSrc = this.documentOpenOptions[Asc.c_sWopiSrcName];
-					this.documentIsWopi = true;
 				}
 			}
 			if (!this.documentWopiSrc) {
@@ -689,6 +690,7 @@
 		this.restrictions = val;
 		this.onUpdateRestrictions(additionalSettings);
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestrictions", this.restrictions);
 	};
 	baseEditorsApi.prototype.getViewMode                     = function()
 	{
@@ -699,12 +701,14 @@
 		this.restrictions |= val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestrictions", this.restrictions);
 	};
 	baseEditorsApi.prototype.asc_removeRestriction           = function(val)
 	{
 		this.restrictions &= ~val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestrictions", this.restrictions);
 	};
 	baseEditorsApi.prototype.asc_setCanSendChanges           = function(canSend)
 	{
@@ -1032,11 +1036,8 @@
 	{
 		this.sendEvent("asc_onPrint");
 	};
-	// Open
-	baseEditorsApi.prototype.asc_LoadDocument                    = function(versionHistory, isRepeat)
+	baseEditorsApi.prototype._getOpenCmd = function(versionHistory)
 	{
-		// Меняем тип состояния (на открытие)
-		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
 		var rData                  = null;
 		if (!(this.DocInfo && this.DocInfo.get_OfflineApp()))
 		{
@@ -1049,7 +1050,7 @@
 				}
 			}
 			let convertToOrigin = '';
-			if (!!this.DocInfo.get_DirectUrl() && this["asc_isSupportFeature"]("ooxml")) {
+			if (!!(this.DocInfo && this.DocInfo.get_DirectUrl()) && this["asc_isSupportFeature"]("ooxml")) {
 				convertToOrigin = '.docx.xlsx.pptx';
 			}
 
@@ -1073,15 +1074,25 @@
 			if (versionHistory)
 			{
 				rData["serverVersion"] = versionHistory.serverVersion;
-                rData["closeonerror"] = versionHistory.isRequested;
+				rData["closeonerror"] = versionHistory.isRequested;
 				rData["tokenHistory"] = versionHistory.token;
 				//чтобы результат пришел только этому соединению, а не всем кто в документе
 				rData["userconnectionid"] = this.CoAuthoringApi.getUserConnectionId();
 			}
 		}
+		return rData;
+	}
+	// Open
+	baseEditorsApi.prototype.asc_LoadDocument                    = function(versionHistory, isRepeat)
+	{
+		// Меняем тип состояния (на открытие)
+		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
+
+		let rData = this._getOpenCmd(versionHistory);
 		if (versionHistory) {
 			this.CoAuthoringApi.versionHistory(rData);
 		} else {
+			//todo auth on connection
 			this.CoAuthoringApi.auth(this.getViewMode(), rData);
 		}
 
@@ -1606,6 +1617,7 @@
 			if (!t.isOnLoadLicense) {
 				t._onEndPermissions();
 			} else {
+				//todo auth on connection
 				if (t.CoAuthoringApi.get_isAuth()) {
 					t.CoAuthoringApi.auth(t.getViewMode(), undefined, t.isIdle());
 				} else {
@@ -1904,7 +1916,9 @@
 		};
 
 		this._coAuthoringInitEnd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc);
+
+		let openCmd = this._getOpenCmd();
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, openCmd);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
@@ -2190,6 +2204,14 @@
 			//todo move cmd from header to body and uncomment
 			// jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
 			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
+			if (this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
+				jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
+			}
+			oAdditionalData["jsonparams"] = jsonparams;
+		} else if ((Asc.c_oAscFileType.PDF === options.fileType || Asc.c_oAscFileType.PDFA === options.fileType) &&
+			this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
+			let jsonparams = {};
+			jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
 			oAdditionalData["jsonparams"] = jsonparams;
 		}
 		if (options.textParams && undefined !== options.textParams.asc_getAssociation()) {
@@ -2347,7 +2369,7 @@
 		var t = this;
         if (this.WordControl) // после показа диалога может не прийти mouseUp
         	this.WordControl.m_bIsMouseLock = false;
-		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, files)
+		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, function(error, files)
 		{
 			t._uploadCallback(error, files, obj);
 		}, function(error)
@@ -2380,7 +2402,7 @@
 			}
 			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
-			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, urls)
+			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, function(error, urls)
 			{
 				if (c_oAscError.ID.No !== error)
 				{
@@ -2852,6 +2874,7 @@
 		if(this.editorId === c_oEditorId.Word)
 		{
 			arrToDownload.push(AscCommon.g_sWordPlaceholderImage);
+			arrToDownload.push(AscCommon.g_sWordPlaceholderFormImage);
 		}
 		this.ImageLoader.LoadImagesWithCallback(arrToDownload, function () {
 
@@ -3004,7 +3027,7 @@
                 else
 				{
 					var transition = this.WordControl.DemonstrationManager.Transition;
-                    if ((manager.SlideNum >= 0 && manager.SlideNum < manager.SlidesCount) && (!transition || !transition.IsPlaying()))
+                    if ((manager.SlideNum >= 0 && manager.SlideNum < this.WordControl.GetSlidesCount()) && (!transition || !transition.IsPlaying()))
                     {
 						var _x = (transition.Rect.x / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 						var _y = (transition.Rect.y / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -3036,12 +3059,90 @@
             }
 		}
 	};
-	baseEditorsApi.prototype.hideVideoControl = function()
+	baseEditorsApi.prototype.hideMediaControl = function()
 	{
-        if (!window["AscDesktopEditor"] || !window["AscDesktopEditor"]["MediaEnd"])
-            return;
-        window["AscDesktopEditor"]["MediaEnd"]();
+
+		if(this.mediaData)
+		{
+			this.callMediaPlayerCommand("hideMediaControl", null);
+		}
 	};
+	baseEditorsApi.prototype.asc_hideMediaControl = function()
+	{
+		this.hideMediaControl();
+	};
+
+
+	baseEditorsApi.prototype.asc_onMediaPlayerEvent = function(evt, mediaData)
+	{
+
+	};
+	baseEditorsApi.prototype.getMediaData = function()
+	{
+		if(this.mediaData && !this.mediaData.isValid())
+			this.mediaData = null;
+		return this.mediaData;
+	};
+
+	baseEditorsApi.prototype.getPlayerData = function (sCmd)
+	{
+		if(!sCmd) return null;
+		if(!this.mediaData) return {"Cmd": sCmd};
+
+		let oPlayerData = null;
+		switch (this.editorId)
+		{
+			case c_oEditorId.Word:
+			{
+				break;
+			}
+			case c_oEditorId.Presentation:
+			{
+				oPlayerData = this.WordControl.GetMediaPlayerData(this.mediaData);
+
+				break;
+			}
+			case c_oEditorId.Spreadsheet:
+			{
+				break;
+			}
+		}
+
+		if(oPlayerData)
+		{
+			let sCmd_ = sCmd;
+			if(sCmd.startsWith("playFrom") === 0)
+			{
+				sCmd_ = "play";
+				oPlayerData["Cmd"] = "play";
+			}
+			oPlayerData["Cmd"] = sCmd_;
+		}
+		return oPlayerData;
+	};
+
+	baseEditorsApi.prototype.onUpdateMediaPlayer = function()
+	{
+		if(this.mediaData)
+		{
+			this.callMediaPlayerCommand("update", this.mediaData);
+		}
+	};
+	baseEditorsApi.prototype.callMediaPlayerCommand = function(sCmd, oMediaData)
+	{
+		this.mediaData = oMediaData;
+		if(!sCmd) return;
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["CallMediaPlayerCommand"])
+		{
+			let oData = this.getPlayerData(sCmd);
+			if(!AscFormat.IsEqualObjects(this.lastPlCompareOayerData, oData))
+			{
+				window["AscDesktopEditor"]["CallMediaPlayerCommand"](oData);
+				this.lastPlCompareOayerData = oData;
+			}
+		}
+	};
+
 	// plugins
 	baseEditorsApi.prototype._checkLicenseApiFunctions   = function()
 	{
@@ -3264,6 +3365,10 @@
 		{
 			window["AscInputMethod"][_prop] = _obj[_prop];
 		}
+	};
+	baseEditorsApi.prototype.asc_getInputLanguage = function()
+	{
+		return lcid_enUS;
 	};
 
 	baseEditorsApi.prototype.asc_addSignatureLine = function (oPr, Width, Height, sImgUrl) {
@@ -4518,7 +4623,10 @@
 	// ---------------------------------------------------- interface events ---------------------------------------------
 	baseEditorsApi.prototype["asc_onShowPopupWindow"] = function()
 	{
-		this.hideVideoControl();
+		if(this.mediaData)
+		{
+			this.callMediaPlayerCommand("hideMediaControl", null);
+		}
 	};
 
 
@@ -4818,7 +4926,9 @@
 	baseEditorsApi.prototype.getInkCursorType = function() {
 		return this.inkDrawer.getCursorType();
 	};
-	
+	baseEditorsApi.prototype.isMasterMode = function(){
+		return false;
+	};
 	baseEditorsApi.prototype.getSelectionState = function() {
 	};
 	baseEditorsApi.prototype.getSpeechDescription = function(prevState, action) {
@@ -4935,7 +5045,7 @@
 		}
 	};
 
-	baseEditorsApi.prototype.wrapEvent = function(name, types) 
+	baseEditorsApi.prototype.wrapEvent = function(name) 
 	{
 		this.asc_registerCallback(name, function()
 		{
@@ -4944,8 +5054,16 @@
 				if (arguments[i] && arguments[i].toCValue)
 					arguments[i] = arguments[i].toCValue();
 			}
-			window["native"]["onJsEvent"](name, arguments);
+			window["native"]["onJsEvent"](name, Array.from(arguments));
 		});
+	};
+
+	baseEditorsApi.prototype.setPluginsOptions = function(options)
+	{
+		this.externalPluginsOptions = options;
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onUpdateOptions();
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -5019,6 +5137,11 @@
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
 	prot['asc_openDocumentFromBytes'] = prot.asc_openDocumentFromBytes;
+	prot['asc_onMediaPlayerEvent'] = prot.asc_onMediaPlayerEvent;
+	prot['asc_hideMediaControl'] = prot.asc_hideMediaControl;
+	prot['asc_getInputLanguage'] = prot.asc_getInputLanguage;
+
+	prot['setPluginsOptions'] = prot.setPluginsOptions;
 
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;

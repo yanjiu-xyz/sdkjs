@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -439,10 +439,20 @@ function (window, undefined)
 
 	var _safe_eval_closure = new Function("Function", "Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "setTimeout", "setInterval", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
 	window['AscCommon'].safePluginEval = function(value) {
-		const normalConstructor = Object.getPrototypeOf(function(){}).constructor;
-		const generatorNext = Object.getPrototypeOf(function*(){}).prototype.next;
-		Object.getPrototypeOf(function(){}).constructor = function(){};
-		Object.getPrototypeOf(function*(){}).prototype.next = function(){};
+		let protoFunc = Object.getPrototypeOf(function(){});
+		// for minimization we use eval!!!
+		let protoFuncGen = null;
+		try {
+			protoFuncGen = eval("Object.getPrototypeOf(function*(){})");
+		} catch (err) {
+			protoFuncGen = null;
+		}
+		const normalConstructor = protoFunc.constructor;
+		const generatorNext = protoFuncGen ? protoFuncGen.prototype.next : null;
+		protoFunc.constructor = function(){};
+		if (protoFuncGen)
+			protoFuncGen.prototype.next = function(){};
+
 		const timeout = function(cb, delay) {
 			var args = Array.prototype.slice.call(arguments, 2);
 			return setTimeout(function() {
@@ -469,8 +479,9 @@ function (window, undefined)
 				Api.parsedJSDoc.length = countOfAdding;
 		}
 		const result = _safe_eval_closure.call(null, {}, Api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, timeout, interval, value);
-		Object.getPrototypeOf(function(){}).constructor = normalConstructor;
-		Object.getPrototypeOf(function*(){}).prototype.next = generatorNext;
+		protoFunc.constructor = normalConstructor;
+		if (protoFuncGen)
+			protoFuncGen.prototype.next = generatorNext;
 		return result;
 	};
 

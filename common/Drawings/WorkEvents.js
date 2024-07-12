@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -66,6 +66,8 @@
 
 	var isUsePointerEvents = true;
 	if (AscBrowser.isChrome && (AscBrowser.chromeVersion <= 70)) // xp
+		isUsePointerEvents = false;
+	else if (AscBrowser.isSafari && (AscBrowser.safariVersion < 17004001))
 		isUsePointerEvents = false;
 	else if (AscBrowser.isIE)
 		isUsePointerEvents = false;
