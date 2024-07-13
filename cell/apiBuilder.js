@@ -13339,12 +13339,6 @@
 	/* Methods */
 
 	/**
-	 * Type of calculation to perform on the data field items.
-	 * @typedef {"Average" | "CountNums" | "Count" | "Max" | "Min" | "Product"|
-	 * "StdDev" | "StdDevp" | "Sum" | "Var" | "Varp"} DataConsolidateFunctionType
-	 */
-
-	/**
 	 * Adds a data field to a PivotTable report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
@@ -13648,7 +13642,10 @@
 	};
 
 	/**
-	 * @typedef {"Rows" | "Columns" | "Filters" | "Values" | "Up" | "Down" | "Begin" | "End" } PivotMoveFieldType
+	 * @typedef { "Up" | "Down" | "Begin" | "End" } PivotMoveFieldType
+	 */
+	/**
+	 * @typedef {"Rows" | "Columns" | "Filters" | "Values" | "Hidden" } PivotFieldOrientationType
 	 */
 
 	/**
@@ -13656,7 +13653,7 @@
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string} identifier - The index number or name of the field.
-	 * @param {PivotMoveFieldType} type - The type of the field to move.
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
 	 * @param {number | undefined} index - The index of the field in new category.
 	 */
 	ApiPivotTable.prototype.MoveField = function (identifier, type, index) {
@@ -14482,13 +14479,7 @@
 	/** Methods */
 
 	/**
-	 * @param {DataConsolidateFunctionType} func - The function performed in the added data field.
-	 */
-	ApiPivotDataField.prototype.SetConsolidateFunction = function (func) {
-		//TODO
-	};
-	/**
-	 * Removes dataFeild from values category.
+	 * Removes data field from values category.
 	 * @memberof ApiPivotDataField
 	 */
 	ApiPivotDataField.prototype.Remove = function () {
@@ -14543,7 +14534,93 @@
 		}
 	}
 
-	/** Properties */
+	/** Attributes */
+
+	/**
+	 * Type of calculation to perform on the data field items.
+	 * @typedef {"Average" | "CountNumbers" | "Count" | "Max" | "Min" | "Product"|
+	 * "StdDev" | "StdDevP" | "Sum" | "Var" | "VarP"} DataConsolidateFunctionType
+	 */
+
+	/**
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {DataConsolidateFunctionType} func - The function performed in the added data field.
+	 */
+	ApiPivotDataField.prototype.SetFunction = function (func) {
+		const field = Asc.CT_DataField();
+		switch (func) {
+			case "Average":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Average);
+				break;
+			case "Count":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Count);
+				break;
+			case "CountNumbers":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.CountNums);
+				break;
+			case "Max":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Max);
+				break;
+			case "Min":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Min);
+				break;
+			case "Product":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Product);
+				break;
+			case "StdDev":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.StdDev);
+				break;
+			case "StdDevP":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.StdDevp);
+				break;
+			case "Sum":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Sum);
+				break;
+			case "Var":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Var);
+				break;
+			case "VarP":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Varp);
+				break;
+			default:
+				private_MakeError('Invalid function type.');
+				return;
+		}
+		this.dataField.asc_set(this.table.api, this.table.pivot, this.index, field);
+	};
+	/**
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @return {DataConsolidateFunctionType} func - The function performed in the added data field.
+	 */
+	ApiPivotDataField.prototype.GetFunction = function () {
+		const subtotal = this.dataField.asc_getSubtotal();
+		switch (subtotal) {
+			case Asc.c_oAscDataConsolidateFunction.Average:
+				return "Average";
+			case Asc.c_oAscDataConsolidateFunction.Count:
+				return "Count";
+			case Asc.c_oAscDataConsolidateFunction.CountNums:
+				return "CountNumbers";
+			case Asc.c_oAscDataConsolidateFunction.Max:
+				return "Max";
+			case Asc.c_oAscDataConsolidateFunction.Min:
+				return "Min";
+			case Asc.c_oAscDataConsolidateFunction.Product:
+				return "Product";
+			case Asc.c_oAscDataConsolidateFunction.StdDev:
+				return "StdDev";
+			case Asc.c_oAscDataConsolidateFunction.StdDevP:
+				return "StdDevP";
+			case Asc.c_oAscDataConsolidateFunction.Sum:
+				return "Sum";
+			case Asc.c_oAscDataConsolidateFunction.Var:
+				return "Var";
+			case Asc.c_oAscDataConsolidateFunction.VarP:
+				return "VarP";
+		}
+	};
 
 	/**
 	 * Returns a value that represents the position of the field in category.
@@ -14580,6 +14657,270 @@
 		},
 		set: function (position) {
 			this.SetPosition(position);
+		}
+	});
+	/**
+	 * Returns a data field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @return {PivotFieldOrientationType}
+	 */
+	ApiPivotDataField.prototype.GetOrientation = function () {
+		if (this.dataField) {
+			return "Values";
+		}
+		return null;
+	};
+
+	/**
+	 * Sets a pivot field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotFieldOrientationType} type - Field orientation type.
+	 */
+	ApiPivotDataField.prototype.SetOrientation = function (type) {
+		const pivotIndex = this.dataField.asc_getIndex();
+		const pivotFields = this.table.pivot.asc_getPivotFields();
+		const pivotField = pivotFields[pivotIndex];
+		switch (type) {
+			case "Rows":
+				if (pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
+					this.table.pivot.asc_moveToRowField(this.table.api, pivotIndex);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Columns":
+				if (pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
+					this.table.pivot.asc_moveToColField(this.table.api, pivotIndex);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Filters":
+				if (pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
+					this.table.pivot.asc_moveToPageField(this.table.api, pivotIndex);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Values":
+				private_MakeError('The field already has that orientation.')
+				break;
+			case "Hidden":
+				this.Remove();
+				break;
+			default:
+				private_MakeError('Invalid "type" value.');
+				break;
+		}
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Orientation", {
+		get: function () {
+			return this.GetOrientation();
+		},
+		set: function (type) {
+			this.SetOrientation(type);
+		}
+	});
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotDataField.prototype.GetValue = function () {
+		return this.GetName();
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 */
+	ApiPivotDataField.prototype.SetValue = function (name) {
+		this.SetName(name)
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Value", {
+		get: function () {
+			return this.GetValue();
+		},
+		set: function (name) {
+			this.SetValue(name);
+		}
+	});
+	/**
+	 * Returns a value that represents the label text for the pivot field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotDataField.prototype.GetCaption = function () {
+		return this.GetName();
+	};
+	/**
+	 * Set value that represents the label text for the pivot field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} caption
+	 */
+	ApiPivotDataField.prototype.SetCaption = function (caption) {
+		return this.SetName(caption);
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Caption", {
+		get: function () {
+			return this.GetCaption();
+		},
+		set: function(caption) {
+			this.SetCaption(caption);
+		}
+	});
+
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotDataField.prototype.GetName = function () {
+		return Common.Utils.String.htmlEncode(this.dataField.asc_getName());
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 */
+	ApiPivotDataField.prototype.SetName = function (name) {
+		if (typeof name === 'string' && name.length > 0) {
+			this.dataField.asc_setName(name);
+		} else {
+			private_MakeError('Bad name type or empty.');
+		}
+
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		},
+		set: function (name) {
+			this.SetName(name);
+		}
+	});
+	/**
+	 * Returns source name
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotDataField.prototype.GetSourceName = function () {
+		const pivotIndex = this.dataField.asc_getIndex();
+		return Common.Utils.String.htmlEncode(this.table.pivot.getCacheFieldName(pivotIndex));
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "SourceName", {
+		get: function () {
+			return this.GetSourceName();
+		}
+	});
+	/**
+	 * Returns a value that represents the format code for the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null}
+	 */
+	ApiPivotDataField.prototype.GetNumberFormat = function () {
+		return this.dataField.asc_getNumFormat();
+	};
+	/**
+	 * Sets value that represents the format code for the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} format
+	 */
+	ApiPivotDataField.prototype.SetNumberFormat = function (format) {
+		const newField = new Asc.CT_DataField();
+		newField.asc_setNumFormat(format);
+		this.dataField.asc_set(this.table.api, this.table.pivot, this.index, newField);
+	};
+	Object.defineProperty(ApiPivotDataField.prototype, "NumberFormat", {
+		get: function () {
+			return this.GetNumberFormat();
+		},
+		set: function (format) {
+			return this.SetNumberFormat(format);
+		}
+	});
+	/**
+	 * Returns index of the data field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 */
+	ApiPivotDataField.prototype.GetIndex = function () {
+		return this.index;
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Index", {
+		get: function () {
+			return this.GetIndex();
+		}
+	});
+	/**
+	 * Returns ApiPivotTable.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable}
+	 */
+	ApiPivotDataField.prototype.GetTable = function () {
+		return this.table;
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Table", {
+		get: function () {
+			return this.GetTable();
+		}
+	});
+
+	/**
+	 * Returns parent object to this field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable}
+	 */
+	ApiPivotDataField.prototype.GetParent = function () {
+		return this.table;
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Parent", {
+		get: function () {
+			return this.GetParent();
+		}
+	});
+
+	/**
+	 * Returns the pivotField from which the data field was created.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField}
+	 */
+	ApiPivotDataField.prototype.GetPivotField = function () {
+		const pivotIndex = this.dataField.asc_getIndex();
+		const pivotField = this.table.pivot.asc_getPivotFields();
+		return new ApiPivotField(this.table, pivotIndex, pivotField);
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "PivotField", {
+		get: function () {
+			return this.GetPivotField();
 		}
 	});
 
@@ -14659,7 +15000,7 @@
 	 * Moves field inside category.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {PivotMoveFieldType} type - The type of the field to move.
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
 	 * @param {number | undefined}
 	 */
 	ApiPivotField.prototype.Move = function (type, index) {
@@ -14676,6 +15017,9 @@
 				default:
 					return null;
 			}
+		}
+		if (index == null) {
+			index = 0;
 		}
 		switch (type) {
 			case "Rows":
@@ -14694,13 +15038,16 @@
 				break;
 			case "Filters":
 				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
-					this.table.pivot.asc_moveToPageField(this.api, this.index, undefined, index - 1);
+					this.table.pivot.asc_moveToPageField(this.table.api, this.index, undefined, index - 1);
 				} else {
 					this.SetPosition(index)
 				}
 				break;
 			case "Values":
 				this.table.pivot.asc_moveToDataField(this.table.api, this.index, undefined, index - 1);
+				break;
+			case "Hidden":
+				this.Remove();
 				break;
 			default:
 				const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
@@ -14750,15 +15097,15 @@
 				}
 			}
 		}
-		private_MakeError('The field is hidden or it is data field.\n' +
-		'If you need to change the position of the data field then use ApiPivotDataField.SetPosition.\n' +
+		private_MakeError('The field is hidden.\n' +
+		'If you need to get the position of the data field then use ApiPivotDataField.GetPosition.\n' +
 		'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ' +
 		'ApiPivotDataField object');
 	};
 
 	/**
-	 * Sets a value that represents the position of the field (first, second, third, and so on)
-	 * among all the fields in its orientation (Rows, Columns, Pages, Data).
+	 * Sets a value that represents the position of the field
+	 * among all the fields in its orientation (Rows, Columns, Pages).
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @param {number} position - Position.
@@ -14766,8 +15113,8 @@
 	ApiPivotField.prototype.SetPosition = function (position) {
 		if (typeof position == "number") {
 			if (this.pivotField.axis === null) {
-				private_MakeError('The field is hidden or it is data field.\n' +
-					'If you need to change the position of the data field then use ApiPivotDataField.SetPosition.\n' +
+				private_MakeError('The field is hidden.\n' +
+					'If you need to set the position of the data field then use ApiPivotDataField.SetPosition.\n' +
 					'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ' +
 					'ApiPivotDataField object');
 				return;
@@ -14794,13 +15141,18 @@
 	 * of the field in the specified PivotTable report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @return {number} (0 - hidden, 2 - columns, 3 - values, 4 - filters, 5 - hidden).
+	 * @return {PivotFieldOrientationType}
 	 */
 	ApiPivotField.prototype.GetOrientation = function () {
-		if (this.pivotField.axis != null) {
-
+		if (this.pivotField.axis === Asc.c_oAscAxis.AxisRow) {
+			return "Rows";
+		} else if (this.pivotField.axis === Asc.c_oAscAxis.AxisCol) {
+			return "Columns";
+		} else if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
+			return "Filters"
+		} else {
+			return "Hidden"
 		}
-		return res;
 	};
 
 	/**
@@ -14808,17 +15160,40 @@
 	 * of the field in the specified PivotTable report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {number} type - The type of the field to move (0 - hidder, 1 - to rows, 2 - to columns, 3 - to filters, 4 - to values).
+	 * @param {PivotFieldOrientationType} type - Field orientation type.
 	 */
 	ApiPivotField.prototype.SetOrientation = function (type) {
-		if ( (typeof type == "number") && type >= 0 && type < 5 ) {
-			if (!type)
+		switch (type) {
+			case "Rows":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
+					this.table.pivot.asc_moveToRowField(this.table.api, this.index);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Columns":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
+					this.table.pivot.asc_moveToColField(this.table.api, this.index);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Filters":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
+					this.table.pivot.asc_moveToPageField(this.table.api, this.index);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Values":
+				this.table.pivot.asc_moveToDataField(this.table.api, this.index);
+				break;
+			case "Hidden":
 				this.Remove();
-			else
-				this.table.MoveField(this.index, type);
-		}
-		else {
-			private_MakeError('Invalid "type" or invalid value.')
+				break;
+			default:
+				private_MakeError('Invalid "type" value.');
+				break;
 		}
 	};
 
@@ -14893,9 +15268,6 @@
 	 * @returns {string}
 	 */
 	ApiPivotField.prototype.GetName = function () {
-		if (this.dataField) {
-			return Common.Utils.String.htmlEncode(this.dataField.asc_getName());
-		}
 		return Common.Utils.String.htmlEncode(this.pivotField.asc_getName() || this.GetSourceName());
 	};
 
@@ -14907,11 +15279,7 @@
 	 */
 	ApiPivotField.prototype.SetName = function (name) {
 		if (typeof name === 'string' && name.length > 0) {
-			if (this.dataField) {
-				this.dataField.asc_setName(name);
-			} else {
-				this.pivotField.asc_setName(name);
-			}
+			this.pivotField.asc_setName(name);
 		} else {
 			private_MakeError('Bad name type or empty.');
 		}
@@ -14940,52 +15308,6 @@
 		get: function () {
 			return this.GetSourceName();
 		}
-	});
-
-	/**
-	 * Returns a value that represents the format code for the object.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @returns {string | null}
-	 */
-	ApiPivotField.prototype.GetNumberFormat = function () {
-		if (this.dataField) {
-			return this.dataField.asc_getNumFormat();
-			return;
-		} else {
-			const dataIndex = this.table.pivot.dataFields.find(this.index);
-			if (dataIndex !== -1) {
-				this.table.pivot.asc_getDataFields()[dataIndex].asc_getNumFormat();
-				return;
-			}
-		}
-		private_MakeError('The num format can only be get for data field');
-	};
-	/**
-	 * Sets value that represents the format code for the object.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @param {string} format
-	 */
-	ApiPivotField.prototype.SetNumberFormat = function (format) {
-		let dataField = null;
-		const dataIndex = this.table.pivot.dataFields.find(this.index);
-		if (dataIndex !== -1) {
-			dataField = this.table.pivot.asc_getDataFields()[dataIndex];
-		}
-		if (dataField) {
-			const newField = new Asc.CT_DataField();
-			newField.asc_setNumFormat(format);
-			dataField.asc_set(this.table.api, this.table.pivot, );
-			return;
-		}
-		private_MakeError('The num format can only be set for data field');
-	};
-	Object.defineProperty(ApiPivotField.prototype, "NumberFormat", {
-		get: function () {
-			return this.GetNumberFormat();
-		}
-
 	});
 
 	/**
@@ -15043,8 +15365,8 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetLayoutCompactRow = function () {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		return ( pivField.asc_getOutline() && pivField.asc_getCompact() );
+		const pivField = this.table.pivot.asc_getPivotFields()[this.index];
+		return (pivField.asc_getOutline() && pivField.asc_getCompact());
 	};
 
 	/**
@@ -15055,8 +15377,8 @@
 	 */
 	ApiPivotField.prototype.SetLayoutCompactRow = function (compact) {
 		if (typeof compact == "boolean") {
-			var field = new Asc.CT_PivotField();
-			var pivField = this.table.pivot.asc_getPivotFields()[this.index];
+			const field = new Asc.CT_PivotField();
+			const pivField = this.table.pivot.asc_getPivotFields()[this.index];
 			field.asc_setCompact( (pivField.asc_getOutline() && compact) );
 			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
 		} else {
@@ -15074,29 +15396,30 @@
 	});
 
 	/**
+	 * @typedef {"Tabular" | "Outline"} PivotLayoutType
+	 */
+
+	/**
 	 * Returns the way the specified PivotTable items appear—in table format or in outline format.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @returns {number}
+	 * @returns {PivotLayoutType}
 	 */
 	ApiPivotField.prototype.GetLayoutForm = function () {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		// 1 - tabular, 2 - outline
-		return ( pivField.asc_getOutline() ? 2 : 1 );
+		return this.pivotField.asc_getOutline() ? "Outline" : "Tabular";
 	};
 
 	/**
 	 * Sets the way the specified PivotTable items appear—in table format or in outline format.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {number} type - Type of layot report form (1 - tabular, 2 - outline).
+	 * @param {PivotLayoutType} type - Type of layot report form.
 	 */
 	ApiPivotField.prototype.SetLayoutForm = function (type) {
-		if ( typeof type == "number" && (type == 1 || type == 2) ) {
-			var field = new Asc.CT_PivotField();
-			var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-			field.asc_setOutline( (type == 2) );
-			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		if (type === "Tabular" || type === "Outline") {
+			const newField = new Asc.CT_PivotField();
+			newField.asc_setOutline(type === "Outline");
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, newField);
 		} else {
 			private_MakeError('Invalid type of "type" or invalid value.')
 		}
@@ -15118,7 +15441,7 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetLayoutPageBreak = function () {
-		return ( this.table.pivot.asc_getPivotFields()[this.index].insertPageBreak );
+		return this.pivotField.insertPageBreak;
 	};
 
 	/**
@@ -15129,7 +15452,7 @@
 	 */
 	ApiPivotField.prototype.SetLayoutPageBreak = function (insert) {
 		if ( typeof insert == "boolean") {
-			this.table.pivot.asc_getPivotFields()[this.index].insertPageBreak = insert;
+			this.pivotField.insertPageBreak = insert;
 		} else {
 			private_MakeError('Invalid type of "insert".')
 		}
@@ -15151,8 +15474,7 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetShowingInAxis = function () {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		return ( pivField.axis !== null || pivField.dataField );
+		return this.pivotField.axis !== null || this.pivotField.dataField;
 	};
 
 	Object.defineProperty(ApiPivotField.prototype, "ShowingInAxis", {
@@ -15168,8 +15490,7 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetRepeatLabels = function () {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		return pivField.asc_getFillDownLabelsDefault();
+		return this.pivotField.asc_getFillDownLabelsDefault();
 	};
 
 	/**
@@ -15179,11 +15500,10 @@
 	 * @param {boolean} repeat - Flag repeat items labels at each row or not.
 	 */
 	ApiPivotField.prototype.SetRepeatLabels = function (repeat) {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
 		if (typeof repeat == "boolean") {
-			var field = new Asc.CT_PivotField();
+			const field = new Asc.CT_PivotField();
 			field.asc_setFillDownLabelsDefault(repeat);
-			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
 		} else {
 			private_MakeError('Invalid type of "repeat".')
 		}
@@ -15205,8 +15525,7 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetLayoutBlankLine = function () {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		return pivField.asc_getInsertBlankRow();
+		return this.pivotField.asc_getInsertBlankRow();
 	};
 
 	/**
@@ -15216,11 +15535,10 @@
 	 * @param {boolean} insert - Flag insert blank rows after each item or not.
 	 */
 	ApiPivotField.prototype.SetLayoutBlankLine = function (insert) {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
 		if (typeof insert == "boolean") {
-			var field = new Asc.CT_PivotField();
+			const field = new Asc.CT_PivotField();
 			field.asc_setInsertBlankRow(insert);
-			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
 		} else {
 			private_MakeError('Invalid type of "insert".')
 		}
@@ -15242,8 +15560,7 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetShowAllItems = function () {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		return pivField.asc_getShowAll();
+		return this.pivotField.asc_getShowAll();
 	};
 
 	/**
@@ -15253,11 +15570,10 @@
 	 * @param {boolean} show - Flag show items with no data or not.
 	 */
 	ApiPivotField.prototype.SetShowAllItems = function (show) {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
 		if (typeof show == "boolean") {
-			var field = new Asc.CT_PivotField();
+			const field = new Asc.CT_PivotField();
 			field.asc_setShowAll(show);
-			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
 		} else {
 			private_MakeError('Invalid type of "show".')
 		}
@@ -15279,8 +15595,7 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetLayoutSubtotals = function () {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		return pivField.asc_getDefaultSubtotal();
+		return this.pivotField.asc_getDefaultSubtotal();
 	};
 
 	/**
@@ -15290,11 +15605,10 @@
 	 * @param {boolean} show - Flag show subtotals or not.
 	 */
 	ApiPivotField.prototype.SetLayoutSubtotals = function (show) {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
 		if (typeof show == "boolean") {
-			var field = new Asc.CT_PivotField();
+			const field = new Asc.CT_PivotField();
 			field.asc_setDefaultSubtotal(show);
-			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
 		} else {
 			private_MakeError('Invalid type of "show".')
 		}
@@ -15309,30 +15623,29 @@
 		}
 	});
 
+	/** @typedef { "Top" | "Bottom" } LayoutSubtotalLocationType */
+
 	/**
 	 * Returns setting layout subtotal location.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @returns {number}
+	 * @returns {LayoutSubtotalLocationType}
 	 */
 	ApiPivotField.prototype.GetLayoutSubtotalLocation = function () {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		// 1 - top, 2 - bottom
-		return ( pivField.asc_getSubtotalTop() ? 1 : 2 );
+		return ( this.pivotField.asc_getSubtotalTop() ? "Top" : "Bottom" );
 	};
 
 	/**
 	 * Sets setting layout subtotal location.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {number} type - Type of layot subtotal location (1 - top, 2 - bottom).
+	 * @param {LayoutSubtotalLocationType} type - Type of layot subtotal location
 	 */
 	ApiPivotField.prototype.SetLayoutSubtotalLocation = function (type) {
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		if ( typeof type == "number" && ( type == 1 || type == 2 ) ) {
-			var field = new Asc.CT_PivotField();
-			field.asc_setSubtotalTop( (type == 1) );
-			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		if (typeof type == "string" && ( type == "Top" || type == "Bottom")) {
+			const field = new Asc.CT_PivotField();
+			field.asc_setSubtotalTop( (type == "Top") );
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
 		} else {
 			private_MakeError('Invalid type of "type" or invalid value.')
 		}
@@ -15354,7 +15667,7 @@
 	 * @returns {string}
 	 */
 	ApiPivotField.prototype.GetSubtotalName = function () {
-		return ( this.table.pivot.asc_getPivotFields()[this.index].subtotalCaption );
+		return (this.pivotField.subtotalCaption);
 	};
 
 	/**
@@ -15381,181 +15694,135 @@
 	});
 
 	/**
+	 * @typedef PivotFieldSubtotals
+	 * @property {boolean} Sum
+	 * @property {boolean} Count
+	 * @property {boolean} Average
+	 * @property {boolean} Max
+	 * @property {boolean} Min
+	 * @property {boolean} Product
+	 * @property {boolean} CountNumbers
+	 * @property {boolean} StdDev
+	 * @property {boolean} StdDevP
+	 * @property {boolean} Var
+	 * @property {boolean} VarP
+	 */
+
+	/**
 	 * Returns object that represent all subtotals.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @returns {object}
+	 * @returns {PivotFieldSubtotals}
 	 */
 	ApiPivotField.prototype.GetSubtotals = function () {
-		// todo поправить опредление на values
-
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		if (!pivField.dataField) {
-			var Subtotals = {
-				Sum: false,
-				Count: false,
-				Average: false,
-				Max: false,
-				Min: false,
-				Product: false,
-				CountNumbers: false,
-				StdDev: false,
-				StdDevP: false,
-				Var: false,
-				VarP: false
-			};
-			if (pivField.asc_getDefaultSubtotal()) {
-				var arr = pivField.asc_getSubtotals();
-				for (var i = 0; i < arr.length; i++) {
-					switch (arr[i]) {
-						case Asc.c_oAscItemType.Sum:
-							Subtotals.Sum = true;
-							break;
-						case Asc.c_oAscItemType.CountA:
-							Subtotals.Count = true;
-							break;
-						case Asc.c_oAscItemType.Avg:
-							Subtotals.Average = true;
-							break;
-						case Asc.c_oAscItemType.Max:
-							Subtotals.Max = true;
-							break;
-						case Asc.c_oAscItemType.Min:
-							Subtotals.Min = true;
-							break;
-						case Asc.c_oAscItemType.Product:
-							Subtotals.Product = true;
-							break;
-						case Asc.c_oAscItemType.Count:
-							Subtotals.CountNumbers = true;
-							break;
-						case Asc.c_oAscItemType.StdDev:
-							Subtotals.StdDev = true;
-							break;
-						case Asc.c_oAscItemType.StdDevP:
-							Subtotals.StdDevP = true;
-							break;
-						case Asc.c_oAscItemType.Var:
-							Subtotals.Var = true;
-							break;
-						case Asc.c_oAscItemType.VarP:
-							Subtotals.VarP = true;
-							break;
-					}
+		const res = {
+			'Sum': false,
+			'Count': false,
+			'Average': false,
+			'Max': false,
+			'Min': false,
+			'Product': false,
+			'CountNumbers': false,
+			'StdDev': false,
+			'StdDevP': false,
+			'Var': false,
+			'VarP': false
+		};
+		if (this.pivotField.asc_getDefaultSubtotal()) {
+			const subtotals = this.pivotField.asc_getSubtotals();
+			for (var i = 0; i < subtotals.length; i++) {
+				switch (subtotals[i]) {
+					case Asc.c_oAscItemType.Sum:
+						res['Sum'] = true;
+						break;
+					case Asc.c_oAscItemType.CountA:
+						res['Count'] = true;
+						break;
+					case Asc.c_oAscItemType.Avg:
+						res['Average'] = true;
+						break;
+					case Asc.c_oAscItemType.Max:
+						res['Max'] = true;
+						break;
+					case Asc.c_oAscItemType.Min:
+						res['Min'] = true;
+						break;
+					case Asc.c_oAscItemType.Product:
+						res['Product'] = true;
+						break;
+					case Asc.c_oAscItemType.Count:
+						res['CountNumbers'] = true;
+						break;
+					case Asc.c_oAscItemType.StdDev:
+						res['StdDev'] = true;
+						break;
+					case Asc.c_oAscItemType.StdDevP:
+						res['StdDevP'] = true;
+						break;
+					case Asc.c_oAscItemType.Var:
+						res['Var'] = true;
+						break;
+					case Asc.c_oAscItemType.VarP:
+						res['VarP'] = true;
+						break;
 				}
 			}
-			return Subtotals;
-		} else {
-			private_MakeError('It is not possible to get the "Subtotals" property from this field.')
 		}
+		return res;
 	};
 
 	/**
-	 * Sets Subtotls.
+	 * Sets Subtotals.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {object} subtotals - Object that represent all subtotals or some of them.
+	 * @param {PivotFieldSubtotals} subtotals - Object that represent all subtotals or some of them.
 	 */
 	ApiPivotField.prototype.SetSubtotals = function (subtotals) {
-		// todo поправить опредление на values
-
-		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
-		if (!pivField.dataField) {
 			if (typeof subtotals == "object") {
-				var field = new Asc.CT_PivotField();
-				var cur_subtotals = this.GetSubtotals();
-				var arr = [];
-				if (pivField.asc_getDefaultSubtotal()) {
-
-					if ( subtotals.hasOwnProperty('Sum') ) {
-						if (subtotals.Sum)
-							arr.push(Asc.c_oAscItemType.Sum);
-					} else if (cur_subtotals.Sum) {
+				const field = new Asc.CT_PivotField();
+				const arr = [];
+				if (this.pivotField.asc_getDefaultSubtotal()) {
+					if (subtotals.hasOwnProperty('Sum') && subtotals['Sum']) {
 						arr.push(Asc.c_oAscItemType.Sum);
 					}
-
-					if ( subtotals.hasOwnProperty('Count') ) {
-						if (subtotals.Count)
-							arr.push(Asc.c_oAscItemType.CountA);
-					} else if (cur_subtotals.Count) {
+					if (subtotals.hasOwnProperty('Count') && subtotals['Count']) {
 						arr.push(Asc.c_oAscItemType.CountA);
 					}
-
-					if ( subtotals.hasOwnProperty('Average') ) {
-						if (subtotals.Average)
-							arr.push(Asc.c_oAscItemType.Avg);
-					} else if (cur_subtotals.Average) {
+					if (subtotals.hasOwnProperty('Average') && subtotals['Average']) {
 						arr.push(Asc.c_oAscItemType.Avg);
 					}
-
-					if ( subtotals.hasOwnProperty('Max') ) {
-						if (subtotals.Max)
-							arr.push(Asc.c_oAscItemType.Max);
-					} else if (cur_subtotals.Max) {
+					if (subtotals.hasOwnProperty('Max') && subtotals['Max']) {
 						arr.push(Asc.c_oAscItemType.Max);
 					}
-
-					if ( subtotals.hasOwnProperty('Min') ) {
-						if (subtotals.Min)
-							arr.push(Asc.c_oAscItemType.Min);
-					} else if (cur_subtotals.Min) {
+					if (subtotals.hasOwnProperty('Min') && subtotals['Min']) {
 						arr.push(Asc.c_oAscItemType.Min);
 					}
-
-					if ( subtotals.hasOwnProperty('Product') ) {
-						if (subtotals.Product)
-							arr.push(Asc.c_oAscItemType.Product);
-					} else if (cur_subtotals.Product) {
+					if (subtotals.hasOwnProperty('Product') && subtotals['Product']) {
 						arr.push(Asc.c_oAscItemType.Product);
 					}
-
-					if ( subtotals.hasOwnProperty('CountNumbers') ) {
-						if (subtotals.CountNumbers)
-							arr.push(Asc.c_oAscItemType.Count);
-					} else if (cur_subtotals.CountNumbers) {
+					if (subtotals.hasOwnProperty('CountNumbers') && subtotals['CountNumbers']) {
 						arr.push(Asc.c_oAscItemType.Count);
 					}
-
-					if ( subtotals.hasOwnProperty('StdDev') ) {
-						if (subtotals.StdDev)
-							arr.push(Asc.c_oAscItemType.StdDev);
-					} else if (cur_subtotals.StdDev) {
+					if (subtotals.hasOwnProperty('StdDev') && subtotals['StdDev']) {
 						arr.push(Asc.c_oAscItemType.StdDev);
 					}
-
-					if ( subtotals.hasOwnProperty('StdDevP') ) {
-						if (subtotals.StdDevP)
-							arr.push(Asc.c_oAscItemType.StdDevP);
-					} else if (cur_subtotals.StdDevP) {
+					if (subtotals.hasOwnProperty('StdDevP') && subtotals['StdDevP']) {
 						arr.push(Asc.c_oAscItemType.StdDevP);
 					}
-
-					if ( subtotals.hasOwnProperty('Var') ) {
-						if (subtotals.Var)
-							arr.push(Asc.c_oAscItemType.Var);
-					} else if (cur_subtotals.Var) {
+					if (subtotals.hasOwnProperty('Var') && subtotals['Var']) {
 						arr.push(Asc.c_oAscItemType.Var);
 					}
-
-					if ( subtotals.hasOwnProperty('VarP') ) {
-						if (subtotals.VarP)
-							arr.push(Asc.c_oAscItemType.VarP);
-					} else if (cur_subtotals.VarP) {
+					if (subtotals.hasOwnProperty('VarP') && subtotals['VarP']) {
 						arr.push(Asc.c_oAscItemType.VarP);
 					}
 				}
-
 				if (arr.length) {
 					field.asc_setSubtotals(arr);
-					pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
+					this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
 				}
-
 			} else {
 				private_MakeError('Invalid type of "subtotals".')
 			}
-		} else {
-			private_MakeError('It is not possible to set the "Subtotals" property from this field.');
-		}
 	};
 
 	Object.defineProperty(ApiPivotField.prototype, "Subtotals", {
@@ -15568,129 +15835,13 @@
 	});
 
 	/**
-	 * Returns a value that represents the object's formula.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @returns {number}
-	 */
-	ApiPivotField.prototype.GetFormula = function () {
-		// todo поправить опредление на values
-
-		/*
-			SummorizeValueFieldBy:
-				Asc.c_oAscItemType.Sum
-				Asc.c_oAscItemType.Count
-				Asc.c_oAscItemType.Avg
-				Asc.c_oAscItemType.Max
-				Asc.c_oAscItemType.Min
-				Asc.c_oAscItemType.Product
-				Asc.c_oAscItemType.CountA
-				Asc.c_oAscItemType.StdDev
-				Asc.c_oAscItemType.StdDevP
-				Asc.c_oAscItemType.Var
-				Asc.c_oAscItemType.VarP
-		*/
-		var vals = this.table.pivot.asc_getDataFields();
-		var check = private_PivotCheckField(this.table.pivot, this.index, vals);
-		if (check.res) {
-			return check.field.asc_getSubtotal();
-		} else {
-			private_MakeError("It is not possible from this field.")
-		}
-	};
-
-	/**
-	 * Sets a value that represents the object's formula.
-	 * @memberof ApiPivotField
-	 * @typeofeditors ["CSE"]
-	 * @param {number} val - Value by summorize value field by.
-	 */
-	ApiPivotField.prototype.SetFormula = function (val) {
-		// todo поправить опредление на values
-
-		/*
-			val:
-				Asc.c_oAscItemType.Sum
-				Asc.c_oAscItemType.Count
-				Asc.c_oAscItemType.Avg
-				Asc.c_oAscItemType.Max
-				Asc.c_oAscItemType.Min
-				Asc.c_oAscItemType.Product
-				Asc.c_oAscItemType.CountA
-				Asc.c_oAscItemType.StdDev
-				Asc.c_oAscItemType.StdDevP
-				Asc.c_oAscItemType.Var
-				Asc.c_oAscItemType.VarP
-		*/
-		if (typeof val == "number" && val >= 0 && val <= 11) {
-			var vals = this.table.pivot.asc_getDataFields();
-			var check = private_PivotCheckField(this.table.pivot, this.index, vals);
-			if (check.res) {
-				var field = new Asc.CT_DataField();
-				field.asc_setSubtotal(val);
-				check.field.asc_set(this.table.api, this.table.pivot, check.index, field);
-				var prefix = "";
-				switch (val) {
-					case Asc.c_oAscItemType.Sum:
-						prefix = "Sum";
-						break;
-					case Asc.c_oAscItemType.CountA:
-						prefix = "Count";
-						break;
-					case Asc.c_oAscItemType.Avg:
-						prefix = "Average";
-						break;
-					case Asc.c_oAscItemType.Max:
-						prefix = "Max";
-						break;
-					case Asc.c_oAscItemType.Min:
-						prefix = "Min";
-						break;
-					case Asc.c_oAscItemType.Product:
-						prefix = "Product";
-						break;
-					case Asc.c_oAscItemType.Count:
-						prefix = "Count Numbers";
-						break;
-					case Asc.c_oAscItemType.StdDev:
-						prefix = "StdDev";
-						break;
-					case Asc.c_oAscItemType.StdDevP:
-						prefix = "StdDevP";
-						break;
-					case Asc.c_oAscItemType.Var:
-						prefix = "Var";
-						break;
-					case Asc.c_oAscItemType.VarP:
-						prefix = "VarP";
-						break;
-				}
-				this.SetCaption( ( prefix + " of " + this.GetSourceName() ) );
-			} else {
-				private_MakeError("This field isn't value.")
-			}
-		} else {
-			private_MakeError('Invalid "val".')
-		}
-	};
-
-	Object.defineProperty(ApiPivotField.prototype, "Formula", {
-		get: function () {
-			return this.GetFormula();
-		},
-		set: function (val) {
-			this.SetFormula(val);
-		}
-	});
-
-	/**
 	 * Returns the specified field, can be dragged to the column position or not.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetDragToColumn = function () {
-		return this.table.pivot.asc_getPivotFields()[this.index].dragToCol;
+		return this.pivotField.dragToCol;
 	};
 
 	/**
@@ -15701,7 +15852,7 @@
 	 */
 	ApiPivotField.prototype.SetDragToColumn = function (flag) {
 		if (typeof flag == "boolean") {
-			this.table.pivot.asc_getPivotFields()[this.index].dragToCol = flag;
+			this.pivotField.dragToCol = flag;
 		} else {
 			private_MakeError('Invalid type of "flag".')
 		}
@@ -15723,7 +15874,7 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetDragToRow = function () {
-		return this.table.pivot.asc_getPivotFields()[this.index].dragToRow;
+		return this.pivotField.dragToRow;
 	};
 
 	/**
@@ -15734,7 +15885,7 @@
 	 */
 	ApiPivotField.prototype.SetDragToRow = function (flag) {
 		if (typeof flag == "boolean") {
-			this.table.pivot.asc_getPivotFields()[this.index].dragToRow = flag;
+			this.pivotField.dragToRow = flag;
 		} else {
 			private_MakeError('Invalid type of "flag".')
 		}
@@ -15756,7 +15907,7 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetDragToData = function () {
-		return this.table.pivot.asc_getPivotFields()[this.index].dragToData;
+		return this.pivotField.dragToData;
 	};
 
 	/**
@@ -15767,7 +15918,7 @@
 	 */
 	ApiPivotField.prototype.SetDragToData = function (flag) {
 		if (typeof flag == "boolean") {
-			this.table.pivot.asc_getPivotFields()[this.index].dragToData = flag;
+			this.pivotField.dragToData = flag;
 		} else {
 			private_MakeError('Invalid type of "flag".')
 		}
@@ -15789,7 +15940,7 @@
 	 * @returns {boolean}
 	 */
 	ApiPivotField.prototype.GetDragToPage = function () {
-		return this.table.pivot.asc_getPivotFields()[this.index].dragToPage;
+		return this.pivotField.dragToPage;
 	};
 
 	/**
@@ -15800,7 +15951,7 @@
 	 */
 	ApiPivotField.prototype.SetDragToPage = function (flag) {
 		if (typeof flag == "boolean") {
-			this.table.pivot.asc_getPivotFields()[this.index].dragToPage = flag;
+			this.pivotField.dragToPage = flag;
 		} else {
 			private_MakeError('Invalid type of "flag".')
 		}
@@ -15822,11 +15973,10 @@
 	 * @returns {string | number}
 	 */
 	ApiPivotField.prototype.GetCurrentPage = function () {
-		// todo поправить опредление на values
-		var filts = this.table.pivot.asc_getPageFields();
-		var check = private_PivotCheckField(this.table.pivot, this.index, (filts || []) );
-		if (check.res) {
-			var val = this.table.pivot.getPageFieldCellValue(check.index);
+		const pageFields = this.table.pivot.pageFields;
+		const pageIndex = pageFields.find(this.index);
+		if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
+			const val = this.table.pivot.getPageFieldCellValue(pageIndex);
 			return val.text || val.number || val.multiText;
 		} else {
 			private_MakeError("It is not possible from this field.");
@@ -17000,7 +17150,6 @@
 		isChangedActiveSheet && ws.workbook.setActive(oldActiveSheet);
 		oldSelection && oldSelection.Select(true);
 	}
-
 
 	function private_PivotCheckField(pivot, index, arr) {
 		if (!arr) {

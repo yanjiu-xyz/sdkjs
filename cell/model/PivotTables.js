@@ -2802,6 +2802,7 @@ function CT_pivotTableDefinition(setDefaults) {
 	this.rowItems = null;
 	this.colFields = null;
 	this.colItems = null;
+	/**@type {CT_PageFields} */
 	this.pageFields = null;
 	/**@type {CT_DataFields} */
 	this.dataFields = null;
@@ -14570,6 +14571,7 @@ function CT_DataField(setDefaults) {
 //Attributes
 	this.name = null;
 	this.fld = null;
+	/** @type {c_oAscDataConsolidateFunction} */
 	this.subtotal = null;
 	this.showDataAs = null;
 	this.baseField = null;
@@ -14695,6 +14697,9 @@ CT_DataField.prototype.asc_getName = function () {
 CT_DataField.prototype.asc_getIndex = function () {
 	return this.fld || 0;
 };
+/**
+ * @return {c_oAscDataConsolidateFunction}
+ */
 CT_DataField.prototype.asc_getSubtotal = function () {
 	return this.subtotal;
 };
