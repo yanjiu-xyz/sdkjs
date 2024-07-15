@@ -14953,7 +14953,7 @@ function RangeDataManagerElem(bbox, data)
 
 		if (this.DefinedNames) {
 			for (var i = 0; i < this.DefinedNames.length; i++) {
-				newObj.DefinedNames.push(this.DefinedNames[i].clone);
+				newObj.DefinedNames.push(this.DefinedNames[i].clone());
 			}
 		}
 
