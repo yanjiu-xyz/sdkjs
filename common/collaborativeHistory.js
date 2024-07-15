@@ -335,8 +335,14 @@
 	};
 	CCollaborativeHistory.prototype.InitTextRecover = function ()
 	{
-		if (!this.textRecovery)
-			this.textRecovery = new AscCommon.DeletedTextRecovery();
+		if (this.textRecovery)
+			return;
+		
+		let logicDocument = this.CoEditing.GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		this.textRecovery = new AscCommon.DeletedTextRecovery(logicDocument);
 	};
 	/**
 	 * Отображаем удаленный текст для данный точки в истории ревизии

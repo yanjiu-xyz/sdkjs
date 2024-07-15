@@ -36,10 +36,13 @@
 {
 	/**
 	 * Класс, восстанавливающий удаленные части документа
+	 * @param {AscWord.Document} logicDocument
 	 * @constructor
 	 */
-	function DeletedTextRecovery()
+	function DeletedTextRecovery(logicDocument)
 	{
+		this.document = logicDocument;
+		
 		/**
 		 * Список всех изменений связанных с удалением текста
 		 * @type {*[]}
@@ -360,7 +363,7 @@
 							}
 						}
 						return false
-					};
+					}
 				}
 			}
 
@@ -576,10 +579,12 @@
 	 */
 	DeletedTextRecovery.prototype.RedoUndoChanges = function (arrInputChanges)
 	{
-		let arrCurrentPoint = [];
 		let arrData = new AddTextPositions();
 		let oRemoveText = new RemoveTextPositions();
 		arrInputChanges = arrInputChanges.reverse();
+		
+		let allChanges = [];
+		let delChanges = [];
 
 		for (let i = 0; i < arrInputChanges.length; i++)
 		{
@@ -621,9 +626,15 @@
 				}
 
 				if (oCurChange instanceof CChangesRunAddItem || oCurChange instanceof CChangesParagraphAddItem || oCurChange instanceof CChangesDocumentAddItem)
-					this.RedoUndoChange(oCurChange, false, []);
+				{
+					this.RedoUndoChange(oCurChange, false, allChanges);
+				}
 				else
-					this.RedoUndoChange(oCurChange, false, arrCurrentPoint);
+				{
+					let startPos = allChanges.length;
+					this.RedoUndoChange(oCurChange, false, allChanges);
+					delChanges = delChanges.concat(allChanges.slice(startPos));
+				}
 			}
 		}
 
@@ -633,7 +644,7 @@
 			let arrCurrent = arr[i];
 			for (let j = arrCurrent.length - 1; j >= 0; j--)
 			{
-				this.RedoUndoChange(arrCurrent[j], true, []);
+				this.RedoUndoChange(arrCurrent[j], true, allChanges);
 			}
 		}
 
@@ -642,7 +653,7 @@
 			classes: oRemoveText.oClasses
 		};
 
-		return [arrCurrentPoint, result];
+		return [delChanges, result, allChanges];
 	};
 	/**
 	 * Создаем точку в истории для сбора данных об отображении удаленного текста
@@ -664,7 +675,6 @@
 		this.HandleChanges();
 		this.CheckPointInHistory();
 
-		let oLogicDocument		= editor.WordControl.m_oLogicDocument;
 		let historyStore		= AscCommon.CollaborativeEditing.CoHistory.CoEditing.m_oLogicDocument.Api.VersionHistory;
 		let strUserId			= historyStore.userId;
 		let strUserName			= historyStore.userName;
@@ -680,18 +690,18 @@
 		this.userTime			= timeOfRevision;
 
 		// отменяем изменения до нужного места (необходимо для перемещения по истории)
-		let arrCurrentPoint		= this.RedoUndoChanges(arrInput);
-		let arrChanges = arrCurrentPoint[0];
-		let arrResult = arrCurrentPoint[1];
+		let arrCurrentPoint	= this.RedoUndoChanges(arrInput);
+		let delChanges = arrCurrentPoint[0];
+		let arrResult  = arrCurrentPoint[1];
+		let allChanges = arrCurrentPoint[2];
 
 		this.Split(arrResult);
 
 		this.ShowDelTextPoint	= AscCommon.History.Points[0];
-		this.ShowDelLettersChanges = arrChanges;
-		this.RecalculatePointFromHistory();
+		this.ShowDelLettersChanges = delChanges;
+		this.RecalculatePointFromHistory(allChanges);
 		this.ApplyCollaborativeMarks(true);
 
-		//editor.WordControl.m_oLogicDocument.Recalculate_Page()
 		return true;
 	};
 	DeletedTextRecovery.prototype.Split = function (arrInput)
@@ -911,14 +921,13 @@
 	};
 	DeletedTextRecovery.prototype.UndoShowDelText = function (isNotApply)
 	{
-
 		if (this.ShowDelTextPoint)
 		{
 			let oHistoryPoint	= this.ShowDelTextPoint;
 			let arr				= this.ProceedHistoryFromHistoryPoint(oHistoryPoint);
 
 			this.UndoReviewBlock(arr, [])
-			editor.WordControl.m_oLogicDocument.RecalculateByChanges(arr);
+			this.document.RecalculateByChanges(arr);
 			this.ShowDelTextPoint = null;
 
 			this.UndoArray(this.ShowDelLettersChanges.reverse());
@@ -950,36 +959,36 @@
 		if (!arrInput || arrInput.length === 0)
 			return false;
 
-		if (arrInput)
+		let arrURChanges = []
+		for (let i = 0; i < arrInput.length; i++)
 		{
-			let arrURChanges = []
-			for (let i = 0; i < arrInput.length; i++)
-			{
-				this.RedoUndoChange(arrInput[i], !isRedo, arrURChanges);
-			}
-
-			editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrURChanges);
-			return true;
+			this.RedoUndoChange(arrInput[i], !isRedo, arrURChanges);
 		}
+
+		this.document.RecalculateByChanges(arrURChanges);
+		return true;
 	};
-	DeletedTextRecovery.prototype.RecalculatePointFromHistory = function ()
+	DeletedTextRecovery.prototype.RecalculatePointFromHistory = function(changes)
 	{
-		let oLocalHistory		= AscCommon.History;
-		if (oLocalHistory.Points.length > 0 && oLocalHistory.Points[0].Items.length > 0)
+		if (!changes || !changes.length)
+			changes = [];
+		
+		let localHistory = AscCommon.History;
+		if (localHistory.Points.length && localHistory.Points[0].Items.length)
 		{
-			let oHistoryPoint	= oLocalHistory.Points[oLocalHistory.Points.length - 1];
-			let arrChanges		= this.ProceedHistoryFromHistoryPoint(oHistoryPoint);
-
-			editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrChanges);
-			AscCommon.History.Remove_LastPoint();
-
-			return true;
+			let lastPoint = localHistory.Points[localHistory.Points.length - 1];
+			changes = changes.concat(this.ProceedHistoryFromHistoryPoint(lastPoint));
 		}
-		return false;
+		
+		if (!changes.length)
+			return false;
+		
+		this.document.RecalculateByChanges(changes);
+		localHistory.Remove_LastPoint();
+		return true;
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.DeletedTextRecovery = DeletedTextRecovery;
-	AscCommon.DeletedTextRecoveryCheckRunsColor = DeletedTextRecovery.prototype.Check;
 	
 })(window);
