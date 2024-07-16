@@ -7282,7 +7282,7 @@ var editor;
 	};
 	/**
 	* @param {CT_pivotTableDefinition} opt_pivotTable
-    * @param {row: number, col: number} opt_activeCell
+	* @param {row: number, col: number} opt_activeCell
 	* @return {boolean} Success
 	*/
 	spreadsheet_api.prototype.asc_pivotShowDetails = function(opt_pivotTable, opt_activeCell) {
