@@ -7281,16 +7281,17 @@ var editor;
 		return name;
 	};
 	/**
-	* @param {CT_pivotTableDefinition} opt_pivotTable 
+	* @param {CT_pivotTableDefinition} opt_pivotTable
+    * @param {row: number, col: number} opt_activeCell
 	* @return {boolean} Success
 	*/
-	spreadsheet_api.prototype.asc_pivotShowDetails = function(opt_pivotTable) {
+	spreadsheet_api.prototype.asc_pivotShowDetails = function(opt_pivotTable, opt_activeCell) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return false;
 		}
 		let t = this;
 		let ws = this.wbModel.getActiveWs();
-		let activeCell = ws.selectionRange.activeCell;
+		let activeCell = opt_activeCell || ws.selectionRange.activeCell;
 		let pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
 		if (!pivotTable) {
 			return false;
