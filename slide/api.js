@@ -9293,6 +9293,7 @@ background-repeat: no-repeat;\
 		if(!this.WordControl) {
 			return;
 		}
+		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide(true);
 		this.WordControl.UpdateViewMode();
 	};
 
