@@ -12832,7 +12832,7 @@
 	/**
 	 * Sets the text outline to the current text run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CSE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the text outline.
 	 * @return {ApiTextPr} - this text properties.
 	 */
@@ -12846,7 +12846,7 @@
 	/**
 	 * Gets the text outline from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {ApiStroke}
 	 * @since 8.1.0
 	 */
