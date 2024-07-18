@@ -11128,11 +11128,11 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_GetFormsCountByKey = function(sKey)
 	{
-		let oFormsManager = this.private_GetFormsManager();
-		if (!oFormsManager)
+		let formManager = this.private_GetFormsManager();
+		if (!formManager)
 			return 0;
-
-		return oFormsManager.GetAllFormsByKey(sKey).length;
+		
+		return formManager.GetAllFormsByKey(sKey).length + formManager.GetRadioButtons(sKey).length;
 	};
 	asc_docs_api.prototype.asc_MoveToFillingForm = function(isNext, isRequired, isNotFilled)
 	{
