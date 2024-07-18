@@ -13500,6 +13500,42 @@
 		}
 		this.private_OnChange();
 	};
+
+	/**
+	 * Sets the outline level for the specified properties.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {Number?} [nLvl=undefined] - 0 - based outline level. Possible values are: 0-8.
+	 * Note: to set no outline level use this method without parameter.
+	 * @returns {boolean}
+	 */
+	ApiParaPr.prototype.SetOutlineLvl = function(nLvl)
+	{
+		if (typeof(nLvl) === "number") {
+			nLvl = Math.ceil(nLvl);
+			if (nLvl < 0 || nLvl > 8) {
+				return false;
+			}
+		}
+		else if (nLvl != undefined) {
+			return false;
+		}
+
+		this.ParaPr.OutlineLvl = nLvl;
+		this.private_OnChange();
+	};
+
+	/**
+	 * Gets the outline level of the specified properties.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {Number?}
+	 */
+	ApiParaPr.prototype.GetOutlineLvl = function()
+	{
+		return this.ParaPr.OutlineLvl;
+	};
+
 	/**
 	 * Converts the ApiParaPr object into the JSON object.
 	 * @memberof ApiParaPr
@@ -20914,6 +20950,8 @@
 	ApiParaPr.prototype["GetIndRight"]               = ApiParaPr.prototype.GetIndRight;
 	ApiParaPr.prototype["GetIndLeft"]                = ApiParaPr.prototype.GetIndLeft;
 	ApiParaPr.prototype["GetIndFirstLine"]           = ApiParaPr.prototype.GetIndFirstLine;
+	ApiParaPr.prototype["SetOutlineLvl"]             = ApiParaPr.prototype.SetOutlineLvl;
+	ApiParaPr.prototype["GetOutlineLvl"]             = ApiParaPr.prototype.GetOutlineLvl;
 	ApiParaPr.prototype["ToJSON"]                    = ApiParaPr.prototype.ToJSON;
 
 	ApiTablePr.prototype["GetClassType"]             = ApiTablePr.prototype.GetClassType;
