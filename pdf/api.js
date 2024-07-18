@@ -582,7 +582,7 @@
 		
 		if (oTxObject) {
 			let oContent = oTxObject.GetDocContent();
-			textObj.Text = oContent ? oContent.GetSelectedText(bClearText, select_Pr) : "";
+			textObj.Text = oContent ? (oContent.GetSelectedText(bClearText, select_Pr) || "") : "";
 		}
 		else {
 			this.DocumentRenderer.Copy(textObj);
