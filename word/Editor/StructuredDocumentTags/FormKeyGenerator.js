@@ -47,20 +47,47 @@
 
 	CFormKeyGenerator.prototype.GetNewKey = function(form)
 	{
+		let key = this.GenerateKey(form);
 		if (form && form.IsRadioButton())
 		{
-			return this.GenerateRadioButtonKey(form);
+			while (!this.CheckRadioButtonGroup(key))
+			{
+				key = this.GenerateKey(form);
+			}
 		}
 		else
 		{
-			let key = this.GenerateKey(form);
 			while (!this.CheckKey(key))
 			{
 				key = this.GenerateKey(form);
 			}
-
-			return key;
 		}
+		return key;
+	};
+	CFormKeyGenerator.prototype.GetNewChoice = function(form)
+	{
+		if (!form || !form.IsRadioButton())
+			return this.GetNewKey(form);
+		
+		let checkBoxPr = form.GetCheckBoxPr();
+		
+		let groupKey = checkBoxPr.GetGroupKey();
+		let buttons  = this.FormManager.GetRadioButtons(groupKey);
+		let choiceKeys = {};
+		for (let index = 0, count = buttons.length; index < count; ++index)
+		{
+			choiceKeys[buttons[index].GetFormKey()] = buttons;
+		}
+		
+		let choiceNum = buttons.length;
+		let newKey    = "Choice" + choiceNum;
+		while (choiceKeys[newKey])
+		{
+			choiceNum++;
+			newKey = "Choice" + choiceNum;
+		}
+		
+		return newKey;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -73,12 +100,22 @@
 		let forms = this.FormManager.GetAllFormsByKey(key);
 		return (!forms.length);
 	};
+	CFormKeyGenerator.prototype.CheckRadioButtonGroup = function(groupKey)
+	{
+		if (!groupKey || "" === groupKey)
+			return true;
+		
+		let forms = this.FormManager.GetRadioButtons(groupKey);
+		return (!forms.length);
+	};
 	CFormKeyGenerator.prototype.GenerateKey = function(form)
 	{
 		let counter = this.GlobalCounter++;
 
 		if (!form)
 			return "Form" + counter;
+		else if (form.IsRadioButton())
+			return "Group" + counter;
 		else if (form.IsComplexForm())
 			return "Complex" + counter;
 		else if (form.IsTextForm())
@@ -91,28 +128,6 @@
 			return "Image" + counter;
 
 		return "Form" + counter;
-	};
-	CFormKeyGenerator.prototype.GenerateRadioButtonKey = function(form)
-	{
-		let checkBoxPr = form.GetCheckBoxPr();
-
-		let groupKey = checkBoxPr.GetGroupKey();
-		let buttons  = this.FormManager.GetRadioButtons(groupKey);
-		let choiceKeys = {};
-		for (let index = 0, count = buttons.length; index < count; ++index)
-		{
-			choiceKeys[buttons[index].GetFormKey()] = buttons;
-		}
-
-		let choiceNum = buttons.length;
-		let newKey    = "Choice" + choiceNum;
-		while (choiceKeys[newKey])
-		{
-			choiceNum++;
-			newKey = "Choice" + choiceNum;
-		}
-
-		return newKey;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
