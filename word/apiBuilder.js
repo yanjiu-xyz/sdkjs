@@ -6578,6 +6578,7 @@
 	 */
 	ApiDocument.prototype.UpdateAllTOC = function(bOnlyPageNumbers)
 	{
+		this.ForceRecalculate();
 		if (typeof(bOnlyPageNumbers) !== "boolean")
 			bOnlyPageNumbers = false;
 
