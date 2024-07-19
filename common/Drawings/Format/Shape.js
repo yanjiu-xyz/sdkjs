@@ -1057,54 +1057,16 @@
 
 		CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMath) {
 			let c = new CShape();
-			c.setWordShape(false);
-			c.setBDeleted(false);
-			c.setWorksheet(worksheet);
-			if (this.nvSpPr) {
-				c.setNvSpPr(this.nvSpPr.createDuplicate());
-			}
-			if (this.spPr) {
-				c.setSpPr(this.spPr.createDuplicate());
-				c.spPr.setParent(c);
-			}
-			if (this.style) {
-				c.setStyle(this.style.createDuplicate());
-			}
-			if (this.textBoxContent) {
-				let tx_body = new AscFormat.CTextBody();
-				tx_body.setParent(c);
-				if (this.bodyPr) {
-					tx_body.setBodyPr(this.bodyPr.createDuplicate());
-				}
-				let new_content = new AscFormat.CDrawingDocContent(tx_body, drawingDocument, 0, 0, 0, 0, false, false, true);
-				let aContent = this.textBoxContent.Content;
-				let aNewParagraphs = [];
-				for (let nIdx = 0; nIdx < aContent.length; ++nIdx) {
-					let oCurElement = aContent[nIdx];
-					if (oCurElement instanceof AscWord.Paragraph) {
-						let oParagraph = ConvertParagraphToPPTX(oCurElement, drawingDocument, new_content, bIsAddMath);
-						aNewParagraphs.push(oParagraph);
-					}
-				}
-				if (aNewParagraphs.length > 0) {
-					new_content.Internal_Content_RemoveAll();
-					for (let nIdx = 0; nIdx < aNewParagraphs.length; ++nIdx) {
-						let oParagraph = aNewParagraphs[nIdx];
-						new_content.Internal_Content_Add(nIdx, oParagraph, false);
-					}
-				}
-				tx_body.setContent(new_content);
-				c.setTxBody(tx_body);
-			}
-			if (worksheet) {
-				if (this.signatureLine) {
-					c.setSignature(this.signatureLine.copy());
-				}
-			}
+			this._convertToPPTX(c, drawingDocument, worksheet, bIsAddMath);
 			return c;
 		};
 		CShape.prototype.convertToPdf = function (drawingDocument, worksheet, bIsAddMath) {
 			let c = new AscPDF.CPdfShape();
+			this._convertToPPTX(c, drawingDocument, worksheet, bIsAddMath);
+			return c;
+		};
+		CShape.prototype._convertToPPTX = function(c, drawingDocument, worksheet, bIsAddMath)
+		{
 			c.setWordShape(false);
 			c.setBDeleted(false);
 			c.setWorksheet(worksheet);
@@ -1149,7 +1111,6 @@
 					c.setSignature(this.signatureLine.copy());
 				}
 			}
-			return c;
 		};
 		CShape.prototype.convertFromSmartArt = function (bForce) {
 			if (AscFormat.SmartArt && !bForce) {
@@ -2124,7 +2085,7 @@
 				var diffX = 0;
 				var diffY = 0;
 				if (oSmartArt.group) {
-					if (bForceSlideTransform || (this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
+					if (bForceSlideTransform || (AscFormat.isSlideLikeObject(this.parent) || this.worksheet)) {
 						const oMainGroupRelativePosition = oSmartArt.group.getRelativePosition();
 						diffX = oMainGroupRelativePosition.x;
 						diffY = oMainGroupRelativePosition.y;
@@ -2167,7 +2128,7 @@
 				var extX = (oRect.r - oRect.l) / 2;
 				var extY = (oRect.b - oRect.t) / 2;
 				var deltaTranslateX = 0, deltaTranslateY = 0;
-				if (bForceSlideTransform || (deltaShape.parent && deltaShape.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
+				if (bForceSlideTransform || (AscFormat.isSlideLikeObject(deltaShape.parent) || this.worksheet)) {
 					deltaTranslateX = deltaShape.group.group.x;
 					deltaTranslateY = deltaShape.group.group.y;
 				}
@@ -3119,8 +3080,7 @@
 			return this.transformText.CreateDublicate();
 		};
 		CShape.prototype.canAddButtonPlaceholder = function () {
-			return (this.parent && (this.parent.getObjectType() === AscDFH.historyitem_type_Slide) ||
-				this.isObjectInSmartArt());
+			return AscFormat.isSlideLikeObject(this.parent) || this.isObjectInSmartArt();
 		};
 		CShape.prototype.isEmptyPlaceholder = function (bDefaultEmpty) {
 			if (this.isObjectInSmartArt()) {
@@ -3146,6 +3106,7 @@
 					|| phldrType == AscFormat.phType_ftr
 					|| phldrType == AscFormat.phType_hdr
 					|| phldrType == AscFormat.phType_sldNum
+					|| phldrType == AscFormat.phType_dgm
 					|| phldrType == AscFormat.phType_sldImg) {
 					if (this.txBody) {
 						if (this.txBody.content) {
@@ -3159,7 +3120,8 @@
 					|| phldrType == AscFormat.phType_media) {
 					return true;
 				}
-				if (phldrType == AscFormat.phType_pic) {
+				if (phldrType == AscFormat.phType_pic
+					|| phldrType == AscFormat.phType_tbl) {
 					var _b_empty_text = true;
 					if (this.txBody) {
 						if (this.txBody.content) {
@@ -3497,8 +3459,19 @@
 
 
 					var scale_scale_coefficients = this.group.getResultScaleCoefficients();
-					this.x = scale_scale_coefficients.cx * (xfrm.offX - this.group.spPr.xfrm.chOffX);
-					this.y = scale_scale_coefficients.cy * (xfrm.offY - this.group.spPr.xfrm.chOffY);
+
+					let offX = xfrm.offX;
+					let offY = xfrm.offY;
+					let oGrXfrm = null;
+					if(this.group.spPr) {
+						oGrXfrm = this.group.spPr.xfrm;
+						if(oGrXfrm) {
+							offX -= oGrXfrm.chOffX;
+							offY -= oGrXfrm.chOffY;
+						}
+					}
+					this.x = scale_scale_coefficients.cx * offX;
+					this.y = scale_scale_coefficients.cy * offY;
 					this.extX = scale_scale_coefficients.cx * xfrm.extX;
 					this.extY = scale_scale_coefficients.cy * xfrm.extY;
 					this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;
@@ -6750,6 +6723,91 @@
 					this.changeFill(oBlipFillUniFill);
 				}
 			}
+			return true;
+		};
+
+		CShape.prototype.checkEditTextStyle = function (fDocContentMethod, params, bSelect) {
+			let nParentType = null;
+			if(this.parent && this.parent.getObjectType) {
+				nParentType = this.parent.getObjectType();
+			}
+			if(nParentType !== AscDFH.historyitem_type_SlideMaster &&
+				nParentType !== AscDFH.historyitem_type_SlideLayout) {
+				return false;
+			}
+			if(!this.isPlaceholder()) {
+				return false;
+			}
+			let oTxBody = this.txBody;
+			if(!oTxBody) {
+				return false;
+			}
+			let oContent = oTxBody.content;
+			if(!oContent) {
+				return false;
+			}
+			let oParaPrToApply = new AscWord.CParaPr();
+			let bIncreaseFontSize = null;
+			let oDCP = AscFormat.CDrawingDocContent.prototype;
+			if(fDocContentMethod === oDCP.Set_ParagraphPresentationNumbering) {
+				oParaPrToApply.Bullet = params[0];
+			}
+			else if(fDocContentMethod === oDCP.SetParagraphIndent) {
+				oParaPrToApply.Ind = new CParaInd();
+				oParaPrToApply.Ind.Set_FromObject(params[0]);
+			}
+			else if(fDocContentMethod === oDCP.ClearParagraphFormatting) {
+				oParaPrToApply = null;
+				if(nParentType === AscDFH.historyitem_type_SlideMaster) {
+					return true;
+				}
+			}
+			else if(fDocContentMethod === oDCP.SetParagraphSpacing) {
+				oParaPrToApply.Spacing = new CParaSpacing();
+				oParaPrToApply.Spacing.Set_FromObject(params[0]);
+			}
+			else if(fDocContentMethod === oDCP.IncreaseDecreaseFontSize) {
+				bIncreaseFontSize = params[0];
+			}
+			else if(fDocContentMethod === oDCP.SetParagraphAlign) {
+				oParaPrToApply.Jc = params[0];
+			}
+			else if(fDocContentMethod === CDocumentContent.prototype.AddToParagraph && params[0].Type === para_TextPr) {
+				oParaPrToApply.DefaultRunPr = params[0].Value;
+			}
+			else {
+				return false;
+			}
+
+			let oTextStyles;
+			if(oTxBody.lstStyle) {
+				oTextStyles = oTxBody.lstStyle.createDuplicate();
+			}
+			else {
+				oTextStyles = new AscFormat.TextListStyle();
+			}
+			if(bSelect) {
+				let oLvls = {};
+				let aParagraphs = [];
+				oContent.GetCurrentParagraph(false, aParagraphs, {});
+				for(let nIdx = 0; nIdx < aParagraphs.length; ++nIdx) {
+					let oParagraph = aParagraphs[nIdx];
+					let nLvl = 0;
+					if(AscFormat.isRealNumber(oParagraph.Pr.Lvl)) {
+						nLvl = oParagraph.Pr.Lvl;
+					}
+					if(!oLvls[nLvl]) {
+						oTextStyles.applyParaPr(nLvl, oParaPrToApply, bIncreaseFontSize, this);
+						oLvls[nLvl] = true;
+					}
+				}
+			}
+			else {
+				for(let nLvl = 0; nLvl < 9; ++nLvl) {
+					oTextStyles.applyParaPr(nLvl, oParaPrToApply, bIncreaseFontSize, this);
+				}
+			}
+			oTxBody.setLstStyle(oTextStyles);
 			return true;
 		};
 

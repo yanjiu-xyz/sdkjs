@@ -162,8 +162,8 @@ function (window, undefined) {
 
 		/** @type RegExp */
 		this.rangeChars = ["=", "-", "+", "*", "/", "(", "{", "<", ">", "^", "!", "&", ":", " ", "."];
-		this.reNotFormula = new XRegExp("[^\\p{L}\\\\_\\#\\]\\[\\p{N}\\.\"\]", "i");
-		this.reFormula = new XRegExp("^([\\p{L}\\\\_\\]\\[][\\p{L}\\\\_\\#\\]\\[\\p{N}\\.]*)", "i");
+		this.reNotFormula = new XRegExp("[^\\p{L}\\\\_\\#\\]\\[\\p{N}\\.\"\@]", "i");
+		this.reFormula = new XRegExp("^([\\p{L}\\\\_\\]\\[][\\p{L}\\\\_\\#\\]\\[\\p{N}\\.@]*)", "i");
 
 		this.defaults = {
 			padding: padding,
@@ -421,8 +421,6 @@ function (window, undefined) {
 		if (this.isStartCompositeInput()) {
 			this.End_CompositeInput();
 		}
-
-		AscCommon.StartIntervalDrawText(false);
 
 		if (saveValue) {
 			// Пересчет делаем всегда для не пустой ячейки или если были изменения. http://bugzilla.onlyoffice.com/show_bug.cgi?id=34864
@@ -1855,14 +1853,14 @@ function (window, undefined) {
 		var l = Math.min(s1.length, s2.length);
 		var i1 = 0, i2;
 
-		while (i1 < l && s1.charAt(i1) === s2.charAt(i1)) {
+		while (i1 < l && s1[i1] === s2[i1]) {
 			++i1;
 		}
 		i2 = i1 + 1;
 		if (i2 >= l) {
 			i2 = Math.max(s1.length, s2.length);
 		} else {
-			while (i2 < l && s1.charAt(i1) !== s2.charAt(i2)) {
+			while (i2 < l && s1[i1] !== s2[i2]) {
 				++i2;
 			}
 		}
@@ -2389,6 +2387,7 @@ function (window, undefined) {
 			var applyByArray = t.textFlags && t.textFlags.ctrlKey;
 			if (!applyByArray && success) {
 				t.handlers.trigger("applyCloseEvent", event);
+				AscCommon.StartIntervalDrawText(false);
 			}
 		};
 		this.close(true, callback);

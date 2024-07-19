@@ -233,11 +233,21 @@ function CTransitionAnimation(htmlpage)
 
     this.GetSlide = function(nIdx)
     {
-        return this.GetPresentation().Slides[nIdx];
+        let oPresentation = this.GetPresentation();
+        if(oPresentation)
+        {
+            return oPresentation.Slides[nIdx];
+        }
+        return null;
     };
     this.GetSlidesCount = function()
     {
-        return this.GetPresentation().Slides.length;
+        let oPresentation = this.GetPresentation();
+        if(oPresentation)
+        {
+            return oPresentation.Slides.length;
+        }
+        return 0;
     };
 
     this.StopIfPlaying = function()
@@ -2923,6 +2933,24 @@ function CDemonstrationManager(htmlpage)
         this.waitReporterObject = null;
     };
 
+    this.wrapKeyboard = function()
+    {
+        if (this.HtmlPage.m_oApi.isReporterMode)
+            return;
+
+        var _t = this;
+        this._funcWrapKeyboard = function(e) {
+            if (document.activeElement === document.body)
+                _t.onKeyDown(e);
+        };
+        window.addEventListener("keydown", this._funcWrapKeyboard, false);
+    };
+    this.unwrapKeyboard = function()
+    {
+        if (this._funcWrapKeyboard)
+            window.removeEventListener("keydown", this._funcWrapKeyboard);
+    };
+
     this.Start = function(main_div_id, start_slide_num, is_play_mode, is_no_fullscreen)
     {
 		this.StartSlideNum = start_slide_num;
@@ -2958,6 +2986,8 @@ function CDemonstrationManager(htmlpage)
         this.Canvas.onmouseup    = this.onMouseUp;
 		this.Canvas.onmouseleave = this.onMouseLeave;
 
+        this.wrapKeyboard();
+
         this.Canvas.onmousewheel = this.onMouseWhell;
         if (this.Canvas.addEventListener)
             this.Canvas.addEventListener("DOMMouseScroll", this.onMouseWhell, false);
@@ -2971,7 +3001,7 @@ function CDemonstrationManager(htmlpage)
         this.SlideIndexes[0] = -1;
         this.SlideIndexes[1] = -1;
 
-				this.GoToSlideShortcutStack = [];
+		this.GoToSlideShortcutStack = [];
         this.StartSlide(true, true);
     };
 
@@ -3070,6 +3100,15 @@ function CDemonstrationManager(htmlpage)
         {
             oSlide.getAnimationPlayer().pause();
         }
+    };
+    this.IsPausedAnimation = function(nSlideNum)
+    {
+        var oSlide = this.GetSlide(nSlideNum);
+        if(oSlide)
+        {
+            return oSlide.getAnimationPlayer().isPaused();
+        }
+        return false;
     };
 
     this.OnAnimMainSeqFinished = function(nSlideNum)
@@ -3359,6 +3398,7 @@ function CDemonstrationManager(htmlpage)
         var ctx1 = this.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
         ctx1.setTransform(1, 0, 0, 1, 0, 0);
 
+        this.unwrapKeyboard();
         this.HtmlPage.m_oApi.sync_endDemonstration();
 
         if (true)
@@ -3640,19 +3680,20 @@ function CDemonstrationManager(htmlpage)
     this.Play = function(isNoSendFormReporter)
     {
         this.IsPlayMode = true;
-        if (-1 == this.CheckSlideDuration)
+        if(this.IsPausedAnimation(this.SlideNum) || -1 !== this.CheckSlideDuration)
         {
-            this.NextSlide(isNoSendFormReporter);
+            this.StartAnimation(this.SlideNum);
         }
         else
         {
-            this.StartAnimation(this.SlideNum);
+            this.NextSlide(isNoSendFormReporter);
         }
     };
 
     this.Pause = function()
     {
         this.IsPlayMode = false;
+        this.StopTransition();
         this.PauseAnimation(this.SlideNum);
     };
 
