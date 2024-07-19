@@ -7379,7 +7379,7 @@ var editor;
 		// добавил возвращение таблицы, для методов билдера
 		return pivot;
 	};
-	spreadsheet_api.prototype.asc_insertPivotExistingWorksheet = function(dataRef, pivotRef) {
+	spreadsheet_api.prototype.asc_insertPivotExistingWorksheet = function(dataRef, pivotRef, confirmation) {
 		if (!Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRef)) {
 			this.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
 			return;
