@@ -1307,8 +1307,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea.prototype.foreach2 = function (action) {
 		var r = this.getRange();
 		if (r) {
-			r._foreach2(function (cell) {
-				action(checkTypeCell(cell), cell);
+			r._foreach2(function (cell, row, col) {
+				action(checkTypeCell(cell), cell, row, col);
 			});
 		}
 	};
@@ -1810,8 +1810,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var _r = this.range(_wsA);
 			for (var i = 0; i < _r.length; i++) {
 				if (_r[i]) {
-					_r[i]._foreach2(function (cell) {
-						action(checkTypeCell(cell));
+					_r[i]._foreach2(function (cell, row, col) {
+						action(checkTypeCell(cell), cell, row, col);
 					});
 				}
 			}
