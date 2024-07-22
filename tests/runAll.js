@@ -60,8 +60,10 @@ const allTests = [
 	'word/styles/paraPr.html',
 	'word/styles/styleApplicator.html',
 	'word/plugins/pluginsApi.html',
+	'word/revisions/document-content.html',
 	'word/revisions/paragraph.html',
 	'word/merge-documents/mergeDocuments.html',
+	'word/math-autocorrection/math-autocorrection.html',
 
 	'cell/shortcuts/shortcuts.html',
 	'slide/shortcuts/shortcuts.html',

@@ -8398,13 +8398,13 @@ function BinaryFileReader(doc, openParams)
 
 			var tryAddStyle = function (_stylePaste, _elem, _basedOnElems) {
 				var isEqualName = null, isAlreadyContainsStyle;
-
+				const isDefaultStyleName = oDocumentStyles.IsStyleDefaultByName(_stylePaste.style.GetName(true), true);
 				for (var j in oDocumentStyles.Style) {
 					var styleDoc = oDocumentStyles.Style[j];
-					isAlreadyContainsStyle = styleDoc.isEqual(_stylePaste.style);
+					isAlreadyContainsStyle = styleDoc.isEqual(_stylePaste.style, isDefaultStyleName);
 
 					//TODO пока закомментировал, поскольку всегда добавляем новый стиль
-					if (styleDoc.Name === _stylePaste.style.Name /*|| (styleDoc.Custom === false && stylePaste.style.Custom === false && styleDoc.Name.toLowerCase() === stylePaste.style.Name.toLowerCase())*/) {
+					if (styleDoc.GetName(isDefaultStyleName) === _stylePaste.style.GetName(isDefaultStyleName) /*|| (styleDoc.Custom === false && stylePaste.style.Custom === false && styleDoc.Name.toLowerCase() === stylePaste.style.Name.toLowerCase())*/) {
 						isEqualName = j;
 					}
 
@@ -8521,17 +8521,17 @@ function BinaryFileReader(doc, openParams)
             bInBlock = true;
         //создаем список используемых шрифтов
         var AllFonts = {};
-
-		if(this.Document.Numbering)
+		
+		if (this.Document.Numbering)
 			this.Document.Numbering.GetAllFontNames(AllFonts);
-		if(this.Document.Styles)
-        this.Document.Styles.Document_Get_AllFontNames(AllFonts);
+		if (this.Document.Styles)
+			this.Document.Styles.Document_Get_AllFontNames(AllFonts);
+		
+		for (var Index = 0, Count = aContent.length; Index < Count; Index++)
+			aContent[Index].Document_Get_AllFontNames(AllFonts);
 
-        for (var Index = 0, Count = aContent.length; Index < Count; Index++)
-            aContent[Index].Document_Get_AllFontNames(AllFonts);
         var aPrepeareFonts = [];
 
-		var oDocument = this.Document && this.Document.LogicDocument ? this.Document.LogicDocument : this.Document;
 
 		var fontScheme;
 		var m_oLogicDocument = editor.WordControl.m_oLogicDocument;
@@ -9132,8 +9132,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 					this.oReadResult.styleLinks.push(new BinaryParagraphStyleUpdater(this.paragraph, ParaStyle, this.isPrChange));
                 break;
             case c_oSerProp_pPrType.numPr:
-                var numPr = new CNumPr();
-				numPr.Set(undefined, undefined);
+                var numPr = new AscWord.NumPr(undefined, undefined);
                 res = this.bcr.Read2(length, function(t, l){
                     return oThis.ReadNumPr(t, l, numPr);
                 });
@@ -17252,7 +17251,7 @@ DocReadResult.prototype = {
 	isDocumentPasting: function(){
 		var api = window["Asc"]["editor"] || editor;
 		if(api) {
-			return this.bCopyPaste && AscCommon.c_oEditorId.Word === api.getEditorId();
+			return !Asc.editor.isPdfEditor() && this.bCopyPaste && AscCommon.c_oEditorId.Word === api.getEditorId();
 		}
 		return false;
 	},

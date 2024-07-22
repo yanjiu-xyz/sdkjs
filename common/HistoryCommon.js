@@ -1325,11 +1325,12 @@
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	window['AscDFH'].historyitem_recalctype_Inline   = 0; // Изменения произошли в обычном тексте (с верхним классом CDocument)
-	window['AscDFH'].historyitem_recalctype_Flow     = 1; // Изменения произошли в "плавающем" объекте
-	window['AscDFH'].historyitem_recalctype_HdrFtr   = 2; // Изменения произошли в колонтитуле
-	window['AscDFH'].historyitem_recalctype_Drawing  = 3; // Изменения произошли в drawing'е
-	window['AscDFH'].historyitem_recalctype_NotesEnd = 4; // Изменение произошли в сносках, которые идут в конце документа
+	window['AscDFH'].historyitem_recalctype_Inline    = 0; // Изменения произошли в обычном тексте (с верхним классом CDocument)
+	window['AscDFH'].historyitem_recalctype_Flow      = 1; // Изменения произошли в "плавающем" объекте
+	window['AscDFH'].historyitem_recalctype_HdrFtr    = 2; // Изменения произошли в колонтитуле
+	window['AscDFH'].historyitem_recalctype_Drawing   = 3; // Изменения произошли в drawing'е
+	window['AscDFH'].historyitem_recalctype_NotesEnd  = 4; // Изменение произошли в сносках, которые идут в конце документа
+	window['AscDFH'].historyitem_recalctype_FromStart = 0xFFFF; // Изменения требуют полного пересчета документа с самого начала
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -4817,6 +4818,7 @@
 	window['AscDFH'].historydescription_Document_AddRemoveBeforeAfterParagraph      = 0x01b0;
 	window['AscDFH'].historydescription_Document_SectionPageNumFormat               = 0x01b1;
 	window['AscDFH'].historydescription_Document_SetPageColor                       = 0x01b2;
+	window['AscDFH'].historydescription_Document_InsertTextFromFile                 = 0x01b3;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

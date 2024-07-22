@@ -68,6 +68,10 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+        if (this.txBody && this.txBody.recalcInfo.recalculateBodyPr) {
+            this.recalcTransformText();
+        }
+        
         this.recalcGeometry();
         this.recalculateContent();
         this.recalculateTransform();
@@ -322,6 +326,11 @@
         };
         this.compiledStyles = [];
         this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
+    };
+    CPdfShape.prototype.copy = function (oPr) {
+        let copy = new CPdfShape();
+        this.fillObject(copy, oPr);
+        return copy;
     };
     window["AscPDF"].CPdfShape = CPdfShape;
 })();
