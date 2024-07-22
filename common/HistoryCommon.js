@@ -4823,6 +4823,7 @@
 	window['AscDFH'].historydescription_Document_SetPageColor                       = 0x01b2;
 	window['AscDFH'].historydescription_Document_InsertTextFromFile                 = 0x01b3;
 	window['AscDFH'].historydescription_Collaborative_DeletedTextRecovery           = 0x01b4;
+	window['AscDFH'].historydescription_Collaborative_MoveByHistory                 = 0x01b5;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

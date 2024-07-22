@@ -49,7 +49,7 @@
 
 		this.SyncIndex      = -1; // Позиция в массиве изменений, которые согласованы с сервером
 		this.curChangeIndex = -1; // Текущая позиция в массиве изменений разделенных по точкам
-		this.StepTextPoint = undefined; //Позиция предыдущего состояния
+		//this.StepTextPoint = undefined; //Позиция предыдущего состояния
 		
 		this.textRecovery = null;
 	}
@@ -85,7 +85,6 @@
 		this.Changes   = [];
 		this.OwnRanges = [];
 		this.ChangesSplitByPoints = [];
-		this.StepTextPoint = undefined; // позиция предыдущего состояния
 		
 		this.SyncIndex      = -1;
 		this.curChangeIndex = -1;
@@ -97,8 +96,15 @@
 	 */
 	CCollaborativeHistory.prototype.UndoNavigationRevision = function ()
 	{
-		let arrInput = this.RedoUndoChanges(this.StepTextPoint, false);
-		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
+		return this.textRecovery.UndoShowDelText(true);
+	};
+	CCollaborativeHistory.prototype.CheckPointInHistory = function ()
+	{
+		let localHistory = AscCommon.History;
+
+		if (localHistory.Points.length === 0 ||
+			(localHistory.Points.length > 0 && localHistory.Points[localHistory.Points.length - 1].Description !== AscDFH.historydescription_Collaborative_MoveByHistory))
+			AscCommon.History.Create_NewPoint(AscDFH.historydescription_Collaborative_MoveByHistory);
 	};
 	/**
 	 * Перемещаемся по истории ревизии на заданную точку
@@ -107,29 +113,34 @@
 	 */
 	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function (intCount)
 	{
+		let nTempGlobalLock = AscCommon.CollaborativeEditing.m_bGlobalLock;
+		AscCommon.CollaborativeEditing.m_bGlobalLock = 0;
+
+		this.UndoNavigationRevision();
+
 		this.SplitChangesByPoints();
 
 		if (intCount <= 0 || intCount > this.ChangesSplitByPoints.length || intCount === this.curChangeIndex)
-		{
-			AscCommon.History.Remove_LastPoint();
 			return false;
-		}
-
-		this.UndoNavigationRevision();
-		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
 
 		this.curChangeIndex	= intCount;
-		this.StepTextPoint	= this.ChangesSplitByPoints[intCount - 1];
+		let arr	= this.ChangesSplitByPoints[intCount - 1];
 
-		let arrInput		= this.RedoUndoChanges(this.StepTextPoint, true);
+		let arrInput		= this.RedoUndoChanges(arr, true);
+
+		this.CheckPointInHistory();
+
+		for (let i = 0; i < arrInput.length; i++)
+		{
+			this.textRecovery.document.History.Add(arrInput[i], arrInput[i])
+		}
 
 		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
-		AscCommon.History.Remove_LastPoint();
 
 		this.textRecovery.oRunSplits = {}
 		this.textRecovery.Check();
 
-
+		AscCommon.CollaborativeEditing.m_bGlobalLock = nTempGlobalLock;
 		return true;
 	};
 	CCollaborativeHistory.prototype.AddChange = function(change)
@@ -330,7 +341,6 @@
 	 */
 	CCollaborativeHistory.prototype.MoveToPoint = function(nPos)
 	{
-		this.UndoDeletedTextRecovery(true);
 		return this.NavigationRevisionHistoryByStep(nPos);
 	};
 	CCollaborativeHistory.prototype.InitTextRecover = function ()
@@ -357,10 +367,10 @@
 	 * Отменить отображение удаленного текста в данной точке истории ревизии
 	 * @return {boolean}
 	 */
-	CCollaborativeHistory.prototype.UndoDeletedTextRecovery = function(isNotCollab)
+	CCollaborativeHistory.prototype.UndoDeletedTextRecovery = function()
 	{
 		if (this.textRecovery)
-			return this.textRecovery.UndoShowDelText(isNotCollab);
+			return this.textRecovery.UndoShowDelText();
 
 		return false;
 	};
