@@ -9326,6 +9326,31 @@
 		return vietnameseCounting(nValue, digits).join(' ');
 	}
 
+	function IntToCustomTurkish(nValue, bLowerCase)
+	{
+		let arrLetters;
+		if (bLowerCase)
+		{
+			arrLetters = [0x0061, 0x0062, 0x0063, 0x00e7, 0x0064, 0x0065, 0x0066, 0x0067, 0x011f, 0x0068, 0x0131, 0x0069, 0x006a,
+				0x006b, 0x006c, 0x006d, 0x006e, 0x006f, 0x00f6, 0x0070, 0x0072, 0x0073, 0x015f, 0x0074, 0x0075, 0x00fc, 0x0076,
+				0x0079, 0x007a];
+		}
+		else
+		{
+			arrLetters = [0x0041, 0x0042, 0x0043, 0x00c7, 0x0044, 0x0045, 0x0046, 0x0047, 0x011e, 0x0048, 0x0049, 0x0130, 0x004a,
+				0x004b, 0x004c, 0x004d, 0x004e, 0x004f, 0x00d6, 0x0050, 0x0052, 0x0053, 0x015e, 0x0054, 0x0055, 0x00dc, 0x0056,
+				0x0059, 0x005a];
+		}
+		nValue = repeatNumberingLvl(nValue, 870);
+		const nNum = nValue - 1;
+
+		const nAlphabetLength = arrLetters.length;
+		const nOst   = nNum % nAlphabetLength;
+		const nCount = ((nNum - nOst) / nAlphabetLength) + 1;
+
+		return String.fromCharCode(arrLetters[nOst]).repeat(nCount);
+	}
+
 	function IntToCustomGreece(nValue) {
 		nValue = repeatNumberingLvl(nValue, 9999);
 		const greeceNumbersMap = {
@@ -9737,6 +9762,15 @@
 				break;
 			case Asc.c_oAscNumberingFormat.CustomGreece:
 				sResult = IntToCustomGreece(nValue);
+				break;
+			case Asc.c_oAscNumberingFormat.CustomUpperTurkish:
+				sResult = IntToCustomTurkish(nValue);
+				break;
+			case Asc.c_oAscNumberingFormat.CustomLowerTurkish:
+				sResult = IntToCustomTurkish(nValue, true);
+				break;
+			default:
+				break;
 		}
 
 		return sResult;
