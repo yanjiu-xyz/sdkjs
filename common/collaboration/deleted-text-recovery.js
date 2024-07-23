@@ -252,15 +252,13 @@
 				{
 					let oLast = arrDelChanges[arrDelChanges.length - 1];
 					oLast.push(oCurrentChange);
-				}
-				else
+				} else
 				{
 					arrDelChanges.push([oCurrentChange]);
 				}
-			}
-			else if (oCurrentChange instanceof CChangesRunAddItem || oCurrentChange instanceof CChangesParagraphAddItem || oCurrentChange instanceof CChangesDocumentAddItem)
+			} else if (oCurrentChange instanceof CChangesRunAddItem || oCurrentChange instanceof CChangesParagraphAddItem || oCurrentChange instanceof CChangesDocumentAddItem)
 			{
-				if (arrDelChanges.length > 0 )
+				if (arrDelChanges.length > 0)
 				{
 					let oLast = arrDelChanges[arrDelChanges.length - 1];
 					oLast.push(oCurrentChange);
@@ -334,10 +332,11 @@
 
 		for (let i = 0; i < arrInputChanges.length; i++)
 		{
-			let oCurChanges = arrInputChanges[i].reverse();
-			for (let y = 0; y < oCurChanges.length; y++)
+			let arrChanges = arrInputChanges[i].reverse();
+
+			for (let y = 0; y < arrChanges.length; y++)
 			{
-				let oCurChange = oCurChanges[y];
+				let oCurChange = arrChanges[y];
 				oRemoveText.ProceedChange(oCurChange)
 
 				if (oCurChange instanceof CChangesRunAddItem || oCurChange instanceof CChangesParagraphAddItem || oCurChange instanceof CChangesDocumentAddItem)
@@ -349,11 +348,13 @@
 				{
 					for (let h = 0; h < oCurChange.PosArray.length; h++)
 					{
-						oRemoveText.AddToClass(oCurChange.Class, oCurChange.Items[h], oCurChange.PosArray[h]);
+						oRemoveText.AddToClass(oCurChange.Class, oCurChange.Items[h], oCurChange.PosArray[h] + h);
 					}
 
 					if (oCurChange.Pos !== undefined)
+					{
 						oRemoveText.AddToClass(oCurChange.Class, oCurChange.Items[0], oCurChange.Pos);
+					}
 
 					let oCurrentRun = oCurChange.Class;
 					if (oCurrentRun.CollaborativeMarks)
@@ -377,9 +378,7 @@
 				}
 				else
 				{
-					let startPos = allChanges.length;
 					this.RedoUndoChange(oCurChange, false, allChanges);
-					delChanges = delChanges.concat(allChanges.slice(startPos));
 				}
 			}
 		}

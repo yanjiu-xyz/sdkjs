@@ -39,6 +39,7 @@ $(function () {
 	versionHistory.asc_SetDateOfRevision(new Date().getTime());
 
 	let oCurDelRecover = null;
+	let oCollaborativeHistory = null;
 	let arr = [];
 
 	function AddParagraph(pos)
@@ -53,17 +54,28 @@ $(function () {
 		r.AddText(text);
 		return r;
 	}
-	function DelLast(nCount)
+	function DelLast(nCount, isShift)
 	{
-		for (let i = 0; i < nCount; i++)
+		if (isShift)
+		{
+			AscTest.MoveCursorLeft(true, false, nCount);
 			AscTest.PressKey(AscTest.Key.backspace);
+		}
+		else
+		{
+			for (let i = 0; i < nCount; i++)
+				AscTest.PressKey(AscTest.Key.backspace);
+		}
+
 	}
 
 	function Init()
 	{
 		UpdateChanges();
 		logicDocument.CollaborativeEditing.CoHistory.InitTextRecover();
-		oCurDelRecover = AscCommon.CollaborativeEditing.CoHistory.textRecovery;
+
+		oCollaborativeHistory	= logicDocument.CollaborativeEditing.CoHistory;
+		oCurDelRecover			= AscCommon.CollaborativeEditing.CoHistory.textRecovery;
 	}
 
 	function UpdateChanges ()
@@ -86,12 +98,12 @@ $(function () {
 
 	function Prev()
 	{
-		oCurDelRecover.NavigationRevisionHistoryByStep(oCurDelRecover.GetGlobalPointIndex() - 1);
+		oCollaborativeHistory.NavigationRevisionHistoryByStep(oCollaborativeHistory.GetGlobalPointIndex() - 1);
 	}
 
 	function Next()
 	{
-		oCurDelRecover.NavigationRevisionHistoryByStep(oCurDelRecover.GetGlobalPointIndex() + 1);
+		oCollaborativeHistory.NavigationRevisionHistoryByStep(oCollaborativeHistory.GetGlobalPointIndex() + 1);
 	}
 
 	function CheckRuns(assert, paragraph, arr)
@@ -112,6 +124,7 @@ $(function () {
 		AscCommon.History.Clear();
 		AscTest.ClearDocument();
 		AscCommon.CollaborativeEditing.CoHistory.textRecovery = null;
+		AscCommon.CollaborativeEditing.Clear();
 	})
 
 	QUnit.module("Unit-tests for recover deleted text");
@@ -153,7 +166,7 @@ $(function () {
 		p.AddToContentToEnd(run);
 		assert.ok(true, "Create run with '" + strStartText+"' text.");
 
-		DelLast(6);
+		DelLast(6, true);
 		assert.ok(true, "Delete ' World'");
 		let strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hello", "Text in run is 'Hello'");
