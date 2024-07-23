@@ -6613,6 +6613,7 @@ function CDrawingDocument()
 		renderer.Memory.Seek(0);
 		renderer.VectorMemoryForPrint.ClearNoAttack();
 		renderer.DocInfo(this.m_oWordControl.m_oApi.asc_getCoreProps());
+		renderer.AddHeadings(this.m_oWordControl.m_oApi.asc_GetDocumentOutlineManager());
 
 		for (var i = start; i <= end; i++)
 		{

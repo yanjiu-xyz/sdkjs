@@ -1544,6 +1544,8 @@
 		this.ctAnnotFieldDelete	= 165;
 		this.ctWidgetsInfo		= 166;
 
+		this.ctHeadings         = 169;
+
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
 
@@ -3372,6 +3374,29 @@
 			this.Memory.Seek(nEndPos);
 		}
 	};
+
+	CDocumentRenderer.prototype.AddHeadings = function(oNavigation)
+	{
+		this.Memory.WriteByte(CommandType.ctHeadings);
+
+		let nStartPos = this.Memory.GetCurPosition();
+		this.Memory.Skip(4);
+
+		let count = oNavigation.get_ElementsCount();
+		this.Memory.WriteLong(count);
+		for (let i = 0; i < count; ++i)
+		{
+			this.Memory.WriteLong(oNavigation.get_Level(i));
+			this.Memory.WriteLong(0); // TODO page
+			this.Memory.WriteDouble(0); // TODO y
+			this.Memory.WriteString(oNavigation.get_Text(i));
+		}
+
+		let nEndPos = this.Memory.GetCurPosition();
+		this.Memory.Seek(nStartPos);
+		this.Memory.WriteLong(nEndPos - nStartPos);
+		this.Memory.Seek(nEndPos);
+	}
 
 	var MATRIX_ORDER_PREPEND = 0;
 	var MATRIX_ORDER_APPEND  = 1;
