@@ -13115,13 +13115,25 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiPivotTable.prototype.ClearTable = function () {
-		// TODO add cleaning of all filters and sorts (when we add work with it)
-		const pivotFields = this.pivot.asc_getPivotFields();
-		for (let i = 0; i < fields.length; i += 1) {
-			if (pivotFields[i].axis !== null) {
-				this.pivot.asc_removeField(this.api, i);
+		const ws = this.pivot.worksheet;
+		const name = this.pivot.asc_getName();
+		const range = this.pivot.getRange();
+		const bbox = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
+		const dataRef = this.pivot.cacheDefinition.cacheSource.worksheetSource.getDataRef();
+		let index = -1;
+		for (let i = 0; i < ws.pivotTables.length; i += 1) {
+			if (ws.pivotTables[i].Get_Id() === this.pivot.Get_Id()) {
+				index = i;
+				break;
 			}
 		}
+		if (index !== -1) {
+			ws._deletePivotTable(ws.pivotTables, this.pivot, index);
+			this.pivot = this.api._asc_insertPivot(ws.workbook, dataRef, ws, bbox, false);
+			this.pivot.asc_setName(name);
+			return;
+		}
+		private_MakeError("Unknown error!")
 	};
 	/**
 	 * Returns the value for the data filed in a PivotTable.
@@ -14650,7 +14662,7 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiPivotField.prototype.ClearAllFilters  = function () {
-		// TODO
+		this.table.pivot.removeFiltersWithLock(this.table.api, [this.index], false);
 	};
 	/**
 	 * This method deletes all label filters or all date filters in the PivotFilters collection.

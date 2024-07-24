@@ -7397,7 +7397,6 @@ var editor;
 			}
 			this.wb.updateWorksheetByModel();
 			this.wb.showWorksheet();
-			// добавил возвращение таблицы, для методов билдера
 			return this._asc_insertPivot(wb, dataRef, ws, location.bbox, confirmation);
 		} else {
 			return new Error("Problem with pivotRef");
