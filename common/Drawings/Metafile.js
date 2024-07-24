@@ -3377,18 +3377,38 @@
 
 	CDocumentRenderer.prototype.AddHeadings = function(oNavigation)
 	{
+		let count = oNavigation.get_ElementsCount();
+		if (!count)
+			return 0;
+
 		this.Memory.WriteByte(CommandType.ctHeadings);
 
 		let nStartPos = this.Memory.GetCurPosition();
 		this.Memory.Skip(4);
 
-		let count = oNavigation.get_ElementsCount();
 		this.Memory.WriteLong(count);
 		for (let i = 0; i < count; ++i)
 		{
+			let oPos = oNavigation.get_DestinationXY(i);
+			let dx = 0;
+			let dy = 0;
+			let page = 0;
+			if (oPos)
+			{
+				page = oPos.PageNum;
+				dx = oPos.X;
+				dy = oPos.Y;
+				if (oPos.Transform)
+				{
+					dx = oBookmarkPos.Transform.TransformPointX(oPos.X, oPos.Y);
+					dy = oBookmarkPos.Transform.TransformPointY(oPos.X, oPos.Y);
+				}
+			}
+
 			this.Memory.WriteLong(oNavigation.get_Level(i));
-			this.Memory.WriteLong(0); // TODO page
-			this.Memory.WriteDouble(0); // TODO y
+			this.Memory.WriteLong(page);
+			this.Memory.WriteDouble(dx);
+			this.Memory.WriteDouble(dy);
 			this.Memory.WriteString(oNavigation.get_Text(i));
 		}
 
@@ -3396,6 +3416,8 @@
 		this.Memory.Seek(nStartPos);
 		this.Memory.WriteLong(nEndPos - nStartPos);
 		this.Memory.Seek(nEndPos);
+
+		return count;
 	}
 
 	var MATRIX_ORDER_PREPEND = 0;

@@ -6613,7 +6613,6 @@ function CDrawingDocument()
 		renderer.Memory.Seek(0);
 		renderer.VectorMemoryForPrint.ClearNoAttack();
 		renderer.DocInfo(this.m_oWordControl.m_oApi.asc_getCoreProps());
-		renderer.AddHeadings(this.m_oWordControl.m_oApi.asc_GetDocumentOutlineManager());
 
 		for (var i = start; i <= end; i++)
 		{
@@ -6638,6 +6637,15 @@ function CDrawingDocument()
 			this.m_oDocRenderer = null;
 			this.m_oWordControl.m_oApi.ShowParaMarks = this.m_bOldShowMarks;
 			this.printedDocument = null;
+		}
+
+		this.m_oWordControl.m_oApi.asc_ShowDocumentOutline();
+		let nSaveHeadings = renderer.AddHeadings(this.m_oWordControl.m_oApi.asc_GetDocumentOutlineManager());
+		this.m_oWordControl.m_oApi.asc_HideDocumentOutline();
+
+		if (!nSaveHeadings && false)
+		{
+			
 		}
 
 		if (noBase64) {

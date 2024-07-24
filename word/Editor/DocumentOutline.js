@@ -482,6 +482,26 @@ CDocumentOutline.prototype.GetCurrentPosition = function()
 {
 	return this.CurPos;
 };
+CDocumentOutline.prototype.GetDestinationXY = function(nIndex)
+{
+	if (nIndex < 0 || nIndex >= this.Elements.length)
+		return null;
+
+	let oParagraph = this.Elements[nIndex].Paragraph;
+	if (!oParagraph)
+		return null;
+
+	var oCurPos = oParagraph.Get_StartPos();
+	if (!oCurPos)
+		return null;
+
+	let oState = oParagraph.SaveSelectionState();
+	oParagraph.Set_ParaContentPos(oCurPos, false, -1, -1, true);
+	let oResult = oParagraph.GetCalculatedCurPosXY();
+	oParagraph.LoadSelectionState(oState);
+
+	return oResult;
+};
 
 //-------------------------------------------------------------export---------------------------------------------------
 CDocumentOutline.prototype["get_ElementsCount"]    = CDocumentOutline.prototype.GetElementsCount;
@@ -496,3 +516,4 @@ CDocumentOutline.prototype["insertSubHeader"]      = CDocumentOutline.prototype.
 CDocumentOutline.prototype["isFirstItemNotHeader"] = CDocumentOutline.prototype.IsFirstItemNotHeader;
 CDocumentOutline.prototype["selectContent"]        = CDocumentOutline.prototype.SelectContent;
 CDocumentOutline.prototype["isEmptyItem"]          = CDocumentOutline.prototype.IsEmptyItem;
+CDocumentOutline.prototype["get_DestinationXY"]    = CDocumentOutline.prototype.GetDestinationXY;
