@@ -2803,7 +2803,8 @@
 			if (this.VersionHistory && this.VersionHistory.documentSha256) {
 				let sha256 = AscCommon.Digest.sha256(this.openResult.data, 0, this.openResult.data.length);
 				if (this.VersionHistory.documentSha256 !== AscCommon.Hex.encode(sha256) ) {
-					this.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
+					this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
+					this.sendEvent("asc_onError", c_oAscError.ID.DocumentAndChangeMismatch, c_oAscError.Level.Critical);
 					return;
 				}
 			}
