@@ -6640,7 +6640,7 @@ function CDrawingDocument()
 		}
 		
 		// TODO: Когда в интерфейсе появится флаг как писать заголовки послать его вторым параметром
-		renderer.AddHeadings(_this.m_oLogicDocument, false);
+		renderer.AddHeadings(_this.m_oLogicDocument, true);
 
 		if (noBase64) {
 			return renderer.Memory.GetData();
