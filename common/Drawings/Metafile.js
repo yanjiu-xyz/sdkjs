@@ -3375,50 +3375,109 @@
 		}
 	};
 
-	CDocumentRenderer.prototype.AddHeadings = function(oNavigation)
+	function AddHeadings(memory, headings)
 	{
-		let count = oNavigation.get_ElementsCount();
+		if (!headings.length)
+			return;
+
+		memory.WriteByte(CommandType.ctHeadings);
+
+		let nStartPos = memory.GetCurPosition();
+		memory.Skip(4);
+
+		memory.WriteLong(headings.length);
+		for (let i = 0; i < headings.length; ++i)
+		{
+			memory.WriteLong(headings[i].lvl);
+			memory.WriteLong(headings[i].page);
+			memory.WriteDouble(headings[i].dx);
+			memory.WriteDouble(headings[i].dy);
+			memory.WriteString(headings[i].desc);
+		}
+
+		let nEndPos = memory.GetCurPosition();
+		memory.Seek(nStartPos);
+		memory.WriteLong(nEndPos - nStartPos);
+		memory.Seek(nEndPos);
+	}
+
+	CDocumentRenderer.prototype.AddOutlines = function(oOutlines)
+	{
+		let count = oOutlines.get_ElementsCount();
 		if (!count)
 			return 0;
 
-		this.Memory.WriteByte(CommandType.ctHeadings);
-
-		let nStartPos = this.Memory.GetCurPosition();
-		this.Memory.Skip(4);
-
-		this.Memory.WriteLong(count);
+		let arrOutlines = [];
 		for (let i = 0; i < count; ++i)
 		{
-			let oPos = oNavigation.get_DestinationXY(i);
-			let dx = 0;
-			let dy = 0;
-			let page = 0;
+			let oPos = oOutlines.get_DestinationXY(i);
+			let dX = 0;
+			let dY = 0;
+			let nPage = 0;
 			if (oPos)
 			{
-				page = oPos.PageNum;
-				dx = oPos.X;
-				dy = oPos.Y;
+				nPage = oPos.PageNum;
+				dX = oPos.X;
+				dY = oPos.Y;
 				if (oPos.Transform)
 				{
-					dx = oBookmarkPos.Transform.TransformPointX(oPos.X, oPos.Y);
-					dy = oBookmarkPos.Transform.TransformPointY(oPos.X, oPos.Y);
+					dX = oPos.Transform.TransformPointX(oPos.X, oPos.Y);
+					dY = oPos.Transform.TransformPointY(oPos.X, oPos.Y);
 				}
 			}
 
-			this.Memory.WriteLong(oNavigation.get_Level(i));
-			this.Memory.WriteLong(page);
-			this.Memory.WriteDouble(dx);
-			this.Memory.WriteDouble(dy);
-			this.Memory.WriteString(oNavigation.get_Text(i));
+			arrOutlines.push({
+				lvl : oOutlines.get_Level(i),
+				page : nPage,
+				dx : dX,
+				dy : dY,
+				desc : oOutlines.get_Text(i)
+			});
 		}
 
-		let nEndPos = this.Memory.GetCurPosition();
-		this.Memory.Seek(nStartPos);
-		this.Memory.WriteLong(nEndPos - nStartPos);
-		this.Memory.Seek(nEndPos);
-
+		AddHeadings(this.Memory, arrOutlines);
 		return count;
-	}
+	};
+
+	CDocumentRenderer.prototype.AddBookmarks = function(oBookmarks)
+	{
+		let count = oBookmarks.asc_GetCount();
+		if (!count)
+			return;
+
+		let arrBookmarks = [];
+		for (let i = 0; i < count; ++i)
+		{
+			let Id = oBookmarks.asc_GetId(i);
+			let oBookmark = oBookmarks.GetBookmarkById(Id)[0];
+
+			let oPos = oBookmark.GetDestinationXY(i);
+			let dX = 0;
+			let dY = 0;
+			let nPage = 0;
+			if (oPos)
+			{
+				nPage = oPos.PageNum;
+				dX = oPos.X;
+				dY = oPos.Y;
+				if (oPos.Transform)
+				{
+					dX = oPos.Transform.TransformPointX(oPos.X, oPos.Y);
+					dY = oPos.Transform.TransformPointY(oPos.X, oPos.Y);
+				}
+			}
+
+			arrBookmarks.push({
+				lvl : 0,
+				page : nPage,
+				dx : dX,
+				dy : dY,
+				desc : oBookmarks.asc_GetName(i)
+			});
+		}
+
+		AddHeadings(this.Memory, arrBookmarks);
+	};
 
 	var MATRIX_ORDER_PREPEND = 0;
 	var MATRIX_ORDER_APPEND  = 1;

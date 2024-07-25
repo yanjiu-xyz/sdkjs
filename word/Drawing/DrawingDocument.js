@@ -6640,13 +6640,11 @@ function CDrawingDocument()
 		}
 
 		this.m_oWordControl.m_oApi.asc_ShowDocumentOutline();
-		let nSaveHeadings = renderer.AddHeadings(this.m_oWordControl.m_oApi.asc_GetDocumentOutlineManager());
+		let nSaveHeadings = renderer.AddOutlines(this.m_oWordControl.m_oApi.asc_GetDocumentOutlineManager());
 		this.m_oWordControl.m_oApi.asc_HideDocumentOutline();
 
 		if (!nSaveHeadings && false)
-		{
-			// TODO Save BookmarksAsHeadings
-		}
+			renderer.AddBookmarks(this.m_oWordControl.m_oApi.asc_GetBookmarksManager());
 
 		if (noBase64) {
 			return renderer.Memory.GetData();
