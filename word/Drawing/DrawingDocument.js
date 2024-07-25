@@ -6638,13 +6638,9 @@ function CDrawingDocument()
 			this.m_oWordControl.m_oApi.ShowParaMarks = this.m_bOldShowMarks;
 			this.printedDocument = null;
 		}
-
-		this.m_oWordControl.m_oApi.asc_ShowDocumentOutline();
-		let nSaveHeadings = renderer.AddOutlines(this.m_oWordControl.m_oApi.asc_GetDocumentOutlineManager());
-		this.m_oWordControl.m_oApi.asc_HideDocumentOutline();
-
-		if (!nSaveHeadings && false)
-			renderer.AddBookmarks(this.m_oWordControl.m_oApi.asc_GetBookmarksManager());
+		
+		// TODO: Когда в интерфейсе появится флаг как писать заголовки послать его вторым параметром
+		renderer.AddHeadings(_this.m_oLogicDocument, false);
 
 		if (noBase64) {
 			return renderer.Memory.GetData();

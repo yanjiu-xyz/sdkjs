@@ -2026,6 +2026,21 @@ Paragraph.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTar
 
 	return oCurPosInfo;
 };
+Paragraph.prototype.GetStartPosXY = function()
+{
+	if (!this.IsRecalculated())
+		return null;
+	
+	let curPos = this.Get_StartPos();
+	if (!curPos)
+		return null;
+	
+	let state = this.SaveSelectionState();
+	this.Set_ParaContentPos(curPos, false, -1, -1, true); // Обязательно корректируем позицию
+	let result = this.GetCalculatedCurPosXY();
+	this.LoadSelectionState(state);
+	return result;
+};
 Paragraph.prototype.GetCalculatedCurPosXY = function()
 {
 	return this.Internal_Recalculate_CurPos(false, false, true);

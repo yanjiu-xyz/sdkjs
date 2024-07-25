@@ -3375,7 +3375,7 @@
 		}
 	};
 
-	function AddHeadings(memory, headings)
+	function WriteHeadings(memory, headings)
 	{
 		if (!headings.length)
 			return;
@@ -3390,8 +3390,8 @@
 		{
 			memory.WriteLong(headings[i].lvl);
 			memory.WriteLong(headings[i].page);
-			memory.WriteDouble(headings[i].dx);
-			memory.WriteDouble(headings[i].dy);
+			memory.WriteDouble(headings[i].x);
+			memory.WriteDouble(headings[i].y);
 			memory.WriteString(headings[i].desc);
 		}
 
@@ -3400,83 +3400,84 @@
 		memory.WriteLong(nEndPos - nStartPos);
 		memory.Seek(nEndPos);
 	}
-
-	CDocumentRenderer.prototype.AddOutlines = function(oOutlines)
+	
+	function AddHeading(headings, posXY, lvl, text)
 	{
-		let count = oOutlines.get_ElementsCount();
-		if (!count)
-			return 0;
-
-		let arrOutlines = [];
-		for (let i = 0; i < count; ++i)
-		{
-			let oPos = oOutlines.get_DestinationXY(i);
-			let dX = 0;
-			let dY = 0;
-			let nPage = 0;
-			if (oPos)
-			{
-				nPage = oPos.PageNum;
-				dX = oPos.X;
-				dY = oPos.Y;
-				if (oPos.Transform)
-				{
-					dX = oPos.Transform.TransformPointX(oPos.X, oPos.Y);
-					dY = oPos.Transform.TransformPointY(oPos.X, oPos.Y);
-				}
-			}
-
-			arrOutlines.push({
-				lvl : oOutlines.get_Level(i),
-				page : nPage,
-				dx : dX,
-				dy : dY,
-				desc : oOutlines.get_Text(i)
-			});
-		}
-
-		AddHeadings(this.Memory, arrOutlines);
-		return count;
-	};
-
-	CDocumentRenderer.prototype.AddBookmarks = function(oBookmarks)
-	{
-		let count = oBookmarks.asc_GetCount();
-		if (!count)
+		if (!posXY)
 			return;
-
-		let arrBookmarks = [];
+		
+		let x = posXY.X;
+		let y = posXY.Y;
+		if (posXY.Transform)
+		{
+			x = posXY.Transform.TransformPointX(posXY.X, posXY.Y);
+			y = posXY.Transform.TransformPointY(posXY.X, posXY.Y);
+		}
+		
+		headings.push({
+			lvl  : lvl,
+			page : posXY.PageNum,
+			x    : x,
+			y    : y,
+			desc : text
+		});
+	}
+	
+	function GetHeadingsByHeadings(logicDocument)
+	{
+		let docOutline = logicDocument.GetDocumentOutline();
+		let isUse = docOutline.IsUse();
+		if (!isUse)
+			docOutline.SetUse(true);
+		
+		let count = docOutline.GetElementsCount();
+		let headings = [];
 		for (let i = 0; i < count; ++i)
 		{
-			let Id = oBookmarks.asc_GetId(i);
-			let oBookmark = oBookmarks.GetBookmarkById(Id)[0];
-
-			let oPos = oBookmark.GetDestinationXY(i);
-			let dX = 0;
-			let dY = 0;
-			let nPage = 0;
-			if (oPos)
-			{
-				nPage = oPos.PageNum;
-				dX = oPos.X;
-				dY = oPos.Y;
-				if (oPos.Transform)
-				{
-					dX = oPos.Transform.TransformPointX(oPos.X, oPos.Y);
-					dY = oPos.Transform.TransformPointY(oPos.X, oPos.Y);
-				}
-			}
-
-			arrBookmarks.push({
-				lvl : 0,
-				page : nPage,
-				dx : dX,
-				dy : dY,
-				desc : oBookmarks.asc_GetName(i)
-			});
+			let posXY = docOutline.GetDestinationXY(i);
+			AddHeading(headings, posXY, docOutline.GetLevel(i), docOutline.GetText(i));
 		}
-
-		AddHeadings(this.Memory, arrBookmarks);
+		
+		if (!isUse)
+			docOutline.SetUse(false);
+		
+		return headings;
+	}
+	
+	function GetHeadingsByBookmarks(logicDocument)
+	{
+		let bookmarkManager = logicDocument.GetBookmarksManager();
+		
+		let count = bookmarkManager.GetCount();
+		let headings = [];
+		for (let i = 0; i < count; ++i)
+		{
+			let name = bookmarkManager.GetName(i);
+			if (bookmarkManager.IsHiddenBookmark(name))
+				continue;
+			
+			let bookmarkStart = bookmarkManager.GetBookmarkStart(i);
+			if (!bookmarkStart)
+				continue;
+			
+			let posXY = bookmarkStart.GetDestinationXY();
+			AddHeading(headings, posXY, 0, name);
+		}
+		
+		return headings;
+	}
+	CDocumentRenderer.prototype.AddHeadings = function(logicDocument, byHeadings)
+	{
+		if (!logicDocument)
+			return;
+		
+		let headings;
+		if (byHeadings)
+			headings = GetHeadingsByHeadings(logicDocument);
+		else
+			headings = GetHeadingsByBookmarks(logicDocument);
+		
+		WriteHeadings(this.Memory, headings);
 	};
 
 	var MATRIX_ORDER_PREPEND = 0;
