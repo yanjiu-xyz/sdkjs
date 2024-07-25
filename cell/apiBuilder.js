@@ -13044,18 +13044,18 @@
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {Object} options
-	 * @param {number | string | Array.<number | string> | undefined} options.rows - Specifies an array of field names or ids to be added as rows or added to the category axis.
-	 * @param {number | string | Array.<number | string> | undefined} options.cols - Specifies an array of field names or ids to be added as columns or added to the series axis.
-	 * @param {number | string | Array.<number | string> | undefined} options.pages - Specifies an array of field names or ids to be added as pages or added to the page area.
+	 * @param {number | string | (number | string)[] | undefined} options.rows - Specifies an array of field names or ids to be added as rows or added to the category axis.
+	 * @param {number | string | (number | string)[] | undefined} options.columns - Specifies an array of field names or ids to be added as columns or added to the series axis.
+	 * @param {number | string | (number | string)[] | undefined} options.pages - Specifies an array of field names or ids to be added as pages or added to the page area.
 	 * @param {boolean | undefined} options.addToTable - Applies only to PivotTable reports. True to add the specified fields to the report (none of the existing fields are replaced). False to replace existing fields with the new fields. The default value is False.
 	 */
 	ApiPivotTable.prototype.AddFields = function (options) {
 		options.rows = options.rows != null ? options.rows : [];
-		options.cols = options.cols != null ? options.cols : [];
+		options.columns = options.columns != null ? options.columns : [];
 		options.pages = options.pages != null ? options.pages : [];
 
 		const rows = Array.isArray(options.rows) ? options.rows : [options.rows];
-		const cols = Array.isArray(options.cols) ? options.cols : [options.cols];
+		const cols = Array.isArray(options.columns) ? options.columns : [options.columns];
 		const pages = Array.isArray(options.pages) ? options.pages : [options.pages];
 		const cacheFields = this.pivot.asc_getCacheFields();
 		const t = this;
@@ -13078,12 +13078,11 @@
 		}
 
 		if (!options.addToTable) {
-			const pivotFields = this.pivot.asc_getPivotFields();
-			for (let i = 0; i < pivotFields.length; i += 1) {
-				if (!pivotFields[i].dataField) {
-					this.pivot.asc_removeField(this.api, i);
-				}
-			}
+			const pivotFields = this.GetPivotFields()
+			pivotFields.forEach(function (pivotField) {
+				pivotField.Remove()
+			})
+
 		}
 		rows.forEach(function(row) {
 			processField(row, function(index) {
@@ -13110,7 +13109,7 @@
 		this.pivot.asc_removeFilters(this.api);
 	};
 	/**
-	 * Removes all field from PivotTable.
+	 * Clears the Pivot Table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 */
@@ -13133,7 +13132,7 @@
 			this.pivot.asc_setName(name);
 			return;
 		}
-		private_MakeError("Unknown error!")
+		private_MakeError("Unknown error!");
 	};
 	/**
 	 * Returns the value for the data filed in a PivotTable.
@@ -13148,7 +13147,7 @@
 		if (cell) {
 			return this.pivot.worksheet.getCell3(cell.row, cell.col).getValue();
 		}
-		private_MakeError('There is no data with that params.')
+		private_MakeError('There is no data with that params.');
 		return null;
 	};
 	/**
