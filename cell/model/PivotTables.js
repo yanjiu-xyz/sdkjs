@@ -6623,6 +6623,30 @@ CT_pivotTableDefinition.prototype.asc_removeFilters = function(api) {
 		this.removeFiltersWithLock(api, flds, false);
 	}
 };
+CT_pivotTableDefinition.prototype.asc_removePivotFilter = function (api, fld, opt_clearManualFilters, opt_clearLabelFilters, opt_clearValueFilters, confirmation) {
+	let flds = [];
+	let autoFilterObject = new Asc.AutoFiltersOptions();
+	this.fillAutoFiltersOptions(autoFilterObject, fld);
+	if (autoFilterObject.filter && autoFilterObject.filter.type !== Asc.c_oAscAutoFilterTypes.None) {
+		if (autoFilterObject.filter.type === Asc.c_oAscAutoFilterTypes.Filters) {
+			if (opt_clearManualFilters) {
+				flds.push(fld);
+			}
+		} else {
+			let pivotFilter = this.getPivotFilter(fld);
+			if (pivotFilter && pivotFilter.isValueFilter()) {
+				if (opt_clearValueFilters) {
+					flds.push(fld);
+				}
+			} else {
+				if (opt_clearLabelFilters) {
+					flds.push(fld);
+				}
+			}
+		}
+	}
+	this.removeFiltersWithLock(api, flds, confirmation);
+};
 CT_pivotTableDefinition.prototype.removeFiltersWithLock = function(api, flds, confirmation) {
 	var t = this, changeRes;
 	let fldsWithFilter = flds.filter(function (fld) {

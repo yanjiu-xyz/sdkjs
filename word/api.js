@@ -1495,10 +1495,11 @@ background-repeat: no-repeat;\
 		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.navigate(value);
 	};
-	asc_docs_api.prototype["asc_setViewerTargetType"] = function(type) {
+	asc_docs_api.prototype["asc_setViewerTargetType"] = asc_docs_api.prototype.asc_setViewerTargetType = function(type) {
 		this.isHandMode = ("hand" === type);
 		this.WordControl.checkMouseHandMode();
 		this.WordControl.onMouseMove();
+		this.sendEvent("asc_onChangeViewerTargetType", this.isHandMode);
 	};
 
 	function BeforeOpenDocument()
@@ -8680,7 +8681,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_SendForm = function()
 	{
 		var t = this;
-		this.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.Submit);
+		this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Submit);
 		var data = {'type': 'sendForm', 'userconnectionid': this.CoAuthoringApi.getUserConnectionId(), 'formdata': {
 				'formsdata': this.asc_GetAllFormsData(true)
 		}};
@@ -8688,7 +8689,7 @@ background-repeat: no-repeat;\
 			if (!(response && AscCommon.c_oAscServerCommandErrors.NoError === response.code)) {
 				t.sendEvent('asc_onError', Asc.c_oAscError.ID.Submit, c_oAscError.Level.NoCritical);
 			}
-			t.sync_EndAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.Submit);
+			t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Submit);
 		});
 	};
 
@@ -12226,11 +12227,14 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_EditSelectAll = function()
 	{
-		let oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
 			return null;
-
-		oLogicDocument.SelectAll();
+		
+		if (this.isTargetHandMode() && !logicDocument.IsInFormField())
+			this.asc_setViewerTargetType("select");
+		
+		logicDocument.SelectAll();
 	};
 	asc_docs_api.prototype.asc_enterText = function(value)
 	{
