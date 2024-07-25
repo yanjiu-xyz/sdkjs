@@ -20498,6 +20498,7 @@ prot["asc_getDataToGetPivotData"] = prot.asc_getDataToGetPivotData;
 prot["asc_getColumnRange"] = prot.asc_getColumnRange;
 prot["asc_getDataBodyRange"] = prot.asc_getDataBodyRange;
 prot["asc_getRowRange"] = prot.asc_getRowRange;
+prot["asc_removePivotFilter"] = prot.asc_removePivotFilter;
 
 
 window["Asc"]["CT_PivotTableStyle"] = window['Asc'].CT_PivotTableStyle = CT_PivotTableStyle;

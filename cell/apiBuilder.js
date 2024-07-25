@@ -14669,14 +14669,14 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiPivotField.prototype.ClearLabelFilters  = function () {
-		// TODO
+		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, false, true, false);
 	};
 	/**
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiPivotField.prototype.ClearManualFilters  = function () {
-		// TODO
+		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, true, false, false);
 	};
 	/**
 	 * Calling this method deletes all value filters in the PivotFilters collection of the PivotField.
@@ -14684,7 +14684,7 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiPivotField.prototype.ClearValueFilters  = function () {
-		// TODO
+		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, false, false, true);
 	};
 	/**
 	 * Returns an object that represents either a single PivotTable item (a PivotItem object)
