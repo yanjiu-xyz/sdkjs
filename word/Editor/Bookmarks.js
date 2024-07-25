@@ -141,24 +141,10 @@ CParagraphBookmark.prototype.GoToBookmark = function()
 };
 CParagraphBookmark.prototype.GetDestinationXY = function()
 {
-	var oParagraph = this.Paragraph;
-	if (!oParagraph)
+	if (!this.Paragraph)
 		return null;
-
-	var oLogicDocument = oParagraph.LogicDocument;
-	if (!oLogicDocument)
-		return null;
-
-	var oCurPos = oParagraph.Get_PosByElement(this);
-	if (!oCurPos)
-		return null;
-
-	var oState = oParagraph.SaveSelectionState();
-	oParagraph.Set_ParaContentPos(oCurPos, false, -1, -1, true); // Корректировать позицию нужно обязательно
-	var oResult = oParagraph.GetCalculatedCurPosXY();
-	oParagraph.LoadSelectionState(oState);
-
-	return oResult;
+	
+	return this.Paragraph.GetStartPosXY();
 };
 CParagraphBookmark.prototype.RemoveBookmark = function()
 {
@@ -339,6 +325,24 @@ CBookmarksManager.prototype.GetBookmarkById = function(Id)
 	}
 
 	return null;
+};
+CBookmarksManager.prototype.GetBookmarkStart = function(index)
+{
+	this.Update();
+	
+	if (index < 0 || index > this.Bookmarks.length)
+		return null;
+	
+	return this.Bookmarks[index][0];
+};
+CBookmarksManager.prototype.GetBookmarkEnd = function(index)
+{
+	this.Update();
+	
+	if (index < 0 || index > this.Bookmarks.length)
+		return null;
+	
+	return this.Bookmarks[index][1];
 };
 CBookmarksManager.prototype.GetBookmarkByName = function(sName)
 {
