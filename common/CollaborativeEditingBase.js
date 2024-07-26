@@ -380,7 +380,6 @@
 		}
 
 		AscCommon.CollaborativeEditing.CoHistory.InitTextRecover();
-		AscCommon.CollaborativeEditing.CoHistory.textRecovery.GetDataForProceedMarks(true);
     };
     CCollaborativeEditingBase.prototype.Apply_OtherChanges = function()
     {

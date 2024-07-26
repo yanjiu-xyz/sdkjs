@@ -137,9 +137,6 @@
 
 		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
 
-		this.textRecovery.oRunSplits = {}
-		this.textRecovery.Check();
-
 		AscCommon.CollaborativeEditing.m_bGlobalLock = nTempGlobalLock;
 		return true;
 	};

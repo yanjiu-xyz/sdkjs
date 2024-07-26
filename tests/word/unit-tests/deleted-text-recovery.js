@@ -41,7 +41,7 @@ $(function () {
 	let oCurDelRecover = null;
 	let oCollaborativeHistory = null;
 	let arr = [];
-
+	let arrPoints = [];
 	function AddParagraph(pos)
 	{
 		let p = AscTest.CreateParagraph();
@@ -69,23 +69,36 @@ $(function () {
 
 	}
 
-	function Init()
+	function Init(nPos)
 	{
-		UpdateChanges();
+		UpdateChanges(nPos);
 		logicDocument.CollaborativeEditing.CoHistory.InitTextRecover();
 
 		oCollaborativeHistory	= logicDocument.CollaborativeEditing.CoHistory;
 		oCurDelRecover			= AscCommon.CollaborativeEditing.CoHistory.textRecovery;
 	}
 
-	function UpdateChanges ()
+	function UpdateChanges (nPoint)
 	{
-		arr = [];
+		let arr = [];
 		let nLengthOfPoints = AscCommon.History.Points.length - 1;
 
-		for (let i = 0; i <= nLengthOfPoints; i++)
+
+		if (nPoint !== undefined)
 		{
-			AscCommon.History.GetChangesFromPoint(i, arr);
+			for (let i = nLengthOfPoints; i >= nPoint; i--)
+			{
+				AscCommon.History.GetChangesFromPoint(i, arr);
+			}
+
+			arr = arr.reverse();
+		}
+		else
+		{
+			for (let i = 0; i <= nLengthOfPoints; i++)
+			{
+				AscCommon.History.GetChangesFromPoint(i, arr);
+			}
 		}
 
 		AscCommon.CollaborativeEditing.CoHistory.Changes = arr;
@@ -96,14 +109,19 @@ $(function () {
 		oCurDelRecover.RecoverDeletedText();
 	}
 
+	function UndoDelText()
+	{
+		oCurDelRecover.UndoShowDelText();
+	}
+
 	function Prev()
 	{
-		oCollaborativeHistory.NavigationRevisionHistoryByStep(oCollaborativeHistory.GetGlobalPointIndex() - 1);
+		logicDocument.CollaborativeEditing.CoHistory.NavigationRevisionHistoryByStep(logicDocument.CollaborativeEditing.CoHistory.GetGlobalPointIndex() - 1);
 	}
 
 	function Next()
 	{
-		oCollaborativeHistory.NavigationRevisionHistoryByStep(oCollaborativeHistory.GetGlobalPointIndex() + 1);
+		logicDocument.CollaborativeEditing.CoHistory.NavigationRevisionHistoryByStep(logicDocument.CollaborativeEditing.CoHistory.GetGlobalPointIndex() + 1);
 	}
 
 	function CheckRuns(assert, paragraph, arr)
@@ -125,6 +143,7 @@ $(function () {
 		AscTest.ClearDocument();
 		AscCommon.CollaborativeEditing.CoHistory.textRecovery = null;
 		AscCommon.CollaborativeEditing.Clear();
+		arrPoints = [];
 	})
 
 	QUnit.module("Unit-tests for recover deleted text");
@@ -470,6 +489,100 @@ $(function () {
 
 		let strResultText2 = AscTest.GetParagraphText(p);
 		assert.strictEqual(strResultText2, "", "Text in run is ''");
+	});
+
+	QUnit.test("Complex 1", function (assert)
+	{
+		logicDocument.AddToContent(0, AscTest.CreateParagraph());
+
+		AscTest.EnterText("Hello hello");
+		assert.ok(true, "Input 'Hello hello' in first paragraph");
+
+		AscTest.PressKey(13);
+		assert.ok(true, "Press Enter for create second paragraph");
+
+		AscTest.EnterText("Hello world 123");
+		assert.ok(true, "Input 'Hello world 123' in second paragraph");
+
+		AscTest.MoveCursorLeft(false, false, 3);
+		assert.ok(true, "Move cursor to start pos of '123'");
+
+		AscTest.MoveCursorLeft(true, false, 5);
+		assert.ok(true, "Select 'world'");
+
+		DelLast(1, true);
+		assert.ok(true, "Delete 'world'");
+
+		let p = logicDocument.Content[0];
+		let p2 = logicDocument.Content[1];
+
+		let strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello hello", "Text in first paragraph 'Hello hello'");
+
+		let strDeletedText2 = AscTest.GetParagraphText(p2);
+		assert.strictEqual(strDeletedText2, "Hello 123", "Text in second paragraph 'Hello 123'");
+
+		Init(3);
+
+		ShowDelText();
+		assert.ok(true, "Show del text");
+
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello hello", "Text in run is 'Hello hello'");
+
+		strDeletedText2 = AscTest.GetParagraphText(p2);
+		assert.strictEqual(strDeletedText2, "Hello world 123", "Text in run is 'Hello world 123'");
+
+		CheckRuns(assert, p2, [
+			["Hello ", reviewtype_Common],
+			["world ", reviewtype_Remove],
+			["123", reviewtype_Common],
+		]);
+
+		UndoDelText();
+		assert.ok(true, "Undo show del text");
+
+		CheckRuns(assert, p2, [
+			["Hello 123", reviewtype_Common],
+		]);
+	});
+
+	QUnit.test("Complex 2", function (assert)
+	{
+		logicDocument.AddToContent(0, AscTest.CreateParagraph());
+
+		AscTest.EnterText("Hello hello");
+		assert.ok(true, "Input 'Hello hello' in first paragraph");
+
+		AscTest.MoveCursorLeft(false, false, 2);
+		DelLast(3, false);
+		assert.ok(true, "Delete from first paragraph 'hel'");
+
+		let p = logicDocument.Content[0];
+
+		let strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello lo", "Text in first paragraph 'Hello hello'");
+
+		Init(1);
+		ShowDelText();
+
+		assert.ok(true, "Show del text");
+
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello hello", "Text in run is 'Hello hello'");
+
+		CheckRuns(assert, p, [
+			["Hello ", reviewtype_Common],
+			["hel", reviewtype_Remove],
+			["lo", reviewtype_Common],
+		]);
+
+		UndoDelText();
+		assert.ok(true, "Undo show del text");
+
+		CheckRuns(assert, p, [
+			["Hello lo", reviewtype_Common],
+		]);
 	});
 
 });

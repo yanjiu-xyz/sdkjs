@@ -49,171 +49,11 @@
 		 * @type {*[]}
 		 */
 		this.m_RewiewDelPoints		= [];
+		this.arrColor				= [];
+
 		this.userId					= undefined;
 		this.userName				= undefined;
 		this.userTime				= undefined;
-
-		this.oCollaborativeMarksData		= {};
-		this.oCollabColor					= {};
-		this.oRunSplits						= {};
-		this.oClasses						= {};
-		this.oCollaborativeMarksDataDefault	= {};
-		this.oDefaultChangedClasses			= AscCommon.CollaborativeEditing.m_aChangedClasses;
-	}
-	DeletedTextRecovery.prototype.GetDataForProceedMarks = function (isDefault)
-	{
-		let oMarksClasses	= AscCommon.CollaborativeEditing.m_aChangedClasses;
-		let arrKeys			= Object.keys(oMarksClasses);
-
-		for (let nKey = 0; nKey < arrKeys.length; nKey++)
-		{
-			let strCurrentKey	= arrKeys[nKey];
-			let oCurrentRun		= oMarksClasses[strCurrentKey];
-
-			if (!oCurrentRun instanceof ParaRun)
-				continue;
-
-			let oCurrentMarks	= oCurrentRun.CollaborativeMarks;
-			let arrContentRun	= oCurrentRun.Content;
-
-			if (!oCurrentMarks)
-				continue;
-
-			let arrRanges	= oCurrentMarks.Ranges;
-			let arrContent	= [];
-			let arrColor	= [];
-
-			for (let i = 0; i < arrRanges.length; i++)
-			{
-				let oCurrentRange	= arrRanges[i];
-				let nStart			= oCurrentRange.PosS;
-				let nEnd			= oCurrentRange.PosE;
-				let oColor			= oCurrentRange.Color;
-				arrColor.push(oColor);
-
-				for (let nContent = nStart; nContent < nEnd; nContent++)
-				{
-					let oCurrentEl = arrContentRun[nContent];
-					arrContent.push(oCurrentEl);
-				}
-			}
-
-			this.oCollaborativeMarksData[strCurrentKey]		= arrContent;
-
-			if (isDefault)
-				this.oCollaborativeMarksDataDefault[strCurrentKey] = arrContent;
-
-			this.oCollabColor[strCurrentKey]				= arrColor;
-		}
-	}
-	DeletedTextRecovery.prototype.GetPositionsOfCollaborativeMarks = function (isDefault)
-	{
-		let oOutput			= {}
-		let oMarksClasses	= this.oDefaultChangedClasses;
-		let arrKeys			= Object.keys(oMarksClasses);
-
-		for (let nKey = 0; nKey < arrKeys.length; nKey++)
-		{
-			let strCurrentKey	= arrKeys[nKey];
-			let oCurrentRun		= oMarksClasses[strCurrentKey];
-
-			if (!oCurrentRun instanceof ParaRun)
-				continue;
-
-			let arrCollaborativeData = isDefault
-				? this.oCollaborativeMarksDataDefault[strCurrentKey]
-				: this.oCollaborativeMarksData[strCurrentKey];
-
-			if (!arrCollaborativeData)
-				continue;
-
-			let arrPositions = [];
-
-			for (let i = 0; i < arrCollaborativeData.length; i++)
-			{
-				let oCurrentEl = arrCollaborativeData[i];
-				let nPos = this.FindPosInTextClass(oCurrentRun, oCurrentEl);
-
-				if (nPos || nPos === 0)
-					arrPositions.push(nPos);
-			}
-
-			if (arrPositions.length === 0)
-			{
-				let oNewRun = this.oRunSplits[oCurrentRun.Id];
-				if (!oNewRun)
-				{
-					oCurrentRun.CollaborativeMarks.Clear();
-					continue;
-				}
-
-				let strNewCurrentKey						= oNewRun.Id;
-				this.oCollaborativeMarksData[oNewRun.Id]	= oNewRun;
-
-				for (let i = 0; i < arrCollaborativeData.length; i++)
-				{
-					let oCurrentEl	= arrCollaborativeData[i];
-					let nPos		= this.FindPosInTextClass(oNewRun, oCurrentEl);
-
-					if (nPos || nPos === 0)
-						arrPositions.push(nPos);
-				}
-
-				if (arrPositions > 0)
-				{
-					this.oCollabColor[oNewRun.Id]	= this.oCollabColor[oCurrentRun.Id];
-					oCurrentRun						= oNewRun;
-					oOutput[strNewCurrentKey]		= arrPositions;
-					this.oClasses[strNewCurrentKey]	= oNewRun;
-				}
-				continue;
-			}
-			oOutput[strCurrentKey]			= arrPositions;
-			this.oClasses[strCurrentKey]	= oCurrentRun;
-		}
-		return oOutput;
-	}
-	DeletedTextRecovery.prototype.ApplyCollaborativeMarks = function (isDefault)
-	{
-		let oCollaborative	= this.GetPositionsOfCollaborativeMarks(isDefault);
-
-		AscCommon.CollaborativeEditing.Clear_CollaborativeMarks(true);
-
-		let oCollaborativeMarks	= CollapsePositions(oCollaborative);
-		let arrKeys				= Object.keys(oCollaborativeMarks);
-
-		for (let nKey = 0; nKey < arrKeys.length; nKey++)
-		{
-			let strCurrentKey	= arrKeys[nKey];
-			let arrCurrentRules	= oCollaborativeMarks[strCurrentKey];
-
-			for (let i = 0; i < arrCurrentRules.length; i++)
-			{
-				let oCurrentRule	= arrCurrentRules[i];
-				let oColor			= this.oCollabColor[strCurrentKey][i];
-				oCurrentRule.Color	= oColor;
-			}
-		}
-
-		for (let strId in oCollaborativeMarks)
-		{
-			let arrRules	= oCollaborativeMarks[strId];
-			let oRun		= this.oClasses[strId];
-			oRun.CollaborativeMarks.Ranges.length = 0;
-
-			for (let nCount = 0; nCount < arrRules.length; nCount++)
-			{
-				let oCurrentRule	= arrRules[nCount];
-				let nStart			= oCurrentRule.nStart;
-				let nEnd			= oCurrentRule.nEnd + 1;
-				let oColor			= oCurrentRule.Color;
-
-				if (!oColor)
-					continue;
-
-				oRun.CollaborativeMarks.Add(nStart, nEnd, oColor);
-			}
-		}
 	}
 	/**
 	 * Инициализация и создание промежуточных данных для отображения удаленного текста в текущей ревизии
@@ -342,7 +182,7 @@
 
 				oCurChange = oCurChange.Copy();
 
-				if (oCurChange.ConvertToSimpleChanges && oCurChange.PosArray.length > 1)
+				if (oCurChange.ConvertToSimpleChanges && oCurChange.Items.length > 1)
 					oCurChange = oCurChange.ConvertToSimpleChanges();
 
 				if (!Array.isArray(oCurChange))
@@ -351,7 +191,7 @@
 				for (let k = 0; k < oCurChange.length; k++)
 				{
 					let oCur = oCurChange[k];
-					if (arrChanges[y].PosArray.length > 1)
+					if (arrChanges[y].Items.length > 1)
 						oCur.Pos += k;
 
 					oRemoveText.ProceedChange(oCur)
@@ -421,7 +261,7 @@
 		let nTempGlobalLock = AscCommon.CollaborativeEditing.m_bGlobalLock;
 		AscCommon.CollaborativeEditing.m_bGlobalLock = 0;
 
-		this.UndoShowDelText()
+		this.UndoShowDelText();
 		this.HandleChanges();
 		this.CheckPointInHistory();
 
@@ -455,7 +295,6 @@
 		this.Split(arrResult);
 		this.document.RecalculateByChanges(delChanges);
 
-		this.ApplyCollaborativeMarks(true);
 		AscCommon.CollaborativeEditing.m_bGlobalLock = nTempGlobalLock;
 		return true;
 	};
@@ -471,7 +310,7 @@
 			let arrCurrentRunData	= data[strCurrentKey];
 			let oCurrentRun			= classes[strCurrentKey];
 
-			arrCurrentRunData.sort(function (a, b) { return a.nStart - b.nStart })
+			arrCurrentRunData.sort(function (a, b) { return a.nStart - b.nStart });
 
 			for (let j = arrCurrentRunData.length - 1; j >= 0; j--)
 			{
@@ -518,19 +357,16 @@
 
 					for (let i = 0; i < oCurrentRun.CollaborativeMarks.Ranges.length; i++)
 					{
-						newCollab[i] = oCurrentRun.CollaborativeMarks.Ranges[i];
+						let oCollab = oCurrentRun.CollaborativeMarks.Ranges[i];
+						newCollab.push({PosS: oCollab.PosS, PosE: oCollab.PosE, Color: oCollab.Color, oCurrentRun: oCurrentRun});
 					}
+
 					let oParent		= oCurrentRun.GetParent();
 					let RunPos		= this.FindPosInParent(oCurrentRun);
 					let RightRun	= oCurrentRun.SplitForSpreadCollaborativeMark(nStart);
 
-					let nNewStartPos
-					let nCount, oColor;
-
 					oParent.Add_ToContent(RunPos + 1, RightRun);
 					let oNewer = RightRun.SplitForSpreadCollaborativeMark(nEnd - nStart + 1);
-
-					this.oRunSplits[oCurrentRun.Id] = oNewer;
 
 					oParent.Add_ToContent(RunPos + 2, oNewer);
 					this.SetReviewInfo(RightRun);
@@ -538,21 +374,7 @@
 					for (let i = 0; i < newCollab.length; i++)
 					{
 						let oCurCollaborativeMark	= newCollab[i];
-						let nStartPos				= oCurCollaborativeMark.PosS;
-						let nEndPos					= oCurCollaborativeMark.PosE;
-
-						oColor						= oCurCollaborativeMark.Color;
-
-						let nCurrentCount			= oCurrentRun.Content.length;
-						let nDelCount				= RightRun.Content.length;
-
-						if (nEndPos > nCurrentCount)
-						{
-							// Вычислите новые позиции относительно oNewer
-							nNewStartPos = nStartPos - nCurrentCount - nDelCount;
-							nCount = nEndPos - nCurrentCount - nDelCount;
-							oNewer.CollaborativeMarks.Add(nNewStartPos, nCount, oColor);
-						}
+						this.arrColor.push(oCurCollaborativeMark);
 					}
 				}
 			}
@@ -606,21 +428,6 @@
 				return i;
 		}
 	};
-	DeletedTextRecovery.prototype.FindPosInTextClass = function (oClass, oItem)
-	{
-		let arrParentContent	= oClass.Content;
-
-		for (let nPos = 0; nPos < arrParentContent.length; nPos++)
-		{
-			if (arrParentContent[nPos] === oItem)
-				return nPos;
-		}
-	}
-	DeletedTextRecovery.prototype.Check = function (isDefault)
-	{
-		// проверяем правильность окрашивания ранов
-		this.ApplyCollaborativeMarks(isDefault);
-	};
 	DeletedTextRecovery.prototype.RedoUndoChange = function (oChange, isRedo, arrToSave)
 	{
 		if (!oChange)
@@ -663,18 +470,34 @@
 				arrToSave.push(oRevChange);
 		}
 	};
+	DeletedTextRecovery.prototype.ColorText = function ()
+	{
+		for (let i = 0; i < this.arrColor.length; i++)
+		{
+			let oCurCollaborativeMark = this.arrColor[i];
+
+			let nStartPos				= oCurCollaborativeMark.PosS;
+			let nEndPos					= oCurCollaborativeMark.PosE;
+			let oColor					= oCurCollaborativeMark.Color;
+			let oRun					= oCurCollaborativeMark.oCurrentRun;
+
+			oRun.CollaborativeMarks.Add(nStartPos, nEndPos, oColor);
+		}
+
+		this.arrColor = [];
+	}
 	DeletedTextRecovery.prototype.UndoShowDelText = function (isNavigation)
 	{
-
 		let localHistory	= AscCommon.History;
 		let oLastPoint		= localHistory.Points[localHistory.Points.length - 1];
 
-		if ((isNavigation && oLastPoint && oLastPoint.Description === AscDFH.historydescription_Collaborative_MoveByHistory)
-			|| (!isNavigation && oLastPoint && oLastPoint.Description === AscDFH.historydescription_Collaborative_DeletedTextRecovery))
+		if ((oLastPoint && oLastPoint.Description === AscDFH.historydescription_Collaborative_DeletedTextRecovery) || (isNavigation && oLastPoint && oLastPoint.Description === AscDFH.historydescription_Collaborative_MoveByHistory))
 		{
 			let arrChanges = localHistory.UndoLastPoint();
 			this.document.RecalculateByChanges(arrChanges);
 			localHistory.Remove_LastPoint();
+
+			this.ColorText();
 			return true
 		}
 	};
