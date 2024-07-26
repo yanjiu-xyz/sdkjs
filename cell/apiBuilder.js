@@ -285,6 +285,7 @@
 	/**
 	 * Returns a color value in RGB format.
 	 * @memberof ApiColor
+	 * @typeofeditors ["CSE"]
 	 * @returns {number}
 	 */
 	ApiColor.prototype.GetRGB = function () {
@@ -394,6 +395,7 @@
 	/**
 	 * Returns a class formatted according to the instructions contained in the format expression.
 	 * @memberof Api
+	 * @typeofeditors ["CSE"]
 	 * @param {string} expression - Any valid expression.
 	 * @param {string} [format] - A valid named or user-defined format expression.
 	 * @returns {string}
@@ -12553,6 +12555,7 @@
 	/**
 	 * Removes a user from the current protected range.
 	 * @memberof ApiProtectedRange
+	 * @typeofeditors ["CSE"]
 	 * @param {string} sId - The user ID.
 	 * @returns {bool}
 	 * @since 8.1.0
@@ -12642,6 +12645,7 @@
 	/**
 	 * Returns an object that represents a user from the current protected range.
 	 * @memberof ApiProtectedRange
+	 * @typeofeditors ["CSE"]
 	 * @param {string} sId - The user ID.
 	 * @returns {ApiProtectedRangeUserInfo | null}
 	 * @since 8.1.0

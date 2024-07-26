@@ -670,6 +670,7 @@
     /**
      * Creates a group of drawings.
      * @memberof Api
+     * @typeofeditors ["CPE"]
      * @param {Array} aDrawings - The array of drawings.
      * @returns {ApiGroup}
      * */
@@ -687,6 +688,8 @@
 
     /**
      * Creates a table.
+     * @memberof Api
+     * @typeofeditors ["CPE"]
      * @param nCols - Number of columns.
      * @param nRows - Number of rows.
      * @returns {?ApiTable}
@@ -1009,6 +1012,7 @@
     /**
      * Returns a slide by its position in the presentation.
      * @memberof ApiPresentation
+     * @typeofeditors ["CPE"]
      * @param {number} nIndex - The slide number (position) in the presentation.
      * @returns {?ApiSlide}
      */
@@ -1270,21 +1274,6 @@
             oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
         return JSON.stringify(oResult);
     };
-
-    ApiPresentation.prototype.GetInfoOle = function(){
-        for (var nSlide = 0; nSlide < this.Presentation.Slides.length; nSlide++)
-        {
-            var oSlide = this.Presentation.Slides[nSlide];
-            for (var nDrawing = 0; nDrawing < oSlide.cSld.spTree.length; nDrawing++)
-            {
-                var oDrawing = oSlide.cSld.spTree[nDrawing];
-
-                if (oDrawing instanceof AscFormat.COleObject)
-                    return {slide: nSlide, drawing: nDrawing}
-            }
-        }
-    };
-
 
 	/**
 	 * Returns all comments from the current presentation.
@@ -3096,6 +3085,7 @@
 
     /**
      * Returns the type of the ApiDrawing class.
+     * @typeofeditors ["CPE"]
      * @returns {"drawing"}
      */
     ApiDrawing.prototype.GetClassType = function()
@@ -3104,6 +3094,7 @@
     };
     /**
      * Sets the size of the object (image, shape, chart) bounding box.
+     * @typeofeditors ["CPE"]
      * @param {EMU} nWidth - The object width measured in English measure units.
      * @param {EMU} nHeight - The object height measured in English measure units.
      */
@@ -3120,6 +3111,7 @@
 
     /**
      * Sets the position of the drawing on the slide.
+     * @typeofeditors ["CPE"]
      * @param {EMU} nPosX - The distance from the left side of the slide to the left side of the drawing measured in English measure units.
      * @param {EMU} nPosY - The distance from the top side of the slide to the upper side of the drawing measured in English measure units.
      */
@@ -3418,6 +3410,7 @@
 
     /**
      * Returns the type of the ApiImage class.
+     * @typeofeditors ["CPE"]
      * @returns {"image"}
      */
     ApiImage.prototype.GetClassType = function()
@@ -3595,6 +3588,7 @@
     //------------------------------------------------------------------------------------------------------------------
     /**
      * Returns the type of the ApiTable object.
+     * @typeofeditors ["CPE"]
      * @returns {"table"}
      * */
     ApiTable.prototype.GetClassType = function(){
@@ -3604,6 +3598,7 @@
 
     /**
      * Returns a row by its index.
+     * @typeofeditors ["CPE"]
      * @param nIndex {number} - The row index (position) in the table.
      * @returns {?ApiTableRow}
      * */
@@ -3621,6 +3616,7 @@
     /**
      * Merges an array of cells. If merge is successful, it will return merged cell, otherwise "null".
      * <b>Warning</b>: The number of cells in any row and the number of rows in the current table may be changed.
+     * @typeofeditors ["CPE"]
      * @param {ApiTableCell[]} aCells - The array of cells.
      * @returns {?ApiTableCell}
      */
@@ -3690,6 +3686,7 @@
      *
      * The default setting is to apply the row and column banding formatting, but not the first row, last row, first
      * column, or last column formatting.
+     * @typeofeditors ["CPE"]
      * @param {boolean} isFirstColumn - Specifies that the first column conditional formatting shall be applied to the
      *     table.
      * @param {boolean} isFirstRow - Specifies that the first row conditional formatting shall be applied to the table.
@@ -3713,6 +3710,7 @@
     };
     /**
      * Adds a new row to the current table.
+     * @typeofeditors ["CPE"]
      * @param {ApiTableCell} [oCell] - If not specified, a new row will be added to the end of the table.
      * @param {boolean} [isBefore=false] - Adds a new row before or after the specified cell. If no cell is specified,
      * then this parameter will be ignored.
@@ -3743,6 +3741,7 @@
     };
     /**
      * Adds a new column to the end of the current table.
+     * @typeofeditors ["CPE"]
      * @param {ApiTableCell} [oCell] - If not specified, a new column will be added to the end of the table.
      * @param {boolean} [isBefore=false] - Add a new column before or after the specified cell. If no cell is specified,
      * then this parameter will be ignored.
@@ -3768,6 +3767,7 @@
     };
     /**
      * Removes a table row with the specified cell.
+     * @typeofeditors ["CPE"]
      * @param {ApiTableCell} oCell - The table cell from the row which will be removed.
      * @returns {boolean} - defines if the table is empty after removing or not.
      */
@@ -3782,6 +3782,7 @@
     };
     /**
      * Removes a table column with the specified cell.
+     * @typeofeditors ["CPE"]
      * @param {ApiTableCell} oCell - The table cell from the column which will be removed.
      * @returns {boolean} - defines if the table is empty after removing or not.
      */
@@ -3867,6 +3868,7 @@
     //------------------------------------------------------------------------------------------------------------------
     /**
      * Returns the type of the ApiTableRow class.
+     * @typeofeditors ["CPE"]
      * @returns {"tableRow"}
      */
     ApiTableRow.prototype.GetClassType = function()
@@ -3875,6 +3877,7 @@
     };
     /**
      * Returns a number of cells in the current row.
+     * @typeofeditors ["CPE"]
      * @returns {number}
      */
     ApiTableRow.prototype.GetCellsCount = function()
@@ -3883,6 +3886,7 @@
     };
     /**
      * Returns a cell by its position in the current row.
+     * @typeofeditors ["CPE"]
      * @param {number} nPos - The cell position in the table row.
      * @returns {ApiTableCell}
      */
@@ -3897,6 +3901,7 @@
 
     /**
      * Sets the height to the current table row.
+     * @typeofeditors ["CPE"]
      * @param {EMU} [nValue] - The row height in English measure units.
      */
     ApiTableRow.prototype.SetHeight = function(nValue)
@@ -3933,6 +3938,7 @@
 
     /**
      * Returns the type of the ApiTableCell class.
+     * @typeofeditors ["CPE"]
      * @returns {"tableCell"}
      */
     ApiTableCell.prototype.GetClassType = function()
@@ -3942,6 +3948,7 @@
 
     /**
      * Returns the current cell content.
+     * @typeofeditors ["CPE"]
      * @returns {ApiDocumentContent}
      */
     ApiTableCell.prototype.GetContent = function(){
@@ -4004,6 +4011,7 @@
     /**
      * Specifies an amount of space which shall be left between the bottom extent of the cell contents and the border
      * of a specific individual table cell within a table.
+     * @typeofeditors ["CPE"]
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell bottom margin shall be used,
      * otherwise override the table cell bottom margin with specified value for the current cell.
      */
@@ -4030,6 +4038,7 @@
     /**
      * Specifies an amount of space which shall be left between the left extent of the current cell contents and the
      * left edge border of a specific individual table cell within a table.
+     * @typeofeditors ["CPE"]
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell left margin shall be used,
      * otherwise override the table cell left margin with specified value for the current cell.
      */
@@ -4056,6 +4065,7 @@
     /**
      * Specifies an amount of space which shall be left between the right extent of the current cell contents and the
      * right edge border of a specific individual table cell within a table.
+     * @typeofeditors ["CPE"]
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell right margin shall be used,
      * otherwise override the table cell right margin with specified value for the current cell.
      */
@@ -4082,6 +4092,7 @@
     /**
      * Specifies an amount of space which shall be left between the top extent of the current cell contents and the
      * top edge border of a specific individual table cell within a table.
+     * @typeofeditors ["CPE"]
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell top margin shall be used,
      * otherwise override the table cell top margin with specified value for the current cell.
      */
@@ -4107,6 +4118,7 @@
     };
     /**
      * Sets the border which shall be displayed at the bottom of the current table cell.
+     * @typeofeditors ["CPE"]
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
      */
@@ -4124,6 +4136,7 @@
 
     /**
      * Sets the border which shall be displayed at the left of the current table cell.
+     * @typeofeditors ["CPE"]
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
      */
@@ -4141,6 +4154,7 @@
 
     /**
      * Sets the border which shall be displayed at the right of the current table cell.
+     * @typeofeditors ["CPE"]
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
      */
@@ -4158,6 +4172,7 @@
 
     /**
      * Sets the border which shall be displayed at the top of the current table cell.
+     * @typeofeditors ["CPE"]
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
      */
@@ -4175,6 +4190,7 @@
 
     /**
      * Specifies the vertical alignment for text within the current table cell.
+     * @typeofeditors ["CPE"]
      * @param {("top" | "center" | "bottom")} sType - The type of the vertical alignment.
      */
     ApiTableCell.prototype.SetVerticalAlign = function(sType)
@@ -4190,6 +4206,7 @@
     };
     /**
      * Specifies the direction of the text flow for the current table cell.
+     * @typeofeditors ["CPE"]
      * @param {("lrtb" | "tbrl" | "btlr")} sType - The type of the text flow direction. 
      */
     ApiTableCell.prototype.SetTextDirection = function(sType)

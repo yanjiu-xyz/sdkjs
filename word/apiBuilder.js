@@ -1435,6 +1435,7 @@
 
 	/**
 	 * Returns a paragraph from all the paragraphs that are in the range.
+	 * @typeofeditors ["CDE"]
 	 * @param {Number} nPos - The paragraph position in the range.
 	 * @return {ApiParagraph | null} - returns null if position is invalid.
 	 */	
@@ -4620,7 +4621,7 @@
 	/**
 	 * Creates a bullet for a paragraph with the numbering character or symbol specified with the sType parameter.
 	 * @memberof Api
-	 * @typeofeditors ["CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {BulletType} sType - The numbering type the paragraphs will be numbered with.
 	 * @param {number} nStartAt - The number the first numbered paragraph will start with.
 	 * @returns {ApiBullet}
@@ -5515,6 +5516,7 @@
 	};
 	/**
 	 * Creates a new history point.
+	 * @typeofeditors ["CDE"]
 	 * @memberof ApiDocument
 	 */
 	ApiDocument.prototype.CreateNewHistoryPoint = function()
@@ -12802,7 +12804,7 @@
 	/**
 	 * Sets the text fill to the current text run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CSE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oApiFill - The color or pattern used to fill the text color.
 	 * @return {ApiTextPr} - this text properties.
 	 */
@@ -12816,7 +12818,7 @@
 	/**
 	 * Gets the text fill from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {ApiFill}
 	 * @since 8.1.0
 	 */
