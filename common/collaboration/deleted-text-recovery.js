@@ -448,12 +448,11 @@
 		let delChanges = arrCurrentPoint[0];
 		let arrResult  = arrCurrentPoint[1];
 
-		this.Split(arrResult);
-
-		for (let i = delChanges.length - 1; i > -1; i--)
+		for (let i = 0; i < delChanges.length; i++)
 		{
 			this.document.History.Add(delChanges[i]);
 		}
+		this.Split(arrResult);
 		this.document.RecalculateByChanges(delChanges);
 
 		this.ApplyCollaborativeMarks(true);
