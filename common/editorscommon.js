@@ -13926,6 +13926,10 @@
 			return max;
 		return value;
 	}
+
+	function getArrayRandomElement(aArray) {
+		return aArray[Math.random() * aArray.length | 0];
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -14150,6 +14154,7 @@
 	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
 	window["AscCommon"].trimMinMaxValue = trimMinMaxValue;
 	window["AscCommon"].cStrucTableReservedWords = cStrucTableReservedWords;
+	window["AscCommon"].getArrayRandomElement = getArrayRandomElement;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)

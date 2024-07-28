@@ -113,7 +113,8 @@ var c_oAscSlideTransitionTypes = {
 	Cover   : 6,
 	Clock   : 7,
 	Zoom    : 8,
-	Morph   : 9
+	Morph   : 9,
+	Random  : 10
 };
 
 /** @enum {number} */
