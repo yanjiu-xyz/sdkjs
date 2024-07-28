@@ -13480,16 +13480,17 @@
 	 * Returns array that represents all added fields in PivotTable.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiPivotField[]}
+	 * @returns {(ApiPivotField | ApiPivotDataField)[]}
 	 */
 	ApiPivotTable.prototype.GetVisibleFields = function () {
-		var fields = this.pivot.asc_getPivotFields();
-		var visible = [];
-		for (var i = 0; i < fields.length; i++)
-			if (fields[i].axis !== null || fields[i].dataField)
-				visible.push( new ApiPivotField(this, i, fields[i]) );
-
-		return visible;
+		const pivotFields = this.pivot.asc_getPivotFields();
+		const visible = [];
+		for (var i = 0; i < pivotFields.length; i++) {
+			if (pivotFields[i].axis !== null && !pivotFields[i].dataField) {
+				visible.push( new ApiPivotField(this, i, pivotFields[i]) );
+			}
+		}
+		return visible.concat(this.GetDataFields());
 	};
 
 	Object.defineProperty(ApiPivotTable.prototype, "VisibleFields", {
