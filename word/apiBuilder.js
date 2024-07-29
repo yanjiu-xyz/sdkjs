@@ -222,7 +222,6 @@
 	/**
 	 * Class representing the Markdown conversion processing.
 	 * Each Range object is determined by the position of the start and end characters.
-	 * @constructor
 	 */
 	function CMarkdownConverter(oConfig)
 	{
@@ -3093,6 +3092,7 @@
 	/**
 	 * Class representing a document.
 	 * @constructor
+	 * @typeofeditors ["CDE"]
 	 * @extends {ApiDocumentContent}
 	 */
 	function ApiDocument(Document)
@@ -3193,6 +3193,7 @@
 
 	/**
 	 * Class representing a comment reply.
+	 * @typeofeditors ["CDE"]
 	 * @constructor
 	 */
 	function ApiCommentReply(oParentComm, oCommentReply)
