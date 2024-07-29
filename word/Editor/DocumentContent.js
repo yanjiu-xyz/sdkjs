@@ -765,7 +765,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
         this.Pages[PageIndex]     = new CDocumentPage();
         this.Pages[PageIndex].Pos = StartIndex;
 
-        if (this.LogicDocument && oDocContentRI === this)
+        if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && oDocContentRI === this)
             this.LogicDocument.DrawingObjects.resetDrawingArrays(this.Get_AbsolutePage(PageIndex), oDocContentRI);
     }
 
