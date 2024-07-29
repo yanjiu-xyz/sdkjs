@@ -8399,7 +8399,7 @@ CT_pivotTableDefinition.prototype.asc_getColumnRange = function() {
 	if (this.getColumnFieldsCount()) {
 		const range = this.getRange();
 		const location = this.location;
-		const c1 = range.c1 + location.firstDataCol - 1;
+		const c1 = range.c1 + location.firstDataCol;
 		const c2 = range.c2;
 		const r1 = range.r1;
 		const r2 = range.r1 + location.firstDataRow - 1;
