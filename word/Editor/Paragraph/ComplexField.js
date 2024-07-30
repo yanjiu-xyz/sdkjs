@@ -199,7 +199,7 @@ ParaFieldChar.prototype.SetNumValue = function(value, numFormat)
 		return;
 	}
 	
-	this.numText = AscCommon.IntToNumberFormat(value, numFormat);
+	this.numText = AscCommon.IntToNumberFormat(value, numFormat, {lang: this.textPr && this.textPr.Lang, isFromField: true, isSkipFractPart: true});
 	this.private_UpdateWidth();
 };
 /**

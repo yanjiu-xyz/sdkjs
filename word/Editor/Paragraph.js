@@ -1856,7 +1856,7 @@ Paragraph.prototype.GetNumberingText = function(bWithoutLvlText)
 
 	var oNumbering = oParent.GetNumbering();
 	var oNumInfo   = oParent.CalculateNumberingValues(this, oNumPr);
-	return oNumbering.GetText(oNumPr.NumId, oNumPr.Lvl, oNumInfo, bWithoutLvlText);
+	return oNumbering.GetText(oNumPr.NumId, oNumPr.Lvl, oNumInfo, bWithoutLvlText, this.GetNumberingTextPr().Lang);
 };
 /**
  * Получаем рассчитанное значение нумерации для данного параграфа вместе с суффиксом
