@@ -69,25 +69,26 @@ $(function () {
 
 	}
 
-	function Init(nPos)
+	function Init(nPos, isMove)
 	{
-		UpdateChanges(nPos);
+		UpdateChanges(nPos, isMove);
 		logicDocument.CollaborativeEditing.CoHistory.InitTextRecover();
 
 		oCollaborativeHistory	= logicDocument.CollaborativeEditing.CoHistory;
 		oCurDelRecover			= AscCommon.CollaborativeEditing.CoHistory.textRecovery;
 	}
 
-	function UpdateChanges (nPoint)
+	function UpdateChanges (nPoint, isMove)
 	{
 		let arr = [];
 		let nLengthOfPoints = AscCommon.History.Points.length - 1;
-
 
 		if (nPoint !== undefined)
 		{
 			for (let i = nLengthOfPoints; i >= nPoint; i--)
 			{
+				if (isMove)
+					arr.push(new AscCommon.CChangesTableIdDescription());
 				AscCommon.History.GetChangesFromPoint(i, arr);
 			}
 
@@ -97,6 +98,8 @@ $(function () {
 		{
 			for (let i = 0; i <= nLengthOfPoints; i++)
 			{
+				if (isMove)
+					arr.push(new AscCommon.CChangesTableIdDescription());
 				AscCommon.History.GetChangesFromPoint(i, arr);
 			}
 		}
@@ -112,6 +115,11 @@ $(function () {
 	function UndoDelText()
 	{
 		oCurDelRecover.UndoShowDelText();
+	}
+
+	function MoveToPoint(nPos)
+	{
+		logicDocument.CollaborativeEditing.CoHistory.NavigationRevisionHistoryByStep(nPos);
 	}
 
 	function Prev()
@@ -584,5 +592,77 @@ $(function () {
 			["Hello lo", reviewtype_Common],
 		]);
 	});
+	QUnit.test("Complex 3", function (assert)
+	{
+		logicDocument.AddToContent(0, AscTest.CreateParagraph());
 
+		AscTest.EnterText("Hello");
+		AscTest.EnterText(" hello");
+
+		assert.ok(true, "Input 'Hello hello' in first paragraph");
+
+		let p = logicDocument.Content[0];
+
+		let strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello hello", "Text in first paragraph 'Hello hello'");
+
+		Init(undefined, true);
+		Prev();
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello", "Text in run is 'Hello'");
+
+		CheckRuns(assert, p, [
+			["Hello ", reviewtype_Common],
+		]);
+	});
+	QUnit.test("Complex 4", function (assert)
+	{
+		logicDocument.AddToContent(0, AscTest.CreateParagraph());
+
+		AscTest.EnterText("Hello3");
+		DelLast(1, false);
+		AscTest.EnterText(" word");
+		DelLast(5, false);
+		AscTest.EnterText(" world");
+
+		assert.ok(true, "* 𝐛𝐨𝐥𝐝 𝐭𝐞𝐱𝐭 𝐢𝐬 𝐝𝐞𝐥𝐞𝐭𝐞𝐝");
+		assert.ok(true, "Input 'Hello𝟑 𝐰𝐨𝐫𝐝 world'");
+
+		let p = logicDocument.Content[0];
+
+		let strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello world", "Input 'Hello𝟑 𝐰𝐨𝐫𝐝 world'");
+
+		Init(undefined, true);
+
+		MoveToPoint(9)
+		assert.ok(true, "Move to point 9");
+
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello", "Input 'Hello'");
+
+		MoveToPoint(4)
+		assert.ok(true, "Move to point 4");
+
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello word", "Input 'Hello word'");
+
+		MoveToPoint(2)
+		assert.ok(true, "Move to point 2");
+
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello3", "Input 'Hello3'");
+
+		MoveToPoint(9)
+		assert.ok(true, "Move to point 9");
+
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello", "Input 'Hello'");
+
+		MoveToPoint(4)
+		assert.ok(true, "Move to point 4");
+
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello word", "Input 'Hello word'");
+	});
 });
