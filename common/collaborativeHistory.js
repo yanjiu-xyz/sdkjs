@@ -96,15 +96,12 @@
 	 */
 	CCollaborativeHistory.prototype.UndoNavigationRevision = function ()
 	{
-		return this.textRecovery.UndoShowDelText(true);
-	};
-	CCollaborativeHistory.prototype.CheckPointInHistory = function ()
-	{
-		let localHistory = AscCommon.History;
-
-		if (localHistory.Points.length === 0 ||
-			(localHistory.Points.length > 0 && localHistory.Points[localHistory.Points.length - 1].Description !== AscDFH.historydescription_Collaborative_MoveByHistory))
-			AscCommon.History.Create_NewPoint(AscDFH.historydescription_Collaborative_MoveByHistory);
+		if (this.curChangeIndex !== -1)
+		{
+			let arr = this.ChangesSplitByPoints[this.curChangeIndex - 1];
+			let arrInput = this.RedoUndoChanges(arr, false);
+			editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
+		}
 	};
 	/**
 	 * Перемещаемся по истории ревизии на заданную точку
@@ -113,31 +110,18 @@
 	 */
 	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function (intCount)
 	{
-		let nTempGlobalLock = AscCommon.CollaborativeEditing.m_bGlobalLock;
-		AscCommon.CollaborativeEditing.m_bGlobalLock = 0;
-
-		this.UndoNavigationRevision();
-
 		this.SplitChangesByPoints();
 
 		if (intCount <= 0 || intCount > this.ChangesSplitByPoints.length || intCount === this.curChangeIndex)
 			return false;
 
+		this.UndoNavigationRevision();
 		this.curChangeIndex	= intCount;
 		let arr	= this.ChangesSplitByPoints[intCount - 1];
 
 		let arrInput		= this.RedoUndoChanges(arr, true);
-
-		this.CheckPointInHistory();
-
-		for (let i = 0; i < arrInput.length; i++)
-		{
-			this.textRecovery.document.History.Add(arrInput[i], arrInput[i])
-		}
-
 		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
 
-		AscCommon.CollaborativeEditing.m_bGlobalLock = nTempGlobalLock;
 		return true;
 	};
 	CCollaborativeHistory.prototype.AddChange = function(change)
