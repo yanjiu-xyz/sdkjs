@@ -122,16 +122,15 @@
 	/**
 	 * Отображаем удаленный текст в текущей точки истории ревизии
 	 * @return {boolean}
-	 * @constructor
 	 */
 	DeletedTextRecovery.prototype.RecoverDeletedText = function()
 	{
+		this.UndoShowDelText();
 		return this.ShowDelText();
 	};
 	/**
 	 * Получаем подготовленные данные, разбитые по точкам
 	 * @return {*[]}
-	 * @constructor
 	 */
 	DeletedTextRecovery.prototype.GetChanges = function()
 	{
@@ -159,7 +158,6 @@
 	 * Отменяем заданные изменения
 	 * @param arrInputChanges
 	 * @return {*[]}
-	 * @constructor
 	 */
 	DeletedTextRecovery.prototype.RedoUndoChanges = function (arrInputChanges)
 	{
@@ -244,44 +242,23 @@
 
 		return [delChanges, result];
 	};
-	/**
-	 * Создаем точку в истории для сбора данных об отображении удаленного текста
-	 * @constructor
-	 */
-	DeletedTextRecovery.prototype.CheckPointInHistory = function ()
-	{
-		let localHistory = AscCommon.History;
-
-		if (localHistory.Points.length === 0 ||
-			(localHistory.Points.length > 0 && localHistory.Points[localHistory.Points.length - 1].Description !== AscDFH.historydescription_Collaborative_DeletedTextRecovery))
-			AscCommon.History.Create_NewPoint(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
-	};
 	DeletedTextRecovery.prototype.ShowDelText = function ()
 	{
-		let nTempGlobalLock = AscCommon.CollaborativeEditing.m_bGlobalLock;
-		AscCommon.CollaborativeEditing.m_bGlobalLock = 0;
-
-		this.UndoShowDelText();
-		this.HandleChanges();
-		this.CheckPointInHistory();
-
-		let historyStore		= AscCommon.CollaborativeEditing.CoHistory.CoEditing.m_oLogicDocument.Api.VersionHistory;
-
-		if (!historyStore)
+		let versionHistory = this.document.GetApi().getVersionHistory();
+		if (!versionHistory)
 			return false;
-
-		let strUserId			= historyStore.userId;
-		let strUserName			= historyStore.userName;
-		let strDateOFRevision	= historyStore.dateOfRevision;
-		let timeOfRevision		= new Date(strDateOFRevision).getTime();
-		let arrInput			= this.GetChanges();
-
+		
+		this.HandleChanges();
+		let arrInput = this.GetChanges();
 		if (arrInput.length === 0)
 			return false;
-
-		this.userId				= strUserId;
-		this.userName			= strUserName;
-		this.userTime			= timeOfRevision;
+		
+		let localHistory = AscCommon.History;
+		localHistory.Create_NewPoint(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
+		
+		this.userId   = versionHistory.userId;
+		this.userName = versionHistory.userName;
+		this.userTime = new Date(versionHistory.dateOfRevision).getTime();
 
 		// отменяем изменения до нужного места (необходимо для перемещения по истории)
 		let arrCurrentPoint	= this.RedoUndoChanges(arrInput);
@@ -294,8 +271,6 @@
 		}
 		this.Split(arrResult);
 		this.document.RecalculateByChanges(delChanges);
-
-		AscCommon.CollaborativeEditing.m_bGlobalLock = nTempGlobalLock;
 		return true;
 	};
 	DeletedTextRecovery.prototype.Split = function (arrInput)
