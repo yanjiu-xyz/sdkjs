@@ -86,9 +86,7 @@ $(function () {
                 AddText(str);
 
 				if (isConvertAfter || isLaTeX)
-				{
 					MathContent.ConvertView(false, isLaTeX ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
-				}
 
                 for (let i = CurPos; i < Root.Content.length; i++)
 				{
@@ -1039,156 +1037,172 @@ $(function () {
 	{
 		QUnit.module( "accent", function ()
 		{
-			// Test("(1/2)/", [["ParaRun", ""], ["CDelimiter", "(1/2)"], ["ParaRun", "/"]], false, "Check devide");
-			//
-			// Test("\\dot{a}", [["ParaRun", ""], ["CAccent", "\\dot{a}"],["ParaRun", ""]], true, "Check LaTeX words");
-			// Test("\\ddot{b}", [["ParaRun", ""], ["CAccent", "\\ddot{b}"],["ParaRun", ""]], true, "Check LaTeX words");
-			// Test("\\acute{c}", [["ParaRun", ""], ["CAccent", "\\acute{c}"],["ParaRun", ""]], true, "Check LaTeX words");
-			// Test("\\grave{d}", [["ParaRun", ""], ["CAccent", "\\grave{d}"],["ParaRun", ""]], true, "Check LaTeX words");
-			// Test("\\check{e}", [["ParaRun", ""], ["CAccent", "\\check{e}"],["ParaRun", ""]], true, "Check LaTeX words");
-			//
-			// Test("\\breve{f}", [["ParaRun", ""], ["CAccent", "\\breve{f}"],["ParaRun", ""]], true, "Check LaTeX words");
-			// Test("\\tilde{g}", [["ParaRun", ""], ["CAccent", "\\tilde{g}"],["ParaRun", ""]], true, "Check LaTeX words");
-			// Test("\\bar{h}", [["ParaRun", ""], ["CAccent", "\\bar{h}"],["ParaRun", ""]], true, "Check LaTeX words");
-			// Test("\\widehat{j}", [["ParaRun", ""], ["CAccent", "\\widehat{j}"],["ParaRun", ""]], true, "Check LaTeX words");
-			// Test("\\vec{k}", [["ParaRun", ""], ["CAccent", "\\vec{k}"],["ParaRun", ""]], true, "Check LaTeX words");
-			// Test("\\vec \\frac{k}{2}", [["ParaRun", ""], ["CAccent", ""],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\dot{a}", [["ParaRun", ""], ["CAccent", "\\dot{a}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\ddot{b}", [["ParaRun", ""], ["CAccent", "\\ddot{b}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\acute{c}", [["ParaRun", ""], ["CAccent", "\\acute{c}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\grave{d}", [["ParaRun", ""], ["CAccent", "\\grave{d}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\check{e}", [["ParaRun", ""], ["CAccent", "\\check{e}"],["ParaRun", ""]], true, "Check LaTeX words");
+
+			Test("\\breve{f}", [["ParaRun", ""], ["CAccent", "\\breve{f}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\tilde{g}", [["ParaRun", ""], ["CAccent", "\\tilde{g}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\bar{h}", [["ParaRun", ""], ["CAccent", "\\bar{h}"],["ParaRun", ""]], true, "Check LaTeX words");
+
+			Test("\\widehat{j}", [["ParaRun", ""], ["CAccent", "\\hat{j}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\vec{k}", [["ParaRun", ""], ["CAccent", "\\vec{k}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\vec{\\frac{k}{2}}", [["ParaRun", ""], ["CAccent", "\\vec{\\frac{k}{2}}"],["ParaRun", ""]], true, "Check LaTeX words");
 			// Test("5''", [["ParaRun", ""], ["ParaRun", ""],["CAccent", ""]], true, "Check LaTeX words");
 			// Test("\\frac{4}{5}''", [["ParaRun", ""], ["CAccent", ""],["ParaRun", ""]], true, "Check LaTeX words");
 		})
 
-		// Test("(a)[b]\\{c\\}|d|\\|e\\|\\langlef\\rangle\\lfloorg\\rfloor\\lceilh\\rceil\\ulcorneri\\urcorner/j\\backslash", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("(2+1]", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\left.1+2\\right)", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("|2|+\\{1\\}+|2|", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("2^2", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("a^b", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("a^2", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("2^b", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("2_2", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("a_b", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("a_2", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("2_b", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test(`k_{n+1} = n^2 + k_n^2 - k_{n-1}`, [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test(`\\frac{1}{2}^{2}`, [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test(`\\frac{1}{2}_2`, [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}_2^y", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}_{2}^{y}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}_1_2_3_4_5_6_7", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}^1^2^3^4^5^6^7", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}^1^2^3^4^5^6^7_x", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1+\\frac{x}{y}}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1^x}{2_y}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sum^{2}_{x}4", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\int^2_x{4}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\binom{1}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sum_{i=1}^{10} t_i", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\exp_a b = a^b, \\exp b = e^b, 10^m, \\exp_{a}^x {b}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\ln c, \\lg d = \\log e, \\log_{10} f", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sin a, \\cos b, \\tan c, \\cot d, \\sec e, \\csc f, \\cos^2_{y}{b}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\arcsin h, \\arccos_x i, \\arctan^y_{x} {j}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sinhk, \\cosh {l}, \\tanh_x^y m, \\coth^{x}_y_1_2 {n}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\left\\vert s \\right\\vert", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\min(x,y), \\max(x,y)", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("0 \\leq \\lim_{n\\to \\infty}\\frac{n!}{(2n)!} \\leq \\lim_{n\\to \\infty} \\frac{n!}{(n!)^2} = \\lim_{k \\to \\infty, k = n!}\\frac{k}{k^2} = \\lim_{k \\to \\infty} \\frac{1}{k} = 0", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sqrt5", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sqrt\\frac{1}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sqrt[2^2]\\frac{1}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sqrt[2^2] {\\frac{1}{2}+3}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\doubleAB", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frakturAB", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\dd", [["ParaRun", "𝑑"]], true, "Check LaTeX words");
-		// Test("\\Dd", [["ParaRun", "𝐷"]], true, "Check LaTeX words");
-		// Test("\\ee", [["ParaRun", "𝑒"]], true, "Check LaTeX words");
-		// Test("\\hbar", [["ParaRun", "ℏ"]], true, "Check LaTeX words");
-		// Test("\\ii", [["ParaRun", "𝑖"]], true, "Check LaTeX words");
-		// Test("\\Im", [["ParaRun", "𝕴"]], true, "Check LaTeX words");
-		// Test("\\imath", [["ParaRun", "𝚤"]], true, "Check LaTeX words");
-		// Test("\\j", [["ParaRun", "𝐽𝑎𝑦"]], true, "Check LaTeX words");
-		// Test("\\jj", [["ParaRun", "𝑗"]], true, "Check LaTeX words");
-		// Test("\\jmath", [["ParaRun", "𝐽"]], true, "Check LaTeX words");
-		// Test("\\partial", [["ParaRun", "∂"]], true, "Check LaTeX words");
-		// Test("\\Re", [["ParaRun", "ℜ"]], true, "Check LaTeX words");
-		// Test("\\wp", [["ParaRun", "℘"]], true, "Check LaTeX words");
-		// Test("\\aleph", [["ParaRun", "ℵ"]], true, "Check LaTeX words");
-		// Test("\\bet", [["ParaRun", "ℶ"]], true, "Check LaTeX words");
-		// Test("\\beth", [["ParaRun", "ℶ"]], true, "Check LaTeX words");
-		// Test("\\gimel", [["ParaRun", "ℷ"]], true, "Check LaTeX words");
-		//
-		//
-		// Test("\\alpha", [["ParaRun", "\\alpha"]], true, "Check LaTeX words");
-		// Test("\\Alpha", [["ParaRun", "\\Alpha"]], true, "Check LaTeX words");
-		// Test("\\beta", [["ParaRun", "\\beta"]], true, "Check LaTeX words");
-		// Test("\\Beta", [["ParaRun", "\\Beta"]], true, "Check LaTeX words");
-		// Test("\\gamma", [["ParaRun", "\\gamma"]], true, "Check LaTeX words");
-		// Test("\\Gamma", [["ParaRun", "\\Gamma"]], true, "Check LaTeX words");
-		// Test("\\pi", [["ParaRun", "\\pi"]], true, "Check LaTeX words");
-		// Test("\\Pi", [["ParaRun", "\\Pi"]], true, "Check LaTeX words");
-		// Test("\\phi", [["ParaRun", "\\phi"]], true, "Check LaTeX words");
-		// Test("\\varphi", [["ParaRun", "\\varphi"]], true, "Check LaTeX words");
-		// Test("\\mu", [["ParaRun", "\\mu"]], true, "Check LaTeX words");
-		// Test("\\Phi", [["ParaRun", "\\Phi"]], true, "Check LaTeX words");
-		//
-		// Test("\\cos(2\\theta ) ", [["ParaRun", ""], ["CMathFunc", "\\cos{\\left(2\\theta\\right)}"], ["ParaRun", ""]], true, "Check LaTeX function");
-		// Test("\\lim_{x\\to \\infty }\\exp(x) ", [["ParaRun", ""], ["CMathFunc", "\\lim_{x→∞} { \\exp { (x)}}"], ["ParaRun", ""]], true, "Check LaTeX function");
-		//
-		// Test("k^{n+1} ", [["ParaRun", ""], ["CDegree", "k^{n+1}"], ["ParaRun", ""]], true, "Check LaTeX degree");
-		// Test("n^2 ",[["ParaRun", ""], ["CDegree", "n^2"], ["ParaRun", ""]], true, "Check LaTeX degree");
-		// Test("n^{2} ", [["ParaRun", ""], ["CDegree", "n^2"], ["ParaRun", ""]], true, "Check LaTeX degree");
-		// Test("n^(2) ", [["ParaRun", ""], ["CDegree", "n^{\\left(2\\right)}"], ["ParaRun", ""]], true, "Check LaTeX degree");
+		QUnit.module( "brackets", function ()
+		{
+			Test("(2+1)", [["ParaRun", ""], ["CDelimiter", "\\left(2+1\\right)"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("()", [["ParaRun", ""], ["CDelimiter", "\\left(\\right)"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("(", [["ParaRun", "("]], true, "Check LaTeX words");
+			Test(")", [["ParaRun", ")"]], true, "Check LaTeX words");
 
+			Test("[2+1]", [["ParaRun", ""], ["CDelimiter", "\\left[2+1\\right]"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("[]", [["ParaRun", ""], ["CDelimiter", "\\left[\\right]"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("[", [["ParaRun", "["]], true, "Check LaTeX words");
+			Test("]", [["ParaRun", "]"]], true, "Check LaTeX words");
 
-		// QUnit.module( "Check bug #61007" );
-		// Test("\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}", [["ParaRun", ""], ["CMathMatrix", "\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}"]], true, "Check bug #61007 default matrix");
-		// Test("\\begin{pmatrix}1&2\\\\3&4\\\\\\end{pmatrix}", [["ParaRun", ""], ["CDelimiter", "\\begin{pmatrix}1&2\\\\3&4\\\\\\end{pmatrix}"]], true, "Check bug #61007 pmatrix");
-		// Test("\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]", [["ParaRun", ""], ["CDelimiter", "\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]"]], true, "Check bug #61007 pmatrix");
-		//
-		// QUnit.module( "Check bug #67181" );
-		// Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181", true);
-		// Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-		//
-		// Test("\\mathcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝓆𝓌ℯ𝓇𝓉𝓎𝓊𝒾ℴ𝓅𝒶𝓈𝒹𝒻ℊ𝒽𝒿𝓀𝓁𝓏𝓍𝒸𝓋𝒷𝓃𝓂"]], true, "Check bug #67181", true);
-		// Test("\\mathcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathcal{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-		//
-		// Test("\\mathsf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝗊𝗐𝖾𝗋𝗍𝗒𝗎𝗂𝗈𝗉𝖺𝗌𝖽𝖿𝗀𝗁𝗃𝗄𝗅𝗓𝗑𝖼𝗏𝖻𝗇𝗆"]], true, "Check bug #67181", true);
-		// Test("\\mathsf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathsf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-		//
-		// Test("\\mathrm{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "qwertyuiopasdfghjklzxcvbnm"]], true, "Check bug #67181", true);
-		// Test("\\mathrm{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "qwertyuiopasdfghjklzxcvbnm"]], true, "Check bug #67181");
-		//
-		// Test("\\mathit{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝑞𝑤𝑒𝑟𝑡𝑦𝑢𝑖𝑜𝑝𝑎𝑠𝑑𝑓𝑔ℎ𝑗𝑘𝑙𝑧𝑥𝑐𝑣𝑏𝑛𝑚"]], true, "Check bug #67181", true);
-		// Test("\\mathit{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathit{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-		//
-		// Test("\\mathfrak{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181", true);
-		// Test("\\mathfrak{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-		//
-		// Test("\\mathbfcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝓺𝔀𝓮𝓻𝓽𝔂𝓾𝓲𝓸𝓹𝓪𝓼𝓭𝓯𝓰𝓱𝓳𝓴𝓵𝔃𝔁𝓬𝓿𝓫𝓷𝓶"]], true, "Check bug #67181", true);
-		// Test("\\mathbfcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbfcal{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-		//
-		// Test("\\mathbf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝐪𝐰𝐞𝐫𝐭𝐲𝐮𝐢𝐨𝐩𝐚𝐬𝐝𝐟𝐠𝐡𝐣𝐤𝐥𝐳𝐱𝐜𝐯𝐛𝐧𝐦"]], true, "Check bug #67181", true);
-		// Test("\\mathbf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-		//
-		// Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181", true);
-		// Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-		//
-		// // в будущем лучше объединять такие последовательности в один Run, когда будет готова работа со стилями перепроверить
-		// Test("\\mathfrak{qwerty}\\mathfrak{uiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶"], ["ParaRun", ""],["ParaRun", "𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181", true);
-		// Test("\\mathfrak{qwerty}\\mathfrak{uiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwerty}"], ["ParaRun", ""], ["ParaRun", "\\mathfrak{uiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-		//
-		// // non-standard for Word LaTeX operations
-		// Test("\\fraktur{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181 check non-standard", true);
-		// Test("\\fraktur{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
-		//
-		// Test("\\sf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝗊𝗐𝖾𝗋𝗍𝗒𝗎𝗂𝗈𝗉𝖺𝗌𝖽𝖿𝗀𝗁𝗃𝗄𝗅𝗓𝗑𝖼𝗏𝖻𝗇𝗆"]], true, "Check bug #67181 check non-standard", true);
-		// Test("\\sf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathsf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
-		//
-		// Test("\\script{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝓆𝓌ℯ𝓇𝓉𝓎𝓊𝒾ℴ𝓅𝒶𝓈𝒹𝒻ℊ𝒽𝒿𝓀𝓁𝓏𝓍𝒸𝓋𝒷𝓃𝓂"]], true, "Check bug #67181 check non-standard", true);
-		// Test("\\script{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathcal{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
-		//
-		// Test("\\double{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181 check non-standard", true);
-		// Test("\\double{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
+			Test("\\{2+1\\}", [["ParaRun", ""], ["CDelimiter", "\\left\\{2+1\\right\\}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\{\\}", [["ParaRun", ""], ["CDelimiter", "\\left\\{\\right\\}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\{", [["ParaRun", "\\{"]], true, "Check LaTeX words");
+			Test("\\}", [["ParaRun", "\\}"]], true, "Check LaTeX words");
+
+			Test("|2+1|", [["ParaRun", ""], ["CDelimiter", "\\left|2+1\\right|"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("||", [["ParaRun", ""], ["CDelimiter", "\\left|\\right|"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("|", [["ParaRun", "|"]], true, "Check LaTeX words");
+
+			Test("\\left]2+1\\right[", [["ParaRun", ""], ["CDelimiter", "\\left]2+1\\right["],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("(2+1]", [["ParaRun", ""], ["CDelimiter", "\\left(2+1\\right]"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\left.1+2\\right)", [["ParaRun", ""], ["CDelimiter", "\\left.1+2\\right)"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("|2|+\\{1\\}+|2|", [["ParaRun", ""], ["CDelimiter", "\\left|2\\right|"],["ParaRun", "+"], ["CDelimiter", "\\left\\{1\\right\\}"], ["ParaRun", "+"], ["CDelimiter", "\\left|2\\right|"]], true, "Check LaTeX words");
+			Test("\\left\\vert s \\right\\vert", [["ParaRun", ""], ["CDelimiter", "\\left|s\\right|"],["ParaRun", ""]], true, "Check LaTeX words");
+		})
+
+		QUnit.module( "degree", function ()
+		{
+			Test("2^2", [["ParaRun", ""], ["CDegree", "2^2"], ["ParaRun", ""]], true, "Check LaTeX words");
+			Test("a^b", [["ParaRun", ""], ["CDegree", "a^b"], ["ParaRun", ""]], true, "Check LaTeX words");
+			Test("a^2", [["ParaRun", ""], ["CDegree", "a^2"], ["ParaRun", ""]], true, "Check LaTeX words");
+			Test("2^b", [["ParaRun", ""], ["CDegree", "2^b"], ["ParaRun", ""]], true, "Check LaTeX words");
+			Test("2_2", [["ParaRun", ""], ["CDegree", "2_2"], ["ParaRun", ""]], true, "Check LaTeX words");
+			Test("a_b", [["ParaRun", ""], ["CDegree", "a_b"], ["ParaRun", ""]], true, "Check LaTeX words");
+			Test("a_2", [["ParaRun", ""], ["CDegree", "a_2"], ["ParaRun", ""]], true, "Check LaTeX words");
+			Test("2_b", [["ParaRun", ""], ["CDegree", "2_b"], ["ParaRun", ""]], true, "Check LaTeX words");
+			Test(`k_{n+1} = n^2 + k_n^2 - k_{n-1}`, [["ParaRun", ""], ["CDegree", "k_{n+1}"], ["ParaRun", "="], ["CDegree", "n^2"], ["ParaRun", "+"], ["CDegreeSubSup", "k_n^2"], ["ParaRun", "-"], ["CDegree", "k_{n-1}"] ], true, "Check LaTeX words");
+			Test("k^{n+1} ", [["ParaRun", ""], ["CDegree", "k^{n+1}"], ["ParaRun", ""]], true, "Check LaTeX degree");
+			Test("n^2 ",[["ParaRun", ""], ["CDegree", "n^2"], ["ParaRun", ""]], true, "Check LaTeX degree");
+			Test("n^{2} ", [["ParaRun", ""], ["CDegree", "n^2"], ["ParaRun", ""]], true, "Check LaTeX degree");
+			Test("n^(2) ", [["ParaRun", ""], ["CDegree", "n^{\\left(2\\right)}"], ["ParaRun", ""]], true, "Check LaTeX degree");
+		})
+
+		QUnit.module( "frac", function ()
+		{
+			Test(`\\frac{1}{2}^{2}`, [["ParaRun", ""], ["CDegree", "{\\frac{1}{2}}^2"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test(`\\frac{1}{2}_2`, [["ParaRun", ""], ["CDegree", "{\\frac{1}{2}}_2"], ["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\frac{1}{2}_2^y", [["ParaRun", ""], ["CDegreeSubSup", "{\\frac{1}{2}}_2^y"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\frac{1}{2}_{2}^{y}", [["ParaRun", ""], ["CDegreeSubSup", "{\\frac{1}{2}}_2^y"],["ParaRun", ""]], true, "Check LaTeX words");
+			// Test("\\frac{1}{2}_1_2_3_4_5_6_7", [["ParaRun", ""], ["CDegree", ""],["ParaRun", ""]], true, "Check LaTeX words");
+			// Test("\\frac{1}{2}^1^2^3^4^5^6^7", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+			// Test("\\frac{1}{2}^1^2^3^4^5^6^7_x", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\frac{1}{2}", [["ParaRun", ""], ["CFraction", "\\frac{1}{2}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\frac{1+\\frac{x}{y}}{2}", [["ParaRun", ""], ["CFraction", "\\frac{1+\\frac{x}{y}}{2}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\frac{1^x}{2_y}", [["ParaRun", ""], ["CFraction", "\\frac{1^x}{2_y}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\binom{1}{2}", [["ParaRun", ""], ["CFraction", "\\binom{1}{2}"],["ParaRun", ""]], true, "Check LaTeX words");
+		})
+
+		QUnit.module( "nary", function ()
+		{
+			Test("\\sum^{2}_{x}4", [["ParaRun", ""], ["CNary", "\\sum_{x}^{2}4"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\int^2_x{4}", [["ParaRun", ""], ["CNary", "\\int_{x}^{2}4"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\sum_{i=1}^{10} t_i", [["ParaRun", ""], ["CNary", "\\sum_{i=1}^{10}{t_i}"],["ParaRun", ""]], true, "Check LaTeX words");
+		})
+
+		QUnit.module( "func", function ()
+		{
+			Test("\\exp_a b", [["ParaRun", ""], ["CMathFunc", "\\exp_a{b}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\exp b = e^b, 10^m", [["ParaRun", ""], ["CMathFunc", "\\exp{b}"], ["ParaRun", "="], ["CDegree", "e^b"], ["ParaRun", ","], ["CDegree", "10^m"]], true, "Check LaTeX words");
+			Test("\\exp_{a}^x {b}", [["ParaRun", ""], ["CMathFunc", "\\exp_a^x{b}"],["ParaRun", ""]], true, "Check LaTeX words");
+
+			Test("\\ln c", [["ParaRun", ""], ["CMathFunc", "\\ln{c}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\log e", [["ParaRun", ""], ["CMathFunc", "\\log{e}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\log_{10} f", [["ParaRun", ""], ["CMathFunc", "\\log_{10}{f}"],["ParaRun", ""]], true, "Check LaTeX words");
+
+			Test("\\sin a", [["ParaRun", ""], ["CMathFunc", "\\sin{a}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\cos b", [["ParaRun", ""], ["CMathFunc", "\\cos{b}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\tan c", [["ParaRun", ""], ["CMathFunc", "\\tan{c}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\cot d", [["ParaRun", ""], ["CMathFunc", "\\cot{d}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\sec e", [["ParaRun", ""], ["CMathFunc", "\\sec{e}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\csc f", [["ParaRun", ""], ["CMathFunc", "\\csc{f}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\cos^2_{y}{b}", [["ParaRun", ""], ["CMathFunc", "\\cos_y^2{b}"],["ParaRun", ""]], true, "Check LaTeX words");
+
+			Test("\\arcsin h", [["ParaRun", ""], ["CMathFunc", "\\arcsin{h}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\arccos_x i", [["ParaRun", ""], ["CMathFunc", "\\arccos_x{i}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\arctan^y_{x} {j}", [["ParaRun", ""], ["CMathFunc", "\\arctan_x^y{j}"],["ParaRun", ""]], true, "Check LaTeX words");
+
+			//Test("\\sinhk", [["ParaRun", ""], ["CMathFunc", ""],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\cosh {l}", [["ParaRun", ""], ["CMathFunc", "\\cosh{l}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\tanh_x^y m", [["ParaRun", ""], ["CMathFunc", "\\tanh_x^y{m}"],["ParaRun", ""]], true, "Check LaTeX words");
+			//Test("\\coth^{x}_y_1_2 {n}", [["ParaRun", ""], ["CDegree", ""],["ParaRun", ""]], true, "Check LaTeX words");
+
+			Test("\\min(x,y)", [["ParaRun", ""], ["CMathFunc", "\\min{\\left(x,y\\right)}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\cos(2\\theta)", [["ParaRun", ""], ["CMathFunc", "\\cos{\\left(2\\theta\\right)}"], ["ParaRun", ""]], true, "Check LaTeX function");
+			//Test("\\lim_{x\\to \\infty }\\exp(x) ", [["ParaRun", ""], ["CMathFunc", "\\lim_{x→∞} { \\exp { (x)}}"], ["ParaRun", ""]], true, "Check LaTeX function");
+		})
+
+		QUnit.module( "radical", function ()
+		{
+			Test("\\sqrt5", [["ParaRun", ""], ["CRadical", "\\sqrt5"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\sqrt\\frac{1}{2}", [["ParaRun", ""], ["CRadical", "\\sqrt{\\frac{1}{2}}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\sqrt[2^2]\\frac{1}{2}", [["ParaRun", ""], ["CRadical", "\\sqrt[2^2]{\\frac{1}{2}}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\sqrt[2^2] {\\frac{1}{2}+3}", [["ParaRun", ""], ["CRadical", "\\sqrt[2^2]{\\frac{1}{2}+3}"],["ParaRun", ""]], true, "Check LaTeX words");
+		})
+
+		QUnit.module( "bugs", function ()
+		{
+			QUnit.module( "Check bug #61007", function ()
+			{
+				Test("\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}", [["ParaRun", ""], ["CMathMatrix", "\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}"]], true, "Check bug #61007 default matrix");
+				Test("\\begin{pmatrix}1&2\\\\3&4\\\\\\end{pmatrix}", [["ParaRun", ""], ["CDelimiter", "\\left(\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right)"]], true, "Check bug #61007 pmatrix");
+				Test("\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]", [["ParaRun", ""], ["CDelimiter", "\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]"]], true, "Check bug #61007 pmatrix");
+			})
+
+			QUnit.module( "Check bug #67181", function ()
+			{
+				Test("\\mathcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝓆𝓌ℯ𝓇𝓉𝓎𝓊𝒾ℴ𝓅𝒶𝓈𝒹𝒻ℊ𝒽𝒿𝓀𝓁𝓏𝓍𝒸𝓋𝒷𝓃𝓂"]], true, "Check bug #67181", true, true);
+				Test("\\mathcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathcal{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathsf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝗊𝗐𝖾𝗋𝗍𝗒𝗎𝗂𝗈𝗉𝖺𝗌𝖽𝖿𝗀𝗁𝗃𝗄𝗅𝗓𝗑𝖼𝗏𝖻𝗇𝗆"]], true, "Check bug #67181", true, true);
+				Test("\\mathsf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathsf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathrm{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "qwertyuiopasdfghjklzxcvbnm"]], true, "Check bug #67181", true, true);
+				Test("\\mathrm{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "qwertyuiopasdfghjklzxcvbnm"]], true, "Check bug #67181");
+
+				Test("\\mathit{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝑞𝑤𝑒𝑟𝑡𝑦𝑢𝑖𝑜𝑝𝑎𝑠𝑑𝑓𝑔ℎ𝑗𝑘𝑙𝑧𝑥𝑐𝑣𝑏𝑛𝑚"]], true, "Check bug #67181", true, true);
+				Test("\\mathit{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝑞𝑤𝑒𝑟𝑡𝑦𝑢𝑖𝑜𝑝𝑎𝑠𝑑𝑓𝑔ℎ𝑗𝑘𝑙𝑧𝑥𝑐𝑣𝑏𝑛𝑚"]], true, "Check bug #67181"); // in word not convert
+
+				Test("\\mathfrak{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181", true, true);
+				Test("\\mathfrak{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathbf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝐪𝐰𝐞𝐫𝐭𝐲𝐮𝐢𝐨𝐩𝐚𝐬𝐝𝐟𝐠𝐡𝐣𝐤𝐥𝐳𝐱𝐜𝐯𝐛𝐧𝐦"]], true, "Check bug #67181", true, true);
+				Test("\\mathbf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181", true, true);
+				Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathfrak{qwerty}\\mathfrak{uiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181", true, true);
+				Test("\\mathfrak{qwerty}\\mathfrak{uiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\sf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝗊𝗐𝖾𝗋𝗍𝗒𝗎𝗂𝗈𝗉𝖺𝗌𝖽𝖿𝗀𝗁𝗃𝗄𝗅𝗓𝗑𝖼𝗏𝖻𝗇𝗆"]], true, "Check bug #67181 check non-standard", true, true);
+				Test("\\sf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathsf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
+
+				Test("\\double{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181 check non-standard", true, true);
+				Test("\\double{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
+			})
+		})
 	})
-
  })
 

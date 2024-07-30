@@ -85,6 +85,17 @@
 		"₍": "(",
 		"₎": ")",
 	}
+	const oStandardFont = {
+		// Standart Word functions with higher proirity for linear format
+		"7" : "\\mathcal",
+		"3" : "\\mathsf",
+		"-1" : "\\mathrm",
+		//"1" : "\\mathit",
+		"9" : "\\mathfrak",
+		//"8" : "\\mathbfcal",
+		"0" : "\\mathbf",
+		"12" : "\\mathbb",
+	}
 	const GetTypeFont = {
 		// Standart Word functions with higher proirity for linear format
 		"\\mathcal": 7,
@@ -246,11 +257,29 @@
 		'8': {0: '𝟖', 12: '𝟠', 3: '𝟪', 4: '𝟴', 11: '𝟾'},
 		'9': {0: '𝟗', 12: '𝟡', 3: '𝟫', 4: '𝟵', 11: '𝟿'},
 	};
+	function GetNamesTypeFontLaTeX(nType)
+	{
+		let arrNamesGetTypeFont = Object.entries(GetTypeFont);
+		return arrNamesGetTypeFont.find(function (element){return element[1] === Number(nType)})
+	}
+	let GetLaTeXFont = {};
+	let nameOfLaTeX = Object.keys(GetMathFontChar)
+	for (let i = 0; i < nameOfLaTeX.length; i++)
+	{
+		let part_font = GetMathFontChar[nameOfLaTeX[i]];
+		let part_keys = Object.keys(part_font);
+
+		for (let j = 0; j < part_keys.length; j++)
+		{
+			GetLaTeXFont[part_font[part_keys[j]]] = [part_keys[j], nameOfLaTeX[i]];
+		}
+	}
 
 	function LexerLiterals()
 	{
 		this.Unicode = {};
 		this.LaTeX = {};
+		this.LaTeXSpecial = undefined;
 		this.isUseLaTeXBrackets = false;
 
 		this.Init();
@@ -316,16 +345,14 @@
 			return;
 
 		let strFunc = ""
-		//"\\";
 
 		// remove regexp
-
 		if (this.isUseLaTeXBrackets)
 		{
 			let isStartBracket = false;
 			let isEndBracket = false;
 			let isSlashes = false;
-			for (let index = 0; arrStr[index] && /[a-zA-Z{}\\]/.test(arrStr[index]); index++)
+			for (let index = 0; arrStr[index] && /[a-zA-Z\\{}]/.test(arrStr[index]); index++)
 			{
 				if (arrStr[index] === "{")
 				{
@@ -355,11 +382,13 @@
 					return strFunc;
 			}
 		}
+		else if (this.Unicode && this.Unicode[arrStr[0]])
+		{
+			return arrStr[0];
+		}
 		else
 		{
 			let isSlashes = false;
-
-
 			for (let index = 0; arrStr[index] && /[a-zA-Z\\]/.test(arrStr[index]); index++)
 			{
 				if (arrStr[index] === "\\")
@@ -375,9 +404,20 @@
 				if (this.LaTeX && this.LaTeX[strFunc])
 					return strFunc;
 			}
-		};
+		}
 
 		return strFunc;
+	};
+	LexerLiterals.prototype.private_GetSpecialLaTeXWord = function (arrStr)
+	{
+		let isSlashes = false;
+		let strWord = "";
+		for (let i = 0; i < arrStr.length; i++)
+		{
+			strWord = strWord + arrStr[i];
+			if (this.LaTeXSpecial && this.LaTeXSpecial[strWord])
+				return strWord;
+		}
 	};
 	LexerLiterals.prototype.SetUnicodeFromLaTeX= function (name, data)
 	{
@@ -395,7 +435,16 @@
 		if (!type)
 			return this.GetUnicodeToken(str);
 		else
+		{
+			if (this.LaTeXSpecial)
+			{
+				let word = this.private_GetSpecialLaTeXWord(str);
+
+				if (typeof word === "string" && word)
+					return word;
+			}
 			return this.GetLaTeXToken(str);
+		}
 	};
 	LexerLiterals.prototype.GetUnicodeToken = function (str)
 	{
@@ -569,6 +618,23 @@
 			"\\notelement" : "∉",
 			"\\notin" : "∉",
 			"\\itimes" : "⁢",
+
+			"⁣" : "⁣",
+			"⁤" : "⁤",
+			"⨯" : "⨯",
+			"⨝" : "⨝",
+			"⟕" : "⟕",
+			"⟖" : "⟖",
+			"⟗" : "⟗",
+			"⋉" : "⋉",
+			"⋊" : "⋊",
+			"▷" : "▷",
+			"+" : "+",
+			"-" : "-",
+			"*" : "*",
+			"=" : "=",
+			"≶" : "≶",
+			"≷" : "≷",
 		};
 		this.Unicode = {
 			"⁣" : 1,
@@ -675,6 +741,8 @@
 			"\\Rho"			:	"Ρ",
 			"\\Tau"			:	"Τ",
 			"\\Chi"			:	"Χ",
+
+			"\\to" : "→",
 		};
 		this.Unicode = {};
 		this.Init();
@@ -688,6 +756,9 @@
 		this.Unicode = {
 			"(" : 1,
 		};
+		this.LaTeXSpecial = {
+			"\\{" : "\\{",
+		};
 		this.LaTeX = {
 			"\\begin" : "〖",
 			"\\langle" : "⟨",
@@ -698,6 +769,7 @@
 			"\\lbbrack" : "⟦",
 			"\\lmoust" : "⎰",
 			"\\bra" : "⟨",
+			"\\{" : "\\{",
 			"{" : "{",
 			"(" : "(",
 			"⟨" : "⟨",
@@ -742,6 +814,9 @@
 			"⟫" : 1,
 			"⟧" : 1,
 		};
+		this.LaTeXSpecial = {
+			"\\}" : "\\}",
+		};
 		this.LaTeX = {
 			"\\end" : "〗",
 			"\\rangle" : "⟩",
@@ -776,10 +851,14 @@
 	{
 		this.id = 6;
 		this.Unicode = {};
+		this.LaTeXSpecial = {
+			"\\|" : "|",
+		};
 		this.LaTeX = {
 			"\\norm" : "‖",
 			"\\Vert" : "‖",
 			"\\vert" : "|",
+
 			"‖"	:	"‖",
 			"|"	:	"|",
 		};
@@ -826,7 +905,7 @@
 			"\\rightarrow" : "→",
 			"\\rightharpoondown" : "⇁",
 			"\\rightharpoonup" : "⇀",
-			"\\to" : "→",
+			//"\\to" : "→",
 			"\\vdash" : "⊢",
 		};
 		this.Unicode = {};
@@ -838,6 +917,12 @@
 	function TokenDivide()
 	{
 		this.id = 11;
+		this.LaTeXSpecial = {
+			"\\binom": "\\binom",
+			"\\sfrac": "\\sfrac",
+			"\\frac": "\\frac",
+			"\\cfrac": "\\cfrac",
+		};
 		this.LaTeX = {
 			"\\atop" : "¦",
 			"\\ndiv" : "⊘",
@@ -976,7 +1061,6 @@
 	function TokenAccent()
 	{
 		this.id = 19;
-		this.name = "AccentLiterals";
 		this.LaTeX = {
 			"\\hat": "̂",
 			"\\widehat": "̂",
@@ -1107,6 +1191,7 @@
 			"\\hairsp"	:	" ",		// 3/18 em veryverythinmathspace
 			"\\zwsp"	: 	"​",
 			"\\zwnj"	: 	"‌",
+			" "			:	" ",
 		};
 		this.Init();
 	}
@@ -1279,39 +1364,46 @@
 	{
 		this.id = 31;
 		this.Unicode = {};
-		this.LaTeX = {};
+		this.LaTeX = {
+			// Standart Word functions with higher proirity for linear format
+			"\\mathcal": "\\mathcal",
+			"\\mathsf": "\\mathsf",
+			"\\mathrm": "\\mathrm",
+			"\\mathit": "\\mathit",
+			"\\mathfrak": "\\mathfrak",
+			"\\mathbfcal": "\\mathbfcal",
+			"\\mathbf": "\\mathbf",
+			"\\mathbb": "\\mathbb",
+
+			// other LaTeX functions
+			"\\sf": "\\sf",
+			"\\script":"\\script",
+			"\\scr":"\\scr",
+			"\\rm": "\\rm",
+			"\\oldstyle":"\\oldstyle",
+			"\\mathtt": "\\mathtt",
+			"\\mathsfit":"\\mathsfit",
+			"\\mathsfbfit":"\\mathsfbfit",
+			"\\mathsfbf":"\\mathsfbf",
+			"\\mathbfit":"\\mathbfit",
+			"\\mathbffrak": "\\mathbffrak",
+			"\\it":"\\it",
+			"\\fraktur":"\\fraktur",
+			"\\frak":"\\frak",
+			"\\double": "\\double",
+		};
 		this.Init();
 	}
 	TokenFont.prototype = Object.create(LexerLiterals.prototype);
 	TokenFont.prototype.constructor = TokenFont;
+	TokenFont.prototype.GetType = function (strToken)
+	{
+		return GetTypeFont[strToken];
+	};
 	TokenFont.prototype.GetTypes = function ()
 	{
-		return {
-			"\\sf": 3,
-			"\\script": 7,
-			"\\scr": 7,
-			"\\rm": -1,
-			"\\oldstyle": 7,
-			"\\mathtt": 11,
-			"\\mathsfit": 5,
-			"\\mathsfbfit": 6,
-			"\\mathsfbf": 4,
-			"\\mathsf": 3,
-			"\\mathrm": -1,
-			"\\mathit": 1,
-			"\\mathfrak": 9,
-			"\\mathcal": 7,
-			"\\mathbfit": 2,
-			"\\mathbffrak": 10,
-			"\\mathbfcal": 8,
-			"\\mathbf": 0,
-			"\\mathbb": 12,
-			"\\it": 1,
-			"\\fraktur": 9,
-			"\\frak": 9,
-			"\\double": 12,
-		}
-	};
+		return GetTypeFont;
+	}
 
 	function TokenOf()
 	{
@@ -1342,6 +1434,21 @@
 		if (str[0] === "\\" && str[1] === "\\")
 			return "\\\\"
 	}
+
+	function TokenPunctuation()
+	{
+		this.id = 34;
+		this.Unicode = {};
+		this.LaTeX = {};
+		//for now, later add Unicode
+		this.LaTeXSpecial = {
+			",": ",",
+			".": ".",
+		};
+		this.Init();
+	}
+	TokenPunctuation.prototype = Object.create(LexerLiterals.prototype)
+	TokenPunctuation.prototype.constructor = TokenPunctuation;
 
 	//---------------------------------------Initialize data for Tokenizer----------------------------------------------
 
@@ -1377,6 +1484,7 @@
 		horizontal: 	new TokenHorizontalStretch(),
 		arrayMatrix:	new TokenArrayMatrix(),
 		eqArray:		new TokenEqArray(),
+		punct:			new TokenPunctuation(),
 	};
 
 	// The array defines the sequence in which the tokens are checked by the lexer
@@ -1389,11 +1497,11 @@
 		MathLiterals.special,
 		MathLiterals.of,
 		MathLiterals.number,
+		MathLiterals.operand,
 		MathLiterals.accent,
 		MathLiterals.space,
 		MathLiterals.operator,
 		MathLiterals.rect,
-		MathLiterals.operand,
 		MathLiterals.lBrackets,
 		MathLiterals.rBrackets,
 		MathLiterals.lrBrackets,
@@ -1410,6 +1518,8 @@
 		MathLiterals.subSup,
 		MathLiterals.arrayMatrix,
 		MathLiterals.eqArray,
+		MathLiterals.punct,
+		MathLiterals.font,
 	];
 
 	//-------------------------------------Generating AutoCorrection Rules----------------------------------------------
@@ -1964,13 +2074,14 @@
 	};
 	Tokenizer.prototype.SaveState = function (oLookahead)
 	{
-		let strClass = oLookahead.class;
-		let data = oLookahead.data;
+		let strClass	= oLookahead.class;
+		let data		= oLookahead.data;
+		let style		= oLookahead.style;
 
 		this.state.push({
 			_string: this._string,
 			_cursor: this._cursor,
-			oLookahead: { class: strClass, data: data},
+			oLookahead: { class: strClass, data: data, style: style},
 		})
 	};
 	Tokenizer.prototype.RestoreState = function ()
@@ -2083,22 +2194,14 @@
 					}
 					break;
 				case MathStructures.other:
-					let intCharCode = oTokens.value.codePointAt()
-					oContext.Add_Symbol(intCharCode);
+					for (const oUnicodeIterator =  oTokens.value.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
+					{
+						oContext.Add_Text(AscCommon.encodeSurrogateChar(oUnicodeIterator.value()), undefined, undefined, oTokens.style[oUnicodeIterator.position()]);
+						//oContext.Add_Text(oTokens.value[nTokenStyle], undefined, undefined, oTokens.style[nTokenStyle]
+					}
 					break;
-				case oNamesOfLiterals.functionNameLiteral[num]:
-				case oNamesOfLiterals.specialScriptNumberLiteral[num]:
-				case oNamesOfLiterals.specialScriptCharLiteral[num]:
-				case oNamesOfLiterals.specialScriptBracketLiteral[num]:
-				case oNamesOfLiterals.specialScriptOperatorLiteral[num]:
-				case oNamesOfLiterals.specialIndexNumberLiteral[num]:
-				case oNamesOfLiterals.specialIndexCharLiteral[num]:
-				case oNamesOfLiterals.specialIndexBracketLiteral[num]:
-				case oNamesOfLiterals.specialIndexOperatorLiteral[num]:
-				case oNamesOfLiterals.opDecimal[num]:
 				case MathStructures.char:
 				case MathStructures.space:
-				case oNamesOfLiterals.mathOperatorLiteral[num]:
 				case MathStructures.number:
 					if (oTokens.decimal)
 					{
@@ -2185,7 +2288,6 @@
 						oAccent.getBase()
 					)
 					break;
-				case oNamesOfLiterals.skewedFractionLiteral[num]:
 				case MathStructures.frac:
 					if (oTokens.fracType === LITTLE_FRACTION)
 					{
@@ -2250,7 +2352,7 @@
 
 						oTokens.value.type = 0;
 						UnicodeArgument(
-							oTokens.value,
+							oTokens.value.value,
 							MathStructures.bracket_block,
 							SubSup.getBase()
 						);
@@ -2603,12 +2705,6 @@
 						oFunc.getArgument(),
 					)
 					break;
-				case oNamesOfLiterals.mathFontLiteral[num]:
-					ConvertTokens(
-						oTokens.value,
-						oContext,
-					);
-					break;
 				case MathStructures.matrix:
 					let strStartBracket, strEndBracket;
 
@@ -2762,7 +2858,7 @@
 			".": -1,
 			"\\{": "{".charCodeAt(0),
 			"\\}": "}".charCodeAt(0),
-			"\\|": "‖".charCodeAt(0),
+			"\\|": "|".charCodeAt(0),
 			"|": 124,
 			"〖": -1,
 			"〗": -1,
@@ -2779,6 +2875,11 @@
 			if (nCounter > 1 && code === "〗")
 				return "〗".charCodeAt();
 
+			let strBracket = oBrackets[code];
+			if (strBracket) {
+				return strBracket
+			}
+
 			if (MathLiterals.rBrackets.LaTeX[code])
 			{
 				return MathLiterals.rBrackets.LaTeX[code].charCodeAt(0);
@@ -2792,10 +2893,6 @@
 				return MathLiterals.lBrackets.LaTeX[code].charCodeAt(0);
 			}
 
-			let strBracket = oBrackets[code];
-			if (strBracket) {
-				return strBracket
-			}
 			return code.charCodeAt(0)
 		}
 	}
@@ -3943,7 +4040,7 @@
 		"⟩" : "\\ket",
 		"〈" : "\\langle",
 		"⟦" : "\\lbbrack",
-		"[" : "\\lbrack",
+		//"[" : "\\lbrack",
 		"⌈" : "\\lceil",
 		"├" : "\\left",
 		"⇐" : "\\Leftarrow",
@@ -3997,7 +4094,7 @@
 		"〉" : "\\rangle",
 		"⟫" : "\\Rangle",
 		"∶" : "\\ratio",
-		"]" : "\\rbrack",
+		//"]" : "\\rbrack",
 		"⟧" : "\\Rbrack",
 		"⌉" : "\\rceil",
 		"⋰" : "\\rddots",
@@ -4093,7 +4190,7 @@
 		"⋮" : "\\vdots",
 		"⃗" : "\\vec",
 		"∨" : "\\vee",
-		"|" : "\\vert",
+		//"|" : "\\vert",
 		"⒩" : "\\Vmatrix",
 		"⇳" : "\\vphantom",
 		" " : "\\vthicksp",
@@ -4616,6 +4713,8 @@
 
 		this.globalStyle		= undefined;
 		this.IsGetStyleFromFirst = true;
+
+		this.IsNotWrap 			= false;
 	}
 	MathTextAndStyles.prototype.IsEmpty = function ()
 	{
@@ -4750,6 +4849,7 @@
 
 			this.Increase();
 			let oPos = this.AddPosition(this.nPos - nPosCopy);
+			let str = oMath.GetText();
 
 			if (this.IsLaTeX())
 			{
@@ -4757,8 +4857,12 @@
 					this.WrapExactElement(oPos, Wrap[0], Wrap[1], this.GetFirstStyle());
 				else if (Wrap === 0 || oContent instanceof ParaRun)
 					return oPos;
-				else if (!(oContent instanceof CDelimiter) && oContent.haveMixedContent && oContent.haveMixedContent() || Wrap === 1)
+				else if (Wrap === 1 && ((oContent.haveMixedContent && oContent.haveMixedContent(this.IsLaTeX())) || (this.IsLaTeX() && str.length > 1 && this.IsNotWrap === false)))
 					this.WrapExactElement(oPos, "{", "}", this.GetStyleFromFirst(oContent));
+				else if (Wrap === 2)
+					this.WrapExactElement(oPos, "{", "}", this.GetStyleFromFirst(oContent));
+
+				this.IsNotWrap = false;
 			}
 			else
 			{
@@ -4788,6 +4892,10 @@
 			return this.AddPosition(this.nPos - nPosCopy);
 		}
 	};
+	MathTextAndStyles.prototype.SetNotWrap = function()
+	{
+		this.IsNotWrap = true;
+	}
 	MathTextAndStyles.prototype.AddText = function(oContent, isNew)
 	{
 		let nPosCopy = this.nPos;
@@ -6515,117 +6623,6 @@
 			return oTempPos;
 	}
 
-	/**
-	 * Correct math words by specific rules.
-	 * @param {CMathContent} oContent - Content that will search for mathematical words.
-	 * @param {Object} oContentToSearch - List of specific rules.
-	 * @param {boolean} isSkipSpecial - Determines whether to skip a space or an operator in the first position.
-	 * @param {boolean} isAllWords - Is need to convert all words or just the first one.
-	 * @param {boolean} isCorrectPos - Is move the cursor to the end of CMathContent
-	 */
-	function CheckAutoCorrection(oContent, oContentToSearch, isSkipSpecial, isAllWords, isCorrectPos)
-	{
-		//todo
-		let oContentIterator = new CMathContentIterator(oContent);
-		let isConvert = false;
-		let strWord = "";
-		let strOperator = "";
-
-		while (oContentIterator.IsHasContent())
-		{
-			let currentContent = oContentIterator.Next();
-
-			// Recursively proceed all CMathContent's
-			if (typeof currentContent  === "object" && currentContent.Content.length > 0)
-			{
-				let arrContentOfCurrent = currentContent.Content;
-
-				for (let i = 0; i < arrContentOfCurrent.length; i++)
-				{
-					let oInnerContent = arrContentOfCurrent[i];
-					if (oInnerContent instanceof CMathContent)
-						CheckAutoCorrection(oInnerContent, oContentToSearch, isSkipSpecial, isAllWords, false);
-				}
-				continue;
-			}
-
-			// if set flag isSkipSpecial and first symbol is space or operator - skip this symbol
-			// used when it is necessary to process one word before the cursor
-			else if (IsNeedSkipSpecial(oContentIterator, isSkipSpecial, currentContent))
-			{
-				strOperator = currentContent;
-				continue;
-			}
-			else if (isAllWords && currentContent === " ")
-			{
-				strWord = "";
-				continue;
-			}
-
-			strWord = currentContent + strWord;
-			let intCurrentSymbol = oContentToSearch[strWord];
-
-			if (oContentToSearch[strWord])
-			{
-				if (oContentIterator._index === -1)
-					oContentIterator._index = 0;
-
-				let intRootIndex = oContent.Content.length - (oContentIterator._index + 1);
-				let intChildIndex = oContentIterator._nParaRun + 1;
-				let oDelMark = new PositionIsCMathContent(intRootIndex, intChildIndex);
-
-				CutContentFromEnd(oContent, {oDelMark : oDelMark});
-
-				let strRule = ConvertRuleDataToText(intCurrentSymbol);
-				strRule += strOperator === " " ? "" : strOperator;
-				AddTextByPos(oContent, oDelMark, strRule);
-
-				isConvert = true;
-				strWord = "";
-
-				if (isAllWords)
-					continue;
-
-				break;
-			}
-
-			if (currentContent === "\\")
-				return false;
-		}
-
-		if (isCorrectPos && isAllWords)
-			oContent.MoveCursorToEndPos(true);
-
-		return isConvert;
-	}
-	function IsNeedSkipSpecial(oContentIterator, isSkipSpecial, currentContent)
-	{
-		return isSkipSpecial
-			&& oContentIterator.counter === 1
-			&& (
-				currentContent === " "
-				|| MathLiterals.operator.SearchU(currentContent)
-				|| MathLiterals.lBrackets.SearchU(currentContent)
-			);
-	}
-	function ConvertRuleDataToText(rule)
-	{
-		if (Array.isArray(rule))
-		{
-			let strRule = "";
-			for (let nCount = 0; nCount < rule.length; nCount++)
-			{
-				strRule += String.fromCharCode(rule[nCount]);
-			}
-
-			return strRule;
-		}
-		else
-		{
-			return String.fromCharCode(rule)
-		}
-	}
-
 	function ConvertBracketContent(oTokens, oCMathContent)
 	{
 		return ConvertBracket(oTokens, oCMathContent, true);
@@ -6848,8 +6845,16 @@
 			this.type = GetTokenType(this.GetText(), TokenSearch_Everything)
 			return true;
 		};
+		this.IsRef = function ()
+		{
+			return this.ref && this.ref.length > 0
+		}
+		this.IsSetPosition = function ()
+		{
+			return this.position[0] !== undefined && this.position[1] !== undefined
+		}
 
-		if (this.ref !== undefined && this.ref !== null && MathPos !== undefined && RunPos !== undefined && type === undefined && this.ref.length > 0)
+		if (this.IsRef() && this.IsSetPosition() && type === undefined)
 			this.type = GetTokenType(this.GetText(), TokenSearch_Everything);
 		else
 			this.type = type;
@@ -7102,4 +7107,8 @@
 	window["AscMath"].GetAutoConvertation			= GetAutoConvertation;
 	window["AscMath"].SetAutoConvertation			= SetAutoConvertation;
 	window["AscMath"].ProceedTokens					= ProceedTokens;
+	window["AscMath"].GetLaTeXFont					= GetLaTeXFont;
+	window["AscMath"].GetNamesTypeFontLaTeX			= GetNamesTypeFontLaTeX;
+	window["AscMath"].oStandardFont					= oStandardFont;
+	window["AscMath"].GetTypeFont					= GetTypeFont;
 })(window);

@@ -48,6 +48,7 @@
     this.token = null;
     this.isRequested = null;
     this.serverVersion = null;
+    this.documentSha256 = null;
     this.userId = null;
     this.userName = null;
     this.userColor = null;
@@ -84,6 +85,7 @@
     this.userColor      = newObj.userColor;
     this.dateOfRevision = newObj.dateOfRevision;
 
+	this.documentSha256 = newObj.documentSha256;
     return bUpdate;
   };
   asc_CVersionHistory.prototype.applyChanges = function(editor) {
@@ -125,6 +127,9 @@
   asc_CVersionHistory.prototype.asc_setServerVersion = function(val) {
     this.serverVersion = val;
   };
+  asc_CVersionHistory.prototype.asc_setDocumentSha256 = function(val) {
+    this.documentSha256 = val;
+  };
   asc_CVersionHistory.prototype.asc_SetUserId = function(val)
   {
     this.userId = val;
@@ -152,6 +157,7 @@
   prot["asc_setToken"] = prot.asc_setToken;
   prot["asc_setIsRequested"] = prot.asc_setIsRequested;
   prot["asc_setServerVersion"] = prot.asc_setServerVersion;
+  prot["asc_setDocumentSha256"] = prot.asc_setDocumentSha256;
   prot["asc_SetUserId"] = prot.asc_SetUserId;
   prot["asc_SetUserName"] = prot.asc_SetUserName;
   prot["asc_SetUserColor"] = prot.asc_SetUserColor;
