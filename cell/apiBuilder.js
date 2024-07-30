@@ -444,7 +444,7 @@
 	Api.prototype.AddCustomFunction = function (fCustom) {
 		// get parsedJSDoc from a macros (we receive it from the Api class)
 		// take the first element and validate it
-		const parsedJSDoc = this.parsedJSDoc.shift();
+		const parsedJSDoc = this.parsedJSDoc && this.parsedJSDoc.shift();
 		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
 		//const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
 		if (!isValidJsDoc/* && !isValidOptions*/) {
@@ -10266,7 +10266,7 @@
 				let bbox = destination.range.bbox;
 				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 				this.range.move(range.bbox, true, destination.range.worksheet);
-				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
 				logError(new Error('Invalid destination'));
 			}
@@ -10297,7 +10297,7 @@
 				let bbox = destination.range.bbox;
 				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 				this.range.move(range.bbox, false, destination.range.worksheet);
-				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
 				logError(new Error('Invalid destination'));
 			}
@@ -13239,10 +13239,13 @@
 				newUser.asc_setType(nType);
 
 				let users = this.protectedRange.asc_getUsers();
+				if (!users) {
+					users = [];
+				}
 				users.push(newUser);
 				newProtectedRange.asc_setUsers(users);
 				worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
-				result = new ApiProtectedRangeUserInfo(result, this.protectedRange);
+				result = new ApiProtectedRangeUserInfo(newUser, this.protectedRange);
 			}
 		}
 		return result;
