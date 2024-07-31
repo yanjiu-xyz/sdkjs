@@ -449,7 +449,7 @@
 		this.dataField = dataField;
 
 	}
-	ApiPivotDataField.prototype = Object.create(ApiPivotField);
+	ApiPivotDataField.prototype = Object.create(ApiPivotField.prototype);
 	ApiPivotDataField.prototype.constructor = ApiPivotDataField;
 
 	/**
