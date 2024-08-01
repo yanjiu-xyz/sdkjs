@@ -6924,6 +6924,7 @@
 	 * @param {ApiRange} pivotRef - Range in which the table will be located.
 	 * @param {bool} confirmation - Replace the data in pivotRef (if it exists) or create a dialog box for this (if it exists).
 	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotExistingWorksheet.js
 	 */
 	Api.prototype.InsertPivotExistingWorksheet = function (dataRef, pivotRef, confirmation) {
 		if (dataRef) {
@@ -6948,6 +6949,7 @@
 	 * @param {ApiRange} dataRef - Source data range.
 	 * @param {ApiRange} newSheetName - New worksheet name.
 	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotNewWorksheet.js
 	 */
 	Api.prototype.InsertPivotNewWorksheet = function (dataRef, newSheetName) {
 		if (dataRef) {
@@ -6980,6 +6982,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} name - Name of PivotTable.
 	 * @returns {ApiPivotTable|null}
+	 * @see office-js-api/Examples/Cell/Api/Methods/GetPivotByName.js
 	 */
 	Api.prototype.GetPivotByName = function (name) {
 		var res = null;
@@ -6995,6 +6998,7 @@
 	 * Refreshs all PivotTables.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/Cell/Api/Methods/RefreshAllPivots.js
 	 */
 	Api.prototype.RefreshAllPivots = function () {
 		this.asc_refreshAllPivots();
@@ -7004,7 +7008,8 @@
 	 * Returns all PivotTables.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @returns {[ApiPivotTable]|[]}
+	 * @returns {ApiPivotTable[]}
+	 * @see office-js-api/Examples/Cell/Api/Methods/GetAllPivotTables.js
 	 */
 	Api.prototype.GetAllPivotTables = function () {
 		var res = [];
@@ -8324,6 +8329,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} name - Name of PivotTable.
 	 * @returns {ApiPivotTable|null}
+	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetPivotByName.js
 	 */
 	ApiWorksheet.prototype.GetPivotByName = function (name) {
 		var res = null;
@@ -8339,7 +8345,8 @@
 	 * Returns all PivotTables on worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @returns {[ApiPivotTable]|[]}
+	 * @returns {ApiPivotTable[]}
+	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllPivotTables.js
 	 */
 	ApiWorksheet.prototype.GetAllPivotTables = function () {
 		var res = [];
@@ -8360,6 +8367,7 @@
 	 * Refresh all PivotTables on current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/RefreshAllPivots.js
 	 */
 	ApiWorksheet.prototype.RefreshAllPivots = function () {
 		this.worksheet.pivotTables.forEach(function(piv) {
@@ -15900,7 +15908,12 @@
 	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;
 
 	Api.prototype["GetWorksheetFunction"] = Api.prototype.GetWorksheetFunction;
-	
+	Api.prototype["InsertPivotExistingWorksheet"] = Api.prototype.InsertPivotExistingWorksheet;
+	Api.prototype["InsertPivotNewWorksheet"] = Api.prototype.InsertPivotNewWorksheet;
+	Api.prototype["GetPivotByName"] = Api.prototype.GetPivotByName;
+	Api.prototype["RefreshAllPivots"] = Api.prototype.RefreshAllPivots;
+	Api.prototype["GetAllPivotTables"] = Api.prototype.GetAllPivotTables;
+
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
 	ApiWorksheet.prototype["SetActive"] = ApiWorksheet.prototype.SetActive;		
@@ -15957,6 +15970,10 @@
 	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
 	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
 	ApiWorksheet.prototype["Paste"] = ApiWorksheet.prototype.Paste;
+	ApiWorksheet.prototype["GetPivotByName"] = ApiWorksheet.prototype.GetPivotByName;
+	ApiWorksheet.prototype["GetAllPivotTables"] = ApiWorksheet.prototype.GetAllPivotTables;
+	ApiWorksheet.prototype["RefreshAllPivots"] = ApiWorksheet.prototype.RefreshAllPivots;
+	ApiWorksheet.prototype["RefreshAllPivots"] = ApiWorksheet.prototype.RefreshAllPivots;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
