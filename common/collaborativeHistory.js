@@ -474,8 +474,12 @@
 
 		return arrReverseChanges;
 	};
-	CCollaborativeHistory.prototype.CommuteContentChange = function(oChange, nStartPosition)
+	CCollaborativeHistory.prototype.CommuteContentChange = function(oChange, nStartPosition, arrChanges)
 	{
+		var arrChangesForProceed = this.Changes;
+		if (arrChanges && arrChanges.length > 0)
+			arrChangesForProceed = arrChanges;
+
 		var arrActions          = oChange.ConvertToSimpleActions();
 		var arrCommutateActions = [];
 
@@ -484,9 +488,9 @@
 			var oAction = arrActions[nActionIndex];
 			var oResult = oAction;
 
-			for (var nIndex = nStartPosition, nOverallCount = this.Changes.length; nIndex < nOverallCount; ++nIndex)
+			for (var nIndex = nStartPosition, nOverallCount = arrChangesForProceed.length; nIndex < nOverallCount; ++nIndex)
 			{
-				var oTempChange = this.Changes[nIndex];
+				var oTempChange = arrChangesForProceed[nIndex];
 				if (!oTempChange)
 					continue;
 

@@ -71,53 +71,7 @@
 		if (!arrChanges || !arrChanges.length)
 			return;
 
-		let arrDelChanges	= [];
-
-		// разделяем по типу изменений
-		for (let i = 0; i < arrChanges.length; i++)
-		{
-			let oCurrentChange = arrChanges[i];
-
-			if (oCurrentChange instanceof AscCommon.CChangesTableIdDescription)
-			{
-				if (arrDelChanges.length > 0 && arrDelChanges[arrDelChanges.length - 1].length === 1)
-					arrDelChanges.length = arrDelChanges.length - 1;
-
-				arrDelChanges.push([oCurrentChange]);
-			}
-
-			if (oCurrentChange instanceof CChangesRunRemoveItem || oCurrentChange instanceof CChangesParagraphRemoveItem || oCurrentChange instanceof CChangesDocumentRemoveItem)
-			{
-				if (arrDelChanges.length > 0)
-				{
-					let oLast = arrDelChanges[arrDelChanges.length - 1];
-					oLast.push(oCurrentChange);
-				} else
-				{
-					arrDelChanges.push([oCurrentChange]);
-				}
-			} else if (oCurrentChange instanceof CChangesRunAddItem || oCurrentChange instanceof CChangesParagraphAddItem || oCurrentChange instanceof CChangesDocumentAddItem)
-			{
-				if (arrDelChanges.length > 0)
-				{
-					let oLast = arrDelChanges[arrDelChanges.length - 1];
-					oLast.push(oCurrentChange);
-				}
-				else
-				{
-					arrDelChanges.push([oCurrentChange]);
-				}
-			}
-		}
-
-		// если блок изменений состоит только из CChangesTableIdDescription, убираем этот блок
-		for (let i = 0; i < arrDelChanges.length; i++)
-		{
-			if (arrDelChanges[i].length === 1 && arrDelChanges[i][0] instanceof AscCommon.CChangesTableIdDescription)
-				arrDelChanges[i].length = 0;
-		}
-
-		this.m_RewiewDelPoints = arrDelChanges;
+		this.m_RewiewDelPoints = arrChanges;
 	};
 	/**
 	 * Отображаем удаленный текст в текущей точки истории ревизии
@@ -134,26 +88,72 @@
 	 */
 	DeletedTextRecovery.prototype.GetChanges = function()
 	{
-		let arrInput = [];
+		return this.m_RewiewDelPoints.reverse();
+	};
+	DeletedTextRecovery.prototype.GetRemoveTextChanges = function (arrInputChanges, oRemoveText)
+	{
+		let oAddText		= new AddTextPositions();
 
-		for (let nCounter = 0; nCounter < this.m_RewiewDelPoints.length; nCounter++)
+		// отбираем удаленный текст связанный с текущей ревизией
+		for (let i = 0; i < arrInputChanges.length; i++)
 		{
-			let arrCurr = this.m_RewiewDelPoints[nCounter];
-			if (nCounter < AscCommon.CollaborativeEditing.CoHistory.curChangeIndex)
-			{
-				let arrTemp = [];
-				for (let j = 0; j < arrCurr.length; j++)
-				{
-					arrTemp.push(arrCurr[j]);
-				}
+			let oCurChange		= arrInputChanges[i];
 
-				if (arrTemp.length > 0)
-					arrInput.push(arrTemp);
+			if (oCurChange instanceof AscCommon.CChangesTableIdDescription)
+				continue;
+
+			if (!oCurChange.Copy)
+				continue;
+
+			let oNewCurChange	= oCurChange.Copy();
+
+			if (oNewCurChange.ConvertToSimpleChanges && oNewCurChange.Items.length > 1)
+				oNewCurChange	= oNewCurChange.ConvertToSimpleChanges();
+
+			if (!Array.isArray(oNewCurChange))
+				oNewCurChange	= [oNewCurChange];
+
+			for (let k = 0; k < oNewCurChange.length; k++)
+			{
+				let oCur = oNewCurChange[k];
+				if (oCurChange.Items.length > 1)
+					oCur.Pos += k;
+
+				oRemoveText.ProceedChange(oCur)
+
+				if (oCur instanceof CChangesRunAddItem || oCur instanceof CChangesParagraphAddItem || oCur instanceof CChangesDocumentAddItem)
+					oAddText.Check(oCur, oRemoveText);
+				else if (oCur instanceof CChangesRunRemoveItem || oCur instanceof CChangesParagraphRemoveItem || oCur instanceof CChangesDocumentRemoveItem)
+					oRemoveText.AddToClass(oCur.Class, oCur, oCur.UseArray ? oCur.PosArray[0] : oCur.Pos, i);
+			}
+		}
+	}
+	DeletedTextRecovery.prototype.CommuteChanges = function (arrInputChanges, arrSaveData, oRemoveText)
+	{
+		// коммутируем изменения
+		let arrRevInput = arrInputChanges.reverse();
+		let arrDelChangesForCommute = oRemoveText.GetArrayChanges();
+		for (let j = 0; j < arrDelChangesForCommute.length; j++)
+		{
+			let oCurItem	= arrDelChangesForCommute[j];
+			let nPos		= oCurItem.nIndex;
+			let oChange		= oCurItem.item;
+
+			if (oChange.IsContentChange())
+			{
+				let _oChange = oChange.Copy();
+
+				if (AscCommon.CollaborativeEditing.CoHistory.CommuteContentChange(_oChange, arrRevInput.length - nPos, arrRevInput))
+					arrSaveData.push(_oChange);
+			}
+			else
+			{
+				arrSaveData.push(oChange);
 			}
 		}
 
-		return arrInput;
-	};
+		oRemoveText.ResetData();
+	}
 	/**
 	 * Отменяем заданные изменения
 	 * @param arrInputChanges
@@ -161,78 +161,26 @@
 	 */
 	DeletedTextRecovery.prototype.RedoUndoChanges = function (arrInputChanges)
 	{
-		let oAddText	= new AddTextPositions();
-		let oRemoveText	= new RemoveTextPositions();
-		arrInputChanges	= arrInputChanges.reverse();
+		let oRemoveText		= new RemoveTextPositions();
+		let arrChanges		= [];
+		let arrDelChanges	= [];
 
-		let delChanges	= [];
+		this.GetRemoveTextChanges(arrInputChanges, oRemoveText);
+		this.CommuteChanges(arrInputChanges, arrDelChanges, oRemoveText);
 
-		for (let i = 0; i < arrInputChanges.length; i++)
+		for (let i = 0; i < arrDelChanges.length; i++)
 		{
-			let arrChanges = arrInputChanges[i].reverse();
+			this.RedoUndoChange(arrDelChanges[i], false, arrChanges);
+			let nPos = arrDelChanges[i].UseArray
+				? arrDelChanges[i].PosArray[0]
+				: arrDelChanges[i].Pos;
 
-			for (let y = 0; y < arrChanges.length; y++)
-			{
-				let oCurChange = arrChanges[y];
-
-				if (oCurChange instanceof AscCommon.CChangesTableIdDescription)
-					continue;
-
-				oCurChange = oCurChange.Copy();
-
-				if (oCurChange.ConvertToSimpleChanges && oCurChange.Items.length > 1)
-					oCurChange = oCurChange.ConvertToSimpleChanges();
-
-				if (!Array.isArray(oCurChange))
-					oCurChange = [oCurChange];
-
-				for (let k = 0; k < oCurChange.length; k++)
-				{
-					let oCur = oCurChange[k];
-					if (arrChanges[y].Items.length > 1)
-						oCur.Pos += k;
-
-					oRemoveText.ProceedChange(oCur)
-
-					if (oCur instanceof CChangesRunAddItem || oCur instanceof CChangesParagraphAddItem || oCur instanceof CChangesDocumentAddItem)
-					{
-						if (oAddText.Check(oCur, oRemoveText))
-							oAddText.AddChange(oCur)
-					}
-					else if (oCur instanceof CChangesRunRemoveItem || oCur instanceof CChangesParagraphRemoveItem || oCur instanceof CChangesDocumentRemoveItem)
-					{
-						if (oCur.UseArray)
-						{
-							oRemoveText.AddToClass(oCur.Class, oCur, oCur.PosArray[0]);
-						}
-						else
-						{
-							oRemoveText.AddToClass(oCur.Class, oCur, oCur.Pos);
-						}
-
-						let oCurrentRun = oCur.Class;
-						if (oCurrentRun.CollaborativeMarks)
-						{
-							let arrMarks = oCurrentRun.CollaborativeMarks.Ranges;
-							for (let p = 0; p < arrMarks.length; p++)
-							{
-								let oCurrentMark = arrMarks[p];
-								if (oCurrentMark.PosS >= oCur.PosArray[0])
-								{
-									oCurrentMark.PosS++;
-									oCurrentMark.PosE++;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		let arr = oRemoveText.GetLinear();
-		for (let i = 0; i < arr.length; i++)
-		{
-			this.RedoUndoChange(arr[i], false, delChanges);
+			oRemoveText.AddToClass(
+				arrDelChanges[i].Class,
+				arrDelChanges[i],
+				nPos,
+				i
+			);
 		}
 
 		let result = {
@@ -240,7 +188,7 @@
 			classes: oRemoveText.oClasses
 		};
 
-		return [delChanges, result];
+		return [arrChanges, result];
 	};
 	DeletedTextRecovery.prototype.ShowDelText = function ()
 	{
@@ -445,34 +393,17 @@
 				arrToSave.push(oRevChange);
 		}
 	};
-	DeletedTextRecovery.prototype.ColorText = function ()
-	{
-		for (let i = 0; i < this.arrColor.length; i++)
-		{
-			let oCurCollaborativeMark = this.arrColor[i];
-
-			let nStartPos				= oCurCollaborativeMark.PosS;
-			let nEndPos					= oCurCollaborativeMark.PosE;
-			let oColor					= oCurCollaborativeMark.Color;
-			let oRun					= oCurCollaborativeMark.oCurrentRun;
-
-			oRun.CollaborativeMarks.Add(nStartPos, nEndPos, oColor);
-		}
-
-		this.arrColor = [];
-	}
-	DeletedTextRecovery.prototype.UndoShowDelText = function (isNavigation)
+	DeletedTextRecovery.prototype.UndoShowDelText = function ()
 	{
 		let localHistory	= AscCommon.History;
 		let oLastPoint		= localHistory.Points[localHistory.Points.length - 1];
 
-		if ((oLastPoint && oLastPoint.Description === AscDFH.historydescription_Collaborative_DeletedTextRecovery) || (isNavigation && oLastPoint && oLastPoint.Description === AscDFH.historydescription_Collaborative_MoveByHistory))
+		if (oLastPoint && oLastPoint.Description === AscDFH.historydescription_Collaborative_DeletedTextRecovery)
 		{
 			let arrChanges = localHistory.UndoLastPoint();
 			this.document.RecalculateByChanges(arrChanges);
 			localHistory.Remove_LastPoint();
 
-			this.ColorText();
 			return true
 		}
 	};
@@ -499,66 +430,11 @@
 
 					if (oCurChange.UseArray && oCurChange.PosArray[0] === oCurrentRemItem.pos && addItem.Value === oCurrentRemItem.item.Items[0].Value)
 					{
-						if (oRemove.data[strCurrentId])
-						{
-							let currentArr = oRemove.data[strCurrentId];
-							for (let i = 0; i < currentArr.length; i++)
-							{
-								if (oCurChange.UseArray)
-								{
-									if (oCurChange.PosArray[0] < currentArr[i].pos)
-									{
-										if (oCurChange.UseArray)
-											oCurChange.PosArray[0]--
-										else
-											oCurChange.Pos--;
-									}
-								}
-							}
-						}
-
-						let addArr = this.data[strCurrentId];
-						if (addArr && addArr.length > 0)
-						{
-							for (let j = 0; j < addArr.length; j++)
-							{
-								let oCur = addArr[j];
-
-								if (oCurChange.PosArray[0] < oCur.pos)
-								{
-									if (oCurChange.UseArray)
-										oCur.change.PosArray[0]--
-									else
-										oCur.change.Pos--;
-
-									oCur.pos--;
-								}
-							}
-						}
-
 						arrRemData.splice(i, 1);
 						return false;
 					}
 					else if (!oCurChange.UseArray && oCurChange.Pos === oCurrentRemItem.pos && addItem.Value === oCurrentRemItem.item.Items[0].Value)
 					{
-						if (oRemove.data[strCurrentId])
-						{
-							let currentArr = oRemove.data[strCurrentId];
-							for (let i = 0; i < currentArr.length; i++)
-							{
-								if (oCurChange.UseArray)
-								{
-									if (oCurChange.PosArray[0] < currentArr[i].pos)
-									{
-										if (oCurChange.UseArray)
-											oCurChange.PosArray[0]--
-										else
-											oCurChange.Pos--;
-									}
-								}
-							}
-						}
-
 						arrRemData.splice(i, 1);
 						return false;
 					}
@@ -567,30 +443,6 @@
 
 			return true;
 		}
-		this.AddChange = function (oChange)
-		{
-			let strCurrentId = oChange.Class.Id;
-
-			if (strCurrentId)
-			{
-				if (!this.data[strCurrentId])
-					this.data[strCurrentId] = []
-
-				let oWait;
-
-				if (this.wait[strCurrentId])
-					oWait = this.wait[strCurrentId].filter( function (oItem) { return oItem.pos === oChange.pos});
-
-				let nChange = oChange.PosArray ? oChange.PosArray[0] : oChange.Pos;
-
-				// repeat for PosArray array
-
-				if (oWait)
-					this.data[strCurrentId][oWait.nCount] = {change: oChange, pos: nChange}
-				else
-					this.data[strCurrentId].push({change: oChange, pos: nChange});
-			}
-		}
 	}
 	function RemoveTextPositions()
 	{
@@ -598,14 +450,14 @@
 		this.oClasses	= {};
 		this.arrClasses	= [];
 
-		this.AddToClass = function (oClass, oItem, Pos)
+		this.AddToClass = function (oClass, oItem, Pos, nIndex)
 		{
 			if (!this.data[oClass.Id])
 				this.data[oClass.Id] = [];
 
-			this.data[oClass.Id].push({item: oItem, pos: Pos});
+			this.data[oClass.Id].push({item: oItem, pos: Pos, nIndex: nIndex});
 		}
-		this.GetLinear = function ()
+		this.GetArrayChanges = function ()
 		{
 			let arrOutput = []
 			let arrKeys = Object.keys(this.data);
@@ -615,13 +467,11 @@
 				let strCurrentKey = arrKeys[nKey];
 				let arrCurrentRunData = this.data[strCurrentKey];
 
-
 				for (let i = 0; i < arrCurrentRunData.length; i++)
 				{
-					arrOutput.push(arrCurrentRunData[i].item);
+					arrOutput.push(arrCurrentRunData[i]);
 				}
 			}
-
 			return arrOutput;
 		}
 		this.ProceedChange = function (oChange)
@@ -692,6 +542,10 @@
 			}
 			const transformedObject = CollapsePositions(this.data);
 			return transformedObject
+		}
+		this.ResetData = function ()
+		{
+			this.data = {};
 		}
 	}
 	function CollapsePositions (oInput)
