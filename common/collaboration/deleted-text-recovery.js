@@ -131,7 +131,7 @@
 	DeletedTextRecovery.prototype.CommuteChanges = function (arrInputChanges, arrSaveData, oRemoveText)
 	{
 		// коммутируем изменения
-		let arrRevInput = arrInputChanges;
+		let arrRevInput = arrInputChanges.reverse();
 		let arrDelChangesForCommute = oRemoveText.GetArrayChanges();
 		for (let j = 0; j < arrDelChangesForCommute.length; j++)
 		{
@@ -143,7 +143,7 @@
 			{
 				let _oChange = oChange.Copy();
 
-				if (AscCommon.CollaborativeEditing.CoHistory.CommuteContentChange(_oChange, nPos, arrRevInput))
+				if (AscCommon.CollaborativeEditing.CoHistory.CommuteContentChange(_oChange,arrRevInput.length - 1 - nPos, arrRevInput))
 					arrSaveData.push(_oChange);
 			}
 			else
