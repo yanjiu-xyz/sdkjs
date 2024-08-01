@@ -16615,7 +16615,7 @@
 	ApiPivotTable.prototype["SetDisplayFieldCaptions"]            = ApiPivotTable.prototype.SetDisplayFieldCaptions;
 	ApiPivotTable.prototype["GetTitle"]                           = ApiPivotTable.prototype.GetTitle;
 	ApiPivotTable.prototype["SetTitle"]                           = ApiPivotTable.prototype.SetTitle;
-	ApiPivotTable.prototype["GetDescription "]                    = ApiPivotTable.prototype.GetDescription;
+	ApiPivotTable.prototype["GetDescription"]                    = ApiPivotTable.prototype.GetDescription;
 	ApiPivotTable.prototype["SetDescription"]                     = ApiPivotTable.prototype.SetDescription;
 	ApiPivotTable.prototype["GetStyleName"]                       = ApiPivotTable.prototype.GetStyleName;
 	ApiPivotTable.prototype["SetStyleName"]                       = ApiPivotTable.prototype.SetStyleName;
