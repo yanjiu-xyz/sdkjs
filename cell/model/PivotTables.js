@@ -14061,6 +14061,9 @@ CT_PivotField.prototype.asc_set = function (api, pivot, index, newVal) {
 			if (null !== newVal.ascNumFormat) {
 				field.setNumFormat(newVal.ascNumFormat, pivot, index, true);
 			}
+			if (null !== newVal.subtotalCaption) {
+				field.asc_setSubtotalCaption(newVal.subtotalCaption, pivot, index, true);
+			}
 			field.checkSubtotal();
 		});
 	}
@@ -14099,6 +14102,10 @@ CT_PivotField.prototype.asc_setDefaultSubtotal = function (newVal, pivot, index,
 CT_PivotField.prototype.asc_setSubtotalTop = function (newVal, pivot, index, addToHistory) {
 	setFieldProperty(pivot, index, this.subtotalTop, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetSubtotalTop, true);
 	this.subtotalTop = newVal;
+};
+CT_PivotField.prototype.asc_setSubtotalCaption = function (newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.subtotalCaption, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetSubtotalCaption, true);
+	this.subtotalCaption = newVal;
 };
 CT_PivotField.prototype.asc_setShowAll = function (newVal, pivot, index, addToHistory) {
 	setFieldProperty(pivot, index, this.showAll, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetShowAll, true);

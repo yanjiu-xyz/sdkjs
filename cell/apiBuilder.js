@@ -15438,7 +15438,9 @@
 	 */
 	ApiPivotField.prototype.SetSubtotalName = function (caption) {
 		if ( typeof caption == "string") {
-			this.table.pivot.asc_getPivotFields()[this.index].subtotalCaption = caption.trim();
+			const field = new Asc.CT_PivotField();
+			field.subtotalCaption = caption.trim();
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
 		} else {
 			private_MakeError('Invalid type of "caption".')
 		}
