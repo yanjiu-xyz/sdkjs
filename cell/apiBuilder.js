@@ -13590,7 +13590,7 @@
 	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetName.js
 	 */
 	ApiPivotTable.prototype.GetName = function () {
-		return Common.Utils.String.htmlEncode(this.pivot.asc_getName());
+		return this.pivot.asc_getName();
 	};
 
 	/**
@@ -14550,7 +14550,7 @@
 	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetName.js
 	 */
 	ApiPivotDataField.prototype.GetName = function () {
-		return Common.Utils.String.htmlEncode(this.dataField.asc_getName());
+		return this.dataField.asc_getName();
 	};
 
 	/**
@@ -15002,7 +15002,7 @@
 	 * @see office-js-api/Examples/ApiPivotField/Methods/GetName.js
 	 */
 	ApiPivotField.prototype.GetName = function () {
-		return Common.Utils.String.htmlEncode(this.pivotField.asc_getName() || this.GetSourceName());
+		return this.pivotField.asc_getName() || this.GetSourceName();
 	};
 
 	/**
@@ -15039,7 +15039,7 @@
 	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSourceName.js
 	 */
 	ApiPivotField.prototype.GetSourceName = function () {
-		return Common.Utils.String.htmlEncode(this.table.pivot.getCacheFieldName(this.index));
+		return this.table.pivot.getCacheFieldName(this.index);
 	};
 
 	Object.defineProperty(ApiPivotField.prototype, "SourceName", {
