@@ -7607,7 +7607,7 @@
 	 * * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
 	 * * <b>LastModified</b> - the parsed date and time when the file was last modified.
 	 * * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * * <b>Autrors</b> - the persons who has created the file.
+	 * * <b>Authors</b> - the persons who has created the file.
 	 * * <b>Title</b> - this property allows you to simplify your documents classification.
 	 * * <b>Tags</b> - this property allows you to simplify your documents classification.
 	 * * <b>Subject</b> - this property allows you to simplify your documents classification.
@@ -7626,7 +7626,7 @@
 			LastModifiedRaw: null,
 			LastModified: '',
 			LastModifiedBy: '',
-			Autrors: [],
+			Authors: [],
 			Title: '',
 			Tags: '',
 			Subject: '',
@@ -7636,15 +7636,19 @@
 
 		let props = (api) ? api.asc_getAppProps() : null;
 		oDocInfo.Application = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
-
+		
 		let langCode = 1033; // en-US
 		let langName = 'en-us';
-		if (api.asc_getLocale) {
-			langName = api.asc_getLocale().replace('_', '-').toLowerCase();
-		} else if (this.Document.GetDefaultLanguage && window['Common']) {
+		if (api.asc_getLocale)
+		{
+			let locale = api.asc_getLocale();
+			if (locale)
+				langName = locale.replace('_', '-').toLowerCase();
+		}
+		else if (this.Document.GetDefaultLanguage && window['Common'])
+		{
 			langCode = this.Document.GetDefaultLanguage();
 			langName = window['Common']['util']['LanguageInfo']['getLocalLanguageName'](langCode)[0].toLowerCase();
-
 		}
 
 		props = api.asc_getCoreProps();
@@ -7676,7 +7680,7 @@
 
 		const authors = props.asc_getCreator();
 		if (authors)
-			oDocInfo.Autrors = authors.split(/\s*[,;]\s*/);
+			oDocInfo.Authors = authors.split(/\s*[,;]\s*/);
 
 		return oDocInfo;
 	};
@@ -21674,7 +21678,7 @@
 	ApiSection.prototype["GetNext"]                  = ApiSection.prototype.GetNext;
 	ApiSection.prototype["GetPrevious"]              = ApiSection.prototype.GetPrevious;
 	ApiSection.prototype["ToJSON"]                   = ApiSection.prototype.ToJSON;
-
+	
 	ApiTable.prototype["GetClassType"]               = ApiTable.prototype.GetClassType;
 	ApiTable.prototype["SetJc"]                      = ApiTable.prototype.SetJc;
 	ApiTable.prototype["GetRowsCount"]               = ApiTable.prototype.GetRowsCount;
@@ -21690,31 +21694,31 @@
 	ApiTable.prototype["RemoveRow"]                  = ApiTable.prototype.RemoveRow;
 	ApiTable.prototype["RemoveColumn"]               = ApiTable.prototype.RemoveColumn;
 	ApiTable.prototype["Copy"]                       = ApiTable.prototype.Copy;
-	ApiTable.prototype["GetCell"]    				 = ApiTable.prototype.GetCell;
-	ApiTable.prototype["Split"]    					 = ApiTable.prototype.Split;
-	ApiTable.prototype["AddRows"]    				 = ApiTable.prototype.AddRows;
-	ApiTable.prototype["AddColumns"]   				 = ApiTable.prototype.AddColumns;
-	ApiTable.prototype["Select"]    			     = ApiTable.prototype.Select;
-	ApiTable.prototype["GetRange"]    				 = ApiTable.prototype.GetRange;
-	ApiTable.prototype["SetHAlign"]    				 = ApiTable.prototype.SetHAlign;
-	ApiTable.prototype["SetVAlign"]    				 = ApiTable.prototype.SetVAlign;
-	ApiTable.prototype["SetPaddings"]    			 = ApiTable.prototype.SetPaddings;
-	ApiTable.prototype["SetWrappingStyle"]    		 = ApiTable.prototype.SetWrappingStyle;
+	ApiTable.prototype["GetCell"]                    = ApiTable.prototype.GetCell;
+	ApiTable.prototype["Split"]                      = ApiTable.prototype.Split;
+	ApiTable.prototype["AddRows"]                    = ApiTable.prototype.AddRows;
+	ApiTable.prototype["AddColumns"]                 = ApiTable.prototype.AddColumns;
+	ApiTable.prototype["Select"]                     = ApiTable.prototype.Select;
+	ApiTable.prototype["GetRange"]                   = ApiTable.prototype.GetRange;
+	ApiTable.prototype["SetHAlign"]                  = ApiTable.prototype.SetHAlign;
+	ApiTable.prototype["SetVAlign"]                  = ApiTable.prototype.SetVAlign;
+	ApiTable.prototype["SetPaddings"]                = ApiTable.prototype.SetPaddings;
+	ApiTable.prototype["SetWrappingStyle"]           = ApiTable.prototype.SetWrappingStyle;
 	ApiTable.prototype["GetParentContentControl"]    = ApiTable.prototype.GetParentContentControl;
 	ApiTable.prototype["InsertInContentControl"]     = ApiTable.prototype.InsertInContentControl;
-	ApiTable.prototype["GetParentTable"]    		 = ApiTable.prototype.GetParentTable;
-	ApiTable.prototype["GetTables"]     			 = ApiTable.prototype.GetTables;
-	ApiTable.prototype["GetParentTableCell"]   	 	 = ApiTable.prototype.GetParentTableCell;
-	ApiTable.prototype["Delete"]    				 = ApiTable.prototype.Delete;
-	ApiTable.prototype["Clear"]    					 = ApiTable.prototype.Clear;
-	ApiTable.prototype["Search"]    				 = ApiTable.prototype.Search;
-	ApiTable.prototype["SetTextPr"]    				 = ApiTable.prototype.SetTextPr;
-	ApiTable.prototype["SetBackgroundColor"]    	 = ApiTable.prototype.SetBackgroundColor;
-	ApiTable.prototype["ToJSON"]    				 = ApiTable.prototype.ToJSON;
-	ApiTable.prototype["GetPosInParent"]    	     = ApiTable.prototype.GetPosInParent;
-	ApiTable.prototype["ReplaceByElement"]    		 = ApiTable.prototype.ReplaceByElement;
-	ApiTable.prototype["AddComment"]  		  		 = ApiTable.prototype.AddComment;
-	ApiTable.prototype["AddCaption"]  		  		 = ApiTable.prototype.AddCaption;
+	ApiTable.prototype["GetParentTable"]             = ApiTable.prototype.GetParentTable;
+	ApiTable.prototype["GetTables"]                  = ApiTable.prototype.GetTables;
+	ApiTable.prototype["GetParentTableCell"]         = ApiTable.prototype.GetParentTableCell;
+	ApiTable.prototype["Delete"]                     = ApiTable.prototype.Delete;
+	ApiTable.prototype["Clear"]                      = ApiTable.prototype.Clear;
+	ApiTable.prototype["Search"]                     = ApiTable.prototype.Search;
+	ApiTable.prototype["SetTextPr"]                  = ApiTable.prototype.SetTextPr;
+	ApiTable.prototype["SetBackgroundColor"]         = ApiTable.prototype.SetBackgroundColor;
+	ApiTable.prototype["ToJSON"]                     = ApiTable.prototype.ToJSON;
+	ApiTable.prototype["GetPosInParent"]             = ApiTable.prototype.GetPosInParent;
+	ApiTable.prototype["ReplaceByElement"]           = ApiTable.prototype.ReplaceByElement;
+	ApiTable.prototype["AddComment"]                 = ApiTable.prototype.AddComment;
+	ApiTable.prototype["AddCaption"]                 = ApiTable.prototype.AddCaption;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
@@ -22166,25 +22170,26 @@
 	ApiTextForm.prototype["SetCellWidth"]        = ApiTextForm.prototype.SetCellWidth;
 	ApiTextForm.prototype["SetText"]             = ApiTextForm.prototype.SetText;
 	ApiTextForm.prototype["Copy"]                = ApiTextForm.prototype.Copy;
-
+	
 	ApiPictureForm.prototype["GetScaleFlag"]       = ApiPictureForm.prototype.GetScaleFlag;
 	ApiPictureForm.prototype["SetScaleFlag"]       = ApiPictureForm.prototype.SetScaleFlag;
 	ApiPictureForm.prototype["SetLockAspectRatio"] = ApiPictureForm.prototype.SetLockAspectRatio;
-	ApiPictureForm.prototype["IsLockAspectRatio"] = ApiPictureForm.prototype.IsLockAspectRatio;
+	ApiPictureForm.prototype["IsLockAspectRatio"]  = ApiPictureForm.prototype.IsLockAspectRatio;
 	ApiPictureForm.prototype["SetPicturePosition"] = ApiPictureForm.prototype.SetPicturePosition;
 	ApiPictureForm.prototype["GetPicturePosition"] = ApiPictureForm.prototype.GetPicturePosition;
-	ApiPictureForm.prototype["SetRespectBorders"] = ApiPictureForm.prototype.SetRespectBorders;
-	ApiPictureForm.prototype["IsRespectBorders"] = ApiPictureForm.prototype.IsRespectBorders;
+	ApiPictureForm.prototype["SetRespectBorders"]  = ApiPictureForm.prototype.SetRespectBorders;
+	ApiPictureForm.prototype["IsRespectBorders"]   = ApiPictureForm.prototype.IsRespectBorders;
 	ApiPictureForm.prototype["GetImage"]           = ApiPictureForm.prototype.GetImage;
 	ApiPictureForm.prototype["SetImage"]           = ApiPictureForm.prototype.SetImage;
 	ApiPictureForm.prototype["Copy"]               = ApiPictureForm.prototype.Copy;
-
-	ApiDateForm.prototype["GetFormat"]		= ApiDateForm.prototype.GetFormat;
-	ApiDateForm.prototype["SetFormat"]		= ApiDateForm.prototype.SetFormat;
-	ApiDateForm.prototype["GetLanguage"]	= ApiDateForm.prototype.GetLanguage;
-	ApiDateForm.prototype["SetLanguage"]	= ApiDateForm.prototype.SetLanguage;
-	ApiDateForm.prototype["GetTime"]		= ApiDateForm.prototype.GetTime;
-	ApiDateForm.prototype["SetTime"]		= ApiDateForm.prototype.SetTime;
+	
+	ApiDateForm.prototype["GetFormat"]   = ApiDateForm.prototype.GetFormat;
+	ApiDateForm.prototype["SetFormat"]   = ApiDateForm.prototype.SetFormat;
+	ApiDateForm.prototype["GetLanguage"] = ApiDateForm.prototype.GetLanguage;
+	ApiDateForm.prototype["SetLanguage"] = ApiDateForm.prototype.SetLanguage;
+	ApiDateForm.prototype["GetTime"]     = ApiDateForm.prototype.GetTime;
+	ApiDateForm.prototype["SetTime"]     = ApiDateForm.prototype.SetTime;
+	ApiDateForm.prototype["Copy"]        = ApiDateForm.prototype.Copy;
 
 	ApiComboBoxForm.prototype["GetListValues"]       = ApiComboBoxForm.prototype.GetListValues;
 	ApiComboBoxForm.prototype["SetListValues"]       = ApiComboBoxForm.prototype.SetListValues;
@@ -22288,7 +22293,7 @@
 	window['AscBuilder'].ApiFormBase        = ApiFormBase;
 	window['AscBuilder'].ApiTextForm        = ApiTextForm;
 	window['AscBuilder'].ApiPictureForm     = ApiPictureForm;
-	window['AscBuilder'].ApiDateForm		= ApiDateForm;
+	window['AscBuilder'].ApiDateForm        = ApiDateForm;
 	window['AscBuilder'].ApiComboBoxForm    = ApiComboBoxForm;
 	window['AscBuilder'].ApiCheckBoxForm    = ApiCheckBoxForm;
 	window['AscBuilder'].ApiComplexForm     = ApiComplexForm;
