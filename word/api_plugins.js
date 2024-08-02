@@ -777,7 +777,7 @@
 	 * @param {?string} sPluginId - Plugin identifier. It must be of the *asc.{UUID}* type.
 	 * @returns {OLEObjectData[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
 	 * @since 7.1.0
-	 * * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllOleObjects.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllOleObjects.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_GetAllOleObjects"] = function (sPluginId)
 	{
@@ -800,7 +800,7 @@
 	 * @alias RemoveOleObject
 	 * @param {string} sInternalId - The OLE object identifier which is used to work with OLE object added to the document.
 	 * @since 7.1.0
-	 * * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObject.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObject.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObject"] = function (sInternalId)
 	{

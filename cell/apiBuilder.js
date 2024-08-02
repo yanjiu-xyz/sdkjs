@@ -211,7 +211,7 @@
 	 *     "slateBlue" | "slateGray" | "slateGrey" | "snow" | "springGreen" | "steelBlue" | "tan" | "teal" |
 	 *     "thistle" | "tomato" | "turquoise" | "violet" | "wheat" | "white" | "whiteSmoke" | "yellow" |
 	 *     "yellowGreen")} PresetColor
-	 * * @see office-js-api/Examples/Enumerations/PresetColor.js
+	 * @see office-js-api/Examples/Enumerations/PresetColor.js
 	 */
 
 	/**
@@ -227,13 +227,13 @@
 	/**
 	 * The page orientation type.
 	 * @typedef {("xlLandscape" | "xlPortrait")} PageOrientation
-	 * * @see office-js-api/Examples/Enumerations/PageOrientation.js
+	 * @see office-js-api/Examples/Enumerations/PageOrientation.js
 	 */
 
 	/**
 	 * The type of tick mark appearance.
 	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
-	 * * @see office-js-api/Examples/Enumerations/TickMark.js
+	 * @see office-js-api/Examples/Enumerations/TickMark.js
 	 */
 
 	/**
@@ -244,7 +244,7 @@
 	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
 	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
 	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransform
-	 * * @see office-js-api/Examples/Enumerations/TextTransform.js
+	 * @see office-js-api/Examples/Enumerations/TextTransform.js
 	 */
 
 	/**
@@ -265,7 +265,7 @@
 	/**
 	 * The cell reference type.
 	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
-	 * * @see office-js-api/Examples/Enumerations/ReferenceStyle.js
+	 * @see office-js-api/Examples/Enumerations/ReferenceStyle.js
 	 */
 
 	//TODO not support "xlPasteAllMergingConditionalFormats" / "xlPasteAllUsingSourceTheme" / "xlPasteValidation"
@@ -275,14 +275,14 @@
 	 * | "xlPasteColumnWidths" | "xlPasteComments"
 	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
 	 * | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
-	 * * @see office-js-api/Examples/Enumerations/PasteType.js
+	 * @see office-js-api/Examples/Enumerations/PasteType.js
 	 */
 
 	/**
 	 * The mathematical operation which will be applied to the copied data.
 	 * @typedef {("xlPasteSpecialOperationAdd" | "xlPasteSpecialOperationDivide" | "xlPasteSpecialOperationMultiply"|
 	 * "xlPasteSpecialOperationNone" | "xlPasteSpecialOperationSubtract" )} PasteSpecialOperation
-	 * * @see office-js-api/Examples/Enumerations/PasteSpecialOperation.js
+	 * @see office-js-api/Examples/Enumerations/PasteSpecialOperation.js
 	 */
 
 	/**
@@ -7439,7 +7439,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ReferenceStyle} - The cell reference style.
 	 * @since 8.1.0
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/GetReferenceStyle.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetReferenceStyle.js
 	 */
 	Api.prototype.GetReferenceStyle = function () {
 		let bReferenceStyle = this.asc_getR1C1Mode();
@@ -8084,7 +8084,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {PageOrientation} sPageOrientation - The page orientation type.
-	 * * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPageOrientation.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPageOrientation.js
 	 */
 	ApiWorksheet.prototype.SetPageOrientation = function (sPageOrientation) {
 		this.worksheet.PagePrintOptions.pageSetup.asc_setOrientation('xlLandscape' === sPageOrientation ? 1 : 0);
@@ -8095,7 +8095,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {PageOrientation}
-	 * * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPageOrientation.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPageOrientation.js
 	 */
 	ApiWorksheet.prototype.GetPageOrientation = function () {
 		var PageOrientation = this.worksheet.PagePrintOptions.pageSetup.asc_getOrientation();
@@ -8117,7 +8117,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - Specifies whether the current sheet row/column headings must be printed or not.
-	 * * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPrintHeadings.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPrintHeadings.js
 	 */
 	ApiWorksheet.prototype.GetPrintHeadings = function () {
 		return this.worksheet.PagePrintOptions.asc_getHeadings();
@@ -8128,7 +8128,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Specifies whether the current sheet row/column headers must be printed or not.
-	 * * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPrintHeadings.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPrintHeadings.js
 	 */
 	ApiWorksheet.prototype.SetPrintHeadings = function (bPrint) {
 		this.worksheet.PagePrintOptions.asc_setHeadings(!!bPrint);
@@ -8148,7 +8148,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - True if cell gridlines are printed on this page.
-	 * * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPrintGridlines.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPrintGridlines.js
 	 */
 	ApiWorksheet.prototype.GetPrintGridlines = function () {
 		return this.worksheet.PagePrintOptions.asc_getGridLines();
@@ -8159,7 +8159,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Defines if cell gridlines are printed on this page or not.
-	 * * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPrintGridlines.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPrintGridlines.js
 	 */
 	ApiWorksheet.prototype.SetPrintGridlines = function (bPrint) {
 		this.worksheet.PagePrintOptions.asc_setGridLines(!!bPrint);
@@ -8270,7 +8270,7 @@
 	 * @param {string} subAddress - The link subaddress to insert internal sheet hyperlinks.
 	 * @param {string} sScreenTip - The screen tip text.
 	 * @param {string} sTextToDisplay - The link text that will be displayed on the sheet.
-	 * * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetHyperlink.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetHyperlink.js
 	 */
 	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, subAddress, sScreenTip, sTextToDisplay) {
 		var range = new ApiRange(this.worksheet.getRange2(sRange));
@@ -8372,7 +8372,7 @@
 	 * @param {number} nFromRow - The number of the row where the beginning of the shape will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the shape measured in English measure units.
 	 * @returns {ApiShape}
-	 * * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddShape.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddShape.js
 	 */
 	ApiWorksheet.prototype.AddShape = function (sType, nWidth, nHeight, oFill, oStroke, nFromCol, nColOffset, nFromRow, nRowOffset) {
 		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill.UniFill, oStroke.Ln, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
@@ -8767,20 +8767,20 @@
 	/**
 	 * Specifies the sort order.
 	 * @typedef {("xlAscending" | "xlDescending")}  SortOrder
-	 * * @see office-js-api/Examples/Enumerations/SortOrder.js
+	 * @see office-js-api/Examples/Enumerations/SortOrder.js
 	 */
 
 	//TODO xlGuess param
 	/**
 	 * Specifies whether the first row of the sort range contains the header information.
 	 * @typedef {("xlNo" | "xlYes")} SortHeader
-	 * * @see office-js-api/Examples/Enumerations/SortHeader.js
+	 * @see office-js-api/Examples/Enumerations/SortHeader.js
 	 */
 
 	/**
 	 * Specifies if the sort should be by row or column.
 	 * @typedef {("xlSortColumns" | "xlSortRows")} SortOrientation
-	 * * @see office-js-api/Examples/Enumerations/SortOrientation.js
+	 * @see office-js-api/Examples/Enumerations/SortOrientation.js
 	 */
 
 	/**
@@ -10809,7 +10809,7 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the drawing object measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the drawing object will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the drawing object measured in English measure units.
-	 * * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetPosition.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetPosition.js
 	 */
 	ApiDrawing.prototype.SetPosition = function (nFromCol, nColOffset, nFromRow, nRowOffset) {
 		var extX = null, extY = null;
