@@ -88,7 +88,31 @@
 	 */
 	DeletedTextRecovery.prototype.GetChanges = function()
 	{
-		return this.m_RewiewDelPoints.reverse();
+		let arr = this.m_RewiewDelPoints.slice();
+
+		let arrOutput = []
+		for (let i = 0; i < arr.length; i++)
+		{
+			let oChange = arr[i];
+			if (oChange.ConvertToSimpleChanges)
+			{
+				let arrSplitChange = oChange.ConvertToSimpleChanges();
+				if (arrSplitChange && arrSplitChange.length)
+				{
+					for (let j = 0; j < arrSplitChange.length; j++)
+					{
+						arrOutput.push(arrSplitChange[j])
+					}
+				} else
+				{
+					arrOutput.push(oChange);
+				}
+			}
+			else
+				arrOutput.push(oChange);
+
+		}
+		return arrOutput;
 	};
 	DeletedTextRecovery.prototype.GetRemoveTextChanges = function (arrInputChanges, oRemoveText)
 	{
@@ -99,40 +123,27 @@
 		{
 			let oCurChange		= arrInputChanges[i];
 
-			if (oCurChange instanceof AscCommon.CChangesTableIdDescription)
-				continue;
-
-			if (!oCurChange.Copy)
+			if (oCurChange instanceof AscCommon.CChangesTableIdDescription || !oCurChange.Copy)
 				continue;
 
 			let oNewCurChange	= oCurChange.Copy();
 
-			if (oNewCurChange.ConvertToSimpleChanges && oNewCurChange.Items.length > 1)
-				oNewCurChange	= oNewCurChange.ConvertToSimpleChanges();
+			oRemoveText.ProceedChange(oNewCurChange)
 
-			if (!Array.isArray(oNewCurChange))
-				oNewCurChange	= [oNewCurChange];
-
-			for (let k = 0; k < oNewCurChange.length; k++)
-			{
-				let oCur = oNewCurChange[k];
-				if (oCurChange.Items.length > 1)
-					oCur.Pos += k;
-
-				oRemoveText.ProceedChange(oCur)
-
-				if (oCur instanceof CChangesRunAddItem || oCur instanceof CChangesParagraphAddItem || oCur instanceof CChangesDocumentAddItem)
-					oAddText.Check(oCur, oRemoveText);
-				else if (oCur instanceof CChangesRunRemoveItem || oCur instanceof CChangesParagraphRemoveItem || oCur instanceof CChangesDocumentRemoveItem)
-					oRemoveText.AddToClass(oCur.Class, oCur, oCur.UseArray ? oCur.PosArray[0] : oCur.Pos, i);
-			}
+			if (oNewCurChange instanceof CChangesRunAddItem || oNewCurChange instanceof CChangesParagraphAddItem || oNewCurChange instanceof CChangesDocumentAddItem)
+				oAddText.Check(oNewCurChange, oRemoveText);
+			else if (oNewCurChange instanceof CChangesRunRemoveItem || oNewCurChange instanceof CChangesParagraphRemoveItem || oNewCurChange instanceof CChangesDocumentRemoveItem)
+				oRemoveText.AddToClass(oCurChange.Class, oCurChange, oCurChange.UseArray ? oCurChange.PosArray[0] : oCurChange.Pos, i);
 		}
+		oRemoveText.DelDuplicate();
 	}
 	DeletedTextRecovery.prototype.CommuteChanges = function (arrInputChanges, arrSaveData, oRemoveText)
 	{
 		// коммутируем изменения
-		let arrRevInput = arrInputChanges.reverse();
+		let arrRevInput = arrInputChanges;
+
 		let arrDelChangesForCommute = oRemoveText.GetArrayChanges();
+
 		for (let j = 0; j < arrDelChangesForCommute.length; j++)
 		{
 			let oCurItem	= arrDelChangesForCommute[j];
@@ -143,7 +154,7 @@
 			{
 				let _oChange = oChange.Copy();
 
-				if (AscCommon.CollaborativeEditing.CoHistory.CommuteContentChange(_oChange,arrRevInput.length - 1 - nPos, arrRevInput))
+				if (AscCommon.CollaborativeEditing.CoHistory.CommuteContentChange(_oChange, nPos, arrRevInput))
 					arrSaveData.push(_oChange);
 			}
 			else
@@ -450,6 +461,28 @@
 		this.oClasses	= {};
 		this.arrClasses	= [];
 
+		this.DelDuplicate = function ()
+		{
+			let arrKeys = Object.keys(this.data);
+
+			for (let nKey = 0; nKey < arrKeys.length; nKey++)
+			{
+				let strCurrentKey = arrKeys[nKey];
+				let arrCurrentRunData = this.data[strCurrentKey];
+
+				for (let i = 0; i < arrCurrentRunData.length; i++)
+				{
+					for (let j = i + 1; j < arrCurrentRunData.length; j++)
+					{
+						if (arrCurrentRunData[i].item === arrCurrentRunData[j].item)
+						{
+							arrCurrentRunData.splice(j, 1);
+							break
+						}
+					}
+				}
+			}
+		}
 		this.AddToClass = function (oClass, oItem, Pos, nIndex)
 		{
 			if (!this.data[oClass.Id])
