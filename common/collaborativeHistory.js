@@ -101,6 +101,7 @@
 		if (!logicDocument || !logicDocument.IsDocumentEditor())
 			return false;
 
+		this.UndoDeletedTextRecovery();
 		this.SplitChangesByPoints();
 		if (this.curChangeIndex < 0)
 			return false;

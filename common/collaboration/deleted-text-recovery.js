@@ -65,7 +65,7 @@
 		let oCoHistory			= AscCommon.CollaborativeEditing.CoHistory;
 		let arrChangesList		= oCoHistory.Changes;
 		let arrPointsList		= AscCommon.CollaborativeEditing.CoHistory.ChangesSplitByPoints;
-		let nIndex				= AscCommon.CollaborativeEditing.CoHistory.curChangeIndex + 1;
+		let nIndex				= AscCommon.CollaborativeEditing.CoHistory.curChangeIndex;
 		let arrChanges			= arrChangesList.slice(0, arrPointsList[nIndex]);
 
 		if (!arrChanges || !arrChanges.length)
@@ -230,6 +230,8 @@
 		}
 		this.Split(arrResult);
 		this.document.RecalculateByChanges(delChanges);
+
+		this.m_RewiewDelPoints = [];
 		return true;
 	};
 	DeletedTextRecovery.prototype.Split = function (arrInput)
