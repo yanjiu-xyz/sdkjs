@@ -61,7 +61,7 @@
 	 * * <b>slide</b> - presentation editor,
 	 * * <b>pdf</b> - pdf editor.
 	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
-     * @see office-js-api/Examples/Plugins/Common/Enumeration/editorType.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
 	 */
 
     /**
@@ -74,13 +74,13 @@
      * * <b>none</b> - no data will be send to the plugin from the editor,
 	 * * <b>sign</b> - the sign for the keychain plugin.
 	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
-     * @see office-js-api/Examples/Plugins/Common/Enumeration/initDataType.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
 
     /**
      * Plugin event ("onDocumentContentReady", "onTargetPositionChanged", onClick", "onInputHelperClear", "onInputHelperInput", etc.).
      * @typedef {string} EventType
-     * @see office-js-api/Examples/Plugins/Common/Enumeration/EventType.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/EventType.js
 	 */
 
     /**
@@ -151,7 +151,7 @@
 	 * @property {boolean} [primary] - Defines if the button is primary or not. The primary flag affects the button skin only.
 	 * @property {boolean} [isViewer] - Defines if the button is shown in the viewer mode only or not.
 	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
-	 * @see office-js-api/Examples/Plugins/Common/Enumeration/Button.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/Button.js
 	 */
 
 	/**
@@ -164,7 +164,7 @@
 	 * @property {number} height - The OLE object height measured in millimeters.
 	 * @property {number} widthPix - The OLE object image width in pixels.
 	 * @property {number} heightPix - The OLE object image height in pixels.
-	 * @see office-js-api/Examples/Plugins/Common/Enumeration/OLEProperties.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/OLEProperties.js
 	 */
 
     /**
@@ -182,7 +182,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetVersion
      * @returns {string} - The editor version.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetVersion.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetVersion.js
 	 */
     Api.prototype["pluginMethod_GetVersion"] = function() { return this.GetVersion(); };
 
@@ -193,7 +193,7 @@
 	 * @alias AddOleObject
 	 * @this Api
      * @param {OLEProperties} data - The OLE object properties.
-    * @see office-js-api/Examples/Plugins/Common/Api/Methods/AddOleObject.js
+    * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddOleObject.js
 	 */
     Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data); };
 
@@ -203,7 +203,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EditOleObject
      * @param {OLEProperties} data - The OLE object properties.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/EditOleObject.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/EditOleObject.js
 	 */
     Api.prototype["pluginMethod_EditOleObject"] = function(data) { return this.asc_editOleObject(data); };
 
@@ -214,7 +214,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias GetSelectedOleObjects
 	 * @returns {OLEProperties[]} - An array of the *OLEProperties* objects containing the data about the OLE object parameters.
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetSelectedOleObjects.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetSelectedOleObjects.js
 	 */
 	Api.prototype["pluginMethod_GetSelectedOleObjects"] = function()
 	{
@@ -255,7 +255,7 @@
 	 * @property {number} m_shLineGap The typographic line gap for the current font.
 	 * @property {number} m_shXHeight The distance between the baseline and the approximate height of non-ascending lowercase letters measured in FUnits.
 	 * @property {number} m_shCapHeight The distance between the baseline and the approximate height of uppercase letters measured in FUnits.
-     * @see office-js-api/Examples/Plugins/Common/Enumeration/FontInfo.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/FontInfo.js
 	 */
 
     /**
@@ -264,7 +264,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetFontList
      * @returns {FontInfo[]} - An array of the FontInfo objects containing the data about the used fonts.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetFontList.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetFontList.js
 	 */
     Api.prototype["pluginMethod_GetFontList"] = function()
     {
@@ -278,7 +278,7 @@
      * @alias InputText
 	 * @param {string} text - A string value that specifies the text to be inserted into the document.
 	 * @param {string} textReplace - A string value that specifies the text to be replaced with a new text.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/InputText.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InputText.js
 	 */
     Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
     {
@@ -301,7 +301,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias PasteHtml
 	 * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/PasteHtml.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PasteHtml.js
 	 */
 	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText) {
 		if (!AscCommon.g_clipboardBase)
@@ -375,7 +375,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias PasteText
      * @param {string} text - A string value that specifies the text to be pasted into the document.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/PasteText.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PasteText.js
 	 */
     Api.prototype["pluginMethod_PasteText"] = function(text)
     {
@@ -390,7 +390,7 @@
      * @typedef {Object} Macros
      * @property {Array.<string>} macrosArray - An array of macros codes (*[{"name": "Macros1", "value": "{macrosCode}"}]*).
      * @property {number} current - A current macro index.
-     * @see office-js-api/Examples/Plugins/Common/Enumeration/Macros.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/Macros.js
 	 */
 
     /**
@@ -399,7 +399,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetMacros
      * @returns {Macros} - The Macros object containing the data about all the macros from the document
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetMacros.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetMacros.js
 	 */
     Api.prototype["pluginMethod_GetMacros"] = function()
     {
@@ -412,7 +412,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias SetMacros
      * @param {Macros} data - The *Macros* object containing the data about all the macros from the document.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/SetMacros.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetMacros.js
 	 */
     Api.prototype["pluginMethod_SetMacros"] = function(data)
     {
@@ -426,7 +426,7 @@
 	 * @alias GetVBAMacros
 	 * @returns {string | null} VBA xml macros.
 	 * @since 7.3.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetVBAMacros.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetVBAMacros.js
 	 */
 	Api.prototype["pluginMethod_GetVBAMacros"] = function()
 	{
@@ -440,7 +440,7 @@
      * @alias StartAction
      * @param {number} type - A value which defines an action type which can take <b>0</b> if this is an *Information* action or <b>1</b> if this is a *BlockInteraction* action.
 	 * @param {string} description - A string value that specifies the description text for the start action of the operation.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/StartAction.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/StartAction.js
 	 */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
     {
@@ -455,7 +455,7 @@
      * @param {number} type - A value which defines an action type which can take <b>"Block"</b> if this is the *BlockInteraction* action or <b>"Information</b> if this is the *Information* action.
      * @param {string} description - A string value that specifies the description text for the operation end action.
 	 * @param {string} status - The error status code. If no error occurs, then an empty string is passed.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/EndAction.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/EndAction.js
 	 */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
     {
@@ -519,7 +519,7 @@
      * @param {string} obj.docinfo - An unencrypted part of the encrypted file.
      * @param {string} obj.hash - A string value specifying a file hash (*sha256* by default).
      * @param {string} obj.error - A string value specifying an error that occurs (the "" value means that the operation is successful).
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/OnEncryption.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/OnEncryption.js
 	 */
     Api.prototype["pluginMethod_OnEncryption"] = function(obj)
     {
@@ -607,7 +607,7 @@
 	 * @property {boolean} paragraphs.runs.italic Defines if the current text is displayed italic or not.
 	 * @property {boolean} paragraphs.runs.strikeout Defines if the current text is displayed struck through or not.
 	 * @property {boolean} paragraphs.runs.underline Defines if the current text is displayed underlined or not.
-     * @see office-js-api/Examples/Plugins/Common/Enumeration/watermark_on_draw.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/watermark_on_draw.js
 	 */
 
     /**
@@ -618,7 +618,7 @@
 	 * @property {string} tags.checkBox The checkbox form value (<b>true</b> - checked, <b>false</b> - unchecked).
 	 * @property {string} tags.picture The image form value (a link to the image).
 	 * @property {string} tags.comboBox The combo box form value (one of the items from the combo box list values).
-     * @see office-js-api/Examples/Plugins/Common/Enumeration/fillForms.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/fillForms.js
 	 */
 
     /**
@@ -632,7 +632,7 @@
 	 * @param {?string} obj.watermark_on_draw - A string value for {@link global#watermark_on_draw watermark properties} in JSON format.
      * @param {?boolean} obj.disableAutostartMacros - Sets a flag that specifies that macros are started automatically when the editor opens.
      * @param {?string} obj.fillForms - Sets rules in JSON format for filling document {@link global#fillForms forms} by tags.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/SetProperties.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetProperties.js
 	 */
     Api.prototype["pluginMethod_SetProperties"] = function(obj)
     {
@@ -862,7 +862,7 @@
      * @param {number} w - A number which specifies the window width measured in millimeters.
      * @param {number} h - A number which specifies the window height measured in millimeters.
      * @param {boolean} isKeyboardTake - Defines if the keyboard is caught (**true**) or not (**alse**).
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/ShowInputHelper.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ShowInputHelper.js
 	 */
     Api.prototype["pluginMethod_ShowInputHelper"] = function(guid, w, h, isKeyboardTake)
     {
@@ -948,7 +948,7 @@
      * @alias UnShowInputHelper
      * @param {string} guid - A string value which specifies a plugin identifier which must be of the *asc.{UUID}* type.
      * @param {string} isclear - Defines if the input context will be cleared (**true**) or not (**false**).
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/UnShowInputHelper.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UnShowInputHelper.js
 	 */
     Api.prototype["pluginMethod_UnShowInputHelper"] = function(guid, isclear)
     {
@@ -990,7 +990,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias CoAuthoringChatSendMessage
      * @param {string} sText - Message text.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/CoAuthoringChatSendMessage.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/CoAuthoringChatSendMessage.js
 	 */
     Api.prototype["pluginMethod_CoAuthoringChatSendMessage"] = function(sText)
     {
@@ -1000,7 +1000,7 @@
 	/**
 	 * The current selection type ("none", "text", "drawing", or "slide").
 	 * @typedef {("none" | "text" | "drawing" | "slide")} SelectionType
-	 * @see office-js-api/Examples/Plugins/Common/Enumeration/SelectionType.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/SelectionType.js
 	 */
 
 	/**
@@ -1009,7 +1009,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias GetSelectionType
 	 * @returns {SelectionType} - The selection type.
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetSelectionType.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetSelectionType.js
 	 */
 	Api.prototype["pluginMethod_GetSelectionType"] = function()
 	{
@@ -1103,7 +1103,7 @@
 	 * @param {boolean} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
 	 * @param {boolean} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket in the following way: \<tag>text\</tag>. By default, the opening angle brackets will be replaced with the special characters.
      * @return {string} - The Markdown/HTML text.
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/ConvertDocument.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ConvertDocument.js
 	 */
     Api.prototype["pluginMethod_ConvertDocument"] = function(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags)
     {
@@ -1126,7 +1126,7 @@
      * @param {string} prop.NewLineSeparator - Defines how the line separator will be specified in the resulting string (this property has the priority over *NewLine*).
 	 * @return {string} - Selected text.
      * @since 7.1.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetSelectedText.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetSelectedText.js
 	 */
     Api.prototype["pluginMethod_GetSelectedText"] = function(prop)
     {
@@ -1168,7 +1168,7 @@
      * @param {string} [sParaNewLine=" "] - A character which is used to specify the line break character in the source text.
      * @returns {boolean} - Always returns true.
      * @since 7.1.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/ReplaceTextSmart.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ReplaceTextSmart.js
 	 */
     Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
     {
@@ -1211,7 +1211,7 @@
      * @param {string} [format=" "] - A format in which you need to download a file.
      * @returns {string} - URL to download the file in the specified format or error.
      * @since 7.2.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetFileToDownload.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetFileToDownload.js
 	 */
 	Api.prototype["pluginMethod_GetFileToDownload"] = function(format)
 	{
@@ -1232,7 +1232,7 @@
 	/**
 	 * Specifies how to adjust the image object in case of replacing the selected image.
 	 * @typedef {("fill" | "fit" | "original" | "stretch")} ReplaceImageMode
-	 * @see office-js-api/Examples/Plugins/Common/Enumeration/ReplaceImageMode.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ReplaceImageMode.js
 	 */
 
     /**
@@ -1242,7 +1242,7 @@
      * @property {number} width The image width in pixels.
      * @property {number} height The image height in pixels.
      * @property {?ReplaceImageMode} replaceMode Specifies how to adjust the image object in case of replacing the selected image.
-     * @see office-js-api/Examples/Plugins/Common/Enumeration/ImageData.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ImageData.js
 	 */
 
 	/**
@@ -1252,7 +1252,7 @@
      * @alias GetImageDataFromSelection
      * @returns {?ImageData} - The ImageData object containig the information about the base64 encoded png image.
      * @since 7.2.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetImageDataFromSelection.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetImageDataFromSelection.js
 	 */
 	Api.prototype["pluginMethod_GetImageDataFromSelection"] = function()
 	{
@@ -1266,7 +1266,7 @@
      * @alias PutImageDataToSelection
      * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
      * @since 7.2.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/PutImageDataToSelection.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PutImageDataToSelection.js
 	 */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
@@ -1471,7 +1471,7 @@
      * @property {string} guid The plugin identifier. It must be of the *asc.{UUID}* type.
 	 * @property {boolean} canRemoved Specifies if the plugin can be removed (**true**) or not (**false**).
      * @property {object} obj The {@link /plugin/config config} of the installed plugin. The version is taken from the config and compared with the current one to check for updates.
-     * @see office-js-api/Examples/Plugins/Common/Enumeration/PluginData.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/PluginData.js
 	 */
 
 	/**
@@ -1481,7 +1481,7 @@
      * @alias GetInstalledPlugins
      * @returns {PluginData[]} - An array of all the installed plugins.
      * @since 7.2.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetInstalledPlugins.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetInstalledPlugins.js
 	 */
 	Api.prototype["pluginMethod_GetInstalledPlugins"] = function()
 	{
@@ -1573,7 +1573,7 @@
      * @alias RemovePlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/RemovePlugin.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemovePlugin.js
 	 */
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
@@ -1635,7 +1635,7 @@
      * @alias InstallPlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/InstallPlugin.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InstallPlugin.js
 	 */
 	Api.prototype["pluginMethod_InstallPlugin"] = function(config)
 	{
@@ -1649,7 +1649,7 @@
      * @alias UpdatePlugin
      * @returns {object} - An object with the result information.
      * @since 7.3.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/UpdatePlugin.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UpdatePlugin.js
 	 */
 	Api.prototype["pluginMethod_UpdatePlugin"] = function(config)
 	{
@@ -1664,7 +1664,7 @@
 	 * @alias InstallDeveloperPlugin
 	 * @returns {boolean} - Returns true if the plugin is installed.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/InstallDeveloperPlugin.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InstallDeveloperPlugin.js
 	 */
 	Api.prototype["installDeveloperPlugin"] = function(configUrl)
 	{
@@ -1696,7 +1696,7 @@
 	 * @param {string} align - The parameter indicates whether the button will be displayed on the right side of the window or on the left. The default value is "left".
 	 * @alias ShowButton 
 	 * @since 7.2.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/ShowButton.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ShowButton.js
 	 */
 	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow, align)
 	{
@@ -1745,7 +1745,7 @@
      * @param {string} obj.text - The dragged text.
 	 * @alias OnDropEvent
 	 * @since 7.3.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/OnDropEvent.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/OnDropEvent.js
 	 */
 	Api.prototype["pluginMethod_OnDropEvent"] = function(obj)
 	{
@@ -1787,7 +1787,7 @@
      * @alias GetDocumentLang
      * @returns {string} - Document language.
 	 * @since 7.4.0
-     * @see office-js-api/Examples/Plugins/Common/Api/Methods/GetDocumentLang.js
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetDocumentLang.js
 	 */
     Api.prototype["pluginMethod_GetDocumentLang"] = function()
     {
@@ -1848,7 +1848,7 @@
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
 	 * @property {string} [icons] - The item icons (see the plugins {@link /plugin/config config} documentation).
 	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
-	 * @see office-js-api/Examples/Plugins/Common/Enumeration/ContextMenuItem.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContextMenuItem.js
 	 */
 
 	/**
@@ -1858,7 +1858,7 @@
 	 * @alias AddContextMenuItem
 	 * @param {ContextMenuItem[]} items - An array containing the context menu items.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/AddContextMenuItem.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContextMenuItem.js
 	 */
 	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
 	{
@@ -1874,7 +1874,7 @@
 	 * @alias UpdateContextMenuItem
 	 * @param {ContextMenuItem[]} items - An array containing the context menu items for the current item.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/UpdateContextMenuItem.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UpdateContextMenuItem.js
 	 */
 	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
 	{
@@ -1886,7 +1886,7 @@
 	/**
 	 * The possible values of the base which the relative vertical position of the toolbar menu item will be calculated from.
 	 * @typedef {("button" | "...")} ToolbarMenuItemType
-	 * @see office-js-api/Examples/Plugins/Common/Enumeration/ToolbarMenuItemType.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ToolbarMenuItemType.js
 	 */
 
 	/**
@@ -1903,7 +1903,7 @@
 	 * @property {boolean} [separator] - Specifies if a separator is used between the toolbar menu items or not.
 	 * @property {boolean} [split] - Specifies if the toolbar menu items are split or not.
 	 * @property {ContextMenuItem[]} [items] - An array containing the context menu items for the current item.
-	 * @see office-js-api/Examples/Plugins/Common/Enumeration/ToolbarMenuItem.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ToolbarMenuItem.js
 	 */
 
 	/**
@@ -1912,7 +1912,7 @@
 	 * @property {string} id - The tab ID.
 	 * @property {string} text - The tab text.
 	 * @property {ToolbarMenuItem[]} [items] - An array containing the toolbar menu items for the current tab.
-	 * @see office-js-api/Examples/Plugins/Common/Enumeration/ToolbarMenuTab.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ToolbarMenuTab.js
 	 */
 
 	/**
@@ -1920,7 +1920,7 @@
 	 * The main toolbar menu item.
 	 * @property {string} guid - The plugin guid.
 	 * @property {ToolbarMenuTab[]} tabs - An array containing the toolbar menu tabs for the current item.
-	 * @see office-js-api/Examples/Plugins/Common/Enumeration/ToolbarMenuMainItem.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ToolbarMenuMainItem.js
 	 */
 
 	/**
@@ -1930,7 +1930,7 @@
 	 * @alias AddToolbarMenuItem
 	 * @param {ToolbarMenuMainItem[]} items - An array containing the main toolbar menu items.
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/AddToolbarMenuItem.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddToolbarMenuItem.js
 	 */
 	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
 	{
@@ -1952,7 +1952,7 @@
 	 * @param {variation} variation - The plugin variation.
 	 * @alias ShowWindow 
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/ShowWindow.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ShowWindow.js
 	 */
 	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
 	{
@@ -1972,7 +1972,7 @@
 	 * @param {string} frameId - The frame ID.
 	 * @alias ActivateWindow
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/ActivateWindow.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ActivateWindow.js
 	 */
 	Api.prototype["pluginMethod_ActivateWindow"] = function(frameId)
 	{
@@ -1986,7 +1986,7 @@
 	 * @param {string} frameId - The frame ID.
 	 * @alias CloseWindow
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/CloseWindow.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/CloseWindow.js
 	 */
 	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
 	{
@@ -2002,7 +2002,7 @@
 	 * @param {object} data - The event data.
 	 * @alias SendToWindow
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/SendToWindow.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SendToWindow.js
 	 */
 	Api.prototype["pluginMethod_SendToWindow"] = function(windowID, name, data)
 	{
@@ -2019,7 +2019,7 @@
 	 * @param {number} maxSize - The frame maximum size.
 	 * @alias ResizeWindow
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/ResizeWindow.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ResizeWindow.js
 	 */
 	Api.prototype["pluginMethod_ResizeWindow"] = function(frameId, size, minSize, maxSize)
 	{
@@ -2038,7 +2038,7 @@
 	 * @param {number} y - The Y coordinate.
 	 * @alias MouseUpWindow
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/MouseUpWindow.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MouseUpWindow.js
 	 */
 	Api.prototype["pluginMethod_MouseUpWindow"] = function(frameId, x, y)
 	{
@@ -2054,11 +2054,12 @@
 	 * @param {number} y - The Y coordinate.
 	 * @alias MouseMoveWindow
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/Common/Api/Methods/MouseMoveWindow.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MouseMoveWindow.js
 	 */
 	Api.prototype["pluginMethod_MouseMoveWindow"] = function(frameId, x, y)
 	{
 		this.sendEvent("asc_onPluginWindowMouseMove", frameId, x, y);
 	};
 })(window);
+
 
