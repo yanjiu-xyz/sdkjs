@@ -7228,7 +7228,7 @@ function parserFormula( formula, parent, _ws ) {
 				oRange = found_operand.getRange();
 			}
 
-			oRange._foreach(function (oCell) {
+			oRange._foreachNoEmpty(function (oCell) {
 				if (!bRecursiveCell) {
 					bRecursiveCell = oCell.checkRecursiveFormula(parserFormula.getParent());
 				}
