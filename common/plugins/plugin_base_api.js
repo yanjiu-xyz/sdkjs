@@ -52,7 +52,7 @@ window.startPluginApi = function() {
 	 * * <b>slide</b> - presentation editor,
 	 * * <b>pdf</b> - pdf editor.
 	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
-	 * * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
 	 */
 
 	/**

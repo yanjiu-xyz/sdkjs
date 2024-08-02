@@ -2923,7 +2923,7 @@
      * @param {Number} [Start=0] - Start character index in the current range.
      * @param {Number} [End=-1] - End character index in the current range (if <= 0, then the range is taken to the end).
      * @returns {ApiRange}
-     * * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRange.js
+     * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRange.js
 	 */
 	ApiRange.prototype.GetRange = function(nStart, nEnd)
 	{
@@ -3329,7 +3329,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The hyperlink address.
 	 * @returns {boolean}
-	 * * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetLink.js
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetLink.js
 	 */
 	ApiHyperlink.prototype.SetLink = function(sLink)
 	{
@@ -3355,7 +3355,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sDisplay - The text to display the hyperlink.
 	 * @returns {boolean}
-	 * * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetDisplayedText.js
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetDisplayedText.js
 	 */
 	ApiHyperlink.prototype.SetDisplayedText = function(sDisplay)
 	{
@@ -3392,7 +3392,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sScreenTipText - The screen tip text of the hyperlink.
 	 * @returns {boolean}
-	 * * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetScreenTipText.js
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetScreenTipText.js
 	 */
 	ApiHyperlink.prototype.SetScreenTipText = function(sScreenTipText)
 	{
@@ -3407,7 +3407,7 @@
 	 * Returns the hyperlink address.
 	 * @typeofeditors ["CDE"]
 	 * @returns {string} 
-	 * * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetLinkedText.js
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetLinkedText.js
 	 */
 	ApiHyperlink.prototype.GetLinkedText = function()
 	{
@@ -3424,7 +3424,7 @@
 	 * Returns the hyperlink display text.
 	 * @typeofeditors ["CDE"]
 	 * @returns {string} 
-	 * * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetDisplayedText.js
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetDisplayedText.js
 	 */
 	ApiHyperlink.prototype.GetDisplayedText = function()
 	{
@@ -3441,7 +3441,7 @@
 	 * Returns the screen tip text of the hyperlink.
 	 * @typeofeditors ["CDE"]
 	 * @returns {string} 
-	 * * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetScreenTipText.js
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetScreenTipText.js
 	 */
 	ApiHyperlink.prototype.GetScreenTipText = function()
 	{
@@ -3485,7 +3485,7 @@
 	 * Sets the default hyperlink style.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
-	 * * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetDefaultStyle.js
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetDefaultStyle.js
 	 */
 	ApiHyperlink.prototype.SetDefaultStyle = function()
 	{
@@ -3512,7 +3512,7 @@
 	 * @param {Number} Start - Start character index in the current element.
 	 * @param {Number} End - End character index in the current element.
 	 * @returns {ApiRange} 
-	 * * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetRange.js
 	 */
 	ApiHyperlink.prototype.GetRange = function(Start, End)
 	{
@@ -3891,7 +3891,7 @@
 	/**
 	 * 60000th of a degree (5400000 = 90 degrees).
 	 * @typedef {number} PositiveFixedAngle
-	 * * @see office-js-api/Examples/Enumerations/PositiveFixedAngle.js
+	 * @see office-js-api/Examples/Enumerations/PositiveFixedAngle.js
 	 */
 
 	/**
@@ -4028,14 +4028,14 @@
 	/**
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
 	 * @typedef {("top" | "center" | "bottom")} VerticalTextAlign
-	 * * @see office-js-api/Examples/Enumerations/VerticalTextAlign.js
+	 * @see office-js-api/Examples/Enumerations/VerticalTextAlign.js
 	 */
 
 	/**
      * The available color scheme identifiers.
 	 * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2"
 	 *     | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
-	 * * @see office-js-api/Examples/Enumerations/SchemeColorId.js
+	 * @see office-js-api/Examples/Enumerations/SchemeColorId.js
 	 */
 
 	/**
@@ -4051,7 +4051,7 @@
 	 *     "dkSlateGray" | "dkSlateGrey" | "dkTurquoise" | "dkViolet" | "dodgerBlue" | "firebrick" | "floralWhite" |
 	 *     "forestGreen" | "fuchsia" | "gainsboro" | "ghostWhite" | "gold" | "goldenrod" | "gray" | "green" |
 	 *     "greenYellow" | "grey" | "honeydew" | "hotPink" | "indianRed" | "indigo" | "ivory" | "khaki" | "lavender" | "lavenderBlush" | "lawnGreen" | "lemonChiffon" | "lightBlue" | "lightCoral" | "lightCyan" | "lightGoldenrodYellow" | "lightGray" | "lightGreen" | "lightGrey" | "lightPink" | "lightSalmon" | "lightSeaGreen" | "lightSkyBlue" | "lightSlateGray" | "lightSlateGrey" | "lightSteelBlue" | "lightYellow" | "lime" | "limeGreen" | "linen" | "ltBlue" | "ltCoral" | "ltCyan" | "ltGoldenrodYellow" | "ltGray" | "ltGreen" | "ltGrey" | "ltPink" | "ltSalmon" | "ltSeaGreen" | "ltSkyBlue" | "ltSlateGray" | "ltSlateGrey" | "ltSteelBlue" | "ltYellow" | "magenta" | "maroon" | "medAquamarine" | "medBlue" | "mediumAquamarine" | "mediumBlue" | "mediumOrchid" | "mediumPurple" | "mediumSeaGreen" | "mediumSlateBlue" | "mediumSpringGreen" | "mediumTurquoise" | "mediumVioletRed" | "medOrchid" | "medPurple" | "medSeaGreen" | "medSlateBlue" | "medSpringGreen" | "medTurquoise" | "medVioletRed" | "midnightBlue" | "mintCream" | "mistyRose" | "moccasin" | "navajoWhite" | "navy" | "oldLace" | "olive" | "oliveDrab" | "orange" | "orangeRed" | "orchid" | "paleGoldenrod" | "paleGreen" | "paleTurquoise" | "paleVioletRed" | "papayaWhip" | "peachPuff" | "peru" | "pink" | "plum" | "powderBlue" | "purple" | "red" | "rosyBrown" | "royalBlue" | "saddleBrown" | "salmon" | "sandyBrown" | "seaGreen" | "seaShell" | "sienna" | "silver" | "skyBlue" | "slateBlue" | "slateGray" | "slateGrey" | "snow" | "springGreen" | "steelBlue" | "tan" | "teal" | "thistle" | "tomato" | "turquoise" | "violet" | "wheat" | "white" | "whiteSmoke" | "yellow" | "yellowGreen")} PresetColor
-	 * * @see office-js-api/Examples/Enumerations/PresetColor.js
+	 * @see office-js-api/Examples/Enumerations/PresetColor.js
 	 */
 
 
@@ -4070,7 +4070,7 @@
      * * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
      * * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
 	 * @typedef {"tile" | "stretch"} BlipFillType
-	 * * @see office-js-api/Examples/Enumerations/BlipFillType.js
+	 * @see office-js-api/Examples/Enumerations/BlipFillType.js
 	 */
 
 	/**
@@ -4082,7 +4082,7 @@
 	 *     "pct75" | "pct80" | "pct90" | "plaid" | "shingle" | "smCheck" | "smConfetti" | "smGrid" | "solidDmnd" |
 	 *     "sphere" | "trellis" | "upDiag" | "vert" | "wave" | "wdDnDiag" | "wdUpDiag" | "weave" | "zigZag"}
 	 *     PatternType
-	 * * @see office-js-api/Examples/Enumerations/PatternType.js
+	 * @see office-js-api/Examples/Enumerations/PatternType.js
 	 */
 
 	/**
@@ -4100,7 +4100,7 @@
 	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
 	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
 	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransform
-	 * * @see office-js-api/Examples/Enumerations/TextTransform.js
+	 * @see office-js-api/Examples/Enumerations/TextTransform.js
 	 */
 
 	/**
@@ -4331,13 +4331,13 @@
 	/**
      * The 1000th of a percent (100000 = 100%).
 	 * @typedef {number} PositivePercentage
-	 * * @see office-js-api/Examples/Enumerations/PositivePercentage.js
+	 * @see office-js-api/Examples/Enumerations/PositivePercentage.js
 	 */
 
 	/**
 	 * The type of tick mark appearance.
 	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
-	 * * @see office-js-api/Examples/Enumerations/TickMark.js
+	 * @see office-js-api/Examples/Enumerations/TickMark.js
 	 */
 
 	/**
@@ -4493,7 +4493,7 @@
 	 * @param {ApiFill} [oFill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [oStroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
 	 * @returns {ApiShape}
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
 	Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke)
 	{
@@ -4532,7 +4532,7 @@
 	 * @param {NumFormat[] | String[]} aNumFormats - Numeric formats which will be applied to the series (can be custom formats).
      * The default numeric format is "General".
 	 * @returns {ApiChart}
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreateChart.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateChart.js
 	 */
 	Api.prototype.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex, aNumFormats)
 	{
@@ -4614,7 +4614,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {PresetColor} sPresetColor - A preset selected from the list of the available color preset names.
 	 * @returns {ApiPresetColor};
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePresetColor.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePresetColor.js
 	 */
 	Api.prototype.CreatePresetColor = function(sPresetColor)
 	{
@@ -4627,7 +4627,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {ApiUniColor} oUniColor - The color used for the element fill.
 	 * @returns {ApiFill}
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
 	 */
 	Api.prototype.CreateSolidFill = function(oUniColor)
 	{
@@ -4683,7 +4683,7 @@
 	 * @param {string} sImageUrl - The path to the image used for the blip fill (currently only internet URL or Base64 encoded images are supported).
 	 * @param {BlipFillType} sBlipFillType - The type of the fill used for the blip fill (tile or stretch).
 	 * @returns {ApiFill}
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreateBlipFill.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateBlipFill.js
 	 */
 	Api.prototype.CreateBlipFill = function(sImageUrl, sBlipFillType)
 	{
@@ -4695,7 +4695,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {ApiFill}
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNoFill.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNoFill.js
 	 */
 	Api.prototype.CreateNoFill = function()
 	{
@@ -4709,7 +4709,7 @@
 	 * @param {EMU} nWidth - The width of the shadow measured in English measure units.
 	 * @param {ApiFill} oFill - The fill type used to create the shadow.
 	 * @returns {ApiStroke}
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreateStroke.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateStroke.js
 	 */
 	Api.prototype.CreateStroke = function(nWidth, oFill)
 	{
@@ -4723,7 +4723,7 @@
 	 * @param {ApiUniColor} oUniColor - The color used for the gradient stop.
 	 * @param {PositivePercentage} nPos - The position of the gradient stop measured in 1000th of percent.
 	 * @returns {ApiGradientStop}
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGradientStop.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGradientStop.js
 	 */
 	Api.prototype.CreateGradientStop = function(oUniColor, nPos)
 	{
@@ -4736,7 +4736,7 @@
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @param {string} sSymbol - The character or symbol which will be used to create the bullet for the paragraph.
 	 * @returns {ApiBullet}
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreateBullet.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateBullet.js
 	 */
 	Api.prototype.CreateBullet = function(sSymbol){
 		var oBullet = new AscFormat.CBullet();
@@ -4758,7 +4758,7 @@
 	 * @param {BulletType} sType - The numbering type the paragraphs will be numbered with.
 	 * @param {number} nStartAt - The number the first numbered paragraph will start with.
 	 * @returns {ApiBullet}
-	 * * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNumbering.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNumbering.js
 	 */
 
 	Api.prototype.CreateNumbering = function(sType, nStartAt){
@@ -5505,7 +5505,7 @@
 	 * @param {Number} Start - Start character in the current element.
 	 * @param {Number} End - End character in the current element.
 	 * @returns {ApiRange} 
-	 * * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetRange.js
 	 */
 	ApiDocumentContent.prototype.GetRange = function(Start, End)
 	{
@@ -6387,7 +6387,7 @@
 	 * @param {Number} Start - Start character in the current element.
 	 * @param {Number} End - End character in the current element.
 	 * @returns {ApiRange} 
-	 * * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetRange.js
 	 */
 	ApiDocument.prototype.GetRange = function(Start, End)
 	{
@@ -6398,7 +6398,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiRange | null} - returns null if selection doesn't exist.
-	 * * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetRangeBySelect.js
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetRangeBySelect.js
 	 */
 	ApiDocument.prototype.GetRangeBySelect = function()
 	{
@@ -8162,7 +8162,7 @@
 	 * @param {Number} Start - Start character in the current element.
 	 * @param {Number} End - End character in the current element.
 	 * @returns {ApiRange} 
-	 * * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetRange.js
 	 */
 	ApiParagraph.prototype.GetRange = function(Start, End)
 	{
@@ -9849,7 +9849,7 @@
 	 * @param {Number} Start - Start character in the current element.
 	 * @param {Number} End - End character in the current element.
 	 * @returns {ApiRange} 
-	 * * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetRange.js
 	 */
 	ApiRun.prototype.GetRange = function(Start, End)
 	{
@@ -11187,7 +11187,7 @@
 	 * @param {Number} Start - Start character in the current element.
 	 * @param {Number} End - End character in the current element.
 	 * @returns {ApiRange} 
-	 * * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRange.js
 	 */
 	ApiTable.prototype.GetRange = function(Start, End)
 	{
@@ -11199,7 +11199,7 @@
 	 * @typeofeditors ["CDE"]
      * @param {String} sType - Horizontal alignment type: may be "left" or "center" or "right".
      * @returns {boolean} - returns false if param is invalid.
-     * * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHAlign.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHAlign.js
 	 */
     ApiTable.prototype.SetHAlign = function(sType)
     {
@@ -11231,7 +11231,7 @@
      * @typeofeditors ["CDE"]
      * @param {String} sType - Vertical alignment type: may be "top" or "center" or "bottom".
      * @returns {boolean} - returns false if param is invalid.
-     * * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetVAlign.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetVAlign.js
 	 */
     ApiTable.prototype.SetVAlign = function(sType)
     {
@@ -11258,7 +11258,7 @@
 	 * @param {Number} nRight - Right padding.
 	 * @param {Number} nBottom - Bottom padding.
      * @returns {boolean} - returns true.
-     * * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetPaddings.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetPaddings.js
 	 */
     ApiTable.prototype.SetPaddings = function(nLeft, nTop, nRight, nBottom)
     {
@@ -11275,7 +11275,7 @@
 	 * @typeofeditors ["CDE"]
      * @param {boolean} isFlow - Specifies if the table is inline or not.
 	 * @returns {boolean} - returns false if param is invalid.
-     * * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetWrappingStyle.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetWrappingStyle.js
 	 */
     ApiTable.prototype.SetWrappingStyle = function(isFlow)
     {
@@ -16164,7 +16164,7 @@
 	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTitle.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTitle.js
 	 */
 	ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold)
 	{
@@ -16178,7 +16178,7 @@
 	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the vertical axis title is written in bold font or not.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisTitle.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisTitle.js
 	 */
 	ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold)
 	{
@@ -16190,7 +16190,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the vertical axis (from minimum to maximum).
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisOrientation.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisOrientation.js
 	 */
 	ApiChart.prototype.SetVerAxisOrientation = function(bIsMinMax){
 		AscFormat.builder_SetChartVertAxisOrientation(this.Chart, bIsMinMax);
@@ -16201,7 +16201,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the horizontal axis (from minimum to maximum).
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisOrientation.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisOrientation.js
 	 */
 	ApiChart.prototype.SetHorAxisOrientation = function(bIsMinMax){
 		AscFormat.builder_SetChartHorAxisOrientation(this.Chart, bIsMinMax);
@@ -16212,7 +16212,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos - The position of the chart legend inside the chart window.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendPos.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendPos.js
 	 */
 	ApiChart.prototype.SetLegendPos = function(sLegendPos)
 	{
@@ -16273,7 +16273,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendFontSize.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendFontSize.js
 	 */
 	ApiChart.prototype.SetLegendFontSize = function(nFontSize)
 	{
@@ -16288,7 +16288,7 @@
 	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
 	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
 	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetShowDataLabels.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetShowDataLabels.js
 	 */
 	ApiChart.prototype.SetShowDataLabels = function(bShowSerName, bShowCatName, bShowVal, bShowPercent)
 	{
@@ -16306,7 +16306,7 @@
 	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
 	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
 	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetShowPointDataLabel.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetShowPointDataLabel.js
 	 */
 	ApiChart.prototype.SetShowPointDataLabel = function(nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent)
 	{
@@ -16318,7 +16318,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart vertical tick labels.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisTickLabelPosition.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisTickLabelPosition.js
 	 */
 	ApiChart.prototype.SetVertAxisTickLabelPosition = function(sTickLabelPosition)
 	{
@@ -16330,7 +16330,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart horizontal tick labels.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTickLabelPosition.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTickLabelPosition.js
 	 */
 	ApiChart.prototype.SetHorAxisTickLabelPosition = function(sTickLabelPosition)
 	{
@@ -16342,7 +16342,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisMajorTickMark.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisMajorTickMark.js
 	 */
 	ApiChart.prototype.SetHorAxisMajorTickMark = function(sTickMark){
 		AscFormat.builder_SetChartHorAxisMajorTickMark(this.Chart, sTickMark);
@@ -16353,7 +16353,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisMinorTickMark.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisMinorTickMark.js
 	 */
 	ApiChart.prototype.SetHorAxisMinorTickMark = function(sTickMark){
 		AscFormat.builder_SetChartHorAxisMinorTickMark(this.Chart, sTickMark);
@@ -16364,7 +16364,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisMajorTickMark.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisMajorTickMark.js
 	 */
 
 	ApiChart.prototype.SetVertAxisMajorTickMark = function(sTickMark){
@@ -16376,7 +16376,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisMinorTickMark.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisMinorTickMark.js
 	 */
 	ApiChart.prototype.SetVertAxisMinorTickMark = function(sTickMark){
 		AscFormat.builder_SetChartVerAxisMinorTickMark(this.Chart, sTickMark);
@@ -16387,7 +16387,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMajorVerticalGridlines.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMajorVerticalGridlines.js
 	 */
 	ApiChart.prototype.SetMajorVerticalGridlines = function(oStroke)
 	{
@@ -16399,7 +16399,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMinorVerticalGridlines.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMinorVerticalGridlines.js
 	 */
 	ApiChart.prototype.SetMinorVerticalGridlines = function(oStroke)
 	{
@@ -16412,7 +16412,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMajorHorizontalGridlines.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMajorHorizontalGridlines.js
 	 */
 	ApiChart.prototype.SetMajorHorizontalGridlines = function(oStroke)
 	{
@@ -16424,7 +16424,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
-	 * * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMinorHorizontalGridlines.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMinorHorizontalGridlines.js
 	 */
 	ApiChart.prototype.SetMinorHorizontalGridlines = function(oStroke)
 	{
@@ -17664,7 +17664,7 @@
 	 * @param {Number} Start - Start character in the current element.
 	 * @param {Number} End - End character in the current element.
 	 * @returns {ApiRange} 
-	 * * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetRange.js
 	 */
 	ApiInlineLvlSdt.prototype.GetRange = function(Start, End)
 	{
@@ -18632,7 +18632,7 @@
 	 * @param {Number} Start - Start character in the current element.
 	 * @param {Number} End - End character in the current element.
 	 * @returns {ApiRange} 
-	 * * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetRange.js
 	 */
 	ApiBlockLvlSdt.prototype.GetRange = function(Start, End)
 	{
