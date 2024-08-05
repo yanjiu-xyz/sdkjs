@@ -15754,8 +15754,10 @@
 	 * @see office-js-api/Examples/ApiPivotField/Methods/GetCurrentPage.js
 	 */
 	ApiPivotField.prototype.GetCurrentPage = function () {
-		const pageFields = this.table.pivot.pageFields;
-		const pageIndex = pageFields.find(this.index);
+		const pageFields = this.table.pivot.asc_getPageFields();
+		const pageIndex = pageFields.findIndex(function(pageField) {
+			return pageField.asc_getIndex() === this.index;
+		});
 		if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
 			const val = this.table.pivot.getPageFieldCellValue(pageIndex);
 			return val.text || val.number || val.multiText;
