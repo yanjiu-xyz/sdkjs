@@ -11370,54 +11370,21 @@
         return null;
 	};
 	/**
-     * Returns the tables that contain the current table.
-     * @memberof ApiTable
+	 * Returns a Tables array that represents all the tables nested within the specified table.
+	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-     * @return {ApiTable[]}  
-     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTables.js
+	 * @return {ApiTable[]}
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTables.js
 	 */
-    ApiTable.prototype.GetTables = function()
-    {
-        var arrTables = [];
-
-		var viewRow 	= undefined; // будем запоминать последнюю просмотренную строку, т.к. возможны случаи, когда она разбита на несколько Table Pages, такие просматривать повторно не нужно 
-		var viewAbsPage = undefined; // будем запоминать последний абсолютный номер страницы, т.к. возможно случаи, когда строка разбита на несколько страниц, такие строки нужно просматривать повторно на каждой новой странице
-		for (var nCurPage = 0, nPagesCount = this.Table.Pages.length; nCurPage < nPagesCount; ++nCurPage)
+	ApiTable.prototype.GetTables = function()
+	{
+		let tables    = this.Table.GetNestedTables();
+		let apiTables = [];
+		for (let i = 0; i < tables.length; ++i)
 		{
-			if (this.Table.Pages[nCurPage].FirstRow < 0 || this.Table.Pages[nCurPage].LastRow < 0)
-				continue;
-
-			var nTempPageAbs 	= this.Table.GetAbsolutePage(nCurPage);
-			
-			for (var nCurRow = this.Table.Pages[nCurPage].FirstRow; nCurRow <= this.Table.Pages[nCurPage].LastRow; ++nCurRow)
-			{
-				if (nCurRow === viewRow && viewAbsPage === nTempPageAbs)
-					continue;
-
-				viewRow = nCurRow;
-				var oRow = this.Table.GetRow(nCurRow);
-
-				if (oRow)
-				{
-					for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
-					{
-						var oCell = oRow.GetCell(nCurCell);
-						if (oCell.IsMergedCell())
-							continue;
-
-						oCell.GetContent().GetAllTablesOnPage(nTempPageAbs, arrTables);
-					}
-				}
-			}
-
-			viewAbsPage	= nTempPageAbs;
+			apiTables.push(new ApiTable(tables[i]));
 		}
-
-		for (var Index = 0; Index < arrTables.length; Index++)
-		{
-			arrTables[Index] = new ApiTable(arrTables[Index].Table);
-		}
-		return arrTables;
+		return apiTables;
 	};
     /**
      * Returns a table cell that contains the current table.
