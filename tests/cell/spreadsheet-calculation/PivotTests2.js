@@ -646,5 +646,17 @@ $(function() {
 				});
 			}
 		});
+		QUnit.test('Test: Api pivot builder', function (assert) {
+			const file = Asc.pivotBuilder;
+			const wb = openDocument(file);
+			ws = wb.getWorksheetByName('Test');
+			const apiPivot = wb.oApi.GetPivotByName('Test');
+			let range = apiPivot.GetColumnRange();
+			assert.deepEqual([range.range.bbox.r1, range.range.bbox.r2, range.range.bbox.c1, range.range.bbox.c2], [2, 3, 1, 3], 'column range');
+			range = apiPivot.GetRowRange();
+			assert.deepEqual([range.range.bbox.r1, range.range.bbox.r2, range.range.bbox.c1, range.range.bbox.c2], [3, 12, 0, 0], 'row range');
+			range = apiPivot.GetDataBodyRange();
+			assert.deepEqual([range.range.bbox.r1, range.range.bbox.r2, range.range.bbox.c1, range.range.bbox.c2], [4, 12, 1, 3], 'data range');
+		});
 	}
 });
