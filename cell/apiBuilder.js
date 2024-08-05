@@ -15465,7 +15465,8 @@
 	});
 
 	/**
-	 * @typedef PivotFieldSubtotals
+	 * Subtotal pivot field types
+	 * @typedef {Object} PivotFieldSubtotals
 	 * @property {boolean} Sum
 	 * @property {boolean} Count
 	 * @property {boolean} Average
