@@ -446,7 +446,7 @@
 	 * @property {string} Caption - Returns a value that represents the label text for the data field.
 	 * @property {string | null} NumberFormat - Returns a value that represents the format code for the object.
 	 * @property {number} Index - Returns index of the data field.
-	 * @property {ApiPivotField} - Returns the pivotField from which the data field was created.
+	 * @property {ApiPivotField} PivotField - Returns the pivotField from which the data field was created.
 	 */
 	function ApiPivotDataField(table, dataIndex, dataField) {
 		const pivotIndex = dataField.asc_getIndex();
@@ -6947,7 +6947,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} dataRef - Source data range.
-	 * @param {ApiRange} newSheetName - New worksheet name.
+	 * @param {ApiRange} [newSheetName] - New worksheet name.
 	 * @returns {ApiPivotTable}
 	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotNewWorksheet.js
 	 */
@@ -13071,10 +13071,10 @@
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {Object} options
-	 * @param {number | string | number[] | string[] | undefined} options.rows - Specifies an array of field names or ids to be added as rows or added to the category axis.
-	 * @param {number | string | number[] | string[] | undefined} options.columns - Specifies an array of field names or ids to be added as columns or added to the series axis.
-	 * @param {number | string | number[] | string[] | undefined} options.pages - Specifies an array of field names or ids to be added as pages or added to the page area.
-	 * @param {boolean | undefined} options.addToTable - Applies only to PivotTable reports. True to add the specified fields to the report (none of the existing fields are replaced).
+	 * @param {number | string | number[] | string[]} [options.rows] - Specifies an array of field names or ids to be added as rows or added to the category axis.
+	 * @param {number | string | number[] | string[]} [options.columns] - Specifies an array of field names or ids to be added as columns or added to the series axis.
+	 * @param {number | string | number[] | string[]} [options.pages] - Specifies an array of field names or ids to be added as pages or added to the page area.
+	 * @param {boolean} [options.addToTable] - Applies only to PivotTable reports. True to add the specified fields to the report (none of the existing fields are replaced).
 	 * False to replace existing fields with the new fields. The default value is False.
 	 * @see office-js-api/Examples/ApiPivotTable/Methods/AddFields.js
 	 */
@@ -13186,8 +13186,8 @@
 	 * Returns a Range object with information about a data item in a PivotTable report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string | undefined} dataField
-	 * @param {string[] | undefined} fieldItemsArray
+	 * @param {string} [dataField]
+	 * @param {string[]} [fieldItemsArray]
 	 * @returns {ApiRange}
 	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPivotData.js
 	 */
@@ -13206,7 +13206,7 @@
 	 * or a collection of both the visible and hidden fields in the PivotTable report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string | number | undefined} field - The name or index of the field to be returned.
+	 * @param {string | number} [field] - The name or index of the field to be returned.
 	 * @returns {ApiPivotField[] | ApiPivotField | ApiPivotDataField | null}
 	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPivotFields.js
 	 */
@@ -13416,7 +13416,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string} identifier - The index number or name of the field.
 	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
-	 * @param {number | undefined} index - The index of the field in new category.
+	 * @param {number} [index] - The index of the field in new category.
 	 * @see office-js-api/Examples/ApiPivotTable/Methods/MoveField.js
 	 */
 	ApiPivotTable.prototype.MoveField = function (identifier, type, index) {
@@ -14296,7 +14296,7 @@
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
-	 * @param {number | undefined} index - The index of the field in new category.
+	 * @param {number} [index] - The index of the field in new category.
 	 * @see office-js-api/Examples/ApiPivotDataField/Methods/Move.js
 	 */
 	ApiPivotDataField.prototype.Move = function (type, index) {
@@ -14699,7 +14699,7 @@
 	 * or a collection of all the visible and hidden items (a PivotItems object) in the specified field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {number | undefined} index
+	 * @param {number} [index]
 	 * @returns {ApiPivotItem[] | ApiPivotItem | null}
 	 * @see office-js-api/Examples/ApiPivotField/Methods/GetPivotItems.js
 	 */
