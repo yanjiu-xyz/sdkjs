@@ -15755,8 +15755,9 @@
 	 */
 	ApiPivotField.prototype.GetCurrentPage = function () {
 		const pageFields = this.table.pivot.asc_getPageFields();
+		const t = this;
 		const pageIndex = pageFields.findIndex(function(pageField) {
-			return pageField.asc_getIndex() === this.index;
+			return pageField.asc_getIndex() === t.index;
 		});
 		if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
 			const val = this.table.pivot.getPageFieldCellValue(pageIndex);
