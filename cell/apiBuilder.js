@@ -13078,13 +13078,13 @@
 	 * @see office-js-api/Examples/ApiPivotTable/Methods/AddFields.js
 	 */
 	ApiPivotTable.prototype.AddFields = function (options) {
-		options.rows = options.rows != null ? options.rows : [];
-		options.columns = options.columns != null ? options.columns : [];
-		options.pages = options.pages != null ? options.pages : [];
+		options['rows'] = options['rows'] != null ? options['rows'] : [];
+		options['columns'] = options['columns'] != null ? options['columns'] : [];
+		options['pages'] = options['pages'] != null ? options['pages'] : [];
 
-		const rows = Array.isArray(options.rows) ? options.rows : [options.rows];
-		const cols = Array.isArray(options.columns) ? options.columns : [options.columns];
-		const pages = Array.isArray(options.pages) ? options.pages : [options.pages];
+		const rows = Array.isArray(options['rows']) ? options['rows'] : [options['rows']];
+		const cols = Array.isArray(options['columns']) ? options['columns'] : [options['columns']];
+		const pages = Array.isArray(options['pages']) ? options['pages'] : [options['pages']];
 		const cacheFields = this.pivot.asc_getCacheFields();
 		const t = this;
 
@@ -13712,8 +13712,8 @@
 	 */
 	ApiPivotTable.prototype.GetDisplayFieldsInReportFilterArea = function () {
 		return {
-			Type: (this.pivot.asc_getPageOverThenDown() ? "OverThenDown" : "DownThenOver"),
-			ReportFilterFields: this.pivot.asc_getPageWrap()
+			"Type": (this.pivot.asc_getPageOverThenDown() ? "OverThenDown" : "DownThenOver"),
+			"ReportFilterFields": this.pivot.asc_getPageWrap()
 		};
 	};
 
