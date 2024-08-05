@@ -13071,9 +13071,9 @@
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {Object} options
-	 * @param {number | string | (number | string)[] | undefined} options.rows - Specifies an array of field names or ids to be added as rows or added to the category axis.
-	 * @param {number | string | (number | string)[] | undefined} options.columns - Specifies an array of field names or ids to be added as columns or added to the series axis.
-	 * @param {number | string | (number | string)[] | undefined} options.pages - Specifies an array of field names or ids to be added as pages or added to the page area.
+	 * @param {number | string | number[] | string[] | undefined} options.rows - Specifies an array of field names or ids to be added as rows or added to the category axis.
+	 * @param {number | string | number[] | string[] | undefined} options.columns - Specifies an array of field names or ids to be added as columns or added to the series axis.
+	 * @param {number | string | number[] | string[] | undefined} options.pages - Specifies an array of field names or ids to be added as pages or added to the page area.
 	 * @param {boolean | undefined} options.addToTable - Applies only to PivotTable reports. True to add the specified fields to the report (none of the existing fields are replaced).
 	 * False to replace existing fields with the new fields. The default value is False.
 	 * @see office-js-api/Examples/ApiPivotTable/Methods/AddFields.js
@@ -13526,7 +13526,7 @@
 	 * Returns array that represents all added fields in PivotTable.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @returns {(ApiPivotField | ApiPivotDataField)[]}
+	 * @returns {ApiPivotField[]}
 	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetVisibleFields.js
 	 */
 	ApiPivotTable.prototype.GetVisibleFields = function () {
