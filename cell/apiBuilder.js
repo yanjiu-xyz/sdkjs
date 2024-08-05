@@ -8370,8 +8370,9 @@
 	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/RefreshAllPivots.js
 	 */
 	ApiWorksheet.prototype.RefreshAllPivots = function () {
-		this.worksheet.pivotTables.forEach(function(piv) {
-			piv.asc_refresh(this.worksheet.workbook.oApi);
+		const t = this;
+		this.worksheet.pivotTables.forEach(function(pivot) {
+			pivot.asc_refresh(t.worksheet.workbook.oApi);
 		});
 	};
 
