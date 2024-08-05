@@ -54,7 +54,7 @@
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
 	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
-	 * @property {[ApiPivotTable]|[]} PivotTables - Returns all PivotTables.
+	 * @property {ApiPivotTable[]} PivotTables - Returns all PivotTables.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -89,7 +89,7 @@
 	 * @property {Array} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 * @property {ApiProtectedRange[]} AllProtectedRanges - Returns all protected ranges from the current worksheet.
-	 * @property {[ApiPivotTable]|[]} PivotTables - Returns all PivotTables on worksheet.
+	 * @property {ApiPivotTable[]} PivotTables - Returns all PivotTables on worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
