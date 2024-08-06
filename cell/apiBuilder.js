@@ -15860,23 +15860,6 @@
 		}
 	});
 
-	/**
-	 * Returns the parent object for the specified object.
-	 * @memberof ApiPivotItem
-	 * @typeofeditors ["CSE"]
-	 * @returns {ApiPivotField}
-	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetField.js
-	 */
-	ApiPivotItem.prototype.GetField = function () {
-		return this.field;
-	};
-
-	Object.defineProperty(ApiPivotItem.prototype, "Field", {
-		get: function () {
-			return this.GetField();
-		}
-	});
-
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
 	Api.prototype["GetSheets"]             = Api.prototype.GetSheets;
@@ -16720,7 +16703,6 @@
 	ApiPivotItem.prototype["GetCaption"] = ApiPivotItem.prototype.GetCaption;
 	ApiPivotItem.prototype["GetValue"]   = ApiPivotItem.prototype.GetValue;
 	ApiPivotItem.prototype["GetParent"]  = ApiPivotItem.prototype.GetParent;
-	ApiPivotItem.prototype["GetField"]   = ApiPivotItem.prototype.GetField;
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
 		oDrawing.x = 0;
