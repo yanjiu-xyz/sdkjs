@@ -10145,6 +10145,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotTable | null}
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetPivotTable.js
 	 */
 	ApiRange.prototype.GetPivotTable = function() {
 		var bbox = this.range.isOneCell() ?  this.range.bbox : this.range.worksheet.getRange3(this.range.bbox.r1, this.range.bbox.c1, this.range.bbox.r1, this.range.bbox.c1).bbox;
@@ -16043,6 +16044,7 @@
 	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 	ApiRange.prototype["GetCharacters"] = ApiRange.prototype.GetCharacters;
 	ApiRange.prototype["PasteSpecial"] = ApiRange.prototype.PasteSpecial;
+	ApiRange.prototype["GetPivotTable"] = ApiRange.prototype.GetPivotTable;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
