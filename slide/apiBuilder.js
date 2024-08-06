@@ -1396,7 +1396,9 @@
 		let langCode = 1033; // en-US
 		let langName = 'en-us';
 		if (api.asc_getLocale) {
-			langName = api.asc_getLocale().replace('_', '-').toLowerCase();
+			let locale = api.asc_getLocale();
+			if (locale)
+				langName = locale.replace('_', '-').toLowerCase();
 		} else if (this.Presentation.GetDefaultLanguage && window['Common']) {
 			langCode = this.Presentation.GetDefaultLanguage();
 			langName = window['Common']['util']['LanguageInfo']['getLocalLanguageName'](langCode)[0].toLowerCase();
