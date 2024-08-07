@@ -13729,6 +13729,7 @@
 	ApiProtectedRange.prototype["AddUser"]       = ApiProtectedRange.prototype.AddUser;
 	ApiProtectedRange.prototype["DeleteUser"]    = ApiProtectedRange.prototype.DeleteUser;
 	ApiProtectedRange.prototype["GetAllUsers"]   = ApiProtectedRange.prototype.GetAllUsers;
+	ApiProtectedRange.prototype["SetAnyoneType"] = ApiProtectedRange.prototype.SetAnyoneType;
 	ApiProtectedRange.prototype["GetUser"]       = ApiProtectedRange.prototype.GetUser;
 
 	ApiProtectedRangeUserInfo.prototype["GetName"]  = ApiProtectedRangeUserInfo.prototype.GetName;
