@@ -53,7 +53,8 @@
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
-	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents a list of functions.
+	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
+	 * @property {ApiPivotTable[]} PivotTables - Returns all PivotTables.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -88,6 +89,7 @@
 	 * @property {Array} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 * @property {ApiProtectedRange[]} AllProtectedRanges - Returns all protected ranges from the current worksheet.
+	 * @property {ApiPivotTable[]} PivotTables - Returns all PivotTables on worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -131,6 +133,7 @@
 	 * @property {'xlDownward' | 'xlHorizontal' | 'xlUpward' | 'xlVertical'} Orientation - Sets an angle to the current cell range.
 	 * @property {ApiAreas} Areas - Returns a collection of the areas.
 	 * @property {ApiCharacters} Characters - Returns the ApiCharacters object that represents a range of characters within the object text. Use the ApiCharacters object to format characters within a text string.
+	 * @property {ApiPivotTable | null} PivotTable - Returns a PivotTable object that represents the PivotTable report containing the upper-left corner of the specified range.
 	 */
 	function ApiRange(range, areas) {
 		this.range = range;
@@ -362,6 +365,130 @@
 			this.Items.push(new ApiRange(items[i]));
 		}
 	}
+
+	/**
+	 * Class representing a PivotTable.
+	 * @constructor
+	 * @property {string} Name - Returns or sets name of the PivotTable.
+	 * @property {boolean} ColumnGrand - Returns or sets PivotTable Grand Totals settings for columns.
+	 * @property {boolean} RowGrand - Returns or sets PivotTable Grand Totals settings for rows.
+	 * @property {boolean} DisplayFieldCaptions  - Returns or set show field headers for rows and columns.
+	 * @property {string} Title - Returns or sets the title of the PivotTable.
+	 * @property {string} Description - Returns or sets the description of the PivotTable.
+	 * @property {string} StyleName - Returns or sets the style name of the PivotTable.
+	 * @property {boolean} ShowTableStyleRowHeaders - Returns or sets the row headers style for PivotTable.
+	 * @property {boolean} ShowTableStyleColumnHeaders - Returns or sets the column headers style for PivotTable.
+	 * @property {boolean} ShowTableStyleRowStripes - Returns or sets the banded rows style for PivotTable.
+	 * @property {boolean} ShowTableStyleColumnStripes - Returns or sets the banded columns style for PivotTable.
+	 * @property {ApiRange} Source - Returns or sets source for the PivotTable.
+	 * @property {ApiRange | null} ColumnRange - Returns a Range object that represents the range that contains the column area in the PivotTable report.
+	 * @property {ApiRange | null} RowRange - Returns a Range object that represents the range that contains the row area in the PivotTable report.
+	 * @property {ApiRange} DataBodyRange - Returns a Range object that represents the range of values in a PivotTable.
+	 * @property {ApiRange | null} TableRange1 - Returns a Range object that represents the range containing the entire PivotTable report, but doesn't include page fields.
+	 * @property {ApiRange | null} TableRange2 - Returns a Range object that represents the range containing the entire PivotTable report, including page fields
+	 * @property {string} GrandTotalName - Sets the text string label that is displayed in the grand total column or row heading in the specified PivotTable report.
+	 * @property {boolean} RepeatAllLabels - Specifies whether to repeat item labels for all PivotFields in the specified PivotTable.
+	 * @property {object} RowAxisLayout - Sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * @property {boolean} LayoutBlankLine - Sets PivotTable setting insert blank rows after each item.
+	 * @property {boolean} LayoutSubtotals - Sets PivotTable setting show subtotals.
+	 * @property {number} SubtotalLocation - Sets PivotTable setting layout subtotal location.
+	 * @property {ApiPivotField[]} PivotFields - Returns all PivotFields in PivotTable.
+	 * @property {ApiPivotField[]} ColumnFields - Returns array that are currently showing as column fields in PivotTable.
+	 * @property {ApiPivotField[]} DataFields - Returns array that are currently showing values fields in PivotTable.
+	 * @property {ApiPivotField[]} HiddenFields - Returns array that represents all not added fields in PivotTable.
+	 * @property {ApiPivotField[]} VisibleFields - Returns array that represents all not added fields in PivotTable.
+	 * @property {ApiPivotField[]} PageFields - Returns array that are currently showing as page fields in PivotTable.
+	 * @property {ApiPivotField[]} RowFields - Returns array that are currently showing as row fields in PivotTable.
+	 */
+	function ApiPivotTable(pivot, api) {
+		/** @type {CT_pivotTableDefinition} */
+		this.pivot = pivot;
+		this.api = api;
+	}
+
+	/**
+	 * Class representing a PivotTable field.
+	 * @constructor
+	 * @property {number} Position - Returns or sets a value that represents the position of the field (first, second, third, and so on) among all the fields in its orientation (Rows, Columns, Pages, Data).
+	 * @property {number} Orientation - A pivot field orientation value that represents the location of the field in the specified PivotTable report.
+	 * @property {string} Caption - Returns or sets a value that represents the label text for the pivot field.
+	 * @property {string} Name - Returns or sets a value representing the name of the object.
+	 * @property {string} Value - Returns or sets a value representing the name of the object.
+	 * @property {string} SourceName - Returns source name.
+	 * @property {number} Index - Returns index.
+	 * @property {ApiPivotTable} Table - Returns ApiPivotField.
+	 * @property {ApiPivotTable} Parent - Returns parent object to this field.
+	 * @property {boolean} LayoutCompactRow - Returns or sets whether or not a PivotField is compacted.
+	 * @property {number} LayoutForm - Returns or sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * @property {boolean} LayoutPageBreak - Returns or set the flag that represents page break is inserted after each field.
+	 * @property {boolean} ShowingInAxis - Returns if the PivotField is currently visible in the PivotTable or not.
+	 * @property {boolean} RepeatLabels - setting repeat items labels at each row.
+	 * @property {boolean} LayoutBlankLine - Returns or sets setting insert blank rows after each item.
+	 * @property {boolean} ShowAllItems - Returns or sets setting show items with no data.
+	 * @property {boolean} LayoutSubtotals - Returns or sets setting show subtotals.
+	 * @property {number} LayoutSubtotalLocation - Returns or sets setting layout subtotal location.
+	 * @property {string} SubtotalName - Returns or sets text string label displayed in the subtotal column or row heading in the specified PivotTable report.
+	 * @property {object} Subtotals - Returns or sets subtotals.
+	 * @property {number} Formula - Returns or sets a value that represents the object's formula.
+	 * @property {boolean} DragToColumn - Returns or sets the specified field, can be dragged to the column position or not.
+	 * @property {boolean} DragToRow - Returns or sets the specified field, can be dragged to the row position or not.
+	 * @property {boolean} DragToData - Returns or sets the specified field, can be dragged to the data position or not.
+	 * @property {boolean} DragToPage - Returns or sets the specified field, can be dragged to the page position or not.
+	 * @property {string | null} NumberFormat - Returns or sets a value that represents the format code for the object.
+	 * @property {string | number} CurrentPage - Returns the current page showing for the page field (valid only for page fields).
+	 */
+	function ApiPivotField(table, index, pivotField) {
+		/** @type {ApiPivotTable} */
+		this.table = table;
+		/** @type {number} */
+		this.index = index;
+		/** @type {CT_PivotField} */
+		this.pivotField = pivotField;
+	}
+
+	/**
+	 * Class representing a PivotTable data field.
+	 * @constructor
+	 * @extends ApiPivotField
+	 * @property {DataConsolidateFunctionType} Function - Returns the function performed in the data field.
+	 * @property {number} Position - Returns a value that represents the position of the field in category.
+	 * @property {PivotFieldOrientationType} Orientation - Returns a data field orientation value that represents the location.
+	 * @property {string} Name - Returns a value representing the name of the object.
+	 * @property {string} Value - Returns a value representing the value of the object.
+	 * @property {string} Caption - Returns a value that represents the label text for the data field.
+	 * @property {string | null} NumberFormat - Returns a value that represents the format code for the object.
+	 * @property {number} Index - Returns index of the data field.
+	 * @property {ApiPivotField} PivotField - Returns the pivotField from which the data field was created.
+	 */
+	function ApiPivotDataField(table, dataIndex, dataField) {
+		const pivotIndex = dataField.asc_getIndex();
+		const pivotField = table.pivot.asc_getPivotFields()[pivotIndex];
+		ApiPivotField.call(this, table, pivotIndex, pivotField);
+		/** @type {number} */
+		this.dataIndex = dataIndex;
+		/** @type {CT_DataField} */
+		this.dataField = dataField;
+
+	}
+	ApiPivotDataField.prototype = Object.create(ApiPivotField.prototype);
+	ApiPivotDataField.prototype.constructor = ApiPivotDataField;
+
+	/**
+	 * Class representing a PivotTable field item.
+	 * @constructor
+	 * @property {string} Name - Returns the name of Pivot Item.
+	 * @property {string} Caption - Returns the caption of Pivot Item.
+	 * @property {string} Value - Returns the value of Pivot Item.
+	 * @property {string} Parent - Returns the parent of Pivot Item.
+	 * @property {string} Field - Returns the field of Pivot Item.
+	 */
+	function ApiPivotItem(field, item) {
+		/** @type{ApiPivotField} */
+		this.field = field;
+		/** @type{CT_Item} */
+		this.pivotItem = item;
+	}
+
 
 	/**
 	 * Class representing characters in an object that contains text.
@@ -7258,6 +7385,122 @@
 	};
 
 	/**
+	 * Inserts PivotTable on existing worksheet.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} dataRef - Source data range.
+	 * @param {ApiRange} pivotRef - Range in which the table will be located.
+	 * @param {bool} confirmation - Replace the data in pivotRef (if it exists) or create a dialog box for this (if it exists).
+	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotExistingWorksheet.js
+	 */
+	Api.prototype.InsertPivotExistingWorksheet = function (dataRef, pivotRef, confirmation) {
+		if (dataRef) {
+			dataRef = dataRef.GetWorksheet().GetName() + "!" + dataRef.GetAddress(true, true);
+		} else {
+			var options = this.asc_getAddPivotTableOptions();
+			dataRef = options.range;
+		}
+		if (pivotRef) {
+			pivotRef = pivotRef.GetWorksheet().GetName() + "!" + pivotRef.GetAddress(true, true);
+		} else {
+			private_MakeError('"pivotRef" is undefined.');
+		}
+		var pivot = this.asc_insertPivotExistingWorksheet(dataRef, pivotRef, confirmation);
+		if (pivot) {
+			return new ApiPivotTable(pivot, this);
+		}
+		private_MakeError('Error! Bad pivotRef!');
+	};
+
+	/**
+	 * Inserts PivotTable on new worksheet.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} dataRef - Source data range.
+	 * @param {ApiRange} [newSheetName] - New worksheet name.
+	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotNewWorksheet.js
+	 */
+	Api.prototype.InsertPivotNewWorksheet = function (dataRef, newSheetName) {
+		if (dataRef) {
+			dataRef = dataRef.GetWorksheet().GetName() + "!" + dataRef.GetAddress(true, true);
+		} else {
+			var options = this.asc_getAddPivotTableOptions();
+			dataRef = options.range;
+		}
+		if (!newSheetName) {
+			var items = [], wc = this.asc_getWorksheetsCount();
+			while (wc--) {
+				items.push(this.asc_getWorksheetName(wc).toLowerCase());
+			}
+
+			var index = 0, name;
+			while(++index < 1000) {
+				name = 'Sheet' + index;
+				if (items.indexOf(name.toLowerCase()) < 0) break;
+			}
+
+			newSheetName = name;
+		}
+		var pivot = this.asc_insertPivotNewWorksheet(dataRef, newSheetName);
+		if (pivot) {
+			return new ApiPivotTable(pivot, this);
+		}
+		private_MakeError('An error occurred while creating the pivot table!');
+	};
+
+	/**
+	 * Returns PivotTable by name or null.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name of PivotTable.
+	 * @returns {ApiPivotTable|null}
+	 * @see office-js-api/Examples/Cell/Api/Methods/GetPivotByName.js
+	 */
+	Api.prototype.GetPivotByName = function (name) {
+		var res = null;
+		if (typeof name == "string" && name.trim().length) {
+			var pivot = this.wbModel.getPivotTableByName( name.trim() );
+			if (pivot)
+				res = new ApiPivotTable(pivot, this);
+		}
+		return res;
+	};
+
+	/**
+	 * Refreshs all PivotTables.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/Cell/Api/Methods/RefreshAllPivots.js
+	 */
+	Api.prototype.RefreshAllPivots = function () {
+		this.asc_refreshAllPivots();
+	};
+
+	/**
+	 * Returns all PivotTables.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable[]}
+	 * @see office-js-api/Examples/Cell/Api/Methods/GetAllPivotTables.js
+	 */
+	Api.prototype.GetAllPivotTables = function () {
+		var res = [];
+		var sheets = this.GetSheets();
+		sheets.forEach(function(ws) {
+			res = res.concat( ws.GetAllPivotTables() )
+		});
+		return res;
+	};
+
+	Object.defineProperty(Api.prototype, "PivotTables", {
+		get: function () {
+			return this.GetAllPivotTables();
+		}
+	});
+
+	/**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
 	 * @function
 	 * @memberof Api
@@ -8618,6 +8861,59 @@
 	};
 
 	/**
+	 * Return PivotTable by name.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name of PivotTable.
+	 * @returns {ApiPivotTable|null}
+	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetPivotByName.js
+	 */
+	ApiWorksheet.prototype.GetPivotByName = function (name) {
+		var res = null;
+		if (name) {
+			var pivot = this.worksheet.getPivotTableByName(name);
+			if (pivot)
+				res = new ApiPivotTable(pivot, this.worksheet.workbook.oApi);
+		}
+		return res;
+	};
+
+	/**
+	 * Returns all PivotTables on worksheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable[]}
+	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllPivotTables.js
+	 */
+	ApiWorksheet.prototype.GetAllPivotTables = function () {
+		var res = [];
+		var ws = this.worksheet;
+		ws.pivotTables.forEach(function(piv) {
+			res.push( new ApiPivotTable(piv, ws.workbook.oApi) );
+		});
+		return res;
+	};
+
+	Object.defineProperty(ApiWorksheet.prototype, "PivotTables", {
+		get: function () {
+			return this.GetAllPivotTables();
+		}
+	});
+
+	/**
+	 * Refresh all PivotTables on current worksheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/RefreshAllPivots.js
+	 */
+	ApiWorksheet.prototype.RefreshAllPivots = function () {
+		const t = this;
+		this.worksheet.pivotTables.forEach(function(pivot) {
+			pivot.asc_refresh(t.worksheet.workbook.oApi);
+		});
+	};
+
+	/**
 	 * Returns the freeze panes from the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -9184,7 +9480,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string | bool | number | Array[] | Array[][]} data - The general value for the cell or cell range.
-	 * @return {boolean} - returns false if such a range does not exist.
+	 * @returns {boolean} - returns false if such a range does not exist.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetValue.js
 	 */
 	ApiRange.prototype.SetValue = function (data) {
@@ -9259,7 +9555,7 @@
 	 * Returns a formula of the specified range.
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiRange
-	 * @return {string | string[][]} - return Value2 property (value without format) if formula doesn't exist.
+	 * @returns {string | string[][]} - return Value2 property (value without format) if formula doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFormula.js
 	 */
 	ApiRange.prototype.GetFormula = function () {
@@ -9282,7 +9578,7 @@
 	 * Returns the Value2 property (value without format) of the specified range.
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiRange
-	 * @return {string | string[][]}
+	 * @returns {string | string[][]}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetValue2.js
 	 */
 	ApiRange.prototype.GetValue2 = function () {
@@ -9319,7 +9615,7 @@
 	 * Returns the text of the specified range.
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiRange
-	 * @return {string | string[][]}
+	 * @returns {string | string[][]}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetText.js
 	 */
 	ApiRange.prototype.GetText = function () {
@@ -10036,7 +10332,7 @@
 	 * Returns the current range angle.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @return {Angle}
+	 * @returns {Angle}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetOrientation.js
 	 */
 	ApiRange.prototype.GetOrientation = function () {
@@ -10251,7 +10547,7 @@
 	 * Returns a collection of the ranges.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @return {ApiAreas}
+	 * @returns {ApiAreas}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAreas.js
 	 */
 	ApiRange.prototype.GetAreas = function () {
@@ -10449,6 +10745,35 @@
 			oApi && oApi.asc_Paste();
 		});
 	};
+
+	/**
+	 * Returns a PivotTable object that represents the PivotTable report containing the upper-left corner of the specified range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable | null}
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetPivotTable.js
+	 */
+	ApiRange.prototype.GetPivotTable = function() {
+		var bbox = this.range.isOneCell() ?  this.range.bbox : this.range.worksheet.getRange3(this.range.bbox.r1, this.range.bbox.c1, this.range.bbox.r1, this.range.bbox.c1).bbox;
+		var pivotTables = this.range.worksheet.pivotTables;
+		var foundTable = null;
+		for (var i = 0; i < pivotTables.length; i++) {
+			var table = pivotTables[i];
+			if (table.intersection(bbox)) {
+				foundTable = new ApiPivotTable(table, this.range.worksheet.workbook.oApi);
+				break;
+			}
+		}
+		return foundTable;
+	};
+
+	Object.defineProperty(ApiRange.prototype, "PivotTable", {
+		get: function () {
+			return this.GetPivotTable();
+		}
+	});
+
+
 
 	/**
 	 * Search data type (formulas or values).
@@ -10744,7 +11069,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Start - The first character to be returned. If this argument is either 1 or omitted, this property returns a range of characters starting with the first character.
 	 * @param {number} Length - The number of characters to be returned. If this argument is omitted, this property returns the remainder of the string (everything after the Start character).
-	 * @return {ApiCharacters}
+	 * @returns {ApiCharacters}
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetCharacters.js
 	 */
@@ -13169,7 +13494,7 @@
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sTitle - The title which will be displayed for the current protected range.
-	 * @return {boolean} - Returns false if a user doesn't have permission to modify the protected range.
+	 * @returns {boolean} - Returns false if a user doesn't have permission to modify the protected range.
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/SetTitle.js
 	 */
@@ -13194,7 +13519,7 @@
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The cell range which will be set for the current protected range.
-	 * @return {boolean} - Returns false if a user doesn't have permission to modify the protected range.
+	 * @returns {boolean} - Returns false if a user doesn't have permission to modify the protected range.
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/SetRange.js
 	 */
@@ -13437,6 +13762,2890 @@
 		return this.userInfo.asc_getId();
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotTable
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/* Methods */
+
+	/**
+	 * Adds a data field to a PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number | string} field - The index number or name of the field.
+	 * @returns {ApiPivotDataField}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/AddDataField.js
+	 */
+	ApiPivotTable.prototype.AddDataField = function (field) {
+		let pivotIndex = -1;
+		const pivotFields = this.pivot.asc_getPivotFields();
+		if (typeof field === 'string') {
+			pivotIndex = this.pivot.getFieldIndexByValue(field);
+		} else if (typeof field === 'number') {
+			pivotIndex = field - 1;
+		} else {
+			private_MakeError('Bad field indentifier type.')
+			return null;
+		}
+		if (pivotFields[pivotIndex]) {
+			this.pivot.asc_addDataField(this.api, pivotIndex);
+			const dataFields = this.pivot.asc_getDataFields();
+			return new ApiPivotDataField(this, dataFields.length - 1, dataFields[dataFields.length - 1]);
+		}
+		private_MakeError("Field with such an identifier does not exist.");
+		return null;
+	};
+	/**
+	 * Adds row, column, and page fields to a PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {Object} options
+	 * @param {number | string | number[] | string[]} [options.rows] - Specifies an array of field names or ids to be added as rows or added to the category axis.
+	 * @param {number | string | number[] | string[]} [options.columns] - Specifies an array of field names or ids to be added as columns or added to the series axis.
+	 * @param {number | string | number[] | string[]} [options.pages] - Specifies an array of field names or ids to be added as pages or added to the page area.
+	 * @param {boolean} [options.addToTable] - Applies only to PivotTable reports. True to add the specified fields to the report (none of the existing fields are replaced).
+	 * False to replace existing fields with the new fields. The default value is False.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/AddFields.js
+	 */
+	ApiPivotTable.prototype.AddFields = function (options) {
+		options['rows'] = options['rows'] != null ? options['rows'] : [];
+		options['columns'] = options['columns'] != null ? options['columns'] : [];
+		options['pages'] = options['pages'] != null ? options['pages'] : [];
+
+		const rows = Array.isArray(options['rows']) ? options['rows'] : [options['rows']];
+		const cols = Array.isArray(options['columns']) ? options['columns'] : [options['columns']];
+		const pages = Array.isArray(options['pages']) ? options['pages'] : [options['pages']];
+		const cacheFields = this.pivot.asc_getCacheFields();
+		const t = this;
+
+		function processField(field, callback) {
+			let index = null;
+			if (typeof field == "number" && field > 0 && field - 1 < cacheFields.length) {
+				index = field - 1;
+			} else if (typeof field == "string") {
+				index = t.pivot.getFieldIndexByValue(field.trim());
+				if (index < 0) {
+					index = null;
+				}
+			}
+			if (index !== null) {
+				callback(index);
+			} else {
+				private_MakeError("There is no field with such an identifier.");
+			}
+		}
+
+		if (!options.addToTable) {
+			const pivotFields = this.GetPivotFields()
+			pivotFields.forEach(function (pivotField) {
+				pivotField.Remove()
+			})
+
+		}
+		rows.forEach(function(row) {
+			processField(row, function(index) {
+				t.pivot.asc_addRowField(t.api, index);
+			});
+		});
+		cols.forEach(function(col) {
+			processField(col, function(index) {
+				t.pivot.asc_addColField(t.api, index);
+			});
+		});
+		pages.forEach(function(page) {
+			processField(page, function(index) {
+				t.pivot.asc_addPageField(t.api, index);
+			});
+		});
+	};
+	/**
+	 * Deletes all filters currently applied to the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/ClearAllFilters.js
+	 */
+	ApiPivotTable.prototype.ClearAllFilters = function () {
+		this.pivot.asc_removeFilters(this.api);
+	};
+	/**
+	 * Clears the Pivot Table.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/ClearTable.js
+	 */
+	ApiPivotTable.prototype.ClearTable = function () {
+		const ws = this.pivot.worksheet;
+		const name = this.pivot.asc_getName();
+		const range = this.pivot.getRange();
+		const bbox = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
+		const dataRef = this.pivot.cacheDefinition.cacheSource.worksheetSource.getDataRef();
+		let index = -1;
+		for (let i = 0; i < ws.pivotTables.length; i += 1) {
+			if (ws.pivotTables[i].Get_Id() === this.pivot.Get_Id()) {
+				index = i;
+				break;
+			}
+		}
+		if (index !== -1) {
+			ws._deletePivotTable(ws.pivotTables, this.pivot, index);
+			this.pivot = this.api._asc_insertPivot(ws.workbook, dataRef, ws, bbox, false);
+			this.pivot.asc_setName(name);
+			return;
+		}
+		private_MakeError("Unknown error!");
+	};
+	/**
+	 * Returns the value for the data filed in a PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string[]} items - Describes a single cell in the PivotTable report.
+	 * @returns {number | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetData.js
+	 */
+	ApiPivotTable.prototype.GetData = function (items) {
+		const params = this.pivot.asc_getDataToGetPivotData(items);
+		const cell = this.pivot.getCellByGetPivotDataParams(params);
+		if (cell) {
+			return this.pivot.worksheet.getCell3(cell.row, cell.col).getValue();
+		}
+		private_MakeError('There is no data with that params.');
+		return null;
+	};
+	/**
+	 * Returns a Range object with information about a data item in a PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} [dataField]
+	 * @param {string[]} [fieldItemsArray]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPivotData.js
+	 */
+	ApiPivotTable.prototype.GetPivotData = function (dataField, fieldItemsArray) {
+		const cell = this.pivot.getCellByGetPivotDataParams({
+			dataFieldName: dataField,
+			optParams: fieldItemsArray
+		});
+		if (cell) {
+			return new ApiRange(this.pivot.worksheet.getCell3(cell.row, cell.col));
+		}
+		return null;
+	};
+	/**
+	 * Returns an collection that represents either a single PivotTable field
+	 * or a collection of both the visible and hidden fields in the PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} [field] - The name or index of the field to be returned.
+	 * @returns {ApiPivotField[] | ApiPivotField | ApiPivotDataField | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPivotFields.js
+	 */
+	ApiPivotTable.prototype.GetPivotFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		if (field != null) {
+			let pivotIndex = -1;
+			if (typeof field === 'number') {
+				pivotIndex = field - 1;
+				if (pivotFields[pivotIndex]) {
+					return new ApiPivotField(this, pivotIndex, pivotFields[pivotIndex]);
+				}
+			} else if (typeof field === 'string') {
+				pivotIndex = this.pivot.getFieldIndexByValue(field.trim());
+				if (pivotIndex !== -1) {
+					return new ApiPivotField(this, pivotIndex, pivotFields[pivotIndex]);
+				}
+				return this.GetDataFields(field);
+			}
+		}
+		const t = this;
+		return pivotFields.map(function(pivotField, i) {
+			return new ApiPivotField(t, i, pivotField);
+		});
+	};
+	Object.defineProperty(ApiPivotTable.prototype, "PivotFields", {
+		get: function (field) {
+			this.GetPivotFields(field);
+		}
+	});
+	/**
+	 * Returns the value of a pivot table cell.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number} rowLine
+	 * @param {number} colLine
+	 * @returns {number | string | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/PivotValueCell.js
+	 */
+	ApiPivotTable.prototype.PivotValueCell = function (rowLine, colLine) {
+		if (rowLine > 0 && colLine > 0) {
+			const pivotRange = this.pivot.getRange();
+			const location = this.pivot.location;
+			const baseCol = pivotRange.c1 + location.firstDataCol;
+			const baseRow = pivotRange.r1 + location.firstDataRow;
+			const curRow = rowLine + baseRow - 1;
+			const curCol = colLine + baseCol - 1;
+			if (curRow <= pivotRange.r2 && curCol <= pivotRange.c2) {
+				return this.pivot.worksheet.getCell3(curRow, curCol).getValue();
+			}
+		}
+		private_MakeError('Cell is out of range');
+		return null;
+	};
+	/**
+	 * Show details of pivot cell.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number} rowLine - report area row
+	 * @param {number} colLine - report area column
+	 * @returns {boolean} success
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/ShowDetails.js
+	 */
+	ApiPivotTable.prototype.ShowDetails = function (rowLine, colLine) {
+		if (rowLine > 0 && colLine > 0) {
+			const pivotRange = this.pivot.getRange();
+			const location = this.pivot.location;
+			const baseCol = pivotRange.c1 + location.firstDataCol;
+			const baseRow = pivotRange.r1 + location.firstDataRow;
+			const curRow = rowLine + baseRow - 1;
+			const curCol = colLine + baseCol - 1;
+			if (curRow <= pivotRange.r2 && curCol <= pivotRange.c2) {
+				return this.api.asc_pivotShowDetails(this.pivot, {row: curRow, col: curCol});
+			}
+		}
+		private_MakeError('Cell is out of range');
+		return false;
+	};
+	/**
+	 * Refreshes the PivotTable report from the source data.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/RefreshTable.js
+	 */
+	ApiPivotTable.prototype.RefreshTable = function () {
+		this.pivot.asc_refresh(this.api);
+	};
+	/**
+	 * Updates the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/Update.js
+	 */
+	ApiPivotTable.prototype.Update = function () {
+		this.pivot.asc_refresh(this.api);
+	};
+	/**
+	 * Specifies whether to repeat item labels for all PivotFields in the specified PivotTable.
+	 * @memberof ApiPivotTable
+	 * @param {boolean} repeat - Specifies whether to repeat all field item labels in a PivotTable report.
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetRepeatAllLabels.js
+	 */
+	ApiPivotTable.prototype.SetRepeatAllLabels = function (repeat) {
+		if (typeof repeat == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setFillDownLabelsDefault(repeat);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "repeat".');
+		}
+	};
+	Object.defineProperty(ApiPivotTable.prototype, "RepeatAllLabels", {
+		set: function (repeat) {
+			this.SetRepeatAllLabels(repeat);
+		}
+	});
+	/**
+	 * Sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * @memberof ApiPivotTable
+	 * @param {PivotLayoutType} type - Type of layot report form.
+	 * @param {boolean} compact - Use compact form or not.
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetRowAxisLayout.js
+	 */
+	ApiPivotTable.prototype.SetRowAxisLayout = function (type, compact) {
+		let props = null;
+		if (typeof type === "string" && (type === "Tabular" || type === "Outline")) {
+			props = new Asc.CT_pivotTableDefinition();
+			props.asc_setOutline((type == "Outline"));
+		} else {
+			private_MakeError('Invalid type of "type" or invalid value.');
+		}
+		if (compact != null) {
+			if (typeof compact === "boolean") {
+				if (!props) {
+					props = new Asc.CT_pivotTableDefinition();
+				}
+				props.asc_setCompact(compact);
+			} else {
+				private_MakeError('Invalid type of "compact".');
+			}
+		}
+		if (props) {
+			this.pivot.asc_set(this.api, props);
+		}
+	};
+	Object.defineProperty(ApiPivotTable.prototype, "RowAxisLayout", {
+		set: function (type, compact) {
+			this.SetRowAxisLayout(type, compact);
+		}
+	});
+	/**
+	 * @typedef { "Hidden" | "Top" | "Bottom" } PivotSubtotalLayoutType
+	 */
+	/**
+	 * Sets PivotTable setting layout subtotal location.
+	 * @memberof ApiPivotTable
+	 * @param {PivotSubtotalLayoutType} type - Type of subtotal layout
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetSubtotalLocation.js
+	 */
+	ApiPivotTable.prototype.SetSubtotalLocation = function (type) {
+		if ( typeof type == "string" && (type === "Hidden" || type === "Bottom" || type === "Top") ) {
+			const props = new Asc.CT_pivotTableDefinition();
+			if (type == "Hidden") {
+				props.asc_setDefaultSubtotal(false);
+			} else {
+				props.asc_setDefaultSubtotal(true);
+				props.asc_setSubtotalTop( (type == "Top") );
+			}
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "type" or invalid value.');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "SubtotalLocation", {
+		set: function (type) {
+			this.SetSubtotalLocation(type);
+		}
+	});
+	/**
+	 * Removes field from all PivotTable categories.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number | string} identifier - The index number or name of the field.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/RemoveField.js
+	 */
+	ApiPivotTable.prototype.RemoveField = function (identifier) {
+		const pivotField = this.GetPivotFields(identifier);
+		if (pivotField) {
+			this.pivot.asc_removeField(this.api, pivotField.index);
+		}
+	};
+
+	/**
+	 * @typedef { "Up" | "Down" | "Begin" | "End" } PivotMoveFieldType
+	 */
+	/**
+	 * @typedef {"Rows" | "Columns" | "Filters" | "Values" | "Hidden" } PivotFieldOrientationType
+	 */
+
+	/**
+	 * Moves field from one category to another.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number | string} identifier - The index number or name of the field.
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
+	 * @param {number} [index] - The index of the field in new category.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/MoveField.js
+	 */
+	ApiPivotTable.prototype.MoveField = function (identifier, type, index) {
+		const pivotField = this.GetPivotFields(identifier);
+		if (pivotField) {
+			pivotField.Move(type, index)
+		}
+	};
+	/**
+	 * Selects the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/Select.js
+	 */
+	ApiPivotTable.prototype.Select = function () {
+		this.pivot.asc_select(this.api);
+	};
+
+	/* Attributes */
+
+	/**
+	 * Returns an collection that represents a collection of all column fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetColumnFields.js
+	 */
+	ApiPivotTable.prototype.GetColumnFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		const colFields = this.pivot.asc_getColumnFields();
+		const t = this;
+		return colFields.map(function(colField, i) {
+			const index = colField.asc_getIndex();
+			return new ApiPivotField(t, index, pivotFields[index]);
+		});
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ColumnFields", {
+		get: function (field) {
+			return this.GetColumnFields(field);
+		}
+	});
+	/**
+	 * Returns an collection that represents either a single PivotTable data field
+	 * or a collection of all visible data fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number | string |undefined} field - The name or index of the field to be returned.
+	 * @returns {ApiPivotDataField[] | ApiPivotDataField | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDataFields.js
+	 */
+	ApiPivotTable.prototype.GetDataFields = function (field) {
+		const dataFields = this.pivot.asc_getDataFields();
+		if (field != null) {
+			let dataIndex = -1;
+			if (typeof field === 'number') {
+				dataIndex = field - 1;
+				const dataField = dataFields[dataIndex];
+				if (dataField) {
+					return new ApiPivotDataField(this, dataIndex, dataField)
+				}
+			} else if (typeof field === 'string') {
+				const dataIndex = this.pivot.dataFields.getIndexByName(field.trim())
+				if (dataIndex !== -1) {
+					return  new ApiPivotDataField(this, dataIndex, dataFields[dataIndex]);
+				}
+			}
+			private_MakeError("A field with such an identifier does not exist.");
+			return null;
+		}
+		const t = this;
+		return dataFields.map(function(dataField, i) {
+			return new ApiPivotDataField(t, i, dataField);
+		});
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "DataFields", {
+		get: function (field) {
+			return this.GetDataFields(field);
+		}
+	});
+
+	/**
+	 * Returns array that represents all not added fields in PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetHiddenFields.js
+	 */
+	ApiPivotTable.prototype.GetHiddenFields = function () {
+		var fields = this.pivot.asc_getPivotFields();
+		var hidden = [];
+		for (var i = 0; i < fields.length; i++)
+			if (fields[i].axis === null && !fields[i].dataField)
+				hidden.push( new ApiPivotField(this, i, fields[i]));
+
+		return hidden;
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "HiddenFields", {
+		get: function () {
+			return this.GetHiddenFields();
+		}
+	});
+
+	/**
+	 * Returns array that represents all added fields in PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetVisibleFields.js
+	 */
+	ApiPivotTable.prototype.GetVisibleFields = function () {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		const visible = [];
+		for (var i = 0; i < pivotFields.length; i++) {
+			if (pivotFields[i].axis !== null && !pivotFields[i].dataField) {
+				visible.push( new ApiPivotField(this, i, pivotFields[i]) );
+			}
+		}
+		return visible.concat(this.GetDataFields());
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "VisibleFields", {
+		get: function () {
+			return this.GetVisibleFields();
+		}
+	});
+
+	/**
+	 * Returns an collection that represents either a single PivotTable page field
+	 * or a collection of all visible page fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPageFields.js
+	 */
+	ApiPivotTable.prototype.GetPageFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		const pageFields = this.pivot.asc_getPageFields();
+		const t = this;
+		return pageFields.map(function(pageField, i) {
+			const index = pageField.asc_getIndex();
+			return new ApiPivotField(t, index, pivotFields[index]);
+		});
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "PageFields", {
+		get: function (field) {
+			return this.GetPageFields(field);
+		}
+	});
+	/**
+	 * Returns an collection that represents a collection of all row fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetRowFields.js
+	 */
+	ApiPivotTable.prototype.GetRowFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		const rowFields = this.pivot.asc_getRowFields();
+		const t = this;
+		return rowFields.map(function(rowField, i) {
+			const index = rowField.asc_getIndex();
+			return new ApiPivotField(t, index, pivotFields[index]);
+		});
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "RowFields", {
+		get: function () {
+			return this.GetRowFields();
+		}
+	});
+	/**
+	 * Returns name of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetName.js
+	 */
+	ApiPivotTable.prototype.GetName = function () {
+		return this.pivot.asc_getName();
+	};
+
+	/**
+	 * Sets name of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @param {string} name - Name for PivotTable.
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetName.js
+	 */
+	ApiPivotTable.prototype.SetName = function (name) {
+		if (typeof name == "string" && name.trim().length) {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setName(name.trim());
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "name" or "name" is empty.');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		},
+		set: function (name) {
+			this.SetName(name);
+		}
+	});
+
+	/**
+	 * Returns PivotTable Grand Totals settings for columns.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetColumnGrand.js
+	 */
+	ApiPivotTable.prototype.GetColumnGrand = function () {
+		return this.pivot.asc_getColGrandTotals();
+	};
+
+	/**
+	 * Sets PivotTable Grand Totals settings for columns.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Shows grand totals for columns or not.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetColumnGrand.js
+	 */
+	ApiPivotTable.prototype.SetColumnGrand = function (show) {
+		if (typeof show == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setColGrandTotals(show);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ColumnGrand", {
+		get: function () {
+			return this.GetColumnGrand();
+		},
+		set: function (show) {
+			this.SetColumnGrand(show);
+		}
+	});
+
+	/**
+	 * Returns PivotTable Grand Totals settings for rows.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetRowGrand.js
+	 */
+	ApiPivotTable.prototype.GetRowGrand = function () {
+		return this.pivot.asc_getRowGrandTotals();
+	};
+
+	/**
+	 * Sets PivotTable Grand Totals settings for rows.
+	 * @memberof ApiPivotTable
+	 * @param {boolean} show - Shows grand totals for rows or not.
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetRowGrand.js
+	 */
+	ApiPivotTable.prototype.SetRowGrand = function (show) {
+		if (typeof show == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setRowGrandTotals(show);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "RowGrand", {
+		get: function () {
+			return this.GetRowGrand();
+		},
+		set: function (show) {
+			this.SetRowGrand(show);
+		}
+	});
+
+	/** @typedef {"OverThenDown" | "DownThenOver"} FieldsInReportFilterType */
+
+	/**
+	 * Returns PivotTable display fields in report filter area settings.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {{Type: FieldsInReportFilterType, ReportFilterFields: number}}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDisplayFieldsInReportFilterArea.js
+	 */
+	ApiPivotTable.prototype.GetDisplayFieldsInReportFilterArea = function () {
+		return {
+			"Type": (this.pivot.asc_getPageOverThenDown() ? "OverThenDown" : "DownThenOver"),
+			"ReportFilterFields": this.pivot.asc_getPageWrap()
+		};
+	};
+
+	/**
+	 * Returns PivotTable display fields in report filter area settings.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {FieldsInReportFilterType} type
+	 * @param {number} fields - Count of report filter fields.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetDisplayFieldsInReportFilterArea.js
+	 */
+	ApiPivotTable.prototype.SetDisplayFieldsInReportFilterArea = function (type, fields) {
+		var props = null;
+		if (type != undefined) {
+			if ( typeof type == "string" && (type == 'OverThenDown' || type == 'DownThenOver') ) {
+				props = new Asc.CT_pivotTableDefinition();
+				props.asc_setPageOverThenDown( (type == 'OverThenDown') );
+			} else {
+				private_MakeError('Invalid type of "type".');
+			}
+		}
+
+		if (fields != undefined) {
+			if (typeof fields == "number" && fields >= 0 && fields <= 255) {
+				if (!props)
+					props = new Asc.CT_pivotTableDefinition();
+
+				props.asc_setPageWrap(fields);
+			} else {
+				private_MakeError('Invalid type of "fields" or invalid value.');
+			}
+		}
+
+		if (props)
+			this.pivot.asc_set(this.api, props);
+	};
+
+	/**
+	 * Returns PivotTable setting show field headers for rows and columns.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDisplayFieldCaptions.js
+	 */
+	ApiPivotTable.prototype.GetDisplayFieldCaptions = function () {
+		return this.pivot.asc_getShowHeaders();
+	};
+
+	/**
+	 * Sets show field headers for rows and columns.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not field headers for rows and columns.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetDisplayFieldCaptions.js
+	 */
+	ApiPivotTable.prototype.SetDisplayFieldCaptions = function (show) {
+		if (typeof show == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setShowHeaders(show);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "DisplayFieldCaptions", {
+		get: function () {
+			return this.GetDisplayFieldCaptions ();
+		},
+		set: function (show) {
+			this.SetDisplayFieldCaptions (show);
+		}
+	});
+
+	/**
+	 * Returns the title of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTitle.js
+	 */
+	ApiPivotTable.prototype.GetTitle = function () {
+		return this.pivot.asc_getTitle() || "";
+	};
+
+	/**
+	 * Sets the title of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} title - Title for PivotTable.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTitle.js
+	 */
+	ApiPivotTable.prototype.SetTitle = function (title) {
+		if (typeof title == "string") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setTitle(title.trim());
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "title".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Title", {
+		get: function () {
+			return this.GetTitle();
+		},
+		set: function (title) {
+			this.SetTitle(title);
+		}
+	});
+
+	/**
+	 * Returns the description of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDescription.js
+	 */
+	ApiPivotTable.prototype.GetDescription = function () {
+		return this.pivot.asc_getDescription() || "";
+	};
+
+	/**
+	 * Sets the description of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} description - Description for PivotTable.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetDescription.js
+	 */
+	ApiPivotTable.prototype.SetDescription = function (description) {
+		if (typeof description == "string") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setDescription(description.trim());
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "description".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Description", {
+		get: function () {
+			return this.GetDescription();
+		},
+		set: function (description) {
+			this.SetDescription(description);
+		}
+	});
+
+	/**
+	 * Returns the style name of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetStyleName.js
+	 */
+	ApiPivotTable.prototype.GetStyleName = function () {
+		return this.pivot.asc_getStyleInfo().asc_getName();
+	};
+
+	/**
+	 * Sets the style of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Style name.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetStyleName.js
+	 */
+	ApiPivotTable.prototype.SetStyleName = function (name) {
+		if (typeof name == "string" && name.trim().length) {
+			this.pivot.asc_getStyleInfo().asc_setName(this.api, this.pivot, name.trim());
+		} else {
+			private_MakeError('Invalid type of "name" or "name" is empty.');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "StyleName", {
+		get: function () {
+			return this.GetStyleName();
+		},
+		set: function (name) {
+			this.SetStyleName(name);
+		}
+	});
+
+	/**
+	 * Returns the row headers style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleRowHeaders.js
+	 */
+	ApiPivotTable.prototype.GetTableStyleRowHeaders = function () {
+		return this.pivot.asc_getStyleInfo().asc_getShowRowHeaders();
+	};
+
+	/**
+	 * Sets the row headers style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not row headers.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleRowHeaders.js
+	 */
+	ApiPivotTable.prototype.SetTableStyleRowHeaders = function (show) {
+		if (typeof show == "boolean") {
+			this.pivot.asc_getStyleInfo().asc_setShowRowHeaders(this.api, this.pivot, show);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ShowTableStyleRowHeaders", {
+		get: function () {
+			return this.GetTableStyleRowHeaders();
+		},
+		set: function (show) {
+			this.SetTableStyleRowHeaders(show);
+		}
+	});
+
+	/**
+	 * Returns the column headers style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleColumnHeaders.js
+	 */
+	ApiPivotTable.prototype.GetTableStyleColumnHeaders = function () {
+		return this.pivot.asc_getStyleInfo().asc_getShowColHeaders();
+	};
+
+	/**
+	 * Sets the column headers style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not column headers.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleColumnHeaders.js
+	 */
+	ApiPivotTable.prototype.SetTableStyleColumnHeaders = function (show) {
+		if (typeof show == "boolean") {
+			this.pivot.asc_getStyleInfo().asc_setShowColHeaders(this.api, this.pivot, show);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ShowTableStyleColumnHeaders", {
+		get: function () {
+			return this.GetTableStyleColumnHeaders();
+		},
+		set: function (show) {
+			this.SetTableStyleColumnHeaders(show);
+		}
+	});
+
+	/**
+	 * Returns the banded rows style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleRowStripes.js
+	 */
+	ApiPivotTable.prototype.GetTableStyleRowStripes = function () {
+		return this.pivot.asc_getStyleInfo().asc_getShowRowStripes();
+	};
+
+	/**
+	 * Sets the banded rows style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not banded rows.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleRowStripes.js
+	 */
+	ApiPivotTable.prototype.SetTableStyleRowStripes = function (show) {
+		if (typeof show == "boolean") {
+			this.pivot.asc_getStyleInfo().asc_setShowRowStripes(this.api, this.pivot, show);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ShowTableStyleRowStripes", {
+		get: function () {
+			return this.GetTableStyleRowStripes();
+		},
+		set: function (show) {
+			this.SetTableStyleRowStripes(show);
+		}
+	});
+
+	/**
+	 * Returns the banded columns style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleColumnStripes.js
+	 */
+	ApiPivotTable.prototype.GetTableStyleColumnStripes = function () {
+		return this.pivot.asc_getStyleInfo().asc_getShowColStripes();
+	};
+
+	/**
+	 * Sets the banded columns style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not banded columns.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleColumnStripes.js
+	 */
+	ApiPivotTable.prototype.SetTableStyleColumnStripes = function (show) {
+		if (typeof show == "boolean") {
+			this.pivot.asc_getStyleInfo().asc_setShowColStripes(this.api, this.pivot, show);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ShowTableStyleColumnStripes", {
+		get: function () {
+			return this.GetTableStyleColumnStripes();
+		},
+		set: function (show) {
+			this.SetTableStyleColumnStripes(show);
+		}
+	});
+
+	/**
+	 * Returns source for the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetSource.js
+	 */
+	ApiPivotTable.prototype.GetSource = function () {
+		var location = this.pivot.getDataLocation();
+		return new ApiRange( location.ws.getRange3(location.bbox.r1, location.bbox.c1, location.bbox.r2, location.bbox.c2) );
+	};
+
+	/**
+	 * Sets source for the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} source - Range where pivot table will be located.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetSource.js
+	 */
+	ApiPivotTable.prototype.SetSource = function (source) {
+		if (source instanceof ApiRange) {
+			var ref = source.GetWorksheet().GetName() + "!" + source.GetAddress(true, true);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setDataRef(ref);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Source must be instance of ApiRange.');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Source", {
+		get: function () {
+			return this.GetSource();
+		},
+		set: function (source) {
+			this.SetSource(source);
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range that contains the column area in the PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetColumnRange.js
+	 */
+	ApiPivotTable.prototype.GetColumnRange = function () {
+		const res = this.pivot.asc_getColumnRange();
+		if (res) {
+			return new ApiRange(res);
+		}
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ColumnRange", {
+		get: function () {
+			return this.GetColumnRange();
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range that contains the row area in the PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetRowRange.js
+	 */
+	ApiPivotTable.prototype.GetRowRange = function () {
+		const res = this.pivot.asc_getRowRange();
+		if (res) {
+			return new ApiRange(res);
+		}
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "RowRange", {
+		get: function () {
+			return this.GetRowRange();
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range of values in a PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDataBodyRange.js
+	 */
+	ApiPivotTable.prototype.GetDataBodyRange = function () {
+		const res = this.pivot.asc_getDataBodyRange();
+		if (res) {
+			return new ApiRange(res);
+		}
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "DataBodyRange", {
+		get: function () {
+			return this.GetDataBodyRange();
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range containing the entire PivotTable report,
+	 * but doesn't include page fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableRange1.js
+	 */
+	ApiPivotTable.prototype.GetTableRange1 = function () {
+		var ref =  (this.pivot.location ? this.pivot.location.ref : null);
+		return (ref ? new ApiRange( this.pivot.worksheet.getRange3(ref.r1, ref.c1, ref.r2, ref.c2) ) : null);
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "TableRange1", {
+		get: function () {
+			return this.GetTableRange1();
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range containing the entire PivotTable report,
+	 * including page fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableRange2.js
+	 */
+	ApiPivotTable.prototype.GetTableRange2 = function () {
+		var ref =  (this.pivot.location ? this.pivot.location.ref : null);
+		var firsPFP, lastPFP;
+		if (this.pivot.pageFieldsPositions.length) {
+			firsPFP = this.pivot.pageFieldsPositions[0];
+			lastPFP = this.pivot.pageFieldsPositions[ (this.pivot.pageFieldsPositions.length - 1) ];
+		}
+		var r1, c1, r2, c2;
+		if (ref) {
+			r1 = (firsPFP ? Math.min(firsPFP.row, ref.r1) : ref.r1);
+			c1 = (firsPFP ? Math.min(firsPFP.col, ref.c1) : ref.c1);
+			r2 = (lastPFP ? Math.max(lastPFP.row, ref.r2) : ref.r2);
+			c2 = (lastPFP ? Math.max( (lastPFP.col + 1), ref.c2 ) : ref.c2);
+		}
+		return (ref ? new ApiRange( this.pivot.worksheet.getRange3(r1, c1, r2, c2) ) : null);
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "TableRange2", {
+		get: function () {
+			return this.GetTableRange2();
+		}
+	});
+
+	/**
+	 * Returns the text string label that is displayed in the grand total column
+	 * or row heading in the specified PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetGrandTotalName.js
+	 */
+	ApiPivotTable.prototype.GetGrandTotalName = function () {
+		return ( this.pivot.asc_getGrandTotalCaption() || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION) );
+	};
+
+	/**
+	 * Sets the text string label that is displayed in the grand total column
+	 * or row heading in the specified PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Grand total name.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetGrandTotalName.js
+	 */
+	ApiPivotTable.prototype.SetGrandTotalName = function (name) {
+		if (typeof name == "string") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setGrandTotalCaption( name.trim() );
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "name".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "GrandTotalName", {
+		get: function () {
+			return this.GetGrandTotalName();
+		},
+		set: function (name) {
+			this.SetGrandTotalName(name);
+		}
+	});
+	/**
+	 * Sets PivotTable setting insert blank rows after each item.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} insert - Flag insert blank row after each item or not.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetLayoutBlankLine.js
+	 */
+	ApiPivotTable.prototype.SetLayoutBlankLine = function (insert) {
+		if (typeof insert == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setInsertBlankRow(insert);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "insert".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "LayoutBlankLine", {
+		set: function (insert) {
+			this.SetLayoutBlankLine(insert);
+		}
+	});
+
+	/**
+	 * Sets PivotTable setting show subtotals.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show subtotals or not.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetLayoutSubtotals.js
+	 */
+	ApiPivotTable.prototype.SetLayoutSubtotals = function (show) {
+		if (typeof show == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setDefaultSubtotal(show);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "LayoutSubtotals", {
+		set: function (show) {
+			this.SetLayoutSubtotals(show);
+		}
+	});
+
+	/**
+	 * Returns Pivot Table parent
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorksheet} - Pivot Table parent.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetParent.js
+	 */
+	ApiPivotTable.prototype.GetParent = function () {
+		return new ApiWorksheet(this.pivot.worksheet);
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Parent", {
+		set: function () {
+			this.GetParent();
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotDataField
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/** Methods */
+
+	/**
+	 * Removes data field from category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/Remove.js
+	 */
+	ApiPivotDataField.prototype.Remove = function () {
+		this.table.pivot.asc_removeDataField(this.table.api, this.index, this.dataIndex);
+	};
+	/**
+	 * Moves field inside category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
+	 * @param {number} [index] - The index of the field in new category.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/Move.js
+	 */
+	ApiPivotDataField.prototype.Move = function (type, index) {
+		function getIndexTo(type, indexFrom, fields) {
+			switch (type) {
+				case "Up":
+					return (indexFrom > 0) ? indexFrom - 1 : indexFrom;
+				case "Down":
+					return (indexFrom < fields.length - 1) ? indexFrom + 1 : fields.length - 1;
+				case "Begin":
+					return 0;
+				case "End":
+					return fields.length - 1;
+				default:
+					return null;
+			}
+		}
+		switch (type) {
+			case "Rows":
+				this.table.pivot.asc_moveToRowField(this.table.api, this.index, this.dataIndex, index);
+				break;
+			case "Columns":
+				this.table.pivot.asc_moveToColField(this.table.api, this.index, this.dataIndex, index);
+				break;
+			case "Filters":
+				this.table.pivot.asc_moveToPageField(this.table.api, this.index, this.dataIndex, index);
+				break;
+			case "Values":
+				this.SetPosition(index);
+				break;
+			default:
+				const fields = this.table.pivot.asc_getDataFields();
+				let indexFrom = this.dataIndex;
+				let indexTo = getIndexTo(type, indexFrom, fields);
+				if (indexTo != null) {
+					this.SetPosition(indexTo + 1);
+				} else {
+					private_MakeError("Bad move type.");
+				}
+				break;
+		}
+	}
+
+	/** Attributes */
+
+	/**
+	 * Type of calculation to perform on the data field items.
+	 * @typedef {"Average" | "CountNumbers" | "Count" | "Max" | "Min" | "Product" |
+	 * "StdDev" | "StdDevP" | "Sum" | "Var" | "VarP"} DataConsolidateFunctionType
+	 */
+
+	/**
+	 * Sets the function performed in the data field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {DataConsolidateFunctionType} func - The function performed in the added data field.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetFunction.js
+	 */
+	ApiPivotDataField.prototype.SetFunction = function (func) {
+		const field = new Asc.CT_DataField();
+		switch (func) {
+			case "Average":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Average);
+				break;
+			case "Count":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Count);
+				break;
+			case "CountNumbers":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.CountNums);
+				break;
+			case "Max":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Max);
+				break;
+			case "Min":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Min);
+				break;
+			case "Product":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Product);
+				break;
+			case "StdDev":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.StdDev);
+				break;
+			case "StdDevP":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.StdDevp);
+				break;
+			case "Sum":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Sum);
+				break;
+			case "Var":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Var);
+				break;
+			case "VarP":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Varp);
+				break;
+			default:
+				private_MakeError('Invalid function type.');
+				return;
+		}
+		this.dataField.asc_set(this.table.api, this.table.pivot, this.dataIndex, field);
+	};
+	/**
+	 * Returns the function performed in the data field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {DataConsolidateFunctionType} func - The function performed in the added data field.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetFunction.js
+	 */
+	ApiPivotDataField.prototype.GetFunction = function () {
+		const subtotal = this.dataField.asc_getSubtotal();
+		switch (subtotal) {
+			case Asc.c_oAscDataConsolidateFunction.Average:
+				return "Average";
+			case Asc.c_oAscDataConsolidateFunction.Count:
+				return "Count";
+			case Asc.c_oAscDataConsolidateFunction.CountNums:
+				return "CountNumbers";
+			case Asc.c_oAscDataConsolidateFunction.Max:
+				return "Max";
+			case Asc.c_oAscDataConsolidateFunction.Min:
+				return "Min";
+			case Asc.c_oAscDataConsolidateFunction.Product:
+				return "Product";
+			case Asc.c_oAscDataConsolidateFunction.StdDev:
+				return "StdDev";
+			case Asc.c_oAscDataConsolidateFunction.StdDevP:
+				return "StdDevP";
+			case Asc.c_oAscDataConsolidateFunction.Sum:
+				return "Sum";
+			case Asc.c_oAscDataConsolidateFunction.Var:
+				return "Var";
+			case Asc.c_oAscDataConsolidateFunction.VarP:
+				return "VarP";
+		}
+	};
+
+	/**
+	 * Returns a value that represents the position of the field in category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetPosition.js
+	 */
+	ApiPivotDataField.prototype.GetPosition = function () {
+		return this.dataIndex + 1;
+	};
+
+	/**
+	 * Sets a value that represents the position of the field in dataField category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {number} position - Position.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetPosition.js
+	 */
+	ApiPivotDataField.prototype.SetPosition = function (position) {
+		const dataFields = this.table.pivot.asc_getDataFields();
+		if (typeof position === "number") {
+			if (dataFields[position] && this.index !== position - 1) {
+				this.table.pivot.asc_moveDataField(this.table.api, this.dataIndex, position - 1);
+				this.dataIndex = position - 1;
+			} else {
+				private_MakeError('Invalid position (out of range or the same).');
+			}
+		} else {
+			private_MakeError('Invalid type of "position".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Position", {
+		get: function () {
+			return this.GetPosition();
+		},
+		set: function (position) {
+			this.SetPosition(position);
+		}
+	});
+	/**
+	 * Returns a data field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {PivotFieldOrientationType}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetOrientation.js
+	 */
+	ApiPivotDataField.prototype.GetOrientation = function () {
+		if (this.dataField) {
+			return "Values";
+		}
+		return null;
+	};
+	Object.defineProperty(ApiPivotDataField.prototype, "Orientation", {
+		get: function () {
+			return this.GetOrientation();
+		},
+	});
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetValue.js
+	 */
+	ApiPivotDataField.prototype.GetValue = function () {
+		return this.GetName();
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetValue.js
+	 */
+	ApiPivotDataField.prototype.SetValue = function (name) {
+		this.SetName(name);
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Value", {
+		get: function () {
+			return this.GetValue();
+		},
+		set: function (name) {
+			this.SetValue(name);
+		}
+	});
+	/**
+	 * Returns a value that represents the label text for the data field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetCaption.js
+	 */
+	ApiPivotDataField.prototype.GetCaption = function () {
+		return this.GetName();
+	};
+	/**
+	 * Set value that represents the label text for the pivot field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} caption
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetCaption.js
+	 */
+	ApiPivotDataField.prototype.SetCaption = function (caption) {
+		return this.SetName(caption);
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Caption", {
+		get: function () {
+			return this.GetCaption();
+		},
+		set: function(caption) {
+			this.SetCaption(caption);
+		}
+	});
+
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetName.js
+	 */
+	ApiPivotDataField.prototype.GetName = function () {
+		return this.dataField.asc_getName();
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetName.js
+	 */
+	ApiPivotDataField.prototype.SetName = function (name) {
+		if (typeof name === 'string' && name.length > 0) {
+			const field = new Asc.CT_DataField();
+			field.asc_setName(name);
+			this.dataField.asc_set(this.table.api, this.table.pivot, this.dataIndex, field);
+		} else {
+			private_MakeError('Bad name type or empty.');
+		}
+
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		},
+		set: function (name) {
+			this.SetName(name);
+		}
+	});
+	/**
+	 * Returns a value that represents the format code for the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetNumberFormat.js
+	 */
+	ApiPivotDataField.prototype.GetNumberFormat = function () {
+		return this.dataField.asc_getNumFormat();
+	};
+	/**
+	 * Sets value that represents the format code for the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} format
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetNumberFormat.js
+	 */
+	ApiPivotDataField.prototype.SetNumberFormat = function (format) {
+		const newField = new Asc.CT_DataField();
+		newField.asc_setNumFormat(format);
+		this.dataField.asc_set(this.table.api, this.table.pivot, this.dataIndex, newField);
+	};
+	Object.defineProperty(ApiPivotDataField.prototype, "NumberFormat", {
+		get: function () {
+			return this.GetNumberFormat();
+		},
+		set: function (format) {
+			return this.SetNumberFormat(format);
+		}
+	});
+	/**
+	 * Returns index of the data field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetIndex.js
+	 */
+	ApiPivotDataField.prototype.GetIndex = function () {
+		return this.dataIndex + 1;
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Index", {
+		get: function () {
+			return this.GetIndex();
+		}
+	});
+	/**
+	 * Returns the pivotField from which the data field was created.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetPivotField.js
+	 */
+	ApiPivotDataField.prototype.GetPivotField = function () {
+		return new ApiPivotField(this.table, this.index, this.pivotField);
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "PivotField", {
+		get: function () {
+			return this.GetPivotField();
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotField
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/** Methods */
+
+	/**
+	 * Calling this method deletes all filters currently applied to the PivotField.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearAllFilters.js
+	 */
+	ApiPivotField.prototype.ClearAllFilters  = function () {
+		this.table.pivot.removeFiltersWithLock(this.table.api, [this.index], false);
+	};
+	/**
+	 * This method deletes all label filters or all date filters in the PivotFilters collection.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearLabelFilters.js
+	 */
+	ApiPivotField.prototype.ClearLabelFilters  = function () {
+		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, false, true, false);
+	};
+	/**
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearManualFilters.js
+	 */
+	ApiPivotField.prototype.ClearManualFilters  = function () {
+		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, true, false, false);
+	};
+	/**
+	 * Calling this method deletes all value filters in the PivotFilters collection of the PivotField.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearValueFilters.js
+	 */
+	ApiPivotField.prototype.ClearValueFilters  = function () {
+		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, false, false, true);
+	};
+	/**
+	 * Returns an object that represents either a single PivotTable item (a PivotItem object)
+	 * or a collection of all the visible and hidden items (a PivotItems object) in the specified field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {number} [index]
+	 * @returns {ApiPivotItem[] | ApiPivotItem | null}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetPivotItems.js
+	 */
+	ApiPivotField.prototype.GetPivotItems = function (index) {
+		const pivotFields = this.table.pivot.asc_getPivotFields();
+		const pivotField = pivotFields[this.index];
+		if (index != null) {
+			const item = pivotField[index];
+			if (item && item.t === Asc.c_oAscItemType.Data) {
+				return new ApiPivotItem(this, item);
+			}
+			private_MakeError('Invalid item index.');
+			return null;
+		}
+		const items = pivotField.getItems();
+		const t = this;
+		return items.filter(function (item) {
+			return Asc.c_oAscItemType.Data === item.t;
+		}).map(function (item, index) {
+			return new ApiPivotItem(t, item);
+		})
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "PivotItems", {
+		get: function (index) {
+			return this.GetPivotItems(index);
+		}
+	});
+	/**
+	 * Moves field inside category.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
+	 * @param {number | undefined} index - The index of the field in new category.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/Move.js
+	 */
+	ApiPivotField.prototype.Move = function (type, index) {
+		function getIndexTo(type, indexFrom, fields) {
+			switch (type) {
+				case "Up":
+					return (indexFrom > 0) ? indexFrom - 1 : indexFrom;
+				case "Down":
+					return (indexFrom < fields.length - 1) ? indexFrom + 1 : fields.length - 1;
+				case "Begin":
+					return 0;
+				case "End":
+					return fields.length - 1;
+				default:
+					return null;
+			}
+		}
+		if (index == null) {
+			index = 0;
+		}
+		switch (type) {
+			case "Rows":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
+					this.table.pivot.asc_moveToRowField(this.table.api, this.index, undefined, index - 1);
+				} else {
+					this.SetPosition(index)
+				}
+				break;
+			case "Columns":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
+					this.table.pivot.asc_moveToColField(this.table.api, this.index, undefined, index - 1);
+				} else {
+					this.SetPosition(index)
+				}
+				break;
+			case "Filters":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
+					this.table.pivot.asc_moveToPageField(this.table.api, this.index, undefined, index - 1);
+				} else {
+					this.SetPosition(index)
+				}
+				break;
+			case "Values":
+				this.table.pivot.asc_moveToDataField(this.table.api, this.index, undefined, index - 1);
+				break;
+			case "Hidden":
+				this.Remove();
+				break;
+			default:
+				const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
+				if (fields) {
+					let indexFrom = null;
+					for (let i = 0; i < fields.length; i += 1) {
+						if (fields[i].asc_getIndex() === this.index) {
+							indexFrom = i;
+							break;
+						}
+					}
+					let indexTo = getIndexTo(type, indexFrom, fields);
+					if (indexTo != null) {
+						this.SetPosition(indexTo + 1);
+					} else {
+						private_MakeError("Bad move type.");
+					}
+				} else {
+					private_MakeError("Field is hidden.");
+				}
+				break;
+		}
+	};
+	/**
+	 * Removes field from PivotTable.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/Remove.js
+	 */
+	ApiPivotField.prototype.Remove = function () {
+		this.table.pivot.asc_removeNoDataField(this.table.api, this.index);
+	};
+
+	/** Attributes */
+
+	/**
+	 * Returns a value that represents the position of the field in category.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetPosition.js
+	 */
+	ApiPivotField.prototype.GetPosition = function () {
+		const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
+		if (fields) {
+			for (let i = 0; i < fields.length; i += 1) {
+				if (fields[i].asc_getIndex() === this.index) {
+					return i + 1;
+				}
+			}
+		}
+		private_MakeError('The field is hidden.\n' +
+		'If you need to get the position of the data field then use ApiPivotDataField.GetPosition.\n' +
+		'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ' +
+		'ApiPivotDataField object');
+	};
+
+	/**
+	 * Sets a value that represents the position of the field
+	 * among all the fields in its orientation (Rows, Columns, Pages).
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {number} position - Position.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetPosition.js
+	 */
+	ApiPivotField.prototype.SetPosition = function (position) {
+		if (typeof position == "number") {
+			if (this.pivotField.axis === null) {
+				private_MakeError('The field is hidden.\n' +
+					'If you need to set the position of the data field then use ApiPivotDataField.SetPosition.\n' +
+					'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ' +
+					'ApiPivotDataField object');
+				return;
+			}
+			if (!this.table.pivot.moveFieldInAxis(this.table.api, this.index, this.pivotField.axis, position - 1)) {
+				private_MakeError('Invalid position (out of range or the same).')
+			}
+		} else {
+			private_MakeError('Invalid type of "position".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Position", {
+		get: function () {
+			return this.GetPosition();
+		},
+		set: function (position) {
+			this.SetPosition(position);
+		}
+	});
+
+	/**
+	 * Returns a pivot field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {PivotFieldOrientationType}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetOrientation.js
+	 */
+	ApiPivotField.prototype.GetOrientation = function () {
+		if (this.pivotField.axis === Asc.c_oAscAxis.AxisRow) {
+			return "Rows";
+		} else if (this.pivotField.axis === Asc.c_oAscAxis.AxisCol) {
+			return "Columns";
+		} else if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
+			return "Filters"
+		} else {
+			return "Hidden"
+		}
+	};
+
+	/**
+	 * Sets a pivot field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotFieldOrientationType} type - Field orientation type.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetOrientation.js
+	 */
+	ApiPivotField.prototype.SetOrientation = function (type) {
+		switch (type) {
+			case "Rows":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
+					this.table.pivot.asc_moveToRowField(this.table.api, this.index);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Columns":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
+					this.table.pivot.asc_moveToColField(this.table.api, this.index);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Filters":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
+					this.table.pivot.asc_moveToPageField(this.table.api, this.index);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Values":
+				this.table.pivot.asc_moveToDataField(this.table.api, this.index);
+				break;
+			case "Hidden":
+				this.Remove();
+				break;
+			default:
+				private_MakeError('Invalid "type" value.');
+				break;
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Orientation", {
+		get: function () {
+			return this.GetOrientation();
+		},
+		set: function (type) {
+			this.SetOrientation(type);
+		}
+	});
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetValue.js
+	 */
+	ApiPivotField.prototype.GetValue = function () {
+		return this.GetName();
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetValue.js
+	 */
+	ApiPivotField.prototype.SetValue = function (name) {
+		this.SetName(name)
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Value", {
+		get: function () {
+			return this.GetValue();
+		},
+		set: function (name) {
+			this.SetValue(name);
+		}
+	});
+	/**
+	 * Returns a value that represents the label text for the pivot field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetCaption.js
+	 */
+	ApiPivotField.prototype.GetCaption = function () {
+		return this.GetName();
+	};
+	/**
+	 * Set value that represents the label text for the pivot field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} caption
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetCaption.js
+	 */
+	ApiPivotField.prototype.SetCaption = function (caption) {
+		return this.SetName(caption);
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Caption", {
+		get: function () {
+			return this.GetCaption();
+		},
+		set: function(caption) {
+			this.SetCaption(caption);
+		}
+	});
+
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetName.js
+	 */
+	ApiPivotField.prototype.GetName = function () {
+		return this.pivotField.asc_getName() || this.GetSourceName();
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetName.js
+	 */
+	ApiPivotField.prototype.SetName = function (name) {
+		if (typeof name === 'string' && name.length > 0) {
+			const field = new Asc.CT_PivotField();
+			field.asc_setName(name);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Bad name type or empty.');
+		}
+
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		},
+		set: function (name) {
+			this.SetName(name);
+		}
+	});
+	/**
+	 * Returns source name
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSourceName.js
+	 */
+	ApiPivotField.prototype.GetSourceName = function () {
+		return this.table.pivot.getCacheFieldName(this.index);
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "SourceName", {
+		get: function () {
+			return this.GetSourceName();
+		}
+	});
+
+	/**
+	 * Returns index of the PivotField.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetIndex.js
+	 */
+	ApiPivotField.prototype.GetIndex = function () {
+		return this.index + 1;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Index", {
+		get: function () {
+			return this.GetIndex();
+		}
+	});
+
+	/**
+	 * Returns ApiPivotTable.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetTable.js
+	 */
+	ApiPivotField.prototype.GetTable = function () {
+		return this.table;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Table", {
+		get: function () {
+			return this.GetTable();
+		}
+	});
+
+	/**
+	 * Returns parent object to this field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetParent.js
+	 */
+	ApiPivotField.prototype.GetParent = function () {
+		return this.table;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Parent", {
+		get: function () {
+			return this.GetParent();
+		}
+	});
+
+	/**
+	 * Returns whether or not a PivotField is compacted.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutCompactRow.js
+	 */
+	ApiPivotField.prototype.GetLayoutCompactRow = function () {
+		const pivField = this.table.pivot.asc_getPivotFields()[this.index];
+		return (pivField.asc_getOutline() && pivField.asc_getCompact());
+	};
+
+	/**
+	 * Sets whether or not a PivotField is compacted.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} compact - Use compact form or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutCompactRow.js
+	 */
+	ApiPivotField.prototype.SetLayoutCompactRow = function (compact) {
+		if (typeof compact == "boolean") {
+			const field = new Asc.CT_PivotField();
+			const pivField = this.table.pivot.asc_getPivotFields()[this.index];
+			field.asc_setCompact( (pivField.asc_getOutline() && compact) );
+			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "compact".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutCompactRow", {
+		get: function () {
+			return this.GetLayoutCompactRow();
+		},
+		set: function (compact) {
+			this.SetLayoutCompactRow(compact);
+		}
+	});
+
+	/**
+	 * @typedef {"Tabular" | "Outline"} PivotLayoutType
+	 */
+
+	/**
+	 * Returns the way the specified PivotTable items appear—in table format or in outline format.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {PivotLayoutType}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutForm.js
+	 */
+	ApiPivotField.prototype.GetLayoutForm = function () {
+		return this.pivotField.asc_getOutline() ? "Outline" : "Tabular";
+	};
+
+	/**
+	 * Sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotLayoutType} type - Type of layot report form.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutForm.js
+	 */
+	ApiPivotField.prototype.SetLayoutForm = function (type) {
+		if (type === "Tabular" || type === "Outline") {
+			const newField = new Asc.CT_PivotField();
+			newField.asc_setOutline(type === "Outline");
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, newField);
+		} else {
+			private_MakeError('Invalid type of "type" or invalid value.')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutForm", {
+		get: function () {
+			return this.GetLayoutForm();
+		},
+		set: function (type) {
+			this.SetLayoutForm(type);
+		}
+	});
+
+	/**
+	 * Returns the flag that represents page break is inserted after each field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutPageBreak.js
+	 */
+	ApiPivotField.prototype.GetLayoutPageBreak = function () {
+		return this.pivotField.insertPageBreak;
+	};
+
+	/**
+	 * Sets the flag that represents page break is inserted after each field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} insert - Flag insert or not page break after each field.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutPageBreak.js
+	 */
+	ApiPivotField.prototype.SetLayoutPageBreak = function (insert) {
+		if ( typeof insert == "boolean") {
+			this.pivotField.insertPageBreak = insert;
+		} else {
+			private_MakeError('Invalid type of "insert".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutPageBreak", {
+		get: function () {
+			return this.GetLayoutPageBreak();
+		},
+		set: function (type) {
+			this.SetLayoutPageBreak(type);
+		}
+	});
+
+	/**
+	 * Returns if the PivotField is currently visible in the PivotTable or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetShowingInAxis.js
+	 */
+	ApiPivotField.prototype.GetShowingInAxis = function () {
+		return this.pivotField.axis !== null || this.pivotField.dataField;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "ShowingInAxis", {
+		get: function () {
+			return this.GetShowingInAxis();
+		}
+	});
+
+	/**
+	 * Returns setting repeat items labels at each row.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetRepeatLabels.js
+	 */
+	ApiPivotField.prototype.GetRepeatLabels = function () {
+		return this.pivotField.asc_getFillDownLabelsDefault();
+	};
+
+	/**
+	 * Sets setting repeat items labels at each row.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} repeat - Flag repeat items labels at each row or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetRepeatLabels.js
+	 */
+	ApiPivotField.prototype.SetRepeatLabels = function (repeat) {
+		if (typeof repeat == "boolean") {
+			const field = new Asc.CT_PivotField();
+			field.asc_setFillDownLabelsDefault(repeat);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "repeat".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "RepeatLabels", {
+		get: function () {
+			return this.GetRepeatLabels();
+		},
+		set: function (repeat) {
+			this.SetRepeatLabels(repeat);
+		}
+	});
+
+	/**
+	 * Returns setting insert blank rows after each item.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutBlankLine.js
+	 */
+	ApiPivotField.prototype.GetLayoutBlankLine = function () {
+		return this.pivotField.asc_getInsertBlankRow();
+	};
+
+	/**
+	 * Sets setting insert blank rows after each item.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} insert - Flag insert blank rows after each item or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutBlankLine.js
+	 */
+	ApiPivotField.prototype.SetLayoutBlankLine = function (insert) {
+		if (typeof insert == "boolean") {
+			const field = new Asc.CT_PivotField();
+			field.asc_setInsertBlankRow(insert);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "insert".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutBlankLine", {
+		get: function () {
+			return this.GetLayoutBlankLine();
+		},
+		set: function (insert) {
+			this.SetLayoutBlankLine(insert);
+		}
+	});
+
+	/**
+	 * Returns setting show items with no data.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetShowAllItems.js
+	 */
+	ApiPivotField.prototype.GetShowAllItems = function () {
+		return this.pivotField.asc_getShowAll();
+	};
+
+	/**
+	 * Sets setting show items with no data.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show items with no data or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetShowAllItems.js
+	 */
+	ApiPivotField.prototype.SetShowAllItems = function (show) {
+		if (typeof show == "boolean") {
+			const field = new Asc.CT_PivotField();
+			field.asc_setShowAll(show);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "show".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "ShowAllItems", {
+		get: function () {
+			return this.GetShowAllItems();
+		},
+		set: function (show) {
+			this.SetShowAllItems(show);
+		}
+	});
+
+	/**
+	 * Returns setting show subtotals.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutSubtotals.js
+	 */
+	ApiPivotField.prototype.GetLayoutSubtotals = function () {
+		return this.pivotField.asc_getDefaultSubtotal();
+	};
+
+	/**
+	 * Set setting show subtotals.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show subtotals or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutSubtotals.js
+	 */
+	ApiPivotField.prototype.SetLayoutSubtotals = function (show) {
+		if (typeof show == "boolean") {
+			const field = new Asc.CT_PivotField();
+			field.asc_setDefaultSubtotal(show);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "show".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutSubtotals", {
+		get: function () {
+			return this.GetLayoutSubtotals();
+		},
+		set: function (show) {
+			this.SetLayoutSubtotals(show);
+		}
+	});
+
+	/** @typedef { "Top" | "Bottom" } LayoutSubtotalLocationType */
+
+	/**
+	 * Returns setting layout subtotal location.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {LayoutSubtotalLocationType}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutSubtotalLocation.js
+	 */
+	ApiPivotField.prototype.GetLayoutSubtotalLocation = function () {
+		return ( this.pivotField.asc_getSubtotalTop() ? "Top" : "Bottom" );
+	};
+
+	/**
+	 * Sets setting layout subtotal location.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {LayoutSubtotalLocationType} type - Type of layot subtotal location
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutSubtotalLocation.js
+	 */
+	ApiPivotField.prototype.SetLayoutSubtotalLocation = function (type) {
+		if (typeof type == "string" && ( type == "Top" || type == "Bottom")) {
+			const field = new Asc.CT_PivotField();
+			field.asc_setSubtotalTop( (type == "Top") );
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "type" or invalid value.')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutSubtotalLocation", {
+		get: function () {
+			return this.GetLayoutSubtotalLocation();
+		},
+		set: function (type) {
+			this.SetLayoutSubtotalLocation(type);
+		}
+	});
+
+	/**
+	 * Returns the text string label displayed in the subtotal column or row heading in the specified PivotTable report.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSubtotalName.js
+	 */
+	ApiPivotField.prototype.GetSubtotalName = function () {
+		return (this.pivotField.subtotalCaption);
+	};
+
+	/**
+	 * Sets the text string label displayed in the subtotal column or row heading in the specified PivotTable report.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} caption - Caption.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetSubtotalName.js
+	 */
+	ApiPivotField.prototype.SetSubtotalName = function (caption) {
+		if ( typeof caption == "string") {
+			const field = new Asc.CT_PivotField();
+			field.subtotalCaption = caption.trim();
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "caption".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "SubtotalName", {
+		get: function () {
+			return this.GetSubtotalName();
+		},
+		set: function (caption) {
+			this.SetSubtotalName(caption);
+		}
+	});
+
+	/**
+	 * Subtotal pivot field types
+	 * @typedef {Object} PivotFieldSubtotals
+	 * @property {boolean} Sum
+	 * @property {boolean} Count
+	 * @property {boolean} Average
+	 * @property {boolean} Max
+	 * @property {boolean} Min
+	 * @property {boolean} Product
+	 * @property {boolean} CountNumbers
+	 * @property {boolean} StdDev
+	 * @property {boolean} StdDevP
+	 * @property {boolean} Var
+	 * @property {boolean} VarP
+	 */
+
+	/**
+	 * Returns object that represent all subtotals.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {PivotFieldSubtotals}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSubtotals.js
+	 */
+	ApiPivotField.prototype.GetSubtotals = function () {
+		const res = {
+			'Sum': false,
+			'Count': false,
+			'Average': false,
+			'Max': false,
+			'Min': false,
+			'Product': false,
+			'CountNumbers': false,
+			'StdDev': false,
+			'StdDevP': false,
+			'Var': false,
+			'VarP': false
+		};
+		if (this.pivotField.asc_getDefaultSubtotal()) {
+			const subtotals = this.pivotField.asc_getSubtotals();
+			for (var i = 0; i < subtotals.length; i++) {
+				switch (subtotals[i]) {
+					case Asc.c_oAscItemType.Sum:
+						res['Sum'] = true;
+						break;
+					case Asc.c_oAscItemType.CountA:
+						res['Count'] = true;
+						break;
+					case Asc.c_oAscItemType.Avg:
+						res['Average'] = true;
+						break;
+					case Asc.c_oAscItemType.Max:
+						res['Max'] = true;
+						break;
+					case Asc.c_oAscItemType.Min:
+						res['Min'] = true;
+						break;
+					case Asc.c_oAscItemType.Product:
+						res['Product'] = true;
+						break;
+					case Asc.c_oAscItemType.Count:
+						res['CountNumbers'] = true;
+						break;
+					case Asc.c_oAscItemType.StdDev:
+						res['StdDev'] = true;
+						break;
+					case Asc.c_oAscItemType.StdDevP:
+						res['StdDevP'] = true;
+						break;
+					case Asc.c_oAscItemType.Var:
+						res['Var'] = true;
+						break;
+					case Asc.c_oAscItemType.VarP:
+						res['VarP'] = true;
+						break;
+				}
+			}
+		}
+		return res;
+	};
+
+	/**
+	 * Sets Subtotals.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotFieldSubtotals} subtotals - Object that represent all subtotals or some of them.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetSubtotals.js
+	 */
+	ApiPivotField.prototype.SetSubtotals = function (subtotals) {
+			if (typeof subtotals == "object") {
+				const field = new Asc.CT_PivotField();
+				const arr = [];
+				if (this.pivotField.asc_getDefaultSubtotal()) {
+					if (subtotals.hasOwnProperty('Sum') && subtotals['Sum']) {
+						arr.push(Asc.c_oAscItemType.Sum);
+					}
+					if (subtotals.hasOwnProperty('Count') && subtotals['Count']) {
+						arr.push(Asc.c_oAscItemType.CountA);
+					}
+					if (subtotals.hasOwnProperty('Average') && subtotals['Average']) {
+						arr.push(Asc.c_oAscItemType.Avg);
+					}
+					if (subtotals.hasOwnProperty('Max') && subtotals['Max']) {
+						arr.push(Asc.c_oAscItemType.Max);
+					}
+					if (subtotals.hasOwnProperty('Min') && subtotals['Min']) {
+						arr.push(Asc.c_oAscItemType.Min);
+					}
+					if (subtotals.hasOwnProperty('Product') && subtotals['Product']) {
+						arr.push(Asc.c_oAscItemType.Product);
+					}
+					if (subtotals.hasOwnProperty('CountNumbers') && subtotals['CountNumbers']) {
+						arr.push(Asc.c_oAscItemType.Count);
+					}
+					if (subtotals.hasOwnProperty('StdDev') && subtotals['StdDev']) {
+						arr.push(Asc.c_oAscItemType.StdDev);
+					}
+					if (subtotals.hasOwnProperty('StdDevP') && subtotals['StdDevP']) {
+						arr.push(Asc.c_oAscItemType.StdDevP);
+					}
+					if (subtotals.hasOwnProperty('Var') && subtotals['Var']) {
+						arr.push(Asc.c_oAscItemType.Var);
+					}
+					if (subtotals.hasOwnProperty('VarP') && subtotals['VarP']) {
+						arr.push(Asc.c_oAscItemType.VarP);
+					}
+				}
+				if (arr.length) {
+					field.asc_setSubtotals(arr);
+					this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+				}
+			} else {
+				private_MakeError('Invalid type of "subtotals".')
+			}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Subtotals", {
+		get: function () {
+			return this.GetSubtotals();
+		},
+		set: function (subtotals) {
+			this.SetSubtotals(subtotals);
+		}
+	});
+
+	/**
+	 * Returns the specified field, can be dragged to the column position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToColumn.js
+	 */
+	ApiPivotField.prototype.GetDragToColumn = function () {
+		return this.pivotField.dragToCol;
+	};
+
+	/**
+	 * Sets the specified field, can be dragged to the column position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} flag - Flag whether this field can be moved to columns.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToColumn.js
+	 */
+	ApiPivotField.prototype.SetDragToColumn = function (flag) {
+		if (typeof flag == "boolean") {
+			this.pivotField.dragToCol = flag;
+		} else {
+			private_MakeError('Invalid type of "flag".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "DragToColumn", {
+		get: function () {
+			return this.GetDragToColumn();
+		},
+		set: function (flag) {
+			this.SetDragToColumn(flag);
+		}
+	});
+
+	/**
+	 * Returns the specified field, can be dragged to the row position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToRow.js
+	 */
+	ApiPivotField.prototype.GetDragToRow = function () {
+		return this.pivotField.dragToRow;
+	};
+
+	/**
+	 * Sets the specified field, can be dragged to the row position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} flag - Flag whether this field can be moved to rows.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToRow.js
+	 */
+	ApiPivotField.prototype.SetDragToRow = function (flag) {
+		if (typeof flag == "boolean") {
+			this.pivotField.dragToRow = flag;
+		} else {
+			private_MakeError('Invalid type of "flag".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "DragToRow", {
+		get: function () {
+			return this.GetDragToRow();
+		},
+		set: function (flag) {
+			this.SetDragToRow(flag);
+		}
+	});
+
+	/**
+	 * Returns the specified field, can be dragged to the data position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToData.js
+	 */
+	ApiPivotField.prototype.GetDragToData = function () {
+		return this.pivotField.dragToData;
+	};
+
+	/**
+	 * Sets the specified field, can be dragged to the data position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} flag - Flag whether this field can be moved to data.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToData.js
+	 */
+	ApiPivotField.prototype.SetDragToData = function (flag) {
+		if (typeof flag == "boolean") {
+			this.pivotField.dragToData = flag;
+		} else {
+			private_MakeError('Invalid type of "flag".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "DragToData", {
+		get: function () {
+			return this.GetDragToData();
+		},
+		set: function (flag) {
+			this.SetDragToData(flag);
+		}
+	});
+
+	/**
+	 * Returns the specified field, can be dragged to the page position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToPage.js
+	 */
+	ApiPivotField.prototype.GetDragToPage = function () {
+		return this.pivotField.dragToPage;
+	};
+
+	/**
+	 * Sets the specified field, can be dragged to the page position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} flag - Flag whether this field can be moved to page.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToPage.js
+	 */
+	ApiPivotField.prototype.SetDragToPage = function (flag) {
+		if (typeof flag == "boolean") {
+			this.pivotField.dragToPage = flag;
+		} else {
+			private_MakeError('Invalid type of "flag".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "DragToPage", {
+		get: function () {
+			return this.GetDragToPage();
+		},
+		set: function (flag) {
+			this.SetDragToPage(flag);
+		}
+	});
+
+	/**
+	 * Returns the current page showing for the page field (valid only for page fields).
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | number}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetCurrentPage.js
+	 */
+	ApiPivotField.prototype.GetCurrentPage = function () {
+		const pageFields = this.table.pivot.asc_getPageFields();
+		const t = this;
+		const pageIndex = pageFields.findIndex(function(pageField) {
+			return pageField.asc_getIndex() === t.index;
+		});
+		if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
+			const val = this.table.pivot.getPageFieldCellValue(pageIndex);
+			return val.text || val.number || val.multiText;
+		} else {
+			private_MakeError("It is not possible from this field.");
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "CurrentPage", {
+		get: function () {
+			return this.GetCurrentPage();
+		}
+	});
+
+	ApiPivotField.prototype.GetFunction = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+	ApiPivotField.prototype.SetFunction = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Function", {
+		get: function () {
+			return this.GetFunction();
+		},
+		set: function () {
+			this.SetFunction()
+		}
+	});
+
+	ApiPivotField.prototype.GetNumberFormat = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+	ApiPivotField.prototype.SetNumberFormat = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "NumberFormat", {
+		get: function () {
+			return this.GetNumberFormat();
+		},
+		set: function () {
+			this.SetNumberFormat()
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotItem
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/* Attributes */
+
+	/**
+	 * Returns a String value representing the name of the object.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetName.js
+	 */
+	ApiPivotItem.prototype.GetName = function () {
+		if (this.pivotItem.n) {
+			return this.pivotItem.n;
+		}
+		const pivot = this.field.table.pivot;
+		const cacheField = pivot.asc_getCacheFields()[this.field.index];
+		const sharedItem = cacheField.getGroupOrSharedItem(this.pivotItem.x);
+		if (sharedItem) {
+			return sharedItem.getCellValue().getTextValue();
+		}
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		}
+	});
+
+	/**
+	 * Returns a String value that represents the label text for the pivot item.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetCaption.js
+	 */
+	ApiPivotItem.prototype.GetCaption = function () {
+		return this.GetName();
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Caption", {
+		get: function () {
+			return this.GetCaption();
+		}
+	});
+
+	/**
+	 * Returns a String value that represents the name of the specified item in the PivotTable field.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetValue.js
+	 */
+	ApiPivotItem.prototype.GetValue = function () {
+		return this.GetName();
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Value", {
+		get: function () {
+			return this.GetValue();
+		}
+	});
+
+	/**
+	 * Returns the parent object for the specified object.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField}
+	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetParent.js
+	 */
+	ApiPivotItem.prototype.GetParent = function () {
+		return this.field;
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Parent", {
+		get: function () {
+			return this.GetParent();
+		}
+	});
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
@@ -13476,7 +16685,12 @@
 	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;
 
 	Api.prototype["GetWorksheetFunction"] = Api.prototype.GetWorksheetFunction;
-	
+	Api.prototype["InsertPivotExistingWorksheet"] = Api.prototype.InsertPivotExistingWorksheet;
+	Api.prototype["InsertPivotNewWorksheet"] = Api.prototype.InsertPivotNewWorksheet;
+	Api.prototype["GetPivotByName"] = Api.prototype.GetPivotByName;
+	Api.prototype["RefreshAllPivots"] = Api.prototype.RefreshAllPivots;
+	Api.prototype["GetAllPivotTables"] = Api.prototype.GetAllPivotTables;
+
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
 	ApiWorksheet.prototype["SetActive"] = ApiWorksheet.prototype.SetActive;		
@@ -13533,6 +16747,9 @@
 	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
 	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
 	ApiWorksheet.prototype["Paste"] = ApiWorksheet.prototype.Paste;
+	ApiWorksheet.prototype["GetPivotByName"] = ApiWorksheet.prototype.GetPivotByName;
+	ApiWorksheet.prototype["GetAllPivotTables"] = ApiWorksheet.prototype.GetAllPivotTables;
+	ApiWorksheet.prototype["RefreshAllPivots"] = ApiWorksheet.prototype.RefreshAllPivots;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -13597,6 +16814,7 @@
 	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 	ApiRange.prototype["GetCharacters"] = ApiRange.prototype.GetCharacters;
 	ApiRange.prototype["PasteSpecial"] = ApiRange.prototype.PasteSpecial;
+	ApiRange.prototype["GetPivotTable"] = ApiRange.prototype.GetPivotTable;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
@@ -14140,6 +17358,145 @@
 	ApiWorksheetFunction.prototype["ERROR_TYPE"]      =  ApiWorksheetFunction.prototype.ERROR_TYPE;
 
 
+	ApiPivotTable.prototype["AddDataField"]                       = ApiPivotTable.prototype.AddDataField;
+	ApiPivotTable.prototype["AddFields"]                          = ApiPivotTable.prototype.AddFields;
+	ApiPivotTable.prototype["ClearAllFilters"]                    = ApiPivotTable.prototype.ClearAllFilters;
+	ApiPivotTable.prototype["ClearTable"]                         = ApiPivotTable.prototype.ClearTable
+	ApiPivotTable.prototype["GetData"]                            = ApiPivotTable.prototype.GetData;
+	ApiPivotTable.prototype["GetPivotData"]                       = ApiPivotTable.prototype.GetPivotData;
+	ApiPivotTable.prototype["GetPivotFields"]                     = ApiPivotTable.prototype.GetPivotFields;
+	ApiPivotTable.prototype["PivotValueCell"]                     = ApiPivotTable.prototype.PivotValueCell;
+	ApiPivotTable.prototype["ShowDetails"]                        = ApiPivotTable.prototype.ShowDetails;
+	ApiPivotTable.prototype["RefreshTable"]                       = ApiPivotTable.prototype.RefreshTable;
+	ApiPivotTable.prototype["Update"]                             = ApiPivotTable.prototype.Update;
+	ApiPivotTable.prototype["SetRepeatAllLabels"]                 = ApiPivotTable.prototype.SetRepeatAllLabels;
+	ApiPivotTable.prototype["SetRowAxisLayout"]                   = ApiPivotTable.prototype.SetRowAxisLayout;
+	ApiPivotTable.prototype["SetSubtotalLocation"]                = ApiPivotTable.prototype.SetSubtotalLocation;
+	ApiPivotTable.prototype["RemoveField"]                        = ApiPivotTable.prototype.RemoveField;
+	ApiPivotTable.prototype["MoveField"]                          = ApiPivotTable.prototype.MoveField;
+	ApiPivotTable.prototype["Select"]                             = ApiPivotTable.prototype.Select;
+	ApiPivotTable.prototype["GetColumnFields"]                    = ApiPivotTable.prototype.GetColumnFields;
+	ApiPivotTable.prototype["GetDataFields"]                      = ApiPivotTable.prototype.GetDataFields;
+	ApiPivotTable.prototype["GetHiddenFields"]                    = ApiPivotTable.prototype.GetHiddenFields;
+	ApiPivotTable.prototype["GetVisibleFields"]                   = ApiPivotTable.prototype.GetVisibleFields;
+	ApiPivotTable.prototype["GetPageFields"]                      = ApiPivotTable.prototype.GetPageFields;
+	ApiPivotTable.prototype["GetRowFields"]                       = ApiPivotTable.prototype.GetRowFields;
+	ApiPivotTable.prototype["GetName"]                            = ApiPivotTable.prototype.GetName;
+	ApiPivotTable.prototype["SetName"]                            = ApiPivotTable.prototype.SetName;
+	ApiPivotTable.prototype["GetColumnGrand"]                     = ApiPivotTable.prototype.GetColumnGrand;
+	ApiPivotTable.prototype["SetColumnGrand"]                     = ApiPivotTable.prototype.SetColumnGrand;
+	ApiPivotTable.prototype["GetRowGrand"]                        = ApiPivotTable.prototype.GetRowGrand;
+	ApiPivotTable.prototype["SetRowGrand"]                        = ApiPivotTable.prototype.SetRowGrand;
+	ApiPivotTable.prototype["GetDisplayFieldsInReportFilterArea"] = ApiPivotTable.prototype.GetDisplayFieldsInReportFilterArea;
+	ApiPivotTable.prototype["SetDisplayFieldsInReportFilterArea"] = ApiPivotTable.prototype.SetDisplayFieldsInReportFilterArea;
+	ApiPivotTable.prototype["GetDisplayFieldCaptions"]            = ApiPivotTable.prototype.GetDisplayFieldCaptions;
+	ApiPivotTable.prototype["SetDisplayFieldCaptions"]            = ApiPivotTable.prototype.SetDisplayFieldCaptions;
+	ApiPivotTable.prototype["GetTitle"]                           = ApiPivotTable.prototype.GetTitle;
+	ApiPivotTable.prototype["SetTitle"]                           = ApiPivotTable.prototype.SetTitle;
+	ApiPivotTable.prototype["GetDescription"]                    = ApiPivotTable.prototype.GetDescription;
+	ApiPivotTable.prototype["SetDescription"]                     = ApiPivotTable.prototype.SetDescription;
+	ApiPivotTable.prototype["GetStyleName"]                       = ApiPivotTable.prototype.GetStyleName;
+	ApiPivotTable.prototype["SetStyleName"]                       = ApiPivotTable.prototype.SetStyleName;
+	ApiPivotTable.prototype["GetTableStyleRowHeaders"]            = ApiPivotTable.prototype.GetTableStyleRowHeaders;
+	ApiPivotTable.prototype["SetTableStyleRowHeaders"]            = ApiPivotTable.prototype.SetTableStyleRowHeaders;
+	ApiPivotTable.prototype["GetTableStyleColumnHeaders"]         = ApiPivotTable.prototype.GetTableStyleColumnHeaders;
+	ApiPivotTable.prototype["SetTableStyleColumnHeaders"]         = ApiPivotTable.prototype.SetTableStyleColumnHeaders;
+	ApiPivotTable.prototype["GetTableStyleRowStripes"]            = ApiPivotTable.prototype.GetTableStyleRowStripes;
+	ApiPivotTable.prototype["SetTableStyleRowStripes"]            = ApiPivotTable.prototype.SetTableStyleRowStripes;
+	ApiPivotTable.prototype["GetTableStyleColumnStripes"]         = ApiPivotTable.prototype.GetTableStyleColumnStripes;
+	ApiPivotTable.prototype["SetTableStyleColumnStripes"]         = ApiPivotTable.prototype.SetTableStyleColumnStripes;
+	ApiPivotTable.prototype["GetSource"]                          = ApiPivotTable.prototype.GetSource;
+	ApiPivotTable.prototype["SetSource"]                          = ApiPivotTable.prototype.SetSource;
+	ApiPivotTable.prototype["GetColumnRange"]                     = ApiPivotTable.prototype.GetColumnRange;
+	ApiPivotTable.prototype["GetRowRange"]                        = ApiPivotTable.prototype.GetRowRange;
+	ApiPivotTable.prototype["GetDataBodyRange"]                   = ApiPivotTable.prototype.GetDataBodyRange;
+	ApiPivotTable.prototype["GetTableRange1"]                     = ApiPivotTable.prototype.GetTableRange1;
+	ApiPivotTable.prototype["GetTableRange2"]                     = ApiPivotTable.prototype.GetTableRange2;
+	ApiPivotTable.prototype["GetGrandTotalName"]                  = ApiPivotTable.prototype.GetGrandTotalName;
+	ApiPivotTable.prototype["SetGrandTotalName"]                  = ApiPivotTable.prototype.SetGrandTotalName;
+	ApiPivotTable.prototype["SetLayoutBlankLine"]                 = ApiPivotTable.prototype.SetLayoutBlankLine;
+	ApiPivotTable.prototype["SetLayoutSubtotals"]                 = ApiPivotTable.prototype.SetLayoutSubtotals;
+	ApiPivotTable.prototype["GetParent"]                          = ApiPivotTable.prototype.GetParent;
+
+	ApiPivotDataField.prototype["Remove"]               = ApiPivotDataField.prototype.Remove;
+	ApiPivotDataField.prototype["Move"]                 = ApiPivotDataField.prototype.Move;
+	ApiPivotDataField.prototype["SetFunction"]          = ApiPivotDataField.prototype.SetFunction;
+	ApiPivotDataField.prototype["GetFunction"]          = ApiPivotDataField.prototype.GetFunction;
+	ApiPivotDataField.prototype["GetPosition"]          = ApiPivotDataField.prototype.GetPosition;
+	ApiPivotDataField.prototype["SetPosition"]          = ApiPivotDataField.prototype.SetPosition;
+	ApiPivotDataField.prototype["GetOrientation"]       = ApiPivotDataField.prototype.GetOrientation;
+	ApiPivotDataField.prototype["GetValue"]             = ApiPivotDataField.prototype.GetValue;
+	ApiPivotDataField.prototype["SetValue"]             = ApiPivotDataField.prototype.SetValue;
+	ApiPivotDataField.prototype["GetCaption"]           = ApiPivotDataField.prototype.GetCaption;
+	ApiPivotDataField.prototype["SetCaption"]           = ApiPivotDataField.prototype.SetCaption;
+	ApiPivotDataField.prototype["GetName"]              = ApiPivotDataField.prototype.GetName;
+	ApiPivotDataField.prototype["SetName"]              = ApiPivotDataField.prototype.SetName;
+	ApiPivotDataField.prototype["GetNumberFormat"]      = ApiPivotDataField.prototype.GetNumberFormat;
+	ApiPivotDataField.prototype["SetNumberFormat"]      = ApiPivotDataField.prototype.SetNumberFormat;
+	ApiPivotDataField.prototype["GetIndex"]             = ApiPivotDataField.prototype.GetIndex;
+	ApiPivotDataField.prototype["GetPivotField"]        = ApiPivotDataField.prototype.GetPivotField;
+
+	ApiPivotField.prototype["ClearAllFilters"]           = ApiPivotField.prototype.ClearAllFilters;
+	ApiPivotField.prototype["ClearLabelFilters"]         = ApiPivotField.prototype.ClearLabelFilters;
+	ApiPivotField.prototype["ClearManualFilters"]        = ApiPivotField.prototype.ClearManualFilters;
+	ApiPivotField.prototype["ClearValueFilters"]         = ApiPivotField.prototype.ClearValueFilters;
+	ApiPivotField.prototype["GetPivotItems"]             = ApiPivotField.prototype.GetPivotItems;
+	ApiPivotField.prototype["Move"]                      = ApiPivotField.prototype.Move;
+	ApiPivotField.prototype["Remove"]                    = ApiPivotField.prototype.Remove;
+	ApiPivotField.prototype["GetPosition"]               = ApiPivotField.prototype.GetPosition;
+	ApiPivotField.prototype["SetPosition"]               = ApiPivotField.prototype.SetPosition;
+	ApiPivotField.prototype["GetOrientation"]            = ApiPivotField.prototype.GetOrientation;
+	ApiPivotField.prototype["SetOrientation"]            = ApiPivotField.prototype.SetOrientation;
+	ApiPivotField.prototype["GetValue"]                  = ApiPivotField.prototype.GetValue;
+	ApiPivotField.prototype["SetValue"]                  = ApiPivotField.prototype.SetValue;
+	ApiPivotField.prototype["GetCaption"]                = ApiPivotField.prototype.GetCaption;
+	ApiPivotField.prototype["SetCaption"]                = ApiPivotField.prototype.SetCaption;
+	ApiPivotField.prototype["GetName"]                   = ApiPivotField.prototype.GetName;
+	ApiPivotField.prototype["SetName"]                   = ApiPivotField.prototype.SetName;
+	ApiPivotField.prototype["GetSourceName"]             = ApiPivotField.prototype.GetSourceName;
+	ApiPivotField.prototype["GetIndex"]                  = ApiPivotField.prototype.GetIndex;
+	ApiPivotField.prototype["GetTable"]                  = ApiPivotField.prototype.GetTable;
+	ApiPivotField.prototype["GetParent"]                 = ApiPivotField.prototype.GetParent;
+	ApiPivotField.prototype["GetLayoutCompactRow"]       = ApiPivotField.prototype.GetLayoutCompactRow;
+	ApiPivotField.prototype["SetLayoutCompactRow"]       = ApiPivotField.prototype.SetLayoutCompactRow;
+	ApiPivotField.prototype["GetLayoutForm"]             = ApiPivotField.prototype.GetLayoutForm;
+	ApiPivotField.prototype["SetLayoutForm"]             = ApiPivotField.prototype.SetLayoutForm;
+	ApiPivotField.prototype["GetLayoutPageBreak"]        = ApiPivotField.prototype.GetLayoutPageBreak;
+	ApiPivotField.prototype["SetLayoutPageBreak"]        = ApiPivotField.prototype.SetLayoutPageBreak;
+	ApiPivotField.prototype["GetShowingInAxis"]          = ApiPivotField.prototype.GetShowingInAxis;
+	ApiPivotField.prototype["GetRepeatLabels"]           = ApiPivotField.prototype.GetRepeatLabels;
+	ApiPivotField.prototype["SetRepeatLabels"]           = ApiPivotField.prototype.SetRepeatLabels;
+	ApiPivotField.prototype["GetLayoutBlankLine"]        = ApiPivotField.prototype.GetLayoutBlankLine;
+	ApiPivotField.prototype["SetLayoutBlankLine"]        = ApiPivotField.prototype.SetLayoutBlankLine;
+	ApiPivotField.prototype["GetShowAllItems"]           = ApiPivotField.prototype.GetShowAllItems;
+	ApiPivotField.prototype["SetShowAllItems"]           = ApiPivotField.prototype.SetShowAllItems;
+	ApiPivotField.prototype["GetLayoutSubtotals"]        = ApiPivotField.prototype.GetLayoutSubtotals;
+	ApiPivotField.prototype["SetLayoutSubtotals"]        = ApiPivotField.prototype.SetLayoutSubtotals;
+	ApiPivotField.prototype["GetLayoutSubtotalLocation"] = ApiPivotField.prototype.GetLayoutSubtotalLocation;
+	ApiPivotField.prototype["SetLayoutSubtotalLocation"] = ApiPivotField.prototype.SetLayoutSubtotalLocation;
+	ApiPivotField.prototype["GetSubtotalName"]           = ApiPivotField.prototype.GetSubtotalName;
+	ApiPivotField.prototype["SetSubtotalName"]           = ApiPivotField.prototype.SetSubtotalName;
+	ApiPivotField.prototype["GetSubtotals"]              = ApiPivotField.prototype.GetSubtotals;
+	ApiPivotField.prototype["SetSubtotals"]              = ApiPivotField.prototype.SetSubtotals;
+	ApiPivotField.prototype["GetDragToColumn"]           = ApiPivotField.prototype.GetDragToColumn;
+	ApiPivotField.prototype["SetDragToColumn"]           = ApiPivotField.prototype.SetDragToColumn;
+	ApiPivotField.prototype["GetDragToRow"]              = ApiPivotField.prototype.GetDragToRow;
+	ApiPivotField.prototype["SetDragToRow"]              = ApiPivotField.prototype.SetDragToRow;
+	ApiPivotField.prototype["GetDragToData"]             = ApiPivotField.prototype.GetDragToData;
+	ApiPivotField.prototype["SetDragToData"]             = ApiPivotField.prototype.SetDragToData;
+	ApiPivotField.prototype["GetDragToPage"]             = ApiPivotField.prototype.GetDragToPage;
+	ApiPivotField.prototype["SetDragToPage"]             = ApiPivotField.prototype.SetDragToPage;
+	ApiPivotField.prototype["GetCurrentPage"]            = ApiPivotField.prototype.GetCurrentPage;
+	ApiPivotField.prototype["GetNumberFormat"]           = ApiPivotField.prototype.GetNumberFormat;
+	ApiPivotField.prototype["SetNumberFormat"]           = ApiPivotField.prototype.SetNumberFormat;
+	ApiPivotField.prototype["SetFunction"]               = ApiPivotField.prototype.SetFunction;
+	ApiPivotField.prototype["GetFunction"]               = ApiPivotField.prototype.GetFunction;
+
+	ApiPivotItem.prototype["GetName"]    = ApiPivotItem.prototype.GetName;
+	ApiPivotItem.prototype["GetCaption"] = ApiPivotItem.prototype.GetCaption;
+	ApiPivotItem.prototype["GetValue"]   = ApiPivotItem.prototype.GetValue;
+	ApiPivotItem.prototype["GetParent"]  = ApiPivotItem.prototype.GetParent;
+
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
 		oDrawing.x = 0;
 		oDrawing.y = 0;
@@ -14358,6 +17715,10 @@
 		isChangedActiveSheet && ws.workbook.setActive(oldActiveSheet);
 		oldSelection && oldSelection.Select(true);
 	}
+
+	function private_MakeError(message) {
+		console.error(new Error(message) );
+	};
 
 }(window, null));
 
