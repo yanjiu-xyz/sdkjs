@@ -10184,7 +10184,7 @@
 			wsView._cleanCache(lockRange);
 		};
 		let val;
-		let ws = this.Worksheet.worksheet;
+		let ws = this.GetWorksheet().worksheet;
 		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
 		let cellCommentator = wsView.cellCommentator;
 		let bbox = this.range.bbox;
@@ -10197,7 +10197,7 @@
 			let cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "up" : "left";
 		}
-		if (shift == "up") {
+		if (shift === "up") {
 			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop;
 			lockRange = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, AscCommon.gc_nMaxCol0);
 			this.range.deleteCellsShiftUp(preDeleteAction);
