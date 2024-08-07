@@ -15796,6 +15796,46 @@
 		}
 	});
 
+	ApiPivotField.prototype.GetFunction = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+	ApiPivotField.prototype.SetFunction = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Function", {
+		get: function () {
+			return this.GetFunction();
+		},
+		set: function () {
+			this.SetFunction()
+		}
+	});
+
+	ApiPivotField.prototype.GetNumberFormat = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+	ApiPivotField.prototype.SetNumberFormat = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "NumberFormat", {
+		get: function () {
+			return this.GetNumberFormat();
+		},
+		set: function () {
+			this.SetNumberFormat()
+		}
+	});
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiPivotItem
@@ -16718,6 +16758,10 @@
 	ApiPivotField.prototype["GetDragToPage"]             = ApiPivotField.prototype.GetDragToPage;
 	ApiPivotField.prototype["SetDragToPage"]             = ApiPivotField.prototype.SetDragToPage;
 	ApiPivotField.prototype["GetCurrentPage"]            = ApiPivotField.prototype.GetCurrentPage;
+	ApiPivotField.prototype["GetNumberFormat"]           = ApiPivotField.prototype.GetNumberFormat;
+	ApiPivotField.prototype["SetNumberFormat"]           = ApiPivotField.prototype.SetNumberFormat;
+	ApiPivotField.prototype["SetFunction"]               = ApiPivotField.prototype.SetFunction;
+	ApiPivotField.prototype["GetFunction"]               = ApiPivotField.prototype.GetFunction;
 
 	ApiPivotItem.prototype["GetName"]    = ApiPivotItem.prototype.GetName;
 	ApiPivotItem.prototype["GetCaption"] = ApiPivotItem.prototype.GetCaption;
