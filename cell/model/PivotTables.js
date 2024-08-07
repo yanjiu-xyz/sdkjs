@@ -8344,7 +8344,7 @@ CT_pivotTableDefinition.prototype.asc_getDataToGetPivotData = function(items) {
 		const reg = /^(\w+)\[(\w+)\]/;
 		const match = reg.exec(items[i]);
 		if (match !== null && match[1] && match[2]) {
-			const fieldIndex = this.cacheDefinition.cacheFields.getIndexByName(match[1]);
+			const fieldIndex = this.getFieldIndexByValue(match[1]);
 			if (fieldIndex === null || optParamsMap.has(fieldIndex)) {
 				return null;
 			}
