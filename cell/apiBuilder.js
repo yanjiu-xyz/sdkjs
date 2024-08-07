@@ -6976,7 +6976,10 @@
 			newSheetName = name;
 		}
 		var pivot = this.asc_insertPivotNewWorksheet(dataRef, newSheetName);
-		return new ApiPivotTable(pivot, this);
+		if (pivot) {
+			return new ApiPivotTable(pivot, this);
+		}
+		private_MakeError('An error occurred while creating the pivot table!');
 	};
 
 	/**
