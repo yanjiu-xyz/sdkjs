@@ -7401,9 +7401,8 @@ var editor;
 			this.wb.updateWorksheetByModel();
 			this.wb.showWorksheet();
 			return this._asc_insertPivot(wb, dataRef, ws, location.bbox, confirmation);
-		} else {
-			return new Error("Problem with pivotRef");
 		}
+		return null;
 	};
 	spreadsheet_api.prototype._asc_insertPivot = function(wb, dataRef, ws, bbox, confirmation) {
 		var t = this;

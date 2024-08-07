@@ -6939,7 +6939,10 @@
 			private_MakeError('"pivotRef" is undefined.');
 		}
 		var pivot = this.asc_insertPivotExistingWorksheet(dataRef, pivotRef, confirmation);
-		return new ApiPivotTable(pivot, this);
+		if (pivot) {
+			return new ApiPivotTable(pivot, this);
+		}
+		private_MakeError('Error! Bad pivotRef!');
 	};
 
 	/**
@@ -14275,6 +14278,23 @@
 		}
 	});
 
+	/**
+	 * Returns Pivot Table parent
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorksheet} - Pivot Table parent.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetParent.js
+	 */
+	ApiPivotTable.prototype.GetParent = function () {
+		return new ApiWorksheet(this.pivot.worksheet);
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Parent", {
+		set: function () {
+			this.GetParent();
+		}
+	});
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiPivotDataField
@@ -15962,7 +15982,6 @@
 	ApiWorksheet.prototype["GetPivotByName"] = ApiWorksheet.prototype.GetPivotByName;
 	ApiWorksheet.prototype["GetAllPivotTables"] = ApiWorksheet.prototype.GetAllPivotTables;
 	ApiWorksheet.prototype["RefreshAllPivots"] = ApiWorksheet.prototype.RefreshAllPivots;
-	ApiWorksheet.prototype["RefreshAllPivots"] = ApiWorksheet.prototype.RefreshAllPivots;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -16628,6 +16647,7 @@
 	ApiPivotTable.prototype["SetGrandTotalName"]                  = ApiPivotTable.prototype.SetGrandTotalName;
 	ApiPivotTable.prototype["SetLayoutBlankLine"]                 = ApiPivotTable.prototype.SetLayoutBlankLine;
 	ApiPivotTable.prototype["SetLayoutSubtotals"]                 = ApiPivotTable.prototype.SetLayoutSubtotals;
+	ApiPivotTable.prototype["GetParent"]                          = ApiPivotTable.prototype.GetParent;
 
 	ApiPivotDataField.prototype["Remove"]               = ApiPivotDataField.prototype.Remove;
 	ApiPivotDataField.prototype["Move"]                 = ApiPivotDataField.prototype.Move;
