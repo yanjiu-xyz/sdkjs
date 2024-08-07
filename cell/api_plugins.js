@@ -157,7 +157,14 @@
 	{
 		// DISABLE FOR NATIVE VERSION
 		if (window["NATIVE_EDITOR_ENJINE"])
-			return;
+		{
+			if (!window.localStorage)
+			{
+				window.localStorage = {};
+				window.localStorage.getItem = function(key) { return this[key]; };
+				window.localStorage.setItem = function(key, value) { this[key] = value; };
+			}
+		}
 
 		if (undefined === obj)
 			obj = AscCommon.getLocalStorageItem(customFunctionsStorageId);
@@ -183,6 +190,58 @@
 		}
 
 		this.recalculateCustomFunctions();
+	};
+
+	Api.prototype.addCustomFunctionsLibrary = function(sName, Func)
+	{
+		// DISABLE FOR NATIVE VERSION
+		if (window["NATIVE_EDITOR_ENJINE"])
+		{
+			if (!window.localStorage)
+			{
+				window.localStorage = {};
+				window.localStorage.getItem = function(key) { return this[key]; };
+				window.localStorage.setItem = function(key, value) { this[key] = value; };
+			}
+		}
+
+		let currentValue = AscCommon.getLocalStorageItem(customFunctionsStorageId);
+		let libraryString = "(" + Func.toString() + ")()";
+		if (!currentValue)
+		{
+			currentValue = {
+				"macrosArray" : [{
+					"name": sName,
+					"value": libraryString
+				}]
+			};
+		}
+		else
+		{
+			let arr = currentValue["macrosArray"];
+			if (arr)
+			{
+				let isChanged = false;
+				for (let i = 0, len = arr.length; i < len; i++)
+				{
+					if (arr[i]["name"] === sName)
+					{
+						isChanged = true;
+						arr[i]["value"] = libraryString;
+					}
+				}
+				if (!isChanged)
+				{
+					arr.push({
+						"name"  : sName,
+						"value" : libraryString
+					});
+				}
+			}
+		}
+
+		AscCommon.setLocalStorageItem(customFunctionsStorageId, currentValue);
+		this.registerCustomFunctionsLibrary(currentValue);
 	};
 
 	/**

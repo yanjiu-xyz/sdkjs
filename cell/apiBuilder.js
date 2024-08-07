@@ -427,7 +427,6 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {Function} fCustom - A new function for calculating.
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
 	 */
 	// Example with description:
 	// Calculates the sum of the specified numbers.
@@ -520,6 +519,21 @@
 		})();*/
 
 		this.addCustomFunction(fCustom, parsedJSDoc/*isValidJsDoc ? parsedJSDoc : options*/);
+	};
+
+	/**
+	 * Register a new custom functions library (see SetCustomFunctions plugin method).
+	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
+	 * Parameters and results can be specified as the <em>number / string / bool / any / number[][] / string[][] / bool[][] / any[][]</em> types.
+	 * Parameters can be required or optional. A user can also set a default value.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sName - A name of library
+	 * @param {Function} Func - A custom functions library code.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
+	 */
+	Api.prototype.AddCustomFunctionLibrary = function(sName, Func) {
+		this.addCustomFunctionsLibrary(sName, Func);
 	};
 
 	/**
@@ -13456,6 +13470,7 @@
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
 	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;
+	Api.prototype["AddCustomFunctionLibrary"] = Api.prototype.AddCustomFunctionLibrary;
 
 	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
 	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;
