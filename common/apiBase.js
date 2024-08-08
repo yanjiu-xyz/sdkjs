@@ -5053,24 +5053,26 @@
 		}
 	};
 
-	baseEditorsApi.prototype.wrapEvent = function(name) 
+	baseEditorsApi.prototype.wrapEvent = function(name)
 	{
 		var wrapArray = function(args) {
+			let arrayResult = new Array(args.length);
 			for (let i = 0, len = args.length; i < len; i++)
 			{
+				arrayResult[i] = args[i];
 				if (!args[i])
 					continue;
 				if (args[i].toCValue)
-					args[i] = args[i].toCValue();
+					arrayResult[i] = args[i].toCValue();
 				else if (Array.isArray(args[i]))
-					wrapArray(args[i]);
+					arrayResult[i] = wrapArray(args[i]);
 			}
+			return arrayResult;
 		};
 
 		this.asc_registerCallback(name, function()
 		{
-			wrapArray(arguments);
-			window["native"]["onJsEvent"](name, Array.from(arguments));
+			window["native"]["onJsEvent"](name, wrapArray(arguments));
 		});
 	};
 
