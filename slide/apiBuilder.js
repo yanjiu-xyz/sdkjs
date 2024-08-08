@@ -3578,6 +3578,21 @@
 		return JSON.stringify(oWriter.SerGraphicObject(this.Drawing));
 	};
 
+	/**
+	 * Selects the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
+	 */	
+	ApiDrawing.prototype.Select = function() {
+		let oDrawing = this.Drawing;
+		if(!oDrawing) return;
+        oDrawing.Set_CurrentElement(true, 0, true);
+        let oController = oDrawing.getDrawingObjectsController();
+        oController.updateSelectionState();
+        oController.updateOverlay();
+	};
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // ApiImage
@@ -4600,7 +4615,7 @@
 	ApiDrawing.prototype["GetHeight"]                     = ApiDrawing.prototype.GetHeight;
     ApiDrawing.prototype["GetLockValue"]                  = ApiDrawing.prototype.GetLockValue;
     ApiDrawing.prototype["SetLockValue"]                  = ApiDrawing.prototype.SetLockValue;
-
+    ApiDrawing.prototype["Select"]                        = ApiDrawing.prototype.Select;
 
 
     ApiDrawing.prototype["ToJSON"]                        = ApiDrawing.prototype.ToJSON;

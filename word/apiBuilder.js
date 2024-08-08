@@ -15456,10 +15456,10 @@
 	 */	
 	ApiDrawing.prototype.Select = function()
 	{
-		var Api = editor;
-		var oDocument = Api.GetDocument();
-		this.getParaDrawing().SelectAsText();
-		oDocument.Document.UpdateSelection();
+		let oParaDrawing = this.getParaDrawing();
+		if(!oParaDrawing) return;
+		let oLogicDocument = private_GetLogicDocument();
+		oLogicDocument.Select_DrawingObject(oParaDrawing.Id);
 	};
 	/**
 	 * Inserts a break at the specified location in the main document.
