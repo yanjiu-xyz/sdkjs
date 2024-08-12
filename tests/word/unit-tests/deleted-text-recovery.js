@@ -32,6 +32,20 @@
 
 $(function () {
 	let logicDocument = AscTest.CreateLogicDocument();
+	logicDocument.SetBoldText = function ()
+	{
+		let oTextPr = logicDocument.GetCalculatedTextPr();
+		if (oTextPr)
+		{
+			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+			{
+				logicDocument.StartAction(AscDFH.historydescription_Document_SetTextBoldHotKey);
+				logicDocument.AddToParagraph(new ParaTextPr({Bold : oTextPr.Bold !== true}));
+				logicDocument.UpdateInterface();
+				logicDocument.FinalizeAction();
+			}
+		}
+	}
 
 	let versionHistory = logicDocument.Api.VersionHistory = new Asc.asc_CVersionHistory();
 	versionHistory.asc_SetUserId(0);
@@ -181,7 +195,7 @@ $(function () {
 
 		CheckRuns(assert, p, [
 			["ab", reviewtype_Common],
-			[" c", reviewtype_Remove],
+			["c", reviewtype_Remove],
 		]);
 	});
 
@@ -664,5 +678,40 @@ $(function () {
 
 		strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hello word", "Input 'Hello word'");
+	});
+
+	QUnit.test("Split run", function (assert)
+	{
+		logicDocument.AddToContent(0, AscTest.CreateParagraph());
+
+		AscTest.EnterText("Hello how are you");
+		let p = logicDocument.Content[0];
+		AscTest.SelectParagraphRange(p,3, 11);
+
+		logicDocument.SetBoldText();
+
+		let r0 = logicDocument.Content[0].Content[0];
+		let r1 = logicDocument.Content[0].Content[1];
+		let r2 = logicDocument.Content[0].Content[2];
+
+		assert.strictEqual(r0.Pr.Bold, undefined, "Check \"Hel\" not bold");
+		assert.strictEqual(r1.Pr.Bold, true, "Check \"lo how a\" is bold");
+		assert.strictEqual(r2.Pr.Bold, undefined, "Check \"re you\" not bold");
+
+		AscTest.SelectParagraphRange(p,5, 9);
+		DelLast(1, false);
+
+		assert.strictEqual(p.GetText(), "Hello are you ", "Text is \"Hello are you\"");
+
+		Init(2);
+		ShowDelText();
+
+		CheckRuns(assert, p, [
+			["Hel",		reviewtype_Common],
+			["lo",		reviewtype_Common],
+			[" how",	reviewtype_Remove],
+			[" a",		reviewtype_Common],
+			["re you",	reviewtype_Common],
+		]);
 	});
 });

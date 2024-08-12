@@ -123,6 +123,16 @@
 		{
 			let oCurChange		= arrInputChanges[i];
 
+			// пропускаем все изменения связанные со сплитом
+			if (oCurChange instanceof CChangesRunOnStartSplit)
+			{
+				while (oCurChange && !(oCurChange instanceof CChangesRunOnEndSplit))
+				{
+					i++;
+					oCurChange		= arrInputChanges[i];
+				}
+			}
+
 			if (oCurChange instanceof AscCommon.CChangesTableIdDescription || !oCurChange.Copy)
 				continue;
 
