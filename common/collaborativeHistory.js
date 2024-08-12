@@ -325,7 +325,7 @@
 	CCollaborativeHistory.prototype.UndoDeletedTextRecovery = function()
 	{
 		if (this.textRecovery)
-			return this.textRecovery.UndoShowDelText();
+			return this.textRecovery.UndoRecoveredText();
 
 		return false;
 	};

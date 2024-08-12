@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -32,9 +32,8 @@
 
 "use strict";
 
-(function (window)
+(function ()
 {
-
 	/**
 	 * Класс, восстанавливающий удаленные части документа
 	 * @param {AscWord.Document} logicDocument
@@ -56,6 +55,41 @@
 		this.userTime				= undefined;
 	}
 	/**
+	 * Восстанавливаем удаленный текст в текущей точке истории версий
+	 * @return {boolean}
+	 */
+	DeletedTextRecovery.prototype.RecoverDeletedText = function()
+	{
+		this.UndoRecoveredText();
+		return this.ShowDelText();
+	};
+	/**
+	 * Отменяем восстановление удаленного текста, если оно было
+	 */
+	DeletedTextRecovery.prototype.UndoRecoveredText = function ()
+	{
+		if (!this.HaveRecoveredText())
+			return;
+		
+		let localHistory = AscCommon.History;
+		let changes = localHistory.Undo();
+		this.document.UpdateAfterUndoRedo(changes);
+		localHistory.ClearRedo();
+	};
+	/**
+	 * Запрашивем,есть ли восстановленный удаленный текст
+	 * @return {boolean}
+	 */
+	DeletedTextRecovery.prototype.HaveRecoveredText = function()
+	{
+		let localHistory = AscCommon.History;
+		let lastPoint    = localHistory.Points[localHistory.Points.length - 1];
+		return !!(lastPoint && lastPoint.Description === AscDFH.historydescription_Collaborative_DeletedTextRecovery);
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
 	 * Инициализация и создание промежуточных данных для отображения удаленного текста в текущей ревизии
 	 */
 	DeletedTextRecovery.prototype.HandleChanges = function()
@@ -67,20 +101,11 @@
 		let arrPointsList		= AscCommon.CollaborativeEditing.CoHistory.ChangesSplitByPoints;
 		let nIndex				= AscCommon.CollaborativeEditing.CoHistory.curChangeIndex;
 		let arrChanges			= arrChangesList.slice(0, arrPointsList[nIndex]);
-
+		
 		if (!arrChanges || !arrChanges.length)
 			return;
-
+		
 		this.m_RewiewDelPoints = arrChanges;
-	};
-	/**
-	 * Отображаем удаленный текст в текущей точки истории ревизии
-	 * @return {boolean}
-	 */
-	DeletedTextRecovery.prototype.RecoverDeletedText = function()
-	{
-		this.UndoShowDelText();
-		return this.ShowDelText();
 	};
 	/**
 	 * Получаем подготовленные данные, разбитые по точкам
@@ -416,20 +441,6 @@
 				arrToSave.push(oRevChange);
 		}
 	};
-	DeletedTextRecovery.prototype.UndoShowDelText = function ()
-	{
-		let localHistory	= AscCommon.History;
-		let oLastPoint		= localHistory.Points[localHistory.Points.length - 1];
-
-		if (oLastPoint && oLastPoint.Description === AscDFH.historydescription_Collaborative_DeletedTextRecovery)
-		{
-			let arrChanges = localHistory.UndoLastPoint();
-			this.document.RecalculateByChanges(arrChanges);
-			localHistory.Remove_LastPoint();
-
-			return true
-		}
-	};
 
 	function AddTextPositions()
 	{
@@ -644,5 +655,5 @@
 	}
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.DeletedTextRecovery = DeletedTextRecovery;
-
-})(window);
+	
+})();

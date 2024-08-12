@@ -128,7 +128,7 @@ $(function () {
 
 	function UndoDelText()
 	{
-		oCurDelRecover.UndoShowDelText();
+		oCurDelRecover.UndoRecoveredText();
 	}
 
 	function MoveToPoint(nPos)
