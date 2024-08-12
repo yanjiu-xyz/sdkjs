@@ -329,6 +329,10 @@
 
 		return false;
 	};
+	CCollaborativeHistory.prototype.HaveDeletedTextRecovery = function()
+	{
+		return !!(this.textRecovery && this.textRecovery.HaveRecoveredText());
+	};
 	CCollaborativeHistory.prototype.GetCollaborativeMarks = function ()
 	{
 		return this.CoEditing.Get_CollaborativeMarks();

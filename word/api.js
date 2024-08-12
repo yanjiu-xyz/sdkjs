@@ -14036,6 +14036,28 @@ background-repeat: no-repeat;\
 		insertDocumentManager.insertTextFromUrl(url, token);
 	};
 	
+	asc_docs_api.prototype.asc_showDeletedTextInVersionHistory = function()
+	{
+		if (!this.getVersionHistory())
+			return false;
+		
+		return AscCommon.CollaborativeEditing.CoHistory.RecoverDeletedText()
+	};
+	asc_docs_api.prototype.asc_isShowedDeletedTextInVersionHistory = function()
+	{
+		if (!this.getVersionHistory())
+			return false;
+		
+		return AscCommon.CollaborativeEditing.CoHistory.HaveDeletedTextRecovery()
+	};
+	asc_docs_api.prototype.asc_hideDeletedTextInVersionHistory = function()
+	{
+		if (!this.getVersionHistory())
+			return;
+		
+		AscCommon.CollaborativeEditing.CoHistory.UndoDeletedTextRecovery();
+	};
+	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;
@@ -14846,6 +14868,10 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype["asc_insertTextFromFile"] = asc_docs_api.prototype.asc_insertTextFromFile;
 	asc_docs_api.prototype["asc_insertTextFromUrl"] = asc_docs_api.prototype.asc_insertTextFromUrl;
+	
+	asc_docs_api.prototype["asc_showDeletedTextInVersionHistory"]     = asc_docs_api.prototype.asc_showDeletedTextInVersionHistory;
+	asc_docs_api.prototype["asc_isShowedDeletedTextInVersionHistory"] = asc_docs_api.prototype.asc_isShowedDeletedTextInVersionHistory;
+	asc_docs_api.prototype["asc_hideDeletedTextInVersionHistory"]     = asc_docs_api.prototype.asc_hideDeletedTextInVersionHistory;
 
 	asc_docs_api.prototype["asc_getCoHistory"] = asc_docs_api.prototype.asc_getCoHistory;
 
