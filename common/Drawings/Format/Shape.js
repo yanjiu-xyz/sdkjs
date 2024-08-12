@@ -4481,64 +4481,29 @@
 			}, this, []);
 		};
 		CShape.prototype.findFitFontSizeForSmartArt = function (bMax) {
-			return AscFormat.ExecuteNoHistory(function () {
-				const MAX_FONT_SIZE = 65;
-				const content = this.getCurrentDocContentInSmartArt();
-				if (content) {
-					const nOldFontSize = this.getFirstFontSize();
-					const scalesForSmartArt = Array((MAX_FONT_SIZE - 4) > 0 ? MAX_FONT_SIZE - 4 : 1).fill(0).map(function (e, ind) {
-						return ind + 5;
-					});
-					let a = 0;
-					let b = scalesForSmartArt.length - 1;
-					let averageAmount = Math.floor((a + b) / 2);
-					const bNeedCheckWidth = this.checkFitContentForSmartArt();
-					while (a !== averageAmount && b !== averageAmount) {
-						this.setFontSizeInSmartArt(scalesForSmartArt[averageAmount]);
-						let bCheck;
-						if (bNeedCheckWidth) {
-							bCheck = this.compareWidthOfBoundsTextInSmartArt(bMax) || this.compareHeightOfBoundsTextInSmartArt();
-						} else {
-							bCheck = this.compareHeightOfBoundsTextInSmartArt();
-						}
-
-						if (bCheck) {
-							b = averageAmount;
-						} else {
-							a = averageAmount;
-						}
-						averageAmount = Math.floor((a + b) / 2);
-					}
-					this.setFontSizeInSmartArt(nOldFontSize);
-					this.recalculateContent();
-					return scalesForSmartArt[averageAmount];
-				}
-				return MAX_FONT_SIZE;
-			}, this, []);
+			const oSmartArtInfo = shape.getSmartArtInfo();
+			const nMaxConstrFontSize = AscFormat.isRealNumber(oSmartArtInfo.maxConstrFontSize) ? oSmartArtInfo.maxConstrFontSize : 65;
+			const nMinConstrFontSize = AscFormat.isRealNumber(oSmartArtInfo.minConstrFontSize) ? oSmartArtInfo.minConstrFontSize : 5;
+			return this.findFitFontSize(nMinConstrFontSize, nMaxConstrFontSize, bMax);
 		};
 
 		CShape.prototype.getShapesForFitText = function () {
 			return this.isObjectInSmartArt() ? this.group.group.getShapesForFitText(this) : [];
 		};
 
-		CShape.prototype.setTruthFontSizeInSmartArt = function () {
+		CShape.prototype.isCanFitFontSize = function () {
 			const arrMainContentPoints = this.getSmartArtPointContent();
-			if (!(arrMainContentPoints && arrMainContentPoints.length)) return;
-			const bIsFitText = arrMainContentPoints.every(function (point) {
+			if (!(arrMainContentPoints && arrMainContentPoints.length)) {
+				return false;
+			}
+			return arrMainContentPoints.every(function (point) {
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
-			});
-			let bIsPlaceholder = arrMainContentPoints.every(function (point) {
+			}) || arrMainContentPoints.every(function (point) {
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && point.prSet.phldr;
 			});
+		};
 
-			if (!bIsFitText && !bIsPlaceholder) {
-				return;
-			}
-			const oSmartArtInfo = this.getSmartArtInfo();
-			if (oSmartArtInfo) {
-				oSmartArtInfo.setMaxFontSize(this.findFitFontSizeForSmartArt());
-			}
-			const arrShapes = this.getShapesForFitText();
+		function fitSmartArtShapes(arrShapes) {
 			const arrPlaceholders = [];
 			const arrFitText = [];
 			for (let i = 0; i < arrShapes.length; i += 1) {
@@ -4594,6 +4559,17 @@
 					oShape.setFontSizeInSmartArt(nFitFontSize, true);
 				}
 			}
+		}
+		CShape.prototype.setTruthFontSizeInSmartArt = function () {
+			if (!this.isCanFitFontSize()) {
+				return;
+			}
+			const oSmartArtInfo = this.getSmartArtInfo();
+			if (oSmartArtInfo) {
+				oSmartArtInfo.setMaxFontSize(this.findFitFontSizeForSmartArt());
+			}
+			const arrShapes = this.getShapesForFitText();
+			fitSmartArtShapes(arrShapes);
 		};
 
 		CShape.prototype.checkExtentsByDocContent = function (bForce, bNeedRecalc) {
@@ -7184,4 +7160,5 @@
 		window['AscFormat'].SaveContentSourceFormatting = SaveContentSourceFormatting;
 		window['AscFormat'].hitToHandles = hitToHandles;
 		window['AscFormat'].pHText = pHText;
+		window['AscFormat'].fitSmartArtShapes = fitSmartArtShapes;
 	})(window);

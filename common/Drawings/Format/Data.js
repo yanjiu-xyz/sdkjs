@@ -4110,6 +4110,27 @@ Because of this, the display is sometimes not correct.
 						}
 					}
 					return arrResult;
+				case Param_type_parTxLTRAlign:
+				case Param_type_parTxRTLAlign:
+					switch (this.val) {
+						case "r":
+							return ParameterVal_horizontalAlignment_r;
+						case "l":
+							return ParameterVal_horizontalAlignment_l;
+						default:
+							break;
+					}
+				case Param_type_txAnchorVert:
+					switch (this.val) {
+						case "b":
+							return ParameterVal_textAnchorVertical_b;
+						case "top":
+							return ParameterVal_textAnchorVertical_top;
+						case "mid":
+							return ParameterVal_textAnchorVertical_mid;
+						default:
+							break;
+					}
 				case Param_type_ar:
 				case Param_type_spanAng:
 				case Param_type_stAng:
@@ -9949,6 +9970,8 @@ Because of this, the display is sometimes not correct.
       this.shapePoint = null;
       this.contentPoint = [];
       this.maxFontSize = null;
+			this.textConstraints = {};
+
     }
     InitClass(ShapeSmartArtInfo, CBaseFormatObject, AscDFH.historyitem_type_ShapeSmartArtInfo);
 
@@ -9974,7 +9997,13 @@ Because of this, the display is sometimes not correct.
     }
     ShapeSmartArtInfo.prototype.setMaxFontSize = function (oPr) {
       this.maxFontSize = oPr;
-    }
+    };
+		ShapeSmartArtInfo.prototype.setMaxConstrFontSize = function (pr) {
+			this.maxConstrFontSize = pr;
+		};
+	  ShapeSmartArtInfo.prototype.setMinConstrFontSize = function (pr) {
+			this.minConstrFontSize = pr;
+	  };
 
     changesFactory[AscDFH.historyitem_SmartArtColorsDef] = CChangeObject;
     changesFactory[AscDFH.historyitem_SmartArtDrawing] = CChangeObject;
@@ -10220,14 +10249,14 @@ Because of this, the display is sometimes not correct.
           editor.ShowParaMarks = false;
         }
 	      if (this.bFirstRecalculate) {
-		      if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN) {
+		      if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN || AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) {
 			      this.generateDrawingPart();
 		      }
 	      }
         CGroupShape.prototype.recalculate.call(this);
         if (this.bFirstRecalculate) {
           this.bFirstRecalculate = false;
-	        if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN) {
+	        if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN || AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) {
 		        this.fitFontSize();
 	        }
           // this.fitFontSize();

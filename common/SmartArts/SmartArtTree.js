@@ -36,6 +36,7 @@
 	const IS_DEBUG_DRAWING = true;
 	const IS_ADD_HTML = false;
 	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = false;
+	AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN = false;
 
 	const LayoutNode = AscFormat.LayoutNode;
 	const Choose = AscFormat.Choose;
@@ -1662,25 +1663,8 @@
 	}
 
 	ShadowShape.prototype.applyTextSettings = function (editorShape) {
-		const txXfrm = new AscFormat.CXfrm();
-		const xfrm = editorShape.spPr.xfrm;
-		txXfrm.setOffX(xfrm.offX);
-		txXfrm.setOffY(xfrm.offY);
-		txXfrm.setExtX(xfrm.extX);
-		txXfrm.setExtY(xfrm.extY);
-		txXfrm.setRot(AscFormat.normalizeRotate(-this.rot));
-		editorShape.setTxXfrm(txXfrm);
-
-
-		const bodyPr = new AscFormat.CBodyPr();
-		editorShape.txBody.setBodyPr(bodyPr);
-		if (this.maxDepth > 0) {
-			bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
-			editorShape.txBody.content.SetParagraphAlign(AscCommon.align_Left);
-		} else {
-			bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
-			editorShape.txBody.content.SetParagraphAlign(AscCommon.align_Center);
-		}
+		const algorithm = this.node.algorithm;
+		algorithm.applyTextSettings(editorShape);
 	};
 
 	ShadowShape.prototype.getEditorShapeType = function () {
@@ -1698,6 +1682,7 @@
 		this.constrClockwise = null;
 		this.calcValues = {};
 	}
+	BaseAlgorithm.prototype.applyTextSettings = function (editorShape) {};
 	BaseAlgorithm.prototype.setConstrClockwise = function (isClockwise) {
 		this.constrClockwise = isClockwise;
 	}
@@ -5933,6 +5918,94 @@ function HierarchyAlgorithm() {
 	}
 
 	AscFormat.InitClassWithoutType(TextAlgorithm, BaseAlgorithm);
+	TextAlgorithm.prototype.initParams = function (params) {
+		BaseAlgorithm.prototype.initParams.call(this, params);
+		if (this.params[AscFormat.Param_type_parTxLTRAlign] === undefined) {
+			this.params[AscFormat.Param_type_parTxLTRAlign] = AscFormat.ParameterVal_horizontalAlignment_ctr;
+		}
+		if (this.params[AscFormat.Param_type_parTxRTLAlign] === undefined) {
+			this.params[AscFormat.Param_type_parTxRTLAlign] = AscFormat.ParameterVal_horizontalAlignment_ctr;
+		}
+		if (this.params[AscFormat.Param_type_parTxRTLAlign] === undefined) {
+			this.params[AscFormat.Param_type_parTxRTLAlign] = AscFormat.ParameterVal_horizontalAlignment_ctr;
+		}
+		if (this.params[AscFormat.Param_type_txAnchorVert] === undefined) {
+			this.params[AscFormat.Param_type_txAnchorVert] = AscFormat.ParameterVal_textAnchorVertical_mid;
+		}
+	};
+	TextAlgorithm.prototype.applyTextSettings = function (editorShape) {
+		const shadowShape = this.parentNode.getShape();
+		const txXfrm = new AscFormat.CXfrm();
+		if (shadowShape.txXfrm) {
+
+		} else {
+			const geometryRect = editorShape.spPr && editorShape.spPr.geometry && editorShape.spPr.geometry.rect;
+			const xfrm = editorShape.spPr.xfrm;
+			if (geometryRect) {
+				txXfrm.setOffX(geometryRect.l + xfrm.offX);
+				txXfrm.setOffY(geometryRect.t + xfrm.offY);
+				txXfrm.setExtX(geometryRect.r - geometryRect.l);
+				txXfrm.setExtY(geometryRect.b - geometryRect.t);
+			} else {
+				txXfrm.setOffX(xfrm.offX);
+				txXfrm.setOffY(xfrm.offY);
+				txXfrm.setExtX(xfrm.extX);
+				txXfrm.setExtY(xfrm.extY);
+			}
+		}
+
+		txXfrm.setRot(AscFormat.normalizeRotate(-shadowShape.rot));
+		editorShape.setTxXfrm(txXfrm);
+
+		this.applyHorizontalAlignment(editorShape);
+		this.applyVerticalAlignment(editorShape);
+	};
+	TextAlgorithm.prototype.applyVerticalAlignment = function (editorShape) {
+		const bodyPr = new AscFormat.CBodyPr();
+		switch (this.params[AscFormat.Param_type_txAnchorVert]) {
+			case AscFormat.ParameterVal_textAnchorVertical_b:
+				bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
+				break;
+			case AscFormat.ParameterVal_textAnchorVertical_top:
+				bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+				break;
+			case AscFormat.ParameterVal_textAnchorVertical_mid:
+			default:
+				bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+				break;
+		}
+		editorShape.txBody.setBodyPr(bodyPr);
+	};
+	TextAlgorithm.prototype.applyHorizontalAlignment = function (editorShape) {
+		const drawingContent = editorShape.txBody.content;
+		drawingContent.SetApplyToAll(true);
+		switch (this.params[AscFormat.Param_type_parTxLTRAlign]) {
+			case AscFormat.ParameterVal_horizontalAlignment_l:
+				drawingContent.SetParagraphAlign(AscCommon.align_Left);
+
+				break;
+			case AscFormat.ParameterVal_horizontalAlignment_r:
+				drawingContent.SetParagraphAlign(AscCommon.align_Right);
+				break;
+			case AscFormat.ParameterVal_horizontalAlignment_ctr:
+			default:
+				drawingContent.SetParagraphAlign(AscCommon.align_Center);
+				break;
+		}
+		drawingContent.SetApplyToAll(false);
+	};
+	function applyFontSizeConstraints(fitArrays) {
+		for (let i = 0; i < fitArrays.length; i += 1) {
+			const shapes = fitArrays[i];
+
+			for (let j = 0; j < shapes.length; j += 1) {
+				const shape = shapes[j];
+				const oSmartArtInfo = shape.getSmartArtInfo();
+				oSmartArtInfo.setMaxFontSize(shape.findFitFontSizeForSmartArt());
+			}
+			AscFormat.fitSmartArtShapes(shapes);
+		}
+	}
 
 	TextAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficient) {
 		this.createShadowShape(isCalculateScaleCoefficient);
@@ -5993,6 +6066,7 @@ function PresNode(presPoint, contentNode) {
 	this.namedNodes = null;
 	this.moveWith = null;
 	this._isTxXfrm = null;
+	this.textConstraints = {};
 
 	this.cleanRules();
 	this.cleanConstraints();
@@ -6447,7 +6521,72 @@ PresNode.prototype.addChild = function (ch, pos) {
 			}
 		}
 	};
-	PresNode.prototype.setConstraints = function (isAdapt) {
+	function FontSizeRelation(nodes, refNodes) {
+		this.nodes = refNodes;
+		this.refNodes = [];
+	}
+	FontSizeManager.prototype.add = function (nodes) {
+		this.refNodeArrays.push(nodes);
+	}
+	FontSizeManager.prototype.updateMaxFontSizes = function (fontSize) {
+		for (let i = 0; i < this.refNodeArrays.length; i += 1) {
+			const refNode = this.refNodeArrays[i];
+			for (let j = 0; j < ref; j += 1) {
+				
+			}
+		}
+	};
+	function CalcConstr() {
+		this.op = {};
+		this.op[AscFormat.Constr_op_none] = {};
+		this.op[AscFormat.Constr_op_equ] = {};
+		this.op[AscFormat.Constr_op_gte] = {};
+		this.op[AscFormat.Constr_op_lte] = {};
+	}
+	function checkTextConstraints(constr, refNodes, nodes, parentNode) {
+
+		switch (constr.type) {
+			case AscFormat.Constr_type_primFontSz:
+				for (let i = 0; i < nodes.length; i += 1) {
+					const node = nodes[i].getConstraintNode(constr.forName, constr.ptType.getVal());
+					if (node) {
+						if (!node.textConstraints[constr.type]) {
+							node.textConstraints[constr.type] = new CalcConstr();
+						}
+						const calcConstr = node.textConstraints[constr.type];
+						calcConstr.op[constr.op] = {constr: constr, parentNode: parentNode};
+					}
+				}
+				break;
+			case AscFormat.Constr_type_bMarg:
+			case AscFormat.Constr_type_tMarg:
+			case AscFormat.Constr_type_rMarg:
+			case AscFormat.Constr_type_lMarg:
+				break;
+			default:
+				break;
+		}
+		if (constr.type === AscFormat.Constr_type_primFontSz) {
+			if (constr.refType === AscFormat.Constr_type_none) {
+
+			}
+			const truthNodes = [];
+			const truthRefNodes = [];
+			for (let j = 0; j < nodes.length; j += 1) {
+				const node = nodes[j].getConstraintNode(constr.forName, constr.ptType.getVal());
+				if (node) {
+					truthNodes.push(node);
+				}
+			}
+			for (let j = 0; j < refNodes.length; j += 1) {
+				const node = refNodes[j].getConstraintNode(constr.forName, constr.ptType.getVal());
+				if (node) {
+					truthRefNodes.push(node);
+				}
+			}
+		}
+	}
+	PresNode.prototype.setConstraints = function (isAdapt, smartartAlgorithm) {
 		const constrLst = this.layoutInfo.constrLst;
 		if (!constrLst) {
 			return;
@@ -6462,36 +6601,32 @@ PresNode.prototype.addChild = function (ch, pos) {
 				this.getNodesByAxis(cacheFor[constr.for], constr.for);
 			}
 			const nodes = cacheFor[constr.for];
-		if (constr.refFor === AscFormat.Constr_for_self) {
-				if (constr.for === AscFormat.Constr_for_self) {
-					const calcValue = nodes[0].getCalcRefConstr(constr, isAdapt, valueCache);
-					if (AscFormat.isRealNumber(calcValue)) {
-						nodes[0].setConstraintByNode(constr, nodes[0], calcValue, isAdapt);
+
+			if (!cacheRefFor[constr.refFor]) {
+				cacheRefFor[constr.refFor] = [];
+				this.getNodesByAxis(cacheRefFor[constr.refFor], constr.refFor);
+			}
+			const refNodes = cacheRefFor[constr.refFor];
+
+			for (let j = 0; j < refNodes.length; j++) {
+				const calcValue = refNodes[j].getCalcRefConstr(constr, isAdapt, valueCache);
+				if (AscFormat.isRealNumber(calcValue)) {
+					for (let k = 0; k < nodes.length; k++) {
+						nodes[k].setConstraintByNode(constr, refNodes[j], calcValue, isAdapt);
 					}
-				} else {
-					const calcValue = this.getCalcRefConstr(constr, isAdapt, valueCache);
-					if (AscFormat.isRealNumber(calcValue)) {
-						for (let j = 0; j < nodes.length; j++) {
-							const node = nodes[j];
-							node.setConstraintByNode(constr, this, calcValue, isAdapt);
-						}
-					}
+					break;
 				}
-			} else {
-				if (!cacheRefFor[constr.refFor]) {
-					cacheRefFor[constr.refFor] = [];
-					this.getNodesByAxis(cacheRefFor[constr.refFor], constr.refFor);
-				}
-				const refNodes = cacheRefFor[constr.refFor];
-				for (let j = 0; j < refNodes.length; j++) {
-					const calcValue = refNodes[j].getCalcRefConstr(constr, isAdapt, valueCache);
-					if (AscFormat.isRealNumber(calcValue)) {
-						for (let k = 0; k < nodes.length; k++) {
-							nodes[k].setConstraintByNode(constr, refNodes[j], calcValue, isAdapt);
-						}
-						break;
-					}
-				}
+			}
+			switch (constr.type) {
+				case AscFormat.Constr_type_bMarg:
+				case AscFormat.Constr_type_tMarg:
+				case AscFormat.Constr_type_rMarg:
+				case AscFormat.Constr_type_lMarg:
+				case AscFormat.Constr_type_primFontSz:
+					checkTextConstraints(constr, refNodes, nodes);
+					break;
+				default:
+					break;
 			}
 		}
 	}
@@ -6734,6 +6869,11 @@ PresNode.prototype.addChild = function (ch, pos) {
 					this.algorithm.setConstrClockwise(val > 0);
 					this.algorithm.diameterScale = constr.fact;
 					break;
+				}
+				break;
+			case AscFormat.Constr_type_primFontSz:
+				if (constr.refType !== AscFormat.Constr_type_none) {
+
 				}
 				break;
 			default: {
