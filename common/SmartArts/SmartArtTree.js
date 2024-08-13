@@ -6067,6 +6067,7 @@ function PresNode(presPoint, contentNode) {
 	this.moveWith = null;
 	this._isTxXfrm = null;
 	this.textConstraints = {};
+	this.textConstraintRelations = [];
 
 	this.cleanRules();
 	this.cleanConstraints();
@@ -6536,53 +6537,60 @@ PresNode.prototype.addChild = function (ch, pos) {
 			}
 		}
 	};
-	function CalcConstr() {
+	function TextConstr() {
 		this.op = {};
 		this.op[AscFormat.Constr_op_none] = {};
 		this.op[AscFormat.Constr_op_equ] = {};
 		this.op[AscFormat.Constr_op_gte] = {};
 		this.op[AscFormat.Constr_op_lte] = {};
+		this.rule = null;
 	}
-	function checkTextConstraints(constr, refNodes, nodes, parentNode) {
 
-		switch (constr.type) {
-			case AscFormat.Constr_type_primFontSz:
-				for (let i = 0; i < nodes.length; i += 1) {
-					const node = nodes[i].getConstraintNode(constr.forName, constr.ptType.getVal());
-					if (node) {
-						if (!node.textConstraints[constr.type]) {
-							node.textConstraints[constr.type] = new CalcConstr();
-						}
-						const calcConstr = node.textConstraints[constr.type];
-						calcConstr.op[constr.op] = {constr: constr, parentNode: parentNode};
-					}
+	TextConstr.prototype.getFontSizeFromInfo = function (info) {
+		const constr = info.constr;
+
+		if (constr.refType === AscFormat.Constr_type_none) {
+			return constr.val;
+		} else {
+			const refNodes = info.refNodes;
+			for (let i = 0; i < refNodes.length; i += 1) {
+				const refNode = refNodes[i];
+				const shapeInfo = refNode.getSmartArtShapeInfo();
+				const fontSize = shapeInfo.getRelFitFontSize();
+				if (fontSize !== null) {
+					return fontSize;
 				}
-				break;
-			case AscFormat.Constr_type_bMarg:
-			case AscFormat.Constr_type_tMarg:
-			case AscFormat.Constr_type_rMarg:
-			case AscFormat.Constr_type_lMarg:
-				break;
-			default:
-				break;
+			}
 		}
-		if (constr.type === AscFormat.Constr_type_primFontSz) {
-			if (constr.refType === AscFormat.Constr_type_none) {
-
-			}
-			const truthNodes = [];
-			const truthRefNodes = [];
-			for (let j = 0; j < nodes.length; j += 1) {
-				const node = nodes[j].getConstraintNode(constr.forName, constr.ptType.getVal());
-				if (node) {
-					truthNodes.push(node);
+		return null;
+	};
+	TextConstr.prototype.getMaxFontSize = function () {
+		const noneFontSize = this.getFontSizeFromInfo(this.op[AscFormat.Constr_op_none]);
+		const lteFontSize = this.getFontSizeFromInfo(this.op[AscFormat.Constr_op_lte]);
+		if (noneFontSize !== null && lteFontSize !== null) {
+			return noneFontSize < lteFontSize ? noneFontSize : lteFontSize;
+		} else if (lteFontSize !== null) {
+			return lteFontSize;
+		} else if (noneFontSize !== null) {
+			return noneFontSize;
+		}
+		return 65;
+	};
+	TextConstr.prototype.getMinFontSize = function () {
+		if (this.rule) {
+			return this.rule.val;
+		}
+		return 5;
+	};
+	function checkTextConstraints(constr, refNodes, nodes, parentNode) {
+		for (let i = 0; i < nodes.length; i += 1) {
+			const node = nodes[i].getConstraintNode(constr.forName, constr.ptType.getVal());
+			if (node) {
+				if (!node.textConstraints[constr.type]) {
+					node.textConstraints[constr.type] = new TextConstr();
 				}
-			}
-			for (let j = 0; j < refNodes.length; j += 1) {
-				const node = refNodes[j].getConstraintNode(constr.forName, constr.ptType.getVal());
-				if (node) {
-					truthRefNodes.push(node);
-				}
+				const calcConstr = node.textConstraints[constr.type];
+				calcConstr.op[constr.op] = {constr: constr, refNodes: refNodes};
 			}
 		}
 	}

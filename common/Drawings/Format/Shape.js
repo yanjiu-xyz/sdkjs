@@ -4242,23 +4242,43 @@
 					const paddings = {};
 					const pointContent = this.getSmartArtPointContent();
 					const point = pointContent && pointContent[0];
+					const isRecalculateInsets = point.isRecalculateInsets();
 					if (point) {
-						const isRecalculateInsets = point.isRecalculateInsets();
-						if (isRecalculateInsets.Top) {
-							const tInsetPerPt = oBodyPr.tIns / currentFontSize;
-							paddings.Top = tInsetPerPt * fontSize;
-						}
-						if (isRecalculateInsets.Bottom) {
-							const bInsetPerPt = oBodyPr.bIns / currentFontSize;
-							paddings.Bottom = bInsetPerPt * fontSize;
-						}
-						if (isRecalculateInsets.Left) {
-							const lInsetPerPt = oBodyPr.lIns / currentFontSize;
-							paddings.Left = lInsetPerPt * fontSize;
-						}
-						if (isRecalculateInsets.Right) {
-							const rInsetPerPt = oBodyPr.rIns / currentFontSize;
-							paddings.Right = rInsetPerPt * fontSize;
+
+						const smartArt = this.group && this.group.group;
+						if (smartArt && smartArt.isCanGenerateSmartArt()) {
+							const shapeInfo = this.getSmartArtInfo();
+							const marginFactors = shapeInfo.getMarginFactors();
+							const insetPerPt = 1;
+							if (isRecalculateInsets.Top && marginFactors.tMarg !== undefined) {
+								paddings.Top = insetPerPt * marginFactors.tMarg * fontSize;
+							}
+							if (isRecalculateInsets.Bottom && marginFactors.bMarg !== undefined) {
+								paddings.Bottom = insetPerPt * marginFactors.bMarg * fontSize;
+							}
+							if (isRecalculateInsets.Left && marginFactors.lMarg !== undefined) {
+								paddings.Left = insetPerPt * marginFactors.lMarg * fontSize;
+							}
+							if (isRecalculateInsets.Right && marginFactors.rMarg !== undefined) {
+								paddings.Right = insetPerPt * marginFactors.rMarg * fontSize;
+							}
+						} else {
+							if (isRecalculateInsets.Top) {
+									const tInsetPerPt = oBodyPr.tIns / currentFontSize;
+								paddings.Top = tInsetPerPt * fontSize;
+							}
+							if (isRecalculateInsets.Bottom) {
+								const bInsetPerPt = oBodyPr.bIns / currentFontSize;
+								paddings.Bottom = bInsetPerPt * fontSize;
+							}
+							if (isRecalculateInsets.Left) {
+								const lInsetPerPt = oBodyPr.lIns / currentFontSize;
+								paddings.Left = lInsetPerPt * fontSize;
+							}
+							if (isRecalculateInsets.Right) {
+								const rInsetPerPt = oBodyPr.rIns / currentFontSize;
+								paddings.Right = rInsetPerPt * fontSize;
+							}
 						}
 					}
 					// In files layout.xml insets depend on font size.
@@ -4481,10 +4501,10 @@
 			}, this, []);
 		};
 		CShape.prototype.findFitFontSizeForSmartArt = function (bMax) {
-			const oSmartArtInfo = shape.getSmartArtInfo();
-			const nMaxConstrFontSize = AscFormat.isRealNumber(oSmartArtInfo.maxConstrFontSize) ? oSmartArtInfo.maxConstrFontSize : 65;
-			const nMinConstrFontSize = AscFormat.isRealNumber(oSmartArtInfo.minConstrFontSize) ? oSmartArtInfo.minConstrFontSize : 5;
-			return this.findFitFontSize(nMinConstrFontSize, nMaxConstrFontSize, bMax);
+			const oSmartArtInfo = this.getSmartArtInfo();
+			const maxFontSize = oSmartArtInfo.getMaxConstrFontSize();
+			const minFontSize = oSmartArtInfo.getMinConstrFontSize();
+			return this.findFitFontSize(minFontSize, maxFontSize, bMax);
 		};
 
 		CShape.prototype.getShapesForFitText = function () {

@@ -9974,7 +9974,22 @@ Because of this, the display is sometimes not correct.
 
     }
     InitClass(ShapeSmartArtInfo, CBaseFormatObject, AscDFH.historyitem_type_ShapeSmartArtInfo);
-
+		ShapeSmartArtInfo.prototype.getMarginFactors = function () {
+			const res = {};
+			res.bMarg = this.textConstraints[AscFormat.Constr_type_bMarg];
+			res.tMarg = this.textConstraints[AscFormat.Constr_type_tMarg];
+			res.rMarg = this.textConstraints[AscFormat.Constr_type_rMarg];
+			res.lMarg = this.textConstraints[AscFormat.Constr_type_bMarg];
+			return res;
+		};
+		ShapeSmartArtInfo.prototype.getMaxConstrFontSize = function () {
+			const textConstraint = this.textConstraints[AscFormat.Constr_type_primFontSz];
+			return textConstraint ? textConstraint.getMaxFontSize(): 65;
+		};
+	  ShapeSmartArtInfo.prototype.getMinConstrFontSize = function () {
+		  const textConstraint = this.textConstraints[AscFormat.Constr_type_primFontSz];
+		  return textConstraint ? textConstraint.getMinFontSize(): 5;
+	  };
     ShapeSmartArtInfo.prototype.setShapePoint = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ShapeSmartArtInfoShapePoint, this.shapePoint, oPr));
       this.shapePoint = oPr;
@@ -9998,12 +10013,6 @@ Because of this, the display is sometimes not correct.
     ShapeSmartArtInfo.prototype.setMaxFontSize = function (oPr) {
       this.maxFontSize = oPr;
     };
-		ShapeSmartArtInfo.prototype.setMaxConstrFontSize = function (pr) {
-			this.maxConstrFontSize = pr;
-		};
-	  ShapeSmartArtInfo.prototype.setMinConstrFontSize = function (pr) {
-			this.minConstrFontSize = pr;
-	  };
 
     changesFactory[AscDFH.historyitem_SmartArtColorsDef] = CChangeObject;
     changesFactory[AscDFH.historyitem_SmartArtDrawing] = CChangeObject;
