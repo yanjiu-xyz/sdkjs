@@ -8410,7 +8410,11 @@ background-repeat: no-repeat;\
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
 	};
-
+	asc_docs_api.prototype.initCollaborativeEditing = function()
+	{
+		AscCommon.CollaborativeEditing = new AscCommon.SlideCollaborativeEditing();
+	};
+	
 	asc_docs_api.prototype._downloadAs = function(actionType, options, oAdditionalData, dataContainer, downloadType)
 	{
 		var t = this;

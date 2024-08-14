@@ -1729,7 +1729,10 @@
 		this.saveImageMap       = _images;
 		this.FontLoader.LoadDocumentFonts2([]);
 	};
-
+	
+	PDFEditorApi.prototype.initCollaborativeEditing = function() {
+		AscCommon.CollaborativeEditing = new AscPDF.CPDFCollaborativeEditing();
+	};
 	PDFEditorApi.prototype.ChangeReaderMode = function() {};
 	PDFEditorApi.prototype.asc_getSelectedDrawingObjectsCount = function() {
 		return this.WordControl.m_oLogicDocument.GetSelectedDrawingObjectsCount();
