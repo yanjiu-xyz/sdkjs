@@ -7882,6 +7882,25 @@
          this.ln.merge(spPr.ln);
          }  */
 		};
+		CSpPr.prototype.fullMerge = function (spPr) {
+			if (spPr.xfrm != null) {
+				this.xfrm.merge(spPr.xfrm);
+			}
+			if (spPr.geometry !== null) {
+				this.geometry = spPr.geometry.createDuplicate();
+			}
+
+			if (spPr.Fill !== null && spPr.Fill.fill !== null) {
+				this.Fill = spPr.Fill.createDuplicate();
+			}
+
+			if (spPr.ln != null) {
+				if (this.ln == null)
+					this.ln = new CLn();
+
+				this.ln.merge(spPr.ln);
+			}
+		};
 		CSpPr.prototype.setParent = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SpPr_SetParent, this.parent, pr));
 			this.parent = pr;

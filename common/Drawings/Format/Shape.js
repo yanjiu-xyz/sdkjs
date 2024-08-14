@@ -4249,18 +4249,17 @@
 						if (smartArt && smartArt.isCanGenerateSmartArt()) {
 							const shapeInfo = this.getSmartArtInfo();
 							const marginFactors = shapeInfo.getMarginFactors();
-							const insetPerPt = 1;
 							if (isRecalculateInsets.Top && marginFactors.tMarg !== undefined) {
-								paddings.Top = insetPerPt * marginFactors.tMarg * fontSize;
+								paddings.Top = g_dKoef_pt_to_mm * marginFactors.tMarg * fontSize;
 							}
 							if (isRecalculateInsets.Bottom && marginFactors.bMarg !== undefined) {
-								paddings.Bottom = insetPerPt * marginFactors.bMarg * fontSize;
+								paddings.Bottom = g_dKoef_pt_to_mm * marginFactors.bMarg * fontSize;
 							}
 							if (isRecalculateInsets.Left && marginFactors.lMarg !== undefined) {
-								paddings.Left = insetPerPt * marginFactors.lMarg * fontSize;
+								paddings.Left = g_dKoef_pt_to_mm * marginFactors.lMarg * fontSize;
 							}
 							if (isRecalculateInsets.Right && marginFactors.rMarg !== undefined) {
-								paddings.Right = insetPerPt * marginFactors.rMarg * fontSize;
+								paddings.Right = g_dKoef_pt_to_mm * marginFactors.rMarg * fontSize;
 							}
 						} else {
 							if (isRecalculateInsets.Top) {
@@ -4500,15 +4499,33 @@
 				return MAX_FONT_SIZE;
 			}, this, []);
 		};
-		CShape.prototype.findFitFontSizeForSmartArt = function (bMax) {
+		CShape.prototype.findFitFontSizeForSmartArt = function () {
 			const oSmartArtInfo = this.getSmartArtInfo();
 			const maxFontSize = oSmartArtInfo.getMaxConstrFontSize();
 			const minFontSize = oSmartArtInfo.getMinConstrFontSize();
-			return this.findFitFontSize(minFontSize, maxFontSize, bMax);
+			return this.findFitFontSize(minFontSize, maxFontSize);
 		};
 
 		CShape.prototype.getShapesForFitText = function () {
-			return this.isObjectInSmartArt() ? this.group.group.getShapesForFitText(this) : [];
+			if (this.isObjectInSmartArt()) {
+				if (this.group.group.isCanGenerateSmartArt()) {
+					const smartArtInfo = this.getSmartArtInfo();
+					if (smartArtInfo.adaptFontSizeArray) {
+						const res = [];
+						for (let i = 0; i < smartArtInfo.adaptFontSizeArray.length; i++) {
+							const presNode = smartArtInfo.adaptFontSizeArray[i];
+							const editorShape = presNode.getShape().editorShape;
+							if (editorShape) {
+								res.push(editorShape);
+							}
+						}
+						return res;
+					}
+					return [];
+				}
+				return this.group.group.getShapesForFitText(this);
+			}
+			return [];
 		};
 
 		CShape.prototype.isCanFitFontSize = function () {

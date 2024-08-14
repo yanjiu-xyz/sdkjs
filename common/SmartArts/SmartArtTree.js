@@ -769,7 +769,7 @@
 			if (isNeedSetRules) {
 				presNode.setRules(oThis);
 			}
-			presNode.setConstraints(true);
+			presNode.setConstraints(true, oThis);
 		});
 	};
 	SmartArtAlgorithm.prototype.calcConstraints = function () {
@@ -779,7 +779,7 @@
 			if (isNeedSetRules) {
 				presNode.setRules(oThis);
 			}
-			presNode.setConstraints();
+			presNode.setConstraints(false, oThis);
 		});
 	};
 	SmartArtAlgorithm.prototype.cleanRules = function () {
@@ -1831,6 +1831,7 @@
 			const shadowShape = correctShadowShapes[i];
 			const editorShape = shadowShape.getEditorShape();
 			if (editorShape) {
+				shadowShape.editorShape = editorShape;
 				shapes.push(editorShape);
 			}
 		}
@@ -5939,8 +5940,10 @@ function HierarchyAlgorithm() {
 		if (shadowShape.txXfrm) {
 
 		} else {
-			const geometryRect = editorShape.spPr && editorShape.spPr.geometry && editorShape.spPr.geometry.rect;
 			const xfrm = editorShape.spPr.xfrm;
+			const geometry = editorShape.spPr.geometry;
+			geometry.Recalculate(xfrm.extX, xfrm.extY);
+			const geometryRect = geometry.rect;
 			if (geometryRect) {
 				txXfrm.setOffX(geometryRect.l + xfrm.offX);
 				txXfrm.setOffY(geometryRect.t + xfrm.offY);
@@ -5957,8 +5960,58 @@ function HierarchyAlgorithm() {
 		txXfrm.setRot(AscFormat.normalizeRotate(-shadowShape.rot));
 		editorShape.setTxXfrm(txXfrm);
 
+		this.applyTextMargins(editorShape);
 		this.applyHorizontalAlignment(editorShape);
 		this.applyVerticalAlignment(editorShape);
+		this.applyFontRelations(editorShape);
+		this.applyCustomShapeSettings(editorShape);
+	};
+	TextAlgorithm.prototype.applyCustomShapeSettings = function (editorShape) {
+		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
+		const presPoint = shapeSmartArtInfo.shapePoint;
+		const contentPoint = shapeSmartArtInfo.contentPoint[0];
+		const shape = shapeSmartArtInfo.getShape();
+		const spPr = shape.spPr;
+
+		if (contentPoint && contentPoint.spPr) {
+			spPr.fullMerge(contentPoint.spPr);
+		}
+
+		if (presPoint && presPoint.spPr) {
+			spPr.fullMerge(presPoint.spPr);
+		}
+	};
+	TextAlgorithm.prototype.applyFontRelations = function (editorShape) {
+		const node = this.parentNode;
+		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
+		shapeSmartArtInfo.textConstraintRelations = node.textConstraintRelations;
+		shapeSmartArtInfo.textConstraints = node.textConstraints;
+		shapeSmartArtInfo.adaptFontSizeArray = node.adaptFontSizeArray;
+	};
+	TextAlgorithm.prototype.applyTextMargins = function (editorShape) {
+		const node = this.parentNode;
+		const paddings = {};
+		const bMarginValue = node.getConstr(AscFormat.Constr_type_bMarg, true, true);
+		const tMarginValue = node.getConstr(AscFormat.Constr_type_tMarg, true, true);
+		const rMarginValue = node.getConstr(AscFormat.Constr_type_rMarg, true, true);
+		const lMarginValue = node.getConstr(AscFormat.Constr_type_lMarg, true, true);
+		if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined && bMarginValue !== undefined) {
+			paddings.Bottom = bMarginValue;
+		}
+
+		if (node.textConstraints[AscFormat.Constr_type_tMarg] === undefined && tMarginValue !== undefined) {
+			paddings.Top = tMarginValue;
+		}
+
+		if (node.textConstraints[AscFormat.Constr_type_rMarg] === undefined && rMarginValue !== undefined) {
+			paddings.Right = rMarginValue;
+		}
+
+		if (node.textConstraints[AscFormat.Constr_type_lMarg] === undefined && lMarginValue !== undefined) {
+			paddings.Left = lMarginValue;
+		}
+
+		editorShape.setPaddings(paddings, {bNotCopyToPoints: true});
 	};
 	TextAlgorithm.prototype.applyVerticalAlignment = function (editorShape) {
 		const bodyPr = new AscFormat.CBodyPr();
@@ -6068,6 +6121,7 @@ function PresNode(presPoint, contentNode) {
 	this._isTxXfrm = null;
 	this.textConstraints = {};
 	this.textConstraintRelations = [];
+	this.adaptFontSizeArray = null;
 
 	this.cleanRules();
 	this.cleanConstraints();
@@ -6516,24 +6570,16 @@ PresNode.prototype.addChild = function (ch, pos) {
 						this.valRules[rule.type] = rule.val;
 						break;
 					}
+					case AscFormat.Constr_type_primFontSz: {
+						if (!this.textConstraints[AscFormat.Constr_type_primFontSz]) {
+							this.textConstraints[AscFormat.Constr_type_primFontSz] = new TextConstr();
+						}
+						this.textConstraints[AscFormat.Constr_type_primFontSz].rule = rule;
+						break;
+					}
 					default:
 						break;
 				}
-			}
-		}
-	};
-	function FontSizeRelation(nodes, refNodes) {
-		this.nodes = refNodes;
-		this.refNodes = [];
-	}
-	FontSizeManager.prototype.add = function (nodes) {
-		this.refNodeArrays.push(nodes);
-	}
-	FontSizeManager.prototype.updateMaxFontSizes = function (fontSize) {
-		for (let i = 0; i < this.refNodeArrays.length; i += 1) {
-			const refNode = this.refNodeArrays[i];
-			for (let j = 0; j < ref; j += 1) {
-				
 			}
 		}
 	};
@@ -6546,35 +6592,29 @@ PresNode.prototype.addChild = function (ch, pos) {
 		this.rule = null;
 	}
 
-	TextConstr.prototype.getFontSizeFromInfo = function (info) {
+	TextConstr.prototype.getMaxFontSizeFromInfo = function (info) {
 		const constr = info.constr;
-
-		if (constr.refType === AscFormat.Constr_type_none) {
-			return constr.val;
-		} else {
-			const refNodes = info.refNodes;
-			for (let i = 0; i < refNodes.length; i += 1) {
-				const refNode = refNodes[i];
-				const shapeInfo = refNode.getSmartArtShapeInfo();
-				const fontSize = shapeInfo.getRelFitFontSize();
-				if (fontSize !== null) {
-					return fontSize;
+		if (constr) {
+			if (constr.refType === AscFormat.Constr_type_none) {
+				return constr.val;
+			} else {
+				const refNodes = info.refNodes;
+				for (let i = 0; i < refNodes.length; i += 1) {
+					const refNode = refNodes[i];
+					const shapeInfo = refNode.getShape().editorShape.getSmartArtInfo();
+					const fontSize = shapeInfo.getRelFitFontSize();
+					if (fontSize !== null) {
+						return fontSize;
+					}
 				}
 			}
 		}
-		return null;
+		return 65;
 	};
 	TextConstr.prototype.getMaxFontSize = function () {
-		const noneFontSize = this.getFontSizeFromInfo(this.op[AscFormat.Constr_op_none]);
-		const lteFontSize = this.getFontSizeFromInfo(this.op[AscFormat.Constr_op_lte]);
-		if (noneFontSize !== null && lteFontSize !== null) {
-			return noneFontSize < lteFontSize ? noneFontSize : lteFontSize;
-		} else if (lteFontSize !== null) {
-			return lteFontSize;
-		} else if (noneFontSize !== null) {
-			return noneFontSize;
-		}
-		return 65;
+		const noneFontSize = this.getMaxFontSizeFromInfo(this.op[AscFormat.Constr_op_none]);
+		const lteFontSize = this.getMaxFontSizeFromInfo(this.op[AscFormat.Constr_op_lte]);
+		return Math.min(noneFontSize, lteFontSize);
 	};
 	TextConstr.prototype.getMinFontSize = function () {
 		if (this.rule) {
@@ -6582,15 +6622,35 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 		return 5;
 	};
-	function checkTextConstraints(constr, refNodes, nodes, parentNode) {
-		for (let i = 0; i < nodes.length; i += 1) {
+	function checkFontSizeConstraints(constr, refNodes, nodes) {
+		const truthRefNodes = [];
+		const truthNodes = [];
+		for (let i = 0; i < nodes.length; i++) {
 			const node = nodes[i].getConstraintNode(constr.forName, constr.ptType.getVal());
+			if (node) {
+				truthNodes.push(node);
+			}
+		}
+		for (let i = 0; i < refNodes.length; i++) {
+			const node = refNodes[i].getConstraintNode(constr.refForName, constr.refPtType.getVal());
+			if (node) {
+				truthRefNodes.push(node);
+			}
+		}
+		for (let i = 0; i < truthNodes.length; i += 1) {
+			const node = truthNodes[i].getConstraintNode(constr.forName, constr.ptType.getVal());
 			if (node) {
 				if (!node.textConstraints[constr.type]) {
 					node.textConstraints[constr.type] = new TextConstr();
 				}
 				const calcConstr = node.textConstraints[constr.type];
-				calcConstr.op[constr.op] = {constr: constr, refNodes: refNodes};
+				calcConstr.op[constr.op] = {constr: constr, refNodes: truthRefNodes};
+				node.adaptFontSizeArray = truthNodes;
+			}
+		}
+		if (!(constr.for === constr.refFor && constr.forName === constr.refForName && constr.ptType.getVal() === constr.refPtType.getVal()) && constr.refType !== AscFormat.Constr_type_none) {
+			for (let i = 0; i < truthRefNodes.length; i += 1) {
+				truthRefNodes[i].textConstraintRelations.push(truthNodes);
 			}
 		}
 	}
@@ -6625,16 +6685,14 @@ PresNode.prototype.addChild = function (ch, pos) {
 					break;
 				}
 			}
-			switch (constr.type) {
-				case AscFormat.Constr_type_bMarg:
-				case AscFormat.Constr_type_tMarg:
-				case AscFormat.Constr_type_rMarg:
-				case AscFormat.Constr_type_lMarg:
-				case AscFormat.Constr_type_primFontSz:
-					checkTextConstraints(constr, refNodes, nodes);
-					break;
-				default:
-					break;
+			if (isAdapt) {
+				switch (constr.type) {
+					case AscFormat.Constr_type_primFontSz:
+						checkFontSizeConstraints(constr, refNodes, nodes, smartartAlgorithm);
+						break;
+					default:
+						break;
+				}
 			}
 		}
 	}
@@ -6879,9 +6937,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 					break;
 				}
 				break;
-			case AscFormat.Constr_type_primFontSz:
-				if (constr.refType !== AscFormat.Constr_type_none) {
-
+			case AscFormat.Constr_type_bMarg:
+			case AscFormat.Constr_type_tMarg:
+			case AscFormat.Constr_type_rMarg:
+			case AscFormat.Constr_type_lMarg:
+				if (constr.refType === AscFormat.Constr_type_primFontSz) {
+					this.textConstraints[constr.type] = constr.fact;
 				}
 				break;
 			default: {

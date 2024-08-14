@@ -9971,6 +9971,8 @@ Because of this, the display is sometimes not correct.
       this.contentPoint = [];
       this.maxFontSize = null;
 			this.textConstraints = {};
+			this.textConstraintRelations = [];
+			this.adaptFontSizeArray = null;
 
     }
     InitClass(ShapeSmartArtInfo, CBaseFormatObject, AscDFH.historyitem_type_ShapeSmartArtInfo);
@@ -9982,14 +9984,30 @@ Because of this, the display is sometimes not correct.
 			res.lMarg = this.textConstraints[AscFormat.Constr_type_bMarg];
 			return res;
 		};
+		ShapeSmartArtInfo.prototype.getRelFitFontSize = function () {
+			const isNotPlaceholder = this.contentPoint.every(function (point) {
+				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
+			});
+			if (isNotPlaceholder) {
+				if (this.maxFontSize === null) {
+					const oShape = this.parent;
+					this.setMaxFontSize(oShape.findFitFontSizeForSmartArt());
+				}
+				return this.maxFontSize;
+			}
+			return null;
+		};
 		ShapeSmartArtInfo.prototype.getMaxConstrFontSize = function () {
 			const textConstraint = this.textConstraints[AscFormat.Constr_type_primFontSz];
-			return textConstraint ? textConstraint.getMaxFontSize(): 65;
+			return textConstraint ? textConstraint.getMaxFontSize() : 65;
 		};
 	  ShapeSmartArtInfo.prototype.getMinConstrFontSize = function () {
 		  const textConstraint = this.textConstraints[AscFormat.Constr_type_primFontSz];
-		  return textConstraint ? textConstraint.getMinFontSize(): 5;
+		  return textConstraint ? textConstraint.getMinFontSize() : 5;
 	  };
+		ShapeSmartArtInfo.prototype.getShape = function () {
+			return this.parent;
+		};
     ShapeSmartArtInfo.prototype.setShapePoint = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ShapeSmartArtInfoShapePoint, this.shapePoint, oPr));
       this.shapePoint = oPr;
@@ -10011,6 +10029,17 @@ Because of this, the display is sometimes not correct.
       }
     }
     ShapeSmartArtInfo.prototype.setMaxFontSize = function (oPr) {
+			if (this.maxFontSize !== oPr) {
+				for (let i = 0; i < this.textConstraintRelations.length; i++) {
+					const presNodeArray = this.textConstraintRelations[i];
+					if (presNodeArray.length) {
+						const editorShape = presNodeArray[0].getShape().editorShape;
+						if (editorShape) {
+							editorShape.setTruthFontSizeInSmartArt();
+						}
+					}
+				}
+			}
       this.maxFontSize = oPr;
     };
 
