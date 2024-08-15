@@ -1823,7 +1823,7 @@
 	window['AscDFH'].historyitem_type_OForm_FieldMaster      = 2202 << 16;
 	window['AscDFH'].historyitem_type_OForm_Document         = 2203 << 16;
 	window['AscDFH'].historyitem_type_OForm_FieldGroup       = 2204 << 16;
-
+	
 	window['AscDFH'].historyitem_type_PDF_Document			= 2210 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Form				= 2211 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Comment			= 2212 << 16;
@@ -1836,6 +1836,8 @@
 	window['AscDFH'].historyitem_Pdf_Drawing				= 2219 << 16;
 
 
+	window['AscDFH'].historyitem_type_Variant				= 2300 << 16;
+	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4339,7 +4341,7 @@
 	
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в PDF Forms
+	// Типы изменений в PDF Forms 
 	//------------------------------------------------------------------------------------------------------------------
 
 	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
@@ -4350,9 +4352,9 @@
 
 
 	AscDFH.historyitem_Pdf_Pushbutton_Image		= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
-
+	
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в PDF Annots
+	// Типы изменений в PDF Annots 
 	//------------------------------------------------------------------------------------------------------------------
 
 	// Common
@@ -4378,7 +4380,7 @@
 
 	// annot line
 	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Line | 1;
-
+	
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в PDF Text Shape 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4398,6 +4400,18 @@
 	window['AscDFH'].historyitem_PDF_Document_RecognizePage				= window['AscDFH'].historyitem_type_PDF_Document | 6;
 	window['AscDFH'].historyitem_PDF_Document_ChangePosInTree			= window['AscDFH'].historyitem_type_PDF_Document | 7;
 
+
+	AscDFH.historyitem_VariantType = AscDFH.historyitem_type_Variant | 0;
+	AscDFH.historyitem_VariantStrContent = AscDFH.historyitem_type_Variant | 1;
+	AscDFH.historyitem_VariantIContent = AscDFH.historyitem_type_Variant | 2;
+	AscDFH.historyitem_VariantUContent = AscDFH.historyitem_type_Variant | 3;
+	AscDFH.historyitem_VariantDContent = AscDFH.historyitem_type_Variant | 4;
+	AscDFH.historyitem_VariantBContent = AscDFH.historyitem_type_Variant | 5;
+	AscDFH.historyitem_VariantVariant = AscDFH.historyitem_type_Variant | 6;
+	AscDFH.historyitem_VariantVector = AscDFH.historyitem_type_Variant | 7;
+	AscDFH.historyitem_VariantArray	= AscDFH.historyitem_type_Variant | 8;
+	AscDFH.historyitem_VariantVStream = AscDFH.historyitem_type_Variant | 9;
+	AscDFH.historyitem_VariantParent = AscDFH.historyitem_type_Variant | 10;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

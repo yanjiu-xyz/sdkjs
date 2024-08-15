@@ -70,6 +70,7 @@
 		var CChangesDrawingsContentLong = AscDFH.CChangesDrawingsContentLong;
 		var CChangesDrawingsContentLongMap = AscDFH.CChangesDrawingsContentLongMap;
 		var CChangesDrawingsContent = AscDFH.CChangesDrawingsContent;
+		var CChangesDrawingsDouble2 = AscDFH.CChangesDrawingsDouble2;
 
 
 
@@ -800,6 +801,32 @@
 		AscDFH.changesFactory[AscDFH.historyitem_HF_SetFtr] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_HF_SetHdr] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_HF_SetSldNum] = CChangesDrawingsBool;
+
+
+		AscDFH.changesFactory[AscDFH.historyitem_VariantParent] = CChangesDrawingsObject;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantParent] = CChangesDrawingsObject;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantStrContent] = CChangesDrawingsString;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantIContent] = CChangesDrawingsLong;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantUContent] = CChangesDrawingsLong;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantDContent] = CChangesDrawingsDouble2;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantBContent] = CChangesDrawingsBool;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantVariant] = CChangesDrawingsObject;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantVector] = CChangesDrawingsObject;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantArray] = CChangesDrawingsObject;
+		AscDFH.changesFactory[AscDFH.historyitem_VariantVStream] = CChangesDrawingsObject;
+
+		drawingsChangesMap[AscDFH.historyitem_VariantParent] = function(oClass, value) {oClass.parent = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantParent] = function(oClass, value) {oClass.type = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantStrContent] = function(oClass, value) {oClass.strContent = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantIContent] = function(oClass, value) {oClass.iContent = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantUContent] = function(oClass, value) {oClass.uContent = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantDContent] = function(oClass, value) {oClass.dContent = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantBContent] = function(oClass, value) {oClass.bContent = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantVariant] = function(oClass, value) {oClass.variant = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantVector] = function(oClass, value) {oClass.vector = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantArray] = function(oClass, value) {oClass.array = value;};
+		drawingsChangesMap[AscDFH.historyitem_VariantVStream] = function(oClass, value) {oClass.vStream = value;};
+
 
 // COLOR -----------------------
 		/*
@@ -12900,10 +12927,14 @@
 			newProperty.content = variant;
 			this.properties.push(newProperty);
 		};
+		CCustomProperties.prototype.getAllProperties = function () {
+			return this.properties;
+		};
 
 		window['AscCommon'].CCustomProperties = CCustomProperties;
 		prot = CCustomProperties.prototype;
 		prot["add"] = prot.add;
+		prot["getAllProperties"] = prot.getAllProperties;
 
 		function CCustomProperty() {
 			CBaseNoIdObject.call(this);
@@ -12982,7 +13013,45 @@
 
 			s.WriteRecord4(0, this.content);
 		};
-
+		CCustomProperty.prototype.setContent = function (v) {
+			this.content = v;
+		};
+		CCustomProperty.prototype.asc_getTitle = function() {
+			return this.name;
+		};
+		CCustomProperty.prototype.asc_getType = function() {
+			if(this.content) {
+				return this.content.getVariantType();
+			}
+			return c_oVariantTypes.vtEmpty;
+		};
+		CCustomProperty.prototype.asc_getValue = function() {
+			if(this.content) {
+				return this.content.getValue();
+			}
+			return null;
+		};
+		CCustomProperty.prototype.asc_setTitle = function(v) {
+			this.name = v;
+		};
+		CCustomProperty.prototype.asc_setType = function(v) {
+			if(!this.content) {
+				this.setContent(new CVariant(this));
+			}
+			this.content.setType(v);
+		};
+		CCustomProperty.prototype.asc_getValue = function() {
+			if(this.content) {
+				return this.content.getValue();
+			}
+			return null;
+		};
+		CCustomProperty.prototype["asc_getTitle"] = CCustomProperty.prototype.asc_getTitle;
+		CCustomProperty.prototype["asc_getType"] = CCustomProperty.prototype.asc_getType;
+		CCustomProperty.prototype["asc_getValue"] = CCustomProperty.prototype.asc_getValue;
+		CCustomProperty.prototype["asc_setTitle"] = CCustomProperty.prototype.asc_getTitle;
+		CCustomProperty.prototype["asc_setType"] = CCustomProperty.prototype.asc_getType;
+		CCustomProperty.prototype["asc_setValue"] = CCustomProperty.prototype.asc_getValue;
 
 		function CVariantVector() {
 			CBaseNoIdObject.call(this);
@@ -13201,7 +13270,7 @@
 		};
 
 		function CVariant(parent) {
-			CBaseNoIdObject.call(this);
+			CBaseObject.call(this);
 			this.type = null;
 			this.strContent = null;
 			this.iContent = null;
@@ -13212,11 +13281,9 @@
 			this.vector = null;
 			this.array = null;
 			this.vStream = null;
-
 			this.parent = parent;
 		}
-
-		InitClass(CVariant, CBaseNoIdObject, 0);
+		InitClass(CVariant, CBaseObject, AscDFH.historyitem_type_Variant);
 		CVariant.prototype.fromStream = function (s) {
 			var _type;
 			var _len = s.GetULong();
@@ -13311,21 +13378,66 @@
 			s.WriteRecord4(7, this.array);
 			s.WriteRecord4(8, this.vStream);
 		};
+		CVariant.prototype.setParent = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantParent, this.parent, pr));
+			this.parent = pr;
+		};
+		CVariant.prototype.setType = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantParent, this.type, pr));
+			this.type = pr;
+		};
+		CVariant.prototype.setStrContent = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_VariantStrContent, this.strContent, pr));
+			this.strContent = pr;
+		};
+		CVariant.prototype.setIContent = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_VariantIContent, this.iContent, pr));
+			this.iContent = pr;
+		};
+		CVariant.prototype.setUContent = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_VariantUContent, this.uContent, pr));
+			this.uContent = pr;
+		};
+		CVariant.prototype.setDContent = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_VariantDContent, this.dContent, pr));
+			this.dContent = pr;
+		};
+		CVariant.prototype.setBContent = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_VariantBContent, this.bContent, pr));
+			this.bContent = pr;
+		};
+		CVariant.prototype.setVariant = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantVariant, this.variant, pr));
+			this.variant = pr;
+		};
+		CVariant.prototype.setVector = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantVector, this.vector, pr));
+			this.vector = pr;
+		};
+		CVariant.prototype.setArray = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantArray, this.array, pr));
+			this.array = pr;
+		};
+		CVariant.prototype.setVStream = function(pr) {
+			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantVStream, this.vStream, pr));
+			this.vStream = pr;
+		};
+
 		CVariant.prototype.setText = function (val) {
-			this.type = c_oVariantTypes.vtLpwstr;
-			this.strContent = val;
+			this.setType(c_oVariantTypes.vtLpwstr);
+			this.setStrContent(val);
 		};
 		CVariant.prototype.setNumber = function (val) {
-			this.type = c_oVariantTypes.vtI4;
-			this.iContent = val;
+			this.setType(c_oVariantTypes.vtI4);
+			this.setIContent(val);
 		};
 		CVariant.prototype.setDate = function (val) {
-			this.type = c_oVariantTypes.vtFiletime;
-			this.strContent = val.toISOString().slice(0, 19) + 'Z';
+			this.setDate(c_oVariantTypes.vtFiletime);
+			this.setStrContent(val.toISOString().slice(0, 19) + 'Z');
 		};
 		CVariant.prototype.setBool = function (val) {
-			this.type = c_oVariantTypes.vtBool;
-			this.bContent = val;
+			this.setType(c_oVariantTypes.vtBool);
+			this.setBContent(val);
 		};
 		CVariant.prototype.typeStrToEnum = function (name) {
 			switch (name) {
@@ -13538,6 +13650,58 @@
 		CVariant.prototype.getVariantType = function () {
 			return AscFormat.isRealNumber(this.type) ? this.type : c_oVariantTypes.vtEmpty;
 		};
+		CVariant.prototype.getValue = function () {
+			switch (this.type) {
+				case c_oVariantTypes.vtClsid:
+				case c_oVariantTypes.vtOStorage:
+				case c_oVariantTypes.vtStorage:
+				case c_oVariantTypes.vtOStream:
+				case c_oVariantTypes.vtStream:
+				case c_oVariantTypes.vtError:
+				case c_oVariantTypes.vtCy:
+				case c_oVariantTypes.vtBstr:
+				case c_oVariantTypes.vtDecimal:
+				case c_oVariantTypes.vtEmpty:
+				case c_oVariantTypes.vtVariant:
+				case c_oVariantTypes.vtVector:
+				case c_oVariantTypes.vtArray:
+				case c_oVariantTypes.vtVStream:
+				case c_oVariantTypes.vtBlob:
+				case c_oVariantTypes.vtOBlob:
+				case c_oVariantTypes.vtNull: {
+					return null;
+				}
+				case c_oVariantTypes.vtI2:
+				case c_oVariantTypes.vtI4:
+				case c_oVariantTypes.vtI8:
+				case c_oVariantTypes.vtInt:
+				case c_oVariantTypes.vtI1: {
+					return this.iContent;
+				}
+				case c_oVariantTypes.vtUint:
+				case c_oVariantTypes.vtUi8:
+				case c_oVariantTypes.vtUi4:
+				case c_oVariantTypes.vtUi2:
+				case c_oVariantTypes.vtUi1: {
+					return this.uContent;
+				}
+				case c_oVariantTypes.vtR8:
+				case c_oVariantTypes.vtR4: {
+					return this.dContent;
+				}
+				case c_oVariantTypes.vtLpwstr:
+				case c_oVariantTypes.vtLpstr: {
+					return this.strContent;
+				}
+				case c_oVariantTypes.vtDate:
+				case c_oVariantTypes.vtFiletime: {
+					return new Date(this.strContent);
+				}
+				case c_oVariantTypes.vtBool: {
+					return this.bContent;
+				}
+			}
+		};
 		window['AscCommon'].CVariant = CVariant;
 
 		prot = CVariant.prototype;
@@ -13585,7 +13749,41 @@
 		};
 
 		window['AscCommon'].c_oVariantTypes = c_oVariantTypes;
-
+		window['AscCommon']["c_oVariantTypes"] = c_oVariantTypes;
+		c_oVariantTypes["vtEmpty"] = c_oVariantTypes.vtEmpty;
+		c_oVariantTypes["vtNull"] = c_oVariantTypes.vtNull;
+		c_oVariantTypes["vtVariant"] = c_oVariantTypes.vtVariant;
+		c_oVariantTypes["vtVector"] = c_oVariantTypes.vtVector;
+		c_oVariantTypes["vtArray"] = c_oVariantTypes.vtArray;
+		c_oVariantTypes["vtVStream"] = c_oVariantTypes.vtVStream;
+		c_oVariantTypes["vtBlob"] = c_oVariantTypes.vtBlob;
+		c_oVariantTypes["vtOBlob"] = c_oVariantTypes.vtOBlob;
+		c_oVariantTypes["vtI1"] = c_oVariantTypes.vtI1;
+		c_oVariantTypes["vtI2"] = c_oVariantTypes.vtI2;
+		c_oVariantTypes["vtI4"] = c_oVariantTypes.vtI4;
+		c_oVariantTypes["vtI8"] = c_oVariantTypes.vtI8;
+		c_oVariantTypes["vtInt"] = c_oVariantTypes.vtInt;
+		c_oVariantTypes["vtUi1"] = c_oVariantTypes.vtUi1;
+		c_oVariantTypes["vtUi2"] = c_oVariantTypes.vtUi2;
+		c_oVariantTypes["vtUi4"] = c_oVariantTypes.vtUi4;
+		c_oVariantTypes["vtUi8"] = c_oVariantTypes.vtUi8;
+		c_oVariantTypes["vtUint"] = c_oVariantTypes.vtUint;
+		c_oVariantTypes["vtR4"] = c_oVariantTypes.vtR4;
+		c_oVariantTypes["vtR8"] = c_oVariantTypes.vtR8;
+		c_oVariantTypes["vtDecimal"] = c_oVariantTypes.vtDecimal;
+		c_oVariantTypes["vtLpstr"] = c_oVariantTypes.vtLpstr;
+		c_oVariantTypes["vtLpwstr"] = c_oVariantTypes.vtLpwstr;
+		c_oVariantTypes["vtBstr"] = c_oVariantTypes.vtBstr;
+		c_oVariantTypes["vtDate"] = c_oVariantTypes.vtDate;
+		c_oVariantTypes["vtFiletime"] = c_oVariantTypes.vtFiletime;
+		c_oVariantTypes["vtBool"] = c_oVariantTypes.vtBool;
+		c_oVariantTypes["vtCy"] = c_oVariantTypes.vtCy;
+		c_oVariantTypes["vtError"] = c_oVariantTypes.vtError;
+		c_oVariantTypes["vtStream"] = c_oVariantTypes.vtStream;
+		c_oVariantTypes["vtOStream"] = c_oVariantTypes.vtOStream;
+		c_oVariantTypes["vtStorage"] = c_oVariantTypes.vtStorage;
+		c_oVariantTypes["vtOStorage"] = c_oVariantTypes.vtOStorage;
+		c_oVariantTypes["vtClsid"] = c_oVariantTypes.vtClsid;
 
 		function CPres() {
 			CBaseNoIdObject.call(this);
