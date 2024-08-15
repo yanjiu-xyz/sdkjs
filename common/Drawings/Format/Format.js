@@ -12857,11 +12857,11 @@
 		prot["asc_getPages"] = prot.asc_getPages;
 
 		function CCustomProperties() {
-			CBaseNoIdObject.call(this);
+			CBaseObject.call(this);
 			this.properties = [];
 		}
 
-		InitClass(CCustomProperties, CBaseNoIdObject, 0);
+		InitClass(CCustomProperties, CBaseObject, AscDFH.historyitem_type_CustomProperties);
 		CCustomProperties.prototype.fromStream = function (s) {
 			var _type = s.GetUChar();
 			var _len = s.GetULong();
@@ -12925,16 +12925,37 @@
 			newProperty.name = name;
 			newProperty.linkTarget = opt_linkTarget || null;
 			newProperty.content = variant;
-			this.properties.push(newProperty);
+			this.addProperty(newProperty);
 		};
 		CCustomProperties.prototype.getAllProperties = function () {
 			return this.properties;
+		};
+		
+		CCustomProperties.prototype.addProperty = function (idx, pr) {
+			let nInsertIdx = Math.min(this.properties.length, Math.max(0, idx));
+			AscCommon.History.Add(new CChangesDrawingsContentNoId(this, AscDFH.historyitem_CustomPropertiesAddProperty, nInsertIdx, [pr], true));
+			this.properties.splice(nInsertIdx, 0, pr);
+		};
+		CCustomProperties.prototype.removeProperty = function (idx) {
+			if(idx < 0 || idx >= this.properties.length)
+				return;
+			let aDeleteElems = this.properties.splice(idx, 1);
+			AscCommon.History.Add(new CChangesDrawingsContentNoId(this, AscDFH.historyitem_CustomPropertiesAddProperty, idx, aDeleteElems, false));
+		};
+		CCustomProperties.prototype.modifyProperty = function (idx, pr) {
+			if(idx < 0 || idx >= this.properties.length)
+				return;
+			this.removeProperty(idx);
+			this.addProperty(idx, pr);
 		};
 
 		window['AscCommon'].CCustomProperties = CCustomProperties;
 		prot = CCustomProperties.prototype;
 		prot["add"] = prot.add;
 		prot["getAllProperties"] = prot.getAllProperties;
+		prot["addProperty"] = prot.addProperty;
+		prot["removeProperty"] = prot.removeProperty;
+		prot["modifyProperty"] = prot.modifyProperty;
 
 		function CCustomProperty() {
 			CBaseNoIdObject.call(this);

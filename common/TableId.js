@@ -462,6 +462,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]           = AscFormat.CGraphicFrame;
 
 
+		this.m_oFactoryClass[historyitem_type_CustomProperties]              = AscCommon.CCustomProperties;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Variant]                = AscCommon.CVariant;
 
 
