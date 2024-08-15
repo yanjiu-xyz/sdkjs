@@ -13040,11 +13040,11 @@
 			}
 			this.content.setType(v);
 		};
-		CCustomProperty.prototype.asc_getValue = function() {
-			if(this.content) {
-				return this.content.getValue();
+		CCustomProperty.prototype.asc_setValue = function() {
+			if(!this.content) {
+				this.setContent(new CVariant(this));
 			}
-			return null;
+			this.content.setValue(v);
 		};
 		CCustomProperty.prototype["asc_getTitle"] = CCustomProperty.prototype.asc_getTitle;
 		CCustomProperty.prototype["asc_getType"] = CCustomProperty.prototype.asc_getType;
@@ -13422,7 +13422,6 @@
 			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantVStream, this.vStream, pr));
 			this.vStream = pr;
 		};
-
 		CVariant.prototype.setText = function (val) {
 			this.setType(c_oVariantTypes.vtLpwstr);
 			this.setStrContent(val);
@@ -13699,6 +13698,64 @@
 				}
 				case c_oVariantTypes.vtBool: {
 					return this.bContent;
+				}
+			}
+		};
+		CVariant.prototype.setValue = function(v) {
+			switch (this.type) {
+				case c_oVariantTypes.vtClsid:
+				case c_oVariantTypes.vtOStorage:
+				case c_oVariantTypes.vtStorage:
+				case c_oVariantTypes.vtOStream:
+				case c_oVariantTypes.vtStream:
+				case c_oVariantTypes.vtError:
+				case c_oVariantTypes.vtCy:
+				case c_oVariantTypes.vtBstr:
+				case c_oVariantTypes.vtDecimal:
+				case c_oVariantTypes.vtEmpty:
+				case c_oVariantTypes.vtVariant:
+				case c_oVariantTypes.vtVector:
+				case c_oVariantTypes.vtArray:
+				case c_oVariantTypes.vtVStream:
+				case c_oVariantTypes.vtBlob:
+				case c_oVariantTypes.vtOBlob:
+				case c_oVariantTypes.vtNull: {
+					break;
+				}
+				case c_oVariantTypes.vtI2:
+				case c_oVariantTypes.vtI4:
+				case c_oVariantTypes.vtI8:
+				case c_oVariantTypes.vtInt:
+				case c_oVariantTypes.vtI1: {
+					this.setIContent(v);
+					break;
+				}
+				case c_oVariantTypes.vtUint:
+				case c_oVariantTypes.vtUi8:
+				case c_oVariantTypes.vtUi4:
+				case c_oVariantTypes.vtUi2:
+				case c_oVariantTypes.vtUi1: {
+					this.setUContent(v);
+					break;
+				}
+				case c_oVariantTypes.vtR8:
+				case c_oVariantTypes.vtR4: {
+					this.setDContent(v);
+					break;
+				}
+				case c_oVariantTypes.vtLpwstr:
+				case c_oVariantTypes.vtLpstr: {
+					this.setStrContent(v);
+					break;
+				}
+				case c_oVariantTypes.vtDate:
+				case c_oVariantTypes.vtFiletime: {
+					this.setStrContent(val.toISOString().slice(0, 19) + 'Z');
+					break;
+				}
+				case c_oVariantTypes.vtBool: {
+					this.setBContent(v);
+					break;
 				}
 			}
 		};
