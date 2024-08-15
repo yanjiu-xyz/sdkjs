@@ -5088,6 +5088,10 @@
 			window.g_asc_plugins.onUpdateOptions();
 	};
 
+	baseEditorsApi.prototype.asc_getCustomProperties = function() {
+		return null;
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -5168,5 +5172,7 @@
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
 	prot["asc_resetPassword"] = prot.asc_resetPassword;
+
+	prot["asc_getCustomProperties"] = prot.asc_getCustomProperties;
 
 })(window);

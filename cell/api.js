@@ -9461,8 +9461,12 @@ var editor;
 
 
 
-
-
+	spreadsheet_api.prototype.asc_getCustomProperties = function() {
+		let oWBModel = this.wbModel;
+		if(!oWBModel)
+			return null;
+		return oWBModel.CustomProperties;
+	};
 
   /*
    * Export
@@ -10061,7 +10065,9 @@ var editor;
   prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
   prot["asc_isSupportCopySheetsBetweenBooks"]= prot.asc_isSupportCopySheetsBetweenBooks;
 
-
+  
+  prot["asc_getCustomProperties"]= prot.asc_getCustomProperties;
+  
 
 
 })(window);

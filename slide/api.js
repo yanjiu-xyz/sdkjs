@@ -9299,6 +9299,14 @@ background-repeat: no-repeat;\
 	};
 
 
+	
+	asc_docs_api.prototype.asc_getCustomProperties = function() {
+		let oPresentation = this.private_GetLogicDocument();
+		if(!oPresentation)
+			return null;
+		return oPresentation.CustomProperties;
+	};
+	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
@@ -9860,7 +9868,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_CanDeleteMaster"] = asc_docs_api.prototype.asc_CanDeleteMaster;
 	asc_docs_api.prototype["asc_CanDeleteLayout"] = asc_docs_api.prototype.asc_CanDeleteLayout;
 
-
+	asc_docs_api.prototype["asc_getCustomProperties"] = asc_docs_api.prototype.asc_getCustomProperties;
+	
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;
 	asc_CCommentData.prototype['asc_getText']         = asc_CCommentData.prototype.asc_getText;
 	asc_CCommentData.prototype['asc_putText']         = asc_CCommentData.prototype.asc_putText;

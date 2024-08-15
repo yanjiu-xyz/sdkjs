@@ -14082,6 +14082,13 @@ background-repeat: no-repeat;\
 		
 		AscCommon.CollaborativeEditing.CoHistory.UndoDeletedTextRecovery();
 	};
+	asc_docs_api.prototype.asc_getCustomProperties = function()
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return null;
+		return oLogicDocument.CustomProperties;
+	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
@@ -14902,6 +14909,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_hideDeletedTextInVersionHistory"]     = asc_docs_api.prototype.asc_hideDeletedTextInVersionHistory;
 
 	asc_docs_api.prototype["asc_getCoHistory"] = asc_docs_api.prototype.asc_getCoHistory;
+
+	asc_docs_api.prototype["asc_getCustomProperties"] = asc_docs_api.prototype.asc_getCustomProperties;
 
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;
