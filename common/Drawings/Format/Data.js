@@ -9988,14 +9988,7 @@ Because of this, the display is sometimes not correct.
 			const isNotPlaceholder = this.contentPoint.every(function (point) {
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
 			});
-			if (isNotPlaceholder) {
-				if (this.maxFontSize === null) {
-					const oShape = this.parent;
-					this.setMaxFontSize(oShape.findFitFontSizeForSmartArt());
-				}
-				return this.maxFontSize;
-			}
-			return null;
+			return isNotPlaceholder ? this.parent.getFirstFontSize() : null;
 		};
 		ShapeSmartArtInfo.prototype.getMaxConstrFontSize = function () {
 			const textConstraint = this.textConstraints[AscFormat.Constr_type_primFontSz];
@@ -10028,20 +10021,19 @@ Because of this, the display is sometimes not correct.
         nIdx === this.contentPoint.length - 1 ? this.contentPoint.pop() : this.contentPoint.splice(nIdx, 1);
       }
     }
-    ShapeSmartArtInfo.prototype.setMaxFontSize = function (oPr) {
-			if (this.maxFontSize !== oPr) {
-				for (let i = 0; i < this.textConstraintRelations.length; i++) {
-					const presNodeArray = this.textConstraintRelations[i];
-					if (presNodeArray.length) {
-						const editorShape = presNodeArray[0].getShape().editorShape;
-						if (editorShape) {
-							editorShape.setTruthFontSizeInSmartArt();
-						}
-					}
-				}
-			}
-      this.maxFontSize = oPr;
+    ShapeSmartArtInfo.prototype.setMaxFontSize = function (nPr) {
+      this.maxFontSize = nPr;
     };
+	  ShapeSmartArtInfo.prototype.collectTextConstraintRelations = function (array) {
+			array = array || [];
+		  for (let i = 0; i < this.textConstraintRelations.length; i += 1) {
+			  const presNodeArray = this.textConstraintRelations[i];
+			  if (!array.includes(presNodeArray)) {
+				  array.push(presNodeArray);
+			  }
+		  }
+			return array;
+	  };
 
     changesFactory[AscDFH.historyitem_SmartArtColorsDef] = CChangeObject;
     changesFactory[AscDFH.historyitem_SmartArtDrawing] = CChangeObject;

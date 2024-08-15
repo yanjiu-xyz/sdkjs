@@ -4492,6 +4492,10 @@
 						}
 						averageAmount = Math.floor((a + b) / 2);
 					}
+					this.setFontSizeInSmartArt(scalesForSmartArt[averageAmount + 1]);
+					if (!this.compareWidthOfBoundsTextInSmartArt(bMax) && !this.compareHeightOfBoundsTextInSmartArt()) {
+						averageAmount += 1;
+					}
 					this.setFontSizeInSmartArt(nOldFontSize);
 					this.recalculateContent();
 					return scalesForSmartArt[averageAmount];
@@ -4572,11 +4576,28 @@
 					}
 				}
 			}
+			const adaptRelationArrays = [];
 			for (let i = 0; i < arrFitText.length; i += 1) {
 				const oShape = arrFitText[i];
 				const nCurrentFontSize = oShape.getFirstFontSize();
+				const smartArtInfo = oShape.getSmartArtInfo();
 				if (nCurrentFontSize !== nFitFontSize) {
 					oShape.setFontSizeInSmartArt(nFitFontSize, true);
+				}
+
+				smartArtInfo.collectTextConstraintRelations(adaptRelationArrays);
+			}
+
+			for (let i = 0; i < adaptRelationArrays.length; i += 1) {
+				const presNodeArray = adaptRelationArrays[i];
+				if (presNodeArray.length) {
+					const editorShape = presNodeArray[0].getShape().editorShape;
+					if (editorShape) {
+						const smartArtInfo = editorShape.getSmartArtInfo();
+						if (AscFormat.isRealNumber(smartArtInfo.maxFontSize)) {
+							editorShape.setTruthFontSizeInSmartArt(true);
+						}
+					}
 				}
 			}
 
@@ -4597,15 +4618,30 @@
 				}
 			}
 		}
-		CShape.prototype.setTruthFontSizeInSmartArt = function () {
-			if (!this.isCanFitFontSize()) {
-				return;
+		CShape.prototype.setTruthFontSizeInSmartArt = function (updateAllMaxFontSize) {
+			let arrShapes;
+			if (updateAllMaxFontSize) {
+				arrShapes = this.getShapesForFitText();
+				for (let i = 0; i < arrShapes.length; i += 1) {
+					const shape = arrShapes[i];
+					if (shape.isCanFitFontSize()) {
+						const oSmartArtInfo = shape.getSmartArtInfo();
+						if (oSmartArtInfo) {
+							oSmartArtInfo.setMaxFontSize(shape.findFitFontSizeForSmartArt());
+						}
+					}
+				}
+			} else {
+				if (!this.isCanFitFontSize()) {
+					return;
+				}
+				arrShapes = this.getShapesForFitText();
+				const oSmartArtInfo = this.getSmartArtInfo();
+				if (oSmartArtInfo) {
+					oSmartArtInfo.setMaxFontSize(this.findFitFontSizeForSmartArt());
+				}
 			}
-			const oSmartArtInfo = this.getSmartArtInfo();
-			if (oSmartArtInfo) {
-				oSmartArtInfo.setMaxFontSize(this.findFitFontSizeForSmartArt());
-			}
-			const arrShapes = this.getShapesForFitText();
+
 			fitSmartArtShapes(arrShapes);
 		};
 
@@ -5374,7 +5410,7 @@
 				this.isPlaceholder && this.isPlaceholder()) {
 				bMasterPh = true;
 			}
-			if ((!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && (this.isEmptyPlaceholder() || bMasterPh) && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)
+			if ((!(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) || (!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && (this.isEmptyPlaceholder() || bMasterPh) && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)
 				|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder(graphics) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)) {
 					var drawingObjects = this.getDrawingObjectsController();
 					if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (Asc.editor.isPdfEditor() || !drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {

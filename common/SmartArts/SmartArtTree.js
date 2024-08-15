@@ -36,7 +36,7 @@
 	const IS_DEBUG_DRAWING = true;
 	const IS_ADD_HTML = false;
 	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = false;
-	AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN = false;
+	AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN = true;
 
 	const LayoutNode = AscFormat.LayoutNode;
 	const Choose = AscFormat.Choose;
@@ -1651,9 +1651,8 @@
 			}
 		}
 
-		if (shapeSmartArtInfo.contentPoint.length) {
-			this.applyTextSettings(editorShape);
-		}
+		this.applyTextSettings(editorShape);
+		this.applyShapeSettings(editorShape);
 		if (this.fill) {
 			editorShape.spPr.setFill(this.fill);
 		}
@@ -1665,6 +1664,21 @@
 	ShadowShape.prototype.applyTextSettings = function (editorShape) {
 		const algorithm = this.node.algorithm;
 		algorithm.applyTextSettings(editorShape);
+	};
+	ShadowShape.prototype.applyShapeSettings = function (editorShape) {
+		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
+		const presPoint = shapeSmartArtInfo.shapePoint;
+		const contentPoint = shapeSmartArtInfo.contentPoint[0];
+		const shape = shapeSmartArtInfo.getShape();
+		const spPr = shape.spPr;
+
+		if (contentPoint && contentPoint.spPr) {
+			spPr.fullMerge(contentPoint.spPr);
+		}
+
+		if (presPoint && presPoint.spPr) {
+			spPr.fullMerge(presPoint.spPr);
+		}
 	};
 
 	ShadowShape.prototype.getEditorShapeType = function () {
@@ -5935,52 +5949,53 @@ function HierarchyAlgorithm() {
 		}
 	};
 	TextAlgorithm.prototype.applyTextSettings = function (editorShape) {
-		const shadowShape = this.parentNode.getShape();
-		const txXfrm = new AscFormat.CXfrm();
-		if (shadowShape.txXfrm) {
+		const smartArtInfo = editorShape.getSmartArtInfo();
+		if (smartArtInfo.contentPoint.length) {
+			const shadowShape = this.parentNode.getShape();
+			const txXfrm = new AscFormat.CXfrm();
+			txXfrm.setRot(AscFormat.normalizeRotate(-shadowShape.rot));
 
-		} else {
-			const xfrm = editorShape.spPr.xfrm;
-			const geometry = editorShape.spPr.geometry;
-			geometry.Recalculate(xfrm.extX, xfrm.extY);
-			const geometryRect = geometry.rect;
-			if (geometryRect) {
-				txXfrm.setOffX(geometryRect.l + xfrm.offX);
-				txXfrm.setOffY(geometryRect.t + xfrm.offY);
-				txXfrm.setExtX(geometryRect.r - geometryRect.l);
-				txXfrm.setExtY(geometryRect.b - geometryRect.t);
+			if (shadowShape.txXfrm) {
+
 			} else {
-				txXfrm.setOffX(xfrm.offX);
-				txXfrm.setOffY(xfrm.offY);
-				txXfrm.setExtX(xfrm.extX);
-				txXfrm.setExtY(xfrm.extY);
+				const xfrm = editorShape.spPr.xfrm;
+				const geometry = editorShape.spPr.geometry;
+				geometry.Recalculate(xfrm.extX, xfrm.extY);
+				const geometryRect = geometry.rect;
+				let extX;
+				let extY;
+				let offX;
+				let offY;
+				if (geometryRect) {
+					offX = geometryRect.l + xfrm.offX;
+					offY = geometryRect.t + xfrm.offY;
+					extX = geometryRect.r - geometryRect.l;
+					extY = geometryRect.b - geometryRect.t;
+				} else {
+					offX = xfrm.offX;
+					offY = xfrm.offY;
+					extX = xfrm.extX;
+					extY = xfrm.extY;
+				}
+				const newSizes = AscFormat.fGetMaxInscribedRectangle(extX, extY, txXfrm.rot);
+				offX += (extX - newSizes.width) / 2;
+				offY += (extY - newSizes.height) / 2;
+				txXfrm.setOffX(offX);
+				txXfrm.setOffY(offY);
+				txXfrm.setExtX(newSizes.width);
+				txXfrm.setExtY(newSizes.height);
 			}
+
+			editorShape.setTxXfrm(txXfrm);
+
+			this.applyTextMargins(editorShape);
+			this.applyHorizontalAlignment(editorShape);
+			this.applyVerticalAlignment(editorShape);
 		}
 
-		txXfrm.setRot(AscFormat.normalizeRotate(-shadowShape.rot));
-		editorShape.setTxXfrm(txXfrm);
-
-		this.applyTextMargins(editorShape);
-		this.applyHorizontalAlignment(editorShape);
-		this.applyVerticalAlignment(editorShape);
 		this.applyFontRelations(editorShape);
-		this.applyCustomShapeSettings(editorShape);
 	};
-	TextAlgorithm.prototype.applyCustomShapeSettings = function (editorShape) {
-		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
-		const presPoint = shapeSmartArtInfo.shapePoint;
-		const contentPoint = shapeSmartArtInfo.contentPoint[0];
-		const shape = shapeSmartArtInfo.getShape();
-		const spPr = shape.spPr;
 
-		if (contentPoint && contentPoint.spPr) {
-			spPr.fullMerge(contentPoint.spPr);
-		}
-
-		if (presPoint && presPoint.spPr) {
-			spPr.fullMerge(presPoint.spPr);
-		}
-	};
 	TextAlgorithm.prototype.applyFontRelations = function (editorShape) {
 		const node = this.parentNode;
 		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
@@ -6644,6 +6659,9 @@ PresNode.prototype.addChild = function (ch, pos) {
 					node.textConstraints[constr.type] = new TextConstr();
 				}
 				const calcConstr = node.textConstraints[constr.type];
+/*				if (calcConstr.op[constr.op]) {
+					continue;
+				}*/
 				calcConstr.op[constr.op] = {constr: constr, refNodes: truthRefNodes};
 				node.adaptFontSizeArray = truthNodes;
 			}
