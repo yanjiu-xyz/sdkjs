@@ -9948,25 +9948,8 @@ Because of this, the display is sometimes not correct.
     }
 
 
-    changesFactory[AscDFH.historyitem_ShapeSmartArtInfoSpPrPoint] = CChangeObject;
-    changesFactory[AscDFH.historyitem_ShapeSmartArtInfoShapePoint] = CChangeObject;
-    changesFactory[AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint] = CChangeContent;
-    changesFactory[AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint] = CChangeContent;
-    drawingsChangesMap[AscDFH.historyitem_ShapeSmartArtInfoSpPrPoint] = function (oClass, value) {
-      oClass.spPrPoint = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_ShapeSmartArtInfoShapePoint] = function (oClass, value) {
-      oClass.shapePoint = value;
-    };
-    drawingContentChanges[AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint] = function (oClass) {
-      return oClass.contentPoint;
-    };
-    drawingContentChanges[AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint] = function (oClass) {
-      return oClass.contentPoint;
-    };
-
     function ShapeSmartArtInfo() {
-      CBaseFormatObject.call(this);
+			this.shape = null;
       this.shapePoint = null;
       this.contentPoint = [];
       this.maxFontSize = null;
@@ -9975,7 +9958,9 @@ Because of this, the display is sometimes not correct.
 			this.adaptFontSizeArray = null;
 
     }
-    InitClass(ShapeSmartArtInfo, CBaseFormatObject, AscDFH.historyitem_type_ShapeSmartArtInfo);
+	  ShapeSmartArtInfo.prototype.setShape = function (shape) {
+		  this.shape = shape;
+	  }
 		ShapeSmartArtInfo.prototype.getMarginFactors = function () {
 			const res = {};
 			res.bMarg = this.textConstraints[AscFormat.Constr_type_bMarg];
@@ -9988,7 +9973,7 @@ Because of this, the display is sometimes not correct.
 			const isNotPlaceholder = this.contentPoint.every(function (point) {
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
 			});
-			return isNotPlaceholder ? this.parent.getFirstFontSize() : null;
+			return isNotPlaceholder ? this.shape.getFirstFontSize() : null;
 		};
 		ShapeSmartArtInfo.prototype.getMaxConstrFontSize = function () {
 			const textConstraint = this.textConstraints[AscFormat.Constr_type_primFontSz];
@@ -9999,25 +9984,19 @@ Because of this, the display is sometimes not correct.
 		  return textConstraint ? textConstraint.getMinFontSize() : 5;
 	  };
 		ShapeSmartArtInfo.prototype.getShape = function () {
-			return this.parent;
+			return this.shape;
 		};
     ShapeSmartArtInfo.prototype.setShapePoint = function (oPr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ShapeSmartArtInfoShapePoint, this.shapePoint, oPr));
       this.shapePoint = oPr;
-      this.setParentToChild(oPr);
     }
 
     ShapeSmartArtInfo.prototype.addToLstContentPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.contentPoint.length, Math.max(0, nIdx));
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint, nInsertIdx, [oPr], true));
       nInsertIdx === this.contentPoint.length ? this.contentPoint.push(oPr) : this.contentPoint.splice(nInsertIdx, 0, oPr);
-      this.setParentToChild(oPr);
     }
 
     ShapeSmartArtInfo.prototype.removeFromLstContentPoint = function (nIdx) {
       if (nIdx > -1 && nIdx < this.contentPoint.length) {
-        this.contentPoint[nIdx].setParent(null);
-        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint, nIdx, [this.contentPoint[nIdx]], false));
         nIdx === this.contentPoint.length - 1 ? this.contentPoint.pop() : this.contentPoint.splice(nIdx, 1);
       }
     }
@@ -11506,14 +11485,15 @@ Because of this, the display is sometimes not correct.
         var shapeMap = this.getShapeMap();
         var contentConnections = this.getRelationOfContent();
         var shapeConnections = this.getRelationOfShapes();
-
+				const contentNodeRelations = this.smartArtTree.getDataPointRelations();
         for (var modelId in shapeMap) {
           var shape = shapeMap[modelId];
           var smartArtInfo = new ShapeSmartArtInfo();
           shape.setShapeSmartArtInfo(smartArtInfo);
           if (contentConnections[modelId]) {
             contentConnections[modelId].forEach(function (el) {
-              smartArtInfo.addToLstContentPoint(smartArtInfo.contentPoint.length, el.point);
+							const contentNode = contentNodeRelations[el.point.getModelId()];
+              smartArtInfo.addToLstContentPoint(smartArtInfo.contentPoint.length, contentNode);
             });
           }
           if (shapeConnections[modelId]) {
@@ -11558,7 +11538,10 @@ Because of this, the display is sometimes not correct.
         case 1: {
           this.setDataModel(new DiagramData());
           this.dataModel.fromPPTY(pReader);
-          this.setConnections2();
+					this.smartArtTree = new AscFormat.SmartArtAlgorithm(this);
+/*					if (!this.isCanGenerateSmartArt()) {*/
+						this.setConnections2();
+/*					}*/
           break;
         }
         case 2: {

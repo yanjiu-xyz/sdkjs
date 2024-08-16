@@ -796,7 +796,6 @@
 
 		AscDFH.changesFactory[AscDFH.historyitem_ShapeSetNvSpPr] = AscDFH.CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_ShapeSetSpPr] = AscDFH.CChangesDrawingsObject;
-		AscDFH.changesFactory[AscDFH.historyitem_ShapeSetShapeSmartArtPointInfo] = AscDFH.CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_ShapeSetTxXfrm] = AscDFH.CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_ShapeSetSmartArtPoint] = AscDFH.CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_ShapeSetStyle] = AscDFH.CChangesDrawingsObject;
@@ -816,9 +815,6 @@
 		};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ShapeSetSmartArtPoint] = function (oClass, value) {
 			oClass.point = value;
-		};
-		AscDFH.drawingsChangesMap[AscDFH.historyitem_ShapeSetShapeSmartArtPointInfo] = function (oClass, value) {
-			oClass.shapeSmartArtInfo = value;
 		};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ShapeSetTxXfrm] = function (oClass, value) {
 			oClass.txXfrm = value;
@@ -992,7 +988,8 @@
 		CShape.prototype.setCustT = function (value) {
 			var pointContent = this.getSmartArtPointContent();
 			if (pointContent) {
-				pointContent.forEach(function (point) {
+				pointContent.forEach(function (node) {
+					const point = node.point;
 					if (point.prSet && point.prSet.custT !== value) {
 						point.prSet.setCustT(value);
 					}
@@ -1001,9 +998,8 @@
 		}
 
 		CShape.prototype.setShapeSmartArtInfo = function (pr) {
-			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetShapeSmartArtPointInfo, this.shapeSmartArtInfo, pr));
 			this.shapeSmartArtInfo = pr;
-			this.shapeSmartArtInfo.setParent(this);
+			this.shapeSmartArtInfo.setShape(this);
 		}
 		CShape.prototype.isActiveBlipFillPlaceholder = function () {
 			const shapePoint = this.getSmartArtShapePoint();
@@ -1011,7 +1007,8 @@
 				let isContentFill = false;
 				const contentPoints = this.getSmartArtPointContent();
 				if (contentPoints && contentPoints[0]) {
-					isContentFill = contentPoints[0].spPr && contentPoints[0].spPr.Fill;
+					const contentPoint = contentPoints[0].point;
+					isContentFill = contentPoint.spPr && contentPoint.spPr.Fill;
 				}
 				return shapePoint.isBlipFillPlaceholder() && !(shapePoint.spPr && shapePoint.spPr.Fill) && !isContentFill;
 			}
@@ -1374,7 +1371,7 @@
 				var pointsCopy;
 
 				for (var i = 0; i < pointContent.length; i += 1) {
-					var point = pointContent[i];
+					var point = pointContent[i].point;
 
 					if (point.prSet && point.prSet.custT) {
 						options.custT = true;
@@ -1410,7 +1407,8 @@
 					}
 				}
 				pointsCopy = txBody.createDuplicateForSmartArt(options);
-				pointContent.forEach(function (point, idx) {
+				pointContent.forEach(function (node, idx) {
+					const point = node.point;
 					point.setT(pointsCopy[idx])
 				});
 			}
@@ -2804,7 +2802,8 @@
 			if (this.isObjectInSmartArt()) {
 				var pointContent = this.getSmartArtPointContent();
 				if (pointContent && pointContent.length !== 0) {
-					return pointContent.every(function (point) {
+					return pointContent.every(function (node) {
+						const point = node.point;
 						return point && point.prSet && point.prSet.phldr;
 					})
 				}
@@ -4068,7 +4067,7 @@
 						if (typeof AscCommonSlide !== "undefined" && AscCommonSlide.CNotes && this.parent instanceof AscCommonSlide.CNotes && this.nvSpPr.nvPr.ph.type === AscFormat.phType_body) {
 							text = AscCommon.translateManager.getValue("Click to add notes");
 						} else if (this.isObjectInSmartArt()) {
-							text = AscCommon.translateManager.getValue(pointContent[0].prSet.phldrT || '');
+							text = AscCommon.translateManager.getValue(pointContent[0].point.prSet.phldrT || '');
 						} else {
 							text = this.getPlaceholderName();
 						}
@@ -4241,7 +4240,7 @@
 				if (oBodyPr) {
 					const paddings = {};
 					const pointContent = this.getSmartArtPointContent();
-					const point = pointContent && pointContent[0];
+					const point = pointContent && pointContent[0].point;
 					const isRecalculateInsets = point.isRecalculateInsets();
 					if (point) {
 
@@ -4284,12 +4283,70 @@
 					// While there is no recalculation, we consider new insets as a dependency on the previous font size.
 					this.setPaddings(paddings, {bNotCopyToPoints: true});
 				}
-				const bOldApplyToAll = oContent.ApplyToAll;
-				oContent.ApplyToAll = true;
-				oContent.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize: (Math.min(fontSize, 300))}), false);
-				oContent.ApplyToAll = bOldApplyToAll;
+				// const bOldApplyToAll = oContent.ApplyToAll;
+				// oContent.ApplyToAll = true;
+				// oContent.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize: (Math.min(fontSize, 300))}), false);
+				// oContent.ApplyToAll = bOldApplyToAll;
+				this.applySmartArtIndents(fontSize);
 				if (!bSkipRecalculateContent2) {
 					this.recalculateContent2();
+				}
+			}
+		};
+		CShape.prototype.applySmartArtIndents = function (fontSize) {
+			const oContent = this.txBody && this.txBody.content;
+			const contentPoints = this.getSmartArtPointContent();
+			let indent;
+			if (fontSize >= 30) {
+				indent = 7.9;
+			} else if (fontSize >= 20) {
+				indent = 6.4;
+			} else if (fontSize >= 16) {
+				indent = 4.8;
+			} else if (fontSize >= 12) {
+				indent = 3.2;
+			} else {
+				indent = 1.6;
+			}
+			let nBulletParagraphIndex;
+			for (let i = 0; i < oContent.Content.length; i++) {
+				const shapeParagraph = oContent.Content[i];
+				if (shapeParagraph.PresentationPr && shapeParagraph.PresentationPr.Bullet && !shapeParagraph.PresentationPr.Bullet.IsNone()) {
+					nBulletParagraphIndex = i;
+					break;
+				}
+			}
+			const spacingScale = nBulletParagraphIndex !== undefined ? 0.18 : 0.42;
+			const mainParaTextPr = new AscCommonWord.ParaTextPr({FontSize: (Math.min(fontSize, 300))});
+			let bulletTextPr = mainParaTextPr;
+			if (nBulletParagraphIndex !== undefined && nBulletParagraphIndex > 0) {
+				bulletTextPr = new AscCommonWord.ParaTextPr({FontSize: (Math.min((fontSize * 0.8) >> 0, 300))});
+			}
+			if (oContent && contentPoints && contentPoints.length) {
+				let startDepth;
+				let paragraphIndex = 0;
+				for (let i = 0; i < contentPoints.length; i++) {
+					const node = contentPoints[i];
+					const point = node.point;
+					const pointContent = point.t && point.t.content;
+
+					if (paragraphIndex === nBulletParagraphIndex) {
+						startDepth = node.depth;
+					}
+					const deltaDepth = startDepth !== undefined ? node.depth - startDepth + 1 : 0;
+					for (let j = 0; j < pointContent.Content.length; j += 1) {
+						const oItem = oContent.Content[paragraphIndex];
+						oItem.SetApplyToAll(true);
+						if (startDepth !== undefined) {
+							oItem.AddToParagraph(bulletTextPr, false);
+						} else {
+							oItem.AddToParagraph(mainParaTextPr, false);
+						}
+						oItem.Set_Ind({Left: deltaDepth * indent, FirstLine: -deltaDepth * indent}, false);
+						oItem.Set_Spacing({After: fontSize * spacingScale}, false);
+						oItem.SetApplyToAll(false);
+						paragraphIndex += 1;
+					}
 				}
 			}
 		};
@@ -4312,7 +4369,8 @@
 								return !paragraph.Is_Empty({SkipEnd: true, SkipPlcHldr: false});
 							});
 							if (bIsNotEmptyShape) {
-								arrPointContent.forEach(function (point) {
+								arrPointContent.forEach(function (node) {
+									const point = node.point;
 									point.prSet.setPhldr(false);
 								})
 								this.txBody.content2 = null;
@@ -4514,14 +4572,20 @@
 			if (this.isObjectInSmartArt()) {
 				if (this.group.group.isCanGenerateSmartArt()) {
 					const smartArtInfo = this.getSmartArtInfo();
+					const mapShapes = {};
 					if (smartArtInfo.adaptFontSizeArray) {
 						const res = [];
 						for (let i = 0; i < smartArtInfo.adaptFontSizeArray.length; i++) {
-							const presNode = smartArtInfo.adaptFontSizeArray[i];
-							const editorShape = presNode.getShape().editorShape;
-							if (editorShape) {
-								res.push(editorShape);
+							const nodeArray = smartArtInfo.adaptFontSizeArray[i];
+							for (let j = 0; j < nodeArray.length; j++) {
+								const presNode = nodeArray[j];
+								const editorShape = presNode.getShape().editorShape;
+								if (editorShape && !mapShapes[editorShape.GetId()]) {
+									res.push(editorShape);
+									mapShapes[editorShape.GetId()] = true;
+								}
 							}
+
 						}
 						return res;
 					}
@@ -4537,9 +4601,11 @@
 			if (!(arrMainContentPoints && arrMainContentPoints.length)) {
 				return false;
 			}
-			return arrMainContentPoints.every(function (point) {
+			return arrMainContentPoints.every(function (node) {
+				const point = node.point;
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
-			}) || arrMainContentPoints.every(function (point) {
+			}) || arrMainContentPoints.every(function (node) {
+				const point = node.point;
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && point.prSet.phldr;
 			});
 		};
@@ -4550,10 +4616,12 @@
 			for (let i = 0; i < arrShapes.length; i += 1) {
 				const oShape = arrShapes[i];
 				var contentPoints = oShape.getSmartArtPointContent();
-				const isPlaceholder = contentPoints.every(function (point) {
+				const isPlaceholder = contentPoints.every(function (node) {
+					const point = node.point;
 					return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && point.prSet.phldr;
 				});
-				const isNotPlaceholder = contentPoints.every(function (point) {
+				const isNotPlaceholder = contentPoints.every(function (node) {
+					const point = node.point;
 					return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
 				});
 				if (isPlaceholder) {
@@ -4813,7 +4881,8 @@
 							return !paragraph.Is_Empty({SkipEnd: true, SkipPlcHldr: false});
 						});
 						if (isNotEmptyShape) {
-							pointContent.forEach(function (point) {
+							pointContent.forEach(function (node) {
+								const point = node.point;
 								point.prSet.setPhldr(false);
 							})
 							this.txBody.content2 = null;

@@ -1791,7 +1791,6 @@
 	window['AscDFH'].historyitem_type_DiagramData            = 2092 << 16;
 	window['AscDFH'].historyitem_type_FunctionValue          = 2093 << 16;
 	window['AscDFH'].historyitem_type_PointInfo              = 2094 << 16;
-	window['AscDFH'].historyitem_type_ShapeSmartArtInfo      = 2095 << 16;
 	window['AscDFH'].historyitem_type_BuBlip                 = 2099 << 16;
 
 	window['AscDFH'].historyitem_type_VMLArc                 = 2099 << 16;
@@ -3036,7 +3035,6 @@
 	window['AscDFH'].historyitem_ShapeSetSmartArtPoint          = window['AscDFH'].historyitem_type_Shape | 16;
 	window['AscDFH'].historyitem_ShapeSetFLocksText             = window['AscDFH'].historyitem_type_Shape | 17;
 	window['AscDFH'].historyitem_ShapeSetClientData             = window['AscDFH'].historyitem_type_Shape | 18;
-	window['AscDFH'].historyitem_ShapeSetShapeSmartArtPointInfo = window['AscDFH'].historyitem_type_Shape | 19;
 
 	window['AscDFH'].historyitem_OleSizeSelectionSetRange = window['AscDFH'].historyitem_type_OleSizeSelection | 1;
 
@@ -3946,11 +3944,6 @@
 	AscDFH.historyitem_FunctionValueResizeHandlesStr = AscDFH.historyitem_type_FunctionValue | 5;
 	AscDFH.historyitem_FunctionValueBool             = AscDFH.historyitem_type_FunctionValue | 6;
 	AscDFH.historyitem_FunctionValueInt              = AscDFH.historyitem_type_FunctionValue | 7;
-
-	AscDFH.historyitem_ShapeSmartArtInfoSpPrPoint             = AscDFH.historyitem_type_ShapeSmartArtInfo | 1;
-	AscDFH.historyitem_ShapeSmartArtInfoShapePoint            = AscDFH.historyitem_type_ShapeSmartArtInfo | 2;
-	AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint    = AscDFH.historyitem_type_ShapeSmartArtInfo | 3;
-	AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint = AscDFH.historyitem_type_ShapeSmartArtInfo | 4;
 
 	AscDFH.historyitem_BuBlipBlip              = AscDFH.historyitem_type_BuBlip | 1;
 

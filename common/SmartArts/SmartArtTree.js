@@ -36,7 +36,7 @@
 	const IS_DEBUG_DRAWING = true;
 	const IS_ADD_HTML = false;
 	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = false;
-	AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN = true;
+	AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN = false;
 
 	const LayoutNode = AscFormat.LayoutNode;
 	const Choose = AscFormat.Choose;
@@ -506,6 +506,27 @@
 		this.factRuleState = factRuleState.default;
 		this.initDataTree();
 	}
+	SmartArtAlgorithm.prototype.forEachContentNode = function (callback) {
+		const nodes = [this.dataRoot];
+		while (nodes.length) {
+			const node = nodes.pop();
+			callback(node);
+			nodes.push.apply(nodes, node.childs);
+		}
+	};
+	SmartArtAlgorithm.prototype.getDataPointRelations = function () {
+		const mapRelations = {};
+		this.forEachContentNode(function (node) {
+			mapRelations[node.point.getModelId()] = node;
+			if (node.sibNode) {
+				mapRelations[node.sibNode.point.getModelId()] = node.sibNode;
+			}
+			if (node.parNode) {
+				mapRelations[node.parNode.point.getModelId()] = node.parNode;
+			}
+		});
+		return mapRelations;
+	};
 	SmartArtAlgorithm.prototype.setFactRuleState = function (pr) {
 		this.factRuleState = pr;
 	};
@@ -1604,7 +1625,7 @@
 			const contentNode = contentNodes[i];
 			const mainPoint = contentNode.point;
 			if (contentNode.point) {
-				shapeSmartArtInfo.addToLstContentPoint(i, contentNode.point);
+				shapeSmartArtInfo.addToLstContentPoint(i, contentNode);
 				const dataContent = mainPoint.t && mainPoint.t.content;
 				if (dataContent) {
 					const firstParagraph = dataContent.Content[0];
@@ -1619,12 +1640,12 @@
 							copyParagraph.Set_PresentationLevel(nBulletLevel);
 							nBulletLevel = Math.max(nBulletLevel + 1, 8);
 							const deltaDepth = contentNode.depth - firstDepth;
-							copyParagraph.Set_Ind({Left: 7.9 * (contentNode.depth - firstDepth), FirstLine: -7.9}, false);
+							copyParagraph.Set_Ind({FirstLine: -7.9}, false);
 							if (deltaDepth > maxDepth) {
 								maxDepth = deltaDepth;
 							}
 						}
-						copyParagraph.Set_Spacing({After : 0, Line : 0.9, LineRule : Asc.linerule_Auto}, false);
+						copyParagraph.Set_Spacing({Line : 0.9, LineRule : Asc.linerule_Auto}, false);
 						arrParagraphs.push(copyParagraph);
 						for (let j = 1; j < dataContent.Content.length; j += 1) {
 							const paragraph = dataContent.Content[j];
@@ -1652,13 +1673,13 @@
 		}
 
 		this.applyTextSettings(editorShape);
-		this.applyShapeSettings(editorShape);
 		if (this.fill) {
 			editorShape.spPr.setFill(this.fill);
 		}
 		if (this.ln) {
 			editorShape.spPr.setLn(this.ln);
 		}
+		this.applyShapeSettings(editorShape);
 	}
 
 	ShadowShape.prototype.applyTextSettings = function (editorShape) {
@@ -6029,36 +6050,41 @@ function HierarchyAlgorithm() {
 		editorShape.setPaddings(paddings, {bNotCopyToPoints: true});
 	};
 	TextAlgorithm.prototype.applyVerticalAlignment = function (editorShape) {
-		const bodyPr = new AscFormat.CBodyPr();
-		switch (this.params[AscFormat.Param_type_txAnchorVert]) {
-			case AscFormat.ParameterVal_textAnchorVertical_b:
-				bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
-				break;
-			case AscFormat.ParameterVal_textAnchorVertical_top:
-				bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
-				break;
-			case AscFormat.ParameterVal_textAnchorVertical_mid:
-			default:
-				bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
-				break;
+		const node = this.parentNode;
+		if (node.contentNodes.length <= 1) {
+			const bodyPr = new AscFormat.CBodyPr();
+			switch (this.params[AscFormat.Param_type_txAnchorVert]) {
+				case AscFormat.ParameterVal_textAnchorVertical_b:
+					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
+					break;
+				case AscFormat.ParameterVal_textAnchorVertical_top:
+					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+					break;
+				case AscFormat.ParameterVal_textAnchorVertical_mid:
+				default:
+					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+					break;
+			}
+			editorShape.txBody.setBodyPr(bodyPr);
 		}
-		editorShape.txBody.setBodyPr(bodyPr);
 	};
 	TextAlgorithm.prototype.applyHorizontalAlignment = function (editorShape) {
 		const drawingContent = editorShape.txBody.content;
 		drawingContent.SetApplyToAll(true);
-		switch (this.params[AscFormat.Param_type_parTxLTRAlign]) {
-			case AscFormat.ParameterVal_horizontalAlignment_l:
-				drawingContent.SetParagraphAlign(AscCommon.align_Left);
-
-				break;
-			case AscFormat.ParameterVal_horizontalAlignment_r:
-				drawingContent.SetParagraphAlign(AscCommon.align_Right);
-				break;
-			case AscFormat.ParameterVal_horizontalAlignment_ctr:
-			default:
-				drawingContent.SetParagraphAlign(AscCommon.align_Center);
-				break;
+		const node = this.parentNode;
+		if (node.contentNodes.length <= 1) {
+			switch (this.params[AscFormat.Param_type_parTxLTRAlign]) {
+				case AscFormat.ParameterVal_horizontalAlignment_l:
+					drawingContent.SetParagraphAlign(AscCommon.align_Left);
+					break;
+				case AscFormat.ParameterVal_horizontalAlignment_r:
+					drawingContent.SetParagraphAlign(AscCommon.align_Right);
+					break;
+				case AscFormat.ParameterVal_horizontalAlignment_ctr:
+				default:
+					drawingContent.SetParagraphAlign(AscCommon.align_Center);
+					break;
+			}
 		}
 		drawingContent.SetApplyToAll(false);
 	};
@@ -6136,7 +6162,7 @@ function PresNode(presPoint, contentNode) {
 	this._isTxXfrm = null;
 	this.textConstraints = {};
 	this.textConstraintRelations = [];
-	this.adaptFontSizeArray = null;
+	this.adaptFontSizeArray = [];
 
 	this.cleanRules();
 	this.cleanConstraints();
@@ -6600,35 +6626,46 @@ PresNode.prototype.addChild = function (ch, pos) {
 	};
 	function TextConstr() {
 		this.op = {};
-		this.op[AscFormat.Constr_op_none] = {};
-		this.op[AscFormat.Constr_op_equ] = {};
-		this.op[AscFormat.Constr_op_gte] = {};
-		this.op[AscFormat.Constr_op_lte] = {};
+		this.op[AscFormat.Constr_op_none] = [];
+		this.op[AscFormat.Constr_op_equ] = [];
+		this.op[AscFormat.Constr_op_gte] = [];
+		this.op[AscFormat.Constr_op_lte] = [];
 		this.rule = null;
 	}
 
-	TextConstr.prototype.getMaxFontSizeFromInfo = function (info) {
-		const constr = info.constr;
-		if (constr) {
-			if (constr.refType === AscFormat.Constr_type_none) {
-				return constr.val;
-			} else {
-				const refNodes = info.refNodes;
-				for (let i = 0; i < refNodes.length; i += 1) {
-					const refNode = refNodes[i];
-					const shapeInfo = refNode.getShape().editorShape.getSmartArtInfo();
-					const fontSize = shapeInfo.getRelFitFontSize();
-					if (fontSize !== null) {
-						return fontSize;
+	TextConstr.prototype.getMaxFontSizeFromInfo = function (opType) {
+		const informations = this.op[opType];
+		let fontSize = 65;
+		for (let i = 0; i < informations.length; i += 1) {
+			const info = informations[i];
+			const constr = info.constr;
+			if (constr) {
+				if (constr.refType === AscFormat.Constr_type_none) {
+					if (constr.val < fontSize) {
+						fontSize = constr.val;
+					}
+				} else {
+					const refNodes = info.refNodes;
+					for (let i = 0; i < refNodes.length; i += 1) {
+						const refNode = refNodes[i];
+						const shapeInfo = refNode.getShape().editorShape.getSmartArtInfo();
+						const shapeFontSize = shapeInfo.getRelFitFontSize();
+						if (shapeFontSize !== null) {
+							if (shapeFontSize < fontSize) {
+								fontSize = shapeFontSize;
+							}
+							break;
+						}
 					}
 				}
 			}
 		}
-		return 65;
+
+		return fontSize;
 	};
 	TextConstr.prototype.getMaxFontSize = function () {
-		const noneFontSize = this.getMaxFontSizeFromInfo(this.op[AscFormat.Constr_op_none]);
-		const lteFontSize = this.getMaxFontSizeFromInfo(this.op[AscFormat.Constr_op_lte]);
+		const noneFontSize = this.getMaxFontSizeFromInfo(AscFormat.Constr_op_none);
+		const lteFontSize = this.getMaxFontSizeFromInfo(AscFormat.Constr_op_lte);
 		return Math.min(noneFontSize, lteFontSize);
 	};
 	TextConstr.prototype.getMinFontSize = function () {
@@ -6659,11 +6696,8 @@ PresNode.prototype.addChild = function (ch, pos) {
 					node.textConstraints[constr.type] = new TextConstr();
 				}
 				const calcConstr = node.textConstraints[constr.type];
-/*				if (calcConstr.op[constr.op]) {
-					continue;
-				}*/
 				calcConstr.op[constr.op] = {constr: constr, refNodes: truthRefNodes};
-				node.adaptFontSizeArray = truthNodes;
+				node.adaptFontSizeArray.push(truthNodes);
 			}
 		}
 		if (!(constr.for === constr.refFor && constr.forName === constr.refForName && constr.ptType.getVal() === constr.refPtType.getVal()) && constr.refType !== AscFormat.Constr_type_none) {
