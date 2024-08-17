@@ -4296,18 +4296,6 @@
 		CShape.prototype.applySmartArtIndents = function (fontSize) {
 			const oContent = this.txBody && this.txBody.content;
 			const contentPoints = this.getSmartArtPointContent();
-			let indent;
-			if (fontSize >= 30) {
-				indent = 7.9;
-			} else if (fontSize >= 20) {
-				indent = 6.4;
-			} else if (fontSize >= 16) {
-				indent = 4.8;
-			} else if (fontSize >= 12) {
-				indent = 3.2;
-			} else {
-				indent = 1.6;
-			}
 			let nBulletParagraphIndex;
 			for (let i = 0; i < oContent.Content.length; i++) {
 				const shapeParagraph = oContent.Content[i];
@@ -4322,9 +4310,23 @@
 			if (nBulletParagraphIndex !== undefined && nBulletParagraphIndex > 0) {
 				bulletTextPr = new AscCommonWord.ParaTextPr({FontSize: (Math.min((fontSize * 0.8) >> 0, 300))});
 			}
+			const bulletFontSize = bulletTextPr.Value.FontSize;
+			let indent;
+			if (bulletFontSize >= 30) {
+				indent = 7.9;
+			} else if (bulletFontSize >= 20) {
+				indent = 6.4;
+			} else if (bulletFontSize >= 16) {
+				indent = 4.8;
+			} else if (bulletFontSize >= 12) {
+				indent = 3.2;
+			} else {
+				indent = 1.6;
+			}
 			if (oContent && contentPoints && contentPoints.length) {
 				let startDepth;
 				let paragraphIndex = 0;
+				let firstLine = 0;
 				for (let i = 0; i < contentPoints.length; i++) {
 					const node = contentPoints[i];
 					const point = node.point;
@@ -4332,6 +4334,7 @@
 
 					if (paragraphIndex === nBulletParagraphIndex) {
 						startDepth = node.depth;
+						firstLine = -indent;
 					}
 					const deltaDepth = startDepth !== undefined ? node.depth - startDepth + 1 : 0;
 					for (let j = 0; j < pointContent.Content.length; j += 1) {
@@ -4339,11 +4342,12 @@
 						oItem.SetApplyToAll(true);
 						if (startDepth !== undefined) {
 							oItem.AddToParagraph(bulletTextPr, false);
+							oItem.Set_Spacing({After: g_dKoef_pt_to_mm * bulletFontSize * 0.18}, false);
 						} else {
 							oItem.AddToParagraph(mainParaTextPr, false);
+							oItem.Set_Spacing({After: g_dKoef_pt_to_mm * fontSize * 0.42}, false);
 						}
-						oItem.Set_Ind({Left: deltaDepth * indent, FirstLine: -deltaDepth * indent}, false);
-						oItem.Set_Spacing({After: fontSize * spacingScale}, false);
+						oItem.Set_Ind({Left: deltaDepth * indent, FirstLine: firstLine}, false);
 						oItem.SetApplyToAll(false);
 						paragraphIndex += 1;
 					}
@@ -4692,11 +4696,9 @@
 				arrShapes = this.getShapesForFitText();
 				for (let i = 0; i < arrShapes.length; i += 1) {
 					const shape = arrShapes[i];
-					if (shape.isCanFitFontSize()) {
-						const oSmartArtInfo = shape.getSmartArtInfo();
-						if (oSmartArtInfo) {
-							oSmartArtInfo.setMaxFontSize(shape.findFitFontSizeForSmartArt());
-						}
+					const oSmartArtInfo = shape.getSmartArtInfo();
+					if (oSmartArtInfo) {
+						oSmartArtInfo.setMaxFontSize(null);
 					}
 				}
 			} else {

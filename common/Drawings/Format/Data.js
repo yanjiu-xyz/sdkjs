@@ -9970,7 +9970,8 @@ Because of this, the display is sometimes not correct.
 			return res;
 		};
 		ShapeSmartArtInfo.prototype.getRelFitFontSize = function () {
-			const isNotPlaceholder = this.contentPoint.every(function (point) {
+			const isNotPlaceholder = this.contentPoint.every(function (node) {
+				const point = node.point;
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
 			});
 			return isNotPlaceholder ? this.shape.getFirstFontSize() : null;

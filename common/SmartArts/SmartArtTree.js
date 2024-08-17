@@ -1638,7 +1638,7 @@
 							const oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 0});
 							copyParagraph.Add_PresentationNumbering(oBullet);
 							copyParagraph.Set_PresentationLevel(nBulletLevel);
-							nBulletLevel = Math.max(nBulletLevel + 1, 8);
+							nBulletLevel = Math.min(nBulletLevel + 1, 8);
 							const deltaDepth = contentNode.depth - firstDepth;
 							copyParagraph.Set_Ind({FirstLine: -7.9}, false);
 							if (deltaDepth > maxDepth) {
@@ -1693,8 +1693,8 @@
 		const shape = shapeSmartArtInfo.getShape();
 		const spPr = shape.spPr;
 
-		if (contentPoint && contentPoint.spPr) {
-			spPr.fullMerge(contentPoint.spPr);
+		if (contentPoint && contentPoint.point.spPr) {
+			spPr.fullMerge(contentPoint.point.spPr);
 		}
 
 		if (presPoint && presPoint.spPr) {
@@ -5968,47 +5968,14 @@ function HierarchyAlgorithm() {
 		if (this.params[AscFormat.Param_type_txAnchorVert] === undefined) {
 			this.params[AscFormat.Param_type_txAnchorVert] = AscFormat.ParameterVal_textAnchorVertical_mid;
 		}
+		if (this.params[AscFormat.Param_type_autoTxRot] === undefined) {
+			this.params[AscFormat.Param_type_autoTxRot] = AscFormat.ParameterVal_autoTextRotation_upr;
+		}
 	};
 	TextAlgorithm.prototype.applyTextSettings = function (editorShape) {
 		const smartArtInfo = editorShape.getSmartArtInfo();
 		if (smartArtInfo.contentPoint.length) {
-			const shadowShape = this.parentNode.getShape();
-			const txXfrm = new AscFormat.CXfrm();
-			txXfrm.setRot(AscFormat.normalizeRotate(-shadowShape.rot));
-
-			if (shadowShape.txXfrm) {
-
-			} else {
-				const xfrm = editorShape.spPr.xfrm;
-				const geometry = editorShape.spPr.geometry;
-				geometry.Recalculate(xfrm.extX, xfrm.extY);
-				const geometryRect = geometry.rect;
-				let extX;
-				let extY;
-				let offX;
-				let offY;
-				if (geometryRect) {
-					offX = geometryRect.l + xfrm.offX;
-					offY = geometryRect.t + xfrm.offY;
-					extX = geometryRect.r - geometryRect.l;
-					extY = geometryRect.b - geometryRect.t;
-				} else {
-					offX = xfrm.offX;
-					offY = xfrm.offY;
-					extX = xfrm.extX;
-					extY = xfrm.extY;
-				}
-				const newSizes = AscFormat.fGetMaxInscribedRectangle(extX, extY, txXfrm.rot);
-				offX += (extX - newSizes.width) / 2;
-				offY += (extY - newSizes.height) / 2;
-				txXfrm.setOffX(offX);
-				txXfrm.setOffY(offY);
-				txXfrm.setExtX(newSizes.width);
-				txXfrm.setExtY(newSizes.height);
-			}
-
-			editorShape.setTxXfrm(txXfrm);
-
+			this.applyTxXfrmSettings(editorShape);
 			this.applyTextMargins(editorShape);
 			this.applyHorizontalAlignment(editorShape);
 			this.applyVerticalAlignment(editorShape);
@@ -6016,7 +5983,74 @@ function HierarchyAlgorithm() {
 
 		this.applyFontRelations(editorShape);
 	};
+	TextAlgorithm.prototype.getTextRotate = function () {
+		const shadowShape = this.parentNode.getShape();
+		const layoutRot = shadowShape.shape.rot;
+		switch (this.params[AscFormat.Param_type_autoTxRot]) {
 
+			case AscFormat.ParameterVal_autoTextRotation_none:
+				return 0;
+			case AscFormat.ParameterVal_autoTextRotation_grav:
+				if (layoutRot > 90 && layoutRot <= 180) {
+					return Math.PI;
+				}
+				return 0;
+			case AscFormat.ParameterVal_autoTextRotation_upr:
+			default:
+				let rot = 0;
+				if (layoutRot / 45 > 1) {
+					rot += Math.PI / 2;
+				}
+				if (layoutRot / 135 > 1) {
+					rot += Math.PI / 2;
+				}
+				if (layoutRot / 225 > 1) {
+					rot += Math.PI / 2;
+				}
+				if (layoutRot / 315 > 1) {
+					rot += Math.PI / 2;
+				}
+				return rot;
+		}
+	};
+	TextAlgorithm.prototype.applyTxXfrmSettings = function (editorShape) {
+		const shadowShape = this.parentNode.getShape();
+		const txXfrm = new AscFormat.CXfrm();
+		txXfrm.setRot(this.getTextRotate());
+		if (shadowShape.txXfrm) {
+
+		} else {
+			const xfrm = editorShape.spPr.xfrm;
+			const geometry = editorShape.spPr.geometry;
+			geometry.Recalculate(xfrm.extX, xfrm.extY);
+			const geometryRect = geometry.rect;
+			let extX;
+			let extY;
+			let offX;
+			let offY;
+			if (geometryRect) {
+				offX = geometryRect.l + xfrm.offX;
+				offY = geometryRect.t + xfrm.offY;
+				extX = geometryRect.r - geometryRect.l;
+				extY = geometryRect.b - geometryRect.t;
+			} else {
+				offX = xfrm.offX;
+				offY = xfrm.offY;
+				extX = xfrm.extX;
+				extY = xfrm.extY;
+			}
+
+			const newSizes = AscFormat.fGetMaxInscribedRectangle(extX, extY, txXfrm.rot);
+			offX += (extX - newSizes.width) / 2;
+			offY += (extY - newSizes.height) / 2;
+			txXfrm.setOffX(offX);
+			txXfrm.setOffY(offY);
+			txXfrm.setExtX(newSizes.width);
+			txXfrm.setExtY(newSizes.height);
+		}
+
+		editorShape.setTxXfrm(txXfrm);
+	};
 	TextAlgorithm.prototype.applyFontRelations = function (editorShape) {
 		const node = this.parentNode;
 		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
@@ -6088,18 +6122,6 @@ function HierarchyAlgorithm() {
 		}
 		drawingContent.SetApplyToAll(false);
 	};
-	function applyFontSizeConstraints(fitArrays) {
-		for (let i = 0; i < fitArrays.length; i += 1) {
-			const shapes = fitArrays[i];
-
-			for (let j = 0; j < shapes.length; j += 1) {
-				const shape = shapes[j];
-				const oSmartArtInfo = shape.getSmartArtInfo();
-				oSmartArtInfo.setMaxFontSize(shape.findFitFontSizeForSmartArt());
-			}
-			AscFormat.fitSmartArtShapes(shapes);
-		}
-	}
 
 	TextAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficient) {
 		this.createShadowShape(isCalculateScaleCoefficient);
@@ -6696,7 +6718,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 					node.textConstraints[constr.type] = new TextConstr();
 				}
 				const calcConstr = node.textConstraints[constr.type];
-				calcConstr.op[constr.op] = {constr: constr, refNodes: truthRefNodes};
+				calcConstr.op[constr.op].push({constr: constr, refNodes: truthRefNodes});
 				node.adaptFontSizeArray.push(truthNodes);
 			}
 		}
