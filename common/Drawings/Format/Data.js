@@ -3811,6 +3811,18 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_autoTxRot: {
+					switch (this.val) {
+						case 'upr':
+							return ParameterVal_autoTextRotation_upr;
+						case 'grav':
+							return ParameterVal_autoTextRotation_grav;
+						case 'none':
+							return ParameterVal_autoTextRotation_none;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_rotPath: {
 					switch (this.val) {
 						case 'alongPath':
@@ -4118,9 +4130,10 @@ Because of this, the display is sometimes not correct.
 						case "l":
 							return ParameterVal_horizontalAlignment_l;
 						default:
-							break;
+							return this.val;
 					}
 				case Param_type_txAnchorVert:
+				case Param_type_txAnchorVertCh:
 					switch (this.val) {
 						case "b":
 							return ParameterVal_textAnchorVertical_b;
@@ -4129,7 +4142,7 @@ Because of this, the display is sometimes not correct.
 						case "mid":
 							return ParameterVal_textAnchorVertical_mid;
 						default:
-							break;
+							return this.val;
 					}
 				case Param_type_ar:
 				case Param_type_spanAng:

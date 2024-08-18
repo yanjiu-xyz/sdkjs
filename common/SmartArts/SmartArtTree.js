@@ -168,9 +168,6 @@
 
 			const node = nodes[i];
 			currentPresNode.contentNodes.push(node);
-			if (!node.presOf) {
-				node.setPresOf(currentPresNode);
-			}
 		}
 	};
 	LayoutNode.prototype.executeAlgorithm = function (smartartAlgorithm) {
@@ -1113,9 +1110,6 @@
 	};
 	SmartArtDataNodeBase.prototype.setPresNode = function (presNode) {
 		this.presNode = presNode;
-	};
-	SmartArtDataNodeBase.prototype.setPresOf = function (presNode) {
-		this.presOf = presNode;
 	};
 
 	SmartArtDataNodeBase.prototype.getModelId = function () {
@@ -5968,6 +5962,9 @@ function HierarchyAlgorithm() {
 		if (this.params[AscFormat.Param_type_txAnchorVert] === undefined) {
 			this.params[AscFormat.Param_type_txAnchorVert] = AscFormat.ParameterVal_textAnchorVertical_mid;
 		}
+		if (this.params[AscFormat.Param_type_txAnchorVertCh] === undefined) {
+			this.params[AscFormat.Param_type_txAnchorVertCh] = AscFormat.ParameterVal_textAnchorVertical_top;
+		}
 		if (this.params[AscFormat.Param_type_autoTxRot] === undefined) {
 			this.params[AscFormat.Param_type_autoTxRot] = AscFormat.ParameterVal_autoTextRotation_upr;
 		}
@@ -5999,18 +5996,18 @@ function HierarchyAlgorithm() {
 			default:
 				let rot = 0;
 				if (layoutRot / 45 > 1) {
-					rot += Math.PI / 2;
+					rot -= Math.PI / 2;
 				}
 				if (layoutRot / 135 > 1) {
-					rot += Math.PI / 2;
+					rot -= Math.PI / 2;
 				}
 				if (layoutRot / 225 > 1) {
-					rot += Math.PI / 2;
+					rot -= Math.PI / 2;
 				}
 				if (layoutRot / 315 > 1) {
-					rot += Math.PI / 2;
+					rot -= Math.PI / 2;
 				}
-				return rot;
+				return AscFormat.normalizeRotate(rot);
 		}
 	};
 	TextAlgorithm.prototype.applyTxXfrmSettings = function (editorShape) {
@@ -6085,8 +6082,8 @@ function HierarchyAlgorithm() {
 	};
 	TextAlgorithm.prototype.applyVerticalAlignment = function (editorShape) {
 		const node = this.parentNode;
+		const bodyPr = new AscFormat.CBodyPr();
 		if (node.contentNodes.length <= 1) {
-			const bodyPr = new AscFormat.CBodyPr();
 			switch (this.params[AscFormat.Param_type_txAnchorVert]) {
 				case AscFormat.ParameterVal_textAnchorVertical_b:
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
@@ -6099,8 +6096,21 @@ function HierarchyAlgorithm() {
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 					break;
 			}
-			editorShape.txBody.setBodyPr(bodyPr);
+		} else {
+			switch (this.params[AscFormat.Param_type_txAnchorVertCh]) {
+				case AscFormat.ParameterVal_textAnchorVertical_b:
+					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
+					break;
+				case AscFormat.ParameterVal_textAnchorVertical_mid:
+					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+					break;
+				case AscFormat.ParameterVal_textAnchorVertical_top:
+				default:
+					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+					break;
+			}
 		}
+		editorShape.txBody.setBodyPr(bodyPr);
 	};
 	TextAlgorithm.prototype.applyHorizontalAlignment = function (editorShape) {
 		const drawingContent = editorShape.txBody.content;
@@ -6771,10 +6781,11 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 	}
 	PresNode.prototype.getPtType = function () {
-		return this.node.getPtType();
+		const node = this.contentNodes[0] || this.node;
+		return node.getPtType();
 	}
 	PresNode.prototype.checkPtType = function (elementType) {
-		const ptType = this.node.getPtType();
+		const ptType = this.getPtType();
 		switch (elementType) {
 			case AscFormat.ElementType_value_all:
 				return this;
