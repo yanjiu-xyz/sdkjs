@@ -12975,6 +12975,7 @@
 			return this.getAllProperties();
 		};
 		CCustomProperties.prototype.asc_RemoveProperty = function (idx) {
+			AscCommon.History.Create_NewPoint(0);
 			return this.removeProperty(idx);
 		};
 
