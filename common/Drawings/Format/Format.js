@@ -12925,7 +12925,7 @@
 			newProperty.name = name;
 			newProperty.linkTarget = opt_linkTarget || null;
 			newProperty.content = variant;
-			this.addProperty(newProperty);
+			this.addProperty(this.properties.length, newProperty);
 		};
 		CCustomProperties.prototype.getAllProperties = function () {
 			return this.properties;
