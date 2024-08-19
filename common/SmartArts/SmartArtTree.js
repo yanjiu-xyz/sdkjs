@@ -165,9 +165,13 @@
 		const currentPresNode = smartartAlgorithm.getCurrentPresNode();
 		const nodes = this.getNodesArray(smartartAlgorithm);
 		for (let i = 0; i < nodes.length; i++) {
-
 			const node = nodes[i];
 			currentPresNode.contentNodes.push(node);
+			node.addPresOf(currentPresNode);
+		}
+
+		if (nodes.length) {
+			currentPresNode.node = nodes[0] || smartartAlgorithm.getCurrentNode();
 		}
 	};
 	LayoutNode.prototype.executeAlgorithm = function (smartartAlgorithm) {
@@ -882,7 +886,25 @@
 		this.childs = [];
 		this.algorithm = null;
 		this.depth = AscFormat.isRealNumber(depth) ? depth : null;
+		this.presOf = [];
 	}
+	SmartArtDataNodeBase.prototype.addPresOf = function (presNode) {
+		this.presOf.push(presNode);
+	}
+	SmartArtDataNodeBase.prototype.getTextNodes = function () {
+		const presOf = this.presOf;
+		let textNode;
+		let contentNode;
+		for (let i = 0; i < presOf.length; i++) {
+			const node = presOf[i];
+			if (node.algorithm instanceof TextAlgorithm) {
+				textNode = node;
+			} else {
+				contentNode = node;
+			}
+		}
+		return {textNode: textNode, contentNode: contentNode};
+	};
 	SmartArtDataNodeBase.prototype.getDirection = function () {};
 	SmartArtDataNodeBase.prototype._getHierBranchValue = function () {
 		if (this.presNode) {
@@ -1590,11 +1612,18 @@
 	}
 	ShadowShape.prototype.applyPostEditorSettings = function (editorShape) {
 		const shapeSmartArtInfo = new AscFormat.ShapeSmartArtInfo();
-		const presNode = this.node;
-		// todo: think about it
-		const contentNodes = !presNode.isTxXfrm() ? presNode.contentNodes : [];
-		shapeSmartArtInfo.setShapePoint(presNode.presPoint);
 		editorShape.setShapeSmartArtInfo(shapeSmartArtInfo);
+
+		const presNode = this.node;
+		shapeSmartArtInfo.setShapePoint(presNode.presPoint);
+
+		this.applyTextSettings(editorShape);
+		this.applyShapeRot(editorShape);
+		this.applyShapeSettings(editorShape);
+	}
+
+	ShadowShape.prototype.applyShapeRot = function (editorShape) {
+		const presNode = this.node;
 		let sumRot = this.rot + presNode.moveRot;
 		const prSet = presNode.getPrSet();
 		if (prSet) {
@@ -1603,78 +1632,7 @@
 			}
 		}
 		editorShape.spPr.xfrm.setRot(AscFormat.normalizeRotate(sumRot));
-
-		let shapeContent;
-		if (contentNodes.length) {
-			editorShape.createTextBody();
-			shapeContent = editorShape.txBody.content;
-		}
-
-		const arrParagraphs = [];
-		let nBulletLevel = 0;
-		let nIncreaseLevel = 0;
-		let firstDepth = 0;
-		let maxDepth = 0;
-		for (let i = 0; i < contentNodes.length; i += 1) {
-			const contentNode = contentNodes[i];
-			const mainPoint = contentNode.point;
-			if (contentNode.point) {
-				shapeSmartArtInfo.addToLstContentPoint(i, contentNode);
-				const dataContent = mainPoint.t && mainPoint.t.content;
-				if (dataContent) {
-					const firstParagraph = dataContent.Content[0];
-					if (firstParagraph) {
-						//todo
-						const copyParagraph = firstParagraph.Copy(shapeContent, shapeContent.DrawingDocument);
-						if (i === 0) {
-							firstDepth = contentNode.depth;
-						} else {
-							const oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 0});
-							copyParagraph.Add_PresentationNumbering(oBullet);
-							copyParagraph.Set_PresentationLevel(nBulletLevel);
-							nBulletLevel = Math.min(nBulletLevel + 1, 8);
-							const deltaDepth = contentNode.depth - firstDepth;
-							copyParagraph.Set_Ind({FirstLine: -7.9}, false);
-							if (deltaDepth > maxDepth) {
-								maxDepth = deltaDepth;
-							}
-						}
-						copyParagraph.Set_Spacing({Line : 0.9, LineRule : Asc.linerule_Auto}, false);
-						arrParagraphs.push(copyParagraph);
-						for (let j = 1; j < dataContent.Content.length; j += 1) {
-							const paragraph = dataContent.Content[j];
-							const copyCurrentParagraph = paragraph.Copy();
-							if (copyParagraph.Pr.Ind) {
-								copyCurrentParagraph.Set_Ind({Left: copyParagraph.Pr.Ind.Left}, false);
-
-							}
-							if (copyParagraph.Pr.Spacing) {
-								copyCurrentParagraph.Set_Spacing(copyParagraph.Pr.Spacing, false);
-							}
-							arrParagraphs.push(copyCurrentParagraph);
-						}
-					}
-				}
-				nIncreaseLevel += 1;
-			}
-		}
-		this.maxDepth = maxDepth;
-		if (arrParagraphs.length) {
-			shapeContent.Internal_Content_RemoveAll();
-			for (let i = 0; i < arrParagraphs.length; i++) {
-				shapeContent.AddToContent(shapeContent.Content.length, arrParagraphs[i]);
-			}
-		}
-
-		this.applyTextSettings(editorShape);
-		if (this.fill) {
-			editorShape.spPr.setFill(this.fill);
-		}
-		if (this.ln) {
-			editorShape.spPr.setLn(this.ln);
-		}
-		this.applyShapeSettings(editorShape);
-	}
+	};
 
 	ShadowShape.prototype.applyTextSettings = function (editorShape) {
 		const algorithm = this.node.algorithm;
@@ -1687,6 +1645,12 @@
 		const shape = shapeSmartArtInfo.getShape();
 		const spPr = shape.spPr;
 
+		if (this.fill) {
+			spPr.setFill(this.fill);
+		}
+		if (this.ln) {
+			spPr.setLn(this.ln);
+		}
 		if (contentPoint && contentPoint.point.spPr) {
 			spPr.fullMerge(contentPoint.point.spPr);
 		}
@@ -5934,6 +5898,15 @@ function HierarchyAlgorithm() {
 	}
 	AscFormat.InitClassWithoutType(SpaceAlgorithm, BaseAlgorithm);
 
+	SpaceAlgorithm.prototype.applyTextSettings = function (editorShape) {
+		const node = this.parentNode.node;
+		const textNodes = node.getTextNodes();
+
+		const textNode = textNodes.textNode;
+		if (textNode && textNodes.contentNode === this.parentNode) {
+			textNodes.textNode.algorithm.applyTextSettings(editorShape, true);
+		}
+	};
 	SpaceAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
 		this.createShadowShape(isCalculateScaleCoefficients);
 		if (!isCalculateScaleCoefficients) {
@@ -5956,8 +5929,11 @@ function HierarchyAlgorithm() {
 		if (this.params[AscFormat.Param_type_parTxRTLAlign] === undefined) {
 			this.params[AscFormat.Param_type_parTxRTLAlign] = AscFormat.ParameterVal_horizontalAlignment_ctr;
 		}
-		if (this.params[AscFormat.Param_type_parTxRTLAlign] === undefined) {
-			this.params[AscFormat.Param_type_parTxRTLAlign] = AscFormat.ParameterVal_horizontalAlignment_ctr;
+		if (this.params[AscFormat.Param_type_shpTxLTRAlignCh] === undefined) {
+			this.params[AscFormat.Param_type_shpTxLTRAlignCh] = AscFormat.ParameterVal_horizontalAlignment_l;
+		}
+		if (this.params[AscFormat.Param_type_shpTxRTLAlignCh] === undefined) {
+			this.params[AscFormat.Param_type_shpTxRTLAlignCh] = AscFormat.ParameterVal_horizontalAlignment_r;
 		}
 		if (this.params[AscFormat.Param_type_txAnchorVert] === undefined) {
 			this.params[AscFormat.Param_type_txAnchorVert] = AscFormat.ParameterVal_textAnchorVertical_mid;
@@ -5968,9 +5944,73 @@ function HierarchyAlgorithm() {
 		if (this.params[AscFormat.Param_type_autoTxRot] === undefined) {
 			this.params[AscFormat.Param_type_autoTxRot] = AscFormat.ParameterVal_autoTextRotation_upr;
 		}
+		if (this.params[AscFormat.Param_type_stBulletLvl] === undefined) {
+			this.params[AscFormat.Param_type_stBulletLvl] = 2;
+		}
 	};
-	TextAlgorithm.prototype.applyTextSettings = function (editorShape) {
+	TextAlgorithm.prototype.applyContentFilling = function (editorShape) {
+		const presNode = this.parentNode;
+		const contentNodes = presNode.contentNodes;
+		if (!contentNodes.length) {
+			return;
+		}
+
+		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
+		const stBulletLvl = this.params[AscFormat.Param_type_stBulletLvl];
+		editorShape.createTextBody();
+		const shapeContent = editorShape.txBody.content;
+
+		const arrParagraphs = [];
+		let nBulletLevel = 0;
+
+		for (let i = 0; i < contentNodes.length; i += 1) {
+			const contentNode = contentNodes[i];
+			const mainPoint = contentNode.point;
+			if (contentNode.point) {
+				shapeSmartArtInfo.addToLstContentPoint(i, contentNode);
+				const dataContent = mainPoint.t && mainPoint.t.content;
+				if (dataContent) {
+					const firstParagraph = dataContent.Content[0];
+					if (firstParagraph) {
+						const copyParagraph = firstParagraph.Copy(shapeContent, shapeContent.DrawingDocument);
+						if (i !== 0 || stBulletLvl === 1) {
+							const oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 0});
+							copyParagraph.Add_PresentationNumbering(oBullet);
+							copyParagraph.Set_PresentationLevel(nBulletLevel);
+							nBulletLevel = Math.min(nBulletLevel + 1, 8);
+							copyParagraph.Set_Ind({FirstLine: -7.9}, false);
+						}
+						copyParagraph.Set_Spacing({Line : 0.9, LineRule : Asc.linerule_Auto}, false);
+						arrParagraphs.push(copyParagraph);
+						for (let j = 1; j < dataContent.Content.length; j += 1) {
+							const paragraph = dataContent.Content[j];
+							const copyCurrentParagraph = paragraph.Copy();
+							if (copyParagraph.Pr.Ind) {
+								copyCurrentParagraph.Set_Ind({Left: copyParagraph.Pr.Ind.Left}, false);
+
+							}
+							if (copyParagraph.Pr.Spacing) {
+								copyCurrentParagraph.Set_Spacing(copyParagraph.Pr.Spacing, false);
+							}
+							arrParagraphs.push(copyCurrentParagraph);
+						}
+					}
+				}
+			}
+		}
+		if (arrParagraphs.length) {
+			shapeContent.Internal_Content_RemoveAll();
+			for (let i = 0; i < arrParagraphs.length; i++) {
+				shapeContent.AddToContent(shapeContent.Content.length, arrParagraphs[i]);
+			}
+		}
+	};
+	TextAlgorithm.prototype.applyTextSettings = function (editorShape, skipCheckTxXfrm) {
+		if (!skipCheckTxXfrm && this.parentNode.isTxXfrm()) {
+			return;
+		}
 		const smartArtInfo = editorShape.getSmartArtInfo();
+		this.applyContentFilling(editorShape);
 		if (smartArtInfo.contentPoint.length) {
 			this.applyTxXfrmSettings(editorShape);
 			this.applyTextMargins(editorShape);
@@ -5982,29 +6022,28 @@ function HierarchyAlgorithm() {
 	};
 	TextAlgorithm.prototype.getTextRotate = function () {
 		const shadowShape = this.parentNode.getShape();
-		const layoutRot = shadowShape.shape.rot;
+		const shapeRotate = shadowShape.rot;
 		switch (this.params[AscFormat.Param_type_autoTxRot]) {
-
 			case AscFormat.ParameterVal_autoTextRotation_none:
 				return 0;
 			case AscFormat.ParameterVal_autoTextRotation_grav:
-				if (layoutRot > 90 && layoutRot <= 180) {
+				if ((shapeRotate > Math.PI / 2) && (shapeRotate <= Math.PI)) {
 					return Math.PI;
 				}
 				return 0;
 			case AscFormat.ParameterVal_autoTextRotation_upr:
 			default:
 				let rot = 0;
-				if (layoutRot / 45 > 1) {
+				if (shapeRotate > Math.PI / 4) {
 					rot -= Math.PI / 2;
 				}
-				if (layoutRot / 135 > 1) {
+				if (shapeRotate > Math.PI * 3 / 4) {
 					rot -= Math.PI / 2;
 				}
-				if (layoutRot / 225 > 1) {
+				if (shapeRotate > Math.PI * 5 / 4) {
 					rot -= Math.PI / 2;
 				}
-				if (layoutRot / 315 > 1) {
+				if (shapeRotate > Math.PI * 7 / 4) {
 					rot -= Math.PI / 2;
 				}
 				return AscFormat.normalizeRotate(rot);
@@ -6014,37 +6053,33 @@ function HierarchyAlgorithm() {
 		const shadowShape = this.parentNode.getShape();
 		const txXfrm = new AscFormat.CXfrm();
 		txXfrm.setRot(this.getTextRotate());
-		if (shadowShape.txXfrm) {
-
+		const geometry = editorShape.spPr.geometry;
+		geometry.Recalculate(shadowShape.width, shadowShape.height);
+		const geometryRect = geometry.rect;
+		let extX;
+		let extY;
+		let offX;
+		let offY;
+		if (geometryRect) {
+			offX = geometryRect.l + shadowShape.x;
+			offY = geometryRect.t + shadowShape.y;
+			extX = geometryRect.r - geometryRect.l;
+			extY = geometryRect.b - geometryRect.t;
 		} else {
-			const xfrm = editorShape.spPr.xfrm;
-			const geometry = editorShape.spPr.geometry;
-			geometry.Recalculate(xfrm.extX, xfrm.extY);
-			const geometryRect = geometry.rect;
-			let extX;
-			let extY;
-			let offX;
-			let offY;
-			if (geometryRect) {
-				offX = geometryRect.l + xfrm.offX;
-				offY = geometryRect.t + xfrm.offY;
-				extX = geometryRect.r - geometryRect.l;
-				extY = geometryRect.b - geometryRect.t;
-			} else {
-				offX = xfrm.offX;
-				offY = xfrm.offY;
-				extX = xfrm.extX;
-				extY = xfrm.extY;
-			}
-
-			const newSizes = AscFormat.fGetMaxInscribedRectangle(extX, extY, txXfrm.rot);
-			offX += (extX - newSizes.width) / 2;
-			offY += (extY - newSizes.height) / 2;
-			txXfrm.setOffX(offX);
-			txXfrm.setOffY(offY);
-			txXfrm.setExtX(newSizes.width);
-			txXfrm.setExtY(newSizes.height);
+			offX = shadowShape.x;
+			offY = shadowShape.y;
+			extX = shadowShape.width;
+			extY = shadowShape.height;
 		}
+
+		const newSizes = AscFormat.fGetMaxInscribedRectangle(extX, extY, txXfrm.rot);
+		offX += (extX - newSizes.width) / 2;
+		offY += (extY - newSizes.height) / 2;
+		txXfrm.setOffX(offX);
+		txXfrm.setOffY(offY);
+		txXfrm.setExtX(newSizes.width);
+		txXfrm.setExtY(newSizes.height);
+
 
 		editorShape.setTxXfrm(txXfrm);
 	};
@@ -6054,49 +6089,48 @@ function HierarchyAlgorithm() {
 		shapeSmartArtInfo.textConstraintRelations = node.textConstraintRelations;
 		shapeSmartArtInfo.textConstraints = node.textConstraints;
 		shapeSmartArtInfo.adaptFontSizeArray = node.adaptFontSizeArray;
+		shapeSmartArtInfo.params[AscFormat.Param_type_lnSpAfParP] = this.params[AscFormat.Param_type_lnSpAfParP];
+		shapeSmartArtInfo.params[AscFormat.Param_type_lnSpAfChP] = this.params[AscFormat.Param_type_lnSpAfChP];
 	};
 	TextAlgorithm.prototype.applyTextMargins = function (editorShape) {
 		const node = this.parentNode;
-		const paddings = {};
-		const bMarginValue = node.getConstr(AscFormat.Constr_type_bMarg, true, true);
-		const tMarginValue = node.getConstr(AscFormat.Constr_type_tMarg, true, true);
-		const rMarginValue = node.getConstr(AscFormat.Constr_type_rMarg, true, true);
-		const lMarginValue = node.getConstr(AscFormat.Constr_type_lMarg, true, true);
-		if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined && bMarginValue !== undefined) {
-			paddings.Bottom = bMarginValue;
+
+
+		if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined &&
+			node.textConstraints[AscFormat.Constr_type_tMarg] === undefined &&
+			node.textConstraints[AscFormat.Constr_type_rMarg] === undefined &&
+			node.textConstraints[AscFormat.Constr_type_lMarg] === undefined) {
+			node.textConstraints[AscFormat.Constr_type_bMarg] = 0.56;
+			node.textConstraints[AscFormat.Constr_type_tMarg] = 0.56;
+			node.textConstraints[AscFormat.Constr_type_lMarg] = 0.56;
+			node.textConstraints[AscFormat.Constr_type_rMarg] = 0.56;
+		} else {
+			const paddings = {};
+			if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined) {
+				paddings.Bottom = node.getConstr(AscFormat.Constr_type_bMarg, true);
+			}
+
+			if (node.textConstraints[AscFormat.Constr_type_tMarg] === undefined) {
+				paddings.Top = node.getConstr(AscFormat.Constr_type_tMarg, true);
+			}
+
+			if (node.textConstraints[AscFormat.Constr_type_rMarg] === undefined) {
+				paddings.Right = node.getConstr(AscFormat.Constr_type_rMarg, true);
+			}
+
+			if (node.textConstraints[AscFormat.Constr_type_lMarg] === undefined) {
+				paddings.Left = node.getConstr(AscFormat.Constr_type_lMarg, true);
+			}
+
+			editorShape.setPaddings(paddings, {bNotCopyToPoints: true});
 		}
 
-		if (node.textConstraints[AscFormat.Constr_type_tMarg] === undefined && tMarginValue !== undefined) {
-			paddings.Top = tMarginValue;
-		}
-
-		if (node.textConstraints[AscFormat.Constr_type_rMarg] === undefined && rMarginValue !== undefined) {
-			paddings.Right = rMarginValue;
-		}
-
-		if (node.textConstraints[AscFormat.Constr_type_lMarg] === undefined && lMarginValue !== undefined) {
-			paddings.Left = lMarginValue;
-		}
-
-		editorShape.setPaddings(paddings, {bNotCopyToPoints: true});
 	};
 	TextAlgorithm.prototype.applyVerticalAlignment = function (editorShape) {
 		const node = this.parentNode;
-		const bodyPr = new AscFormat.CBodyPr();
-		if (node.contentNodes.length <= 1) {
-			switch (this.params[AscFormat.Param_type_txAnchorVert]) {
-				case AscFormat.ParameterVal_textAnchorVertical_b:
-					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
-					break;
-				case AscFormat.ParameterVal_textAnchorVertical_top:
-					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
-					break;
-				case AscFormat.ParameterVal_textAnchorVertical_mid:
-				default:
-					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
-					break;
-			}
-		} else {
+		const bodyPr = editorShape.getBodyPr().createDuplicate();
+		const stBulletLvl = this.params[AscFormat.Param_type_stBulletLvl];
+		if (node.contentNodes.length > stBulletLvl - 1) {
 			switch (this.params[AscFormat.Param_type_txAnchorVertCh]) {
 				case AscFormat.ParameterVal_textAnchorVertical_b:
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
@@ -6109,28 +6143,56 @@ function HierarchyAlgorithm() {
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 					break;
 			}
-		}
-		editorShape.txBody.setBodyPr(bodyPr);
-	};
-	TextAlgorithm.prototype.applyHorizontalAlignment = function (editorShape) {
-		const drawingContent = editorShape.txBody.content;
-		drawingContent.SetApplyToAll(true);
-		const node = this.parentNode;
-		if (node.contentNodes.length <= 1) {
-			switch (this.params[AscFormat.Param_type_parTxLTRAlign]) {
-				case AscFormat.ParameterVal_horizontalAlignment_l:
-					drawingContent.SetParagraphAlign(AscCommon.align_Left);
+		} else {
+			switch (this.params[AscFormat.Param_type_txAnchorVert]) {
+				case AscFormat.ParameterVal_textAnchorVertical_b:
+					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 					break;
-				case AscFormat.ParameterVal_horizontalAlignment_r:
-					drawingContent.SetParagraphAlign(AscCommon.align_Right);
+				case AscFormat.ParameterVal_textAnchorVertical_top:
+					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 					break;
-				case AscFormat.ParameterVal_horizontalAlignment_ctr:
+				case AscFormat.ParameterVal_textAnchorVertical_mid:
 				default:
-					drawingContent.SetParagraphAlign(AscCommon.align_Center);
+					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 					break;
 			}
 		}
-		drawingContent.SetApplyToAll(false);
+		editorShape.txBody.setBodyPr(bodyPr);
+	};
+	TextAlgorithm.prototype.getTextAlignment = function (paramType) {
+		switch (this.params[paramType]) {
+			case AscFormat.ParameterVal_horizontalAlignment_l:
+				return AscCommon.align_Left;
+			case AscFormat.ParameterVal_horizontalAlignment_r:
+				return AscCommon.align_Right;
+			case AscFormat.ParameterVal_horizontalAlignment_ctr:
+			default:
+				return AscCommon.align_Center;
+		}
+	};
+	TextAlgorithm.prototype.applyHorizontalAlignment = function (editorShape) {
+		const drawingContent = editorShape.txBody.content;
+		const node = this.parentNode;
+		let paragraphLTRAlignment;
+		let paragraphRTLAlignment;
+		if (node.contentNodes.length <= 1) {
+			paragraphLTRAlignment = this.getTextAlignment(AscFormat.Param_type_parTxLTRAlign);
+			paragraphRTLAlignment = this.getTextAlignment(AscFormat.Param_type_parTxRTLAlign);
+		} else {
+			paragraphLTRAlignment = this.getTextAlignment(AscFormat.Param_type_shpTxLTRAlignCh);
+			paragraphRTLAlignment = this.getTextAlignment(AscFormat.Param_type_shpTxRTLAlignCh);
+		}
+
+		for (let i = 0; i < drawingContent.Content.length; i++) {
+			const item = drawingContent.Content[i];
+			item.SetApplyToAll(true);
+			if (item.isRtlDirection()) {
+				item.SetParagraphAlign(paragraphRTLAlignment);
+			} else {
+				item.SetParagraphAlign(paragraphLTRAlignment);
+			}
+			item.SetApplyToAll(false);
+		}
 	};
 
 	TextAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficient) {
@@ -6781,7 +6843,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 	}
 	PresNode.prototype.getPtType = function () {
-		const node = this.contentNodes[0] || this.node;
+		const node = this.node;
 		return node.getPtType();
 	}
 	PresNode.prototype.checkPtType = function (elementType) {
@@ -7335,45 +7397,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.setLayoutRules = function (lst) {
 		this.layoutInfo.ruleLst = lst;
 	};
-	PresNode.prototype.isSpaceNodeWithContent = function () {
-		let node = this;
-		while (node.algorithm instanceof SpaceAlgorithm && !node.contentNodes.length && node.childs.length) {
-			node = node.childs[0];
-		}
-		return !!(node.algorithm instanceof SpaceAlgorithm && node.contentNodes.length);
-	};
 	PresNode.prototype.isTxXfrm = function () {
-		if (this._isTxXfrm === null) {
-			this._isTxXfrm = false;
-			const textShape = this.getShape(true);
-			const textBounds = textShape.getBounds(true);
-			const textWidth = textBounds.r - textBounds.l;
-			const textHeight = textBounds.b - textBounds.t;
-			if (this.algorithm instanceof TextAlgorithm && this.parent.algorithm instanceof ConnectorAlgorithm) {
-				this._isTxXfrm = true;
-			} else if (this.algorithm instanceof TextAlgorithm && this.parent && (this.parent.algorithm instanceof CompositeAlgorithm) && this.layoutInfo.shape.hideGeom) {
-				const childs = this.parent.childs;
-				for (let i = 0; i < childs.length; i++) {
-					const child = childs[i];
-					if (this.node !== child.node) {
-						continue;
-					}
-					const spaceShape = child.getShape(true);
-					const spaceBounds = spaceShape.getBounds(true);
-					const spaceWidth = spaceBounds.r - spaceBounds.l;
-					const spaceHeight = spaceBounds.b - spaceBounds.t;
-					const isCorrectTxXfrmSizes = (spaceBounds.l <= textBounds.l || fAlgDeltaEqual(spaceBounds.l, textBounds.l)) &&
-						(spaceBounds.t <= textBounds.t || fAlgDeltaEqual(spaceBounds.t, textBounds.t)) &&
-						(spaceWidth >= textWidth || fAlgDeltaEqual(spaceWidth, textWidth)) && (spaceHeight >= textHeight || fAlgDeltaEqual(spaceHeight, textHeight));
-					if (isCorrectTxXfrmSizes && child.isSpaceNodeWithContent()) {
-						this._isTxXfrm = true;
-						break;
-					}
-				}
-			}
-		}
-		return this._isTxXfrm;
+		const contentNode = this.node;
+		const textNodes = contentNode.getTextNodes();
+		return !!(textNodes.textNode && textNodes.contentNode && textNodes.textNode === this);
 	};
+
 	PresNode.prototype.updateCompositeSizes = function (isCalculateCoefficients) {
 		const shape = this.getShape(isCalculateCoefficients);
 		if (!this.childs.length) {

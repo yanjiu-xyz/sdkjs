@@ -4283,10 +4283,6 @@
 					// While there is no recalculation, we consider new insets as a dependency on the previous font size.
 					this.setPaddings(paddings, {bNotCopyToPoints: true});
 				}
-				// const bOldApplyToAll = oContent.ApplyToAll;
-				// oContent.ApplyToAll = true;
-				// oContent.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize: (Math.min(fontSize, 300))}), false);
-				// oContent.ApplyToAll = bOldApplyToAll;
 				this.applySmartArtIndents(fontSize);
 				if (!bSkipRecalculateContent2) {
 					this.recalculateContent2();
@@ -4295,6 +4291,7 @@
 		};
 		CShape.prototype.applySmartArtIndents = function (fontSize) {
 			const oContent = this.txBody && this.txBody.content;
+			const shapeInfo = this.getSmartArtInfo();
 			const contentPoints = this.getSmartArtPointContent();
 			let nBulletParagraphIndex;
 			for (let i = 0; i < oContent.Content.length; i++) {
@@ -4304,7 +4301,6 @@
 					break;
 				}
 			}
-			const spacingScale = nBulletParagraphIndex !== undefined ? 0.18 : 0.42;
 			const mainParaTextPr = new AscCommonWord.ParaTextPr({FontSize: (Math.min(fontSize, 300))});
 			let bulletTextPr = mainParaTextPr;
 			if (nBulletParagraphIndex !== undefined && nBulletParagraphIndex > 0) {
@@ -4323,6 +4319,9 @@
 			} else {
 				indent = 1.6;
 			}
+			const bulletSpacingScale = shapeInfo.getChildrenSpacingScale();
+			const paragraphSpacingScale = shapeInfo.getParentSpacingScale();
+
 			if (oContent && contentPoints && contentPoints.length) {
 				let startDepth;
 				let paragraphIndex = 0;
@@ -4331,7 +4330,6 @@
 					const node = contentPoints[i];
 					const point = node.point;
 					const pointContent = point.t && point.t.content;
-
 					if (paragraphIndex === nBulletParagraphIndex) {
 						startDepth = node.depth;
 						firstLine = -indent;
@@ -4342,10 +4340,10 @@
 						oItem.SetApplyToAll(true);
 						if (startDepth !== undefined) {
 							oItem.AddToParagraph(bulletTextPr, false);
-							oItem.Set_Spacing({After: g_dKoef_pt_to_mm * bulletFontSize * 0.18}, false);
+							oItem.Set_Spacing({After: bulletFontSize * bulletSpacingScale}, false);
 						} else {
 							oItem.AddToParagraph(mainParaTextPr, false);
-							oItem.Set_Spacing({After: g_dKoef_pt_to_mm * fontSize * 0.42}, false);
+							oItem.Set_Spacing({After: fontSize * paragraphSpacingScale}, false);
 						}
 						oItem.Set_Ind({Left: deltaDepth * indent, FirstLine: firstLine}, false);
 						oItem.SetApplyToAll(false);
@@ -4583,7 +4581,12 @@
 							const nodeArray = smartArtInfo.adaptFontSizeArray[i];
 							for (let j = 0; j < nodeArray.length; j++) {
 								const presNode = nodeArray[j];
-								const editorShape = presNode.getShape().editorShape;
+								let editorShape;
+								if (presNode.isTxXfrm()) {
+									editorShape = presNode.node.getTextNodes().contentNode.getShape().editorShape;
+								} else {
+									editorShape = presNode.getShape().editorShape;
+								}
 								if (editorShape && !mapShapes[editorShape.GetId()]) {
 									res.push(editorShape);
 									mapShapes[editorShape.GetId()] = true;

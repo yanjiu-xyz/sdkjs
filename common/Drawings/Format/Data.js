@@ -4124,11 +4124,15 @@ Because of this, the display is sometimes not correct.
 					return arrResult;
 				case Param_type_parTxLTRAlign:
 				case Param_type_parTxRTLAlign:
+				case Param_type_shpTxLTRAlignCh:
+				case Param_type_shpTxRTLAlignCh:
 					switch (this.val) {
 						case "r":
 							return ParameterVal_horizontalAlignment_r;
 						case "l":
 							return ParameterVal_horizontalAlignment_l;
+						case "ctr":
+							return ParameterVal_horizontalAlignment_ctr;
 						default:
 							return this.val;
 					}
@@ -4144,10 +4148,14 @@ Because of this, the display is sometimes not correct.
 						default:
 							return this.val;
 					}
+				case Param_type_lnSpAfParP:
+				case Param_type_lnSpAfChP:
+					return parseFloat(this.val) / 100 * 1.2 * g_dKoef_pt_to_mm;
 				case Param_type_ar:
 				case Param_type_spanAng:
 				case Param_type_stAng:
 				case Param_type_bkPtFixedVal:
+				case Param_type_stBulletLvl:
 					return parseFloat(this.val);
 				default:
 					return this.val;
@@ -9967,10 +9975,23 @@ Because of this, the display is sometimes not correct.
       this.contentPoint = [];
       this.maxFontSize = null;
 			this.textConstraints = {};
+			this.params = {};
 			this.textConstraintRelations = [];
 			this.adaptFontSizeArray = null;
 
     }
+	  ShapeSmartArtInfo.prototype.getChildrenSpacingScale = function () {
+		  if (this.params[AscFormat.Param_type_lnSpAfChP] !== undefined) {
+			  return this.params[AscFormat.Param_type_lnSpAfChP];
+		  }
+		  return g_dKoef_pt_to_mm * 0.18;
+	  };
+	  ShapeSmartArtInfo.prototype.getParentSpacingScale = function () {
+		  if (this.params[AscFormat.Param_type_lnSpAfParP] !== undefined) {
+			  return this.params[AscFormat.Param_type_lnSpAfParP];
+		  }
+			return g_dKoef_pt_to_mm * 0.42;
+	  };
 	  ShapeSmartArtInfo.prototype.setShape = function (shape) {
 		  this.shape = shape;
 	  }
@@ -9979,7 +10000,7 @@ Because of this, the display is sometimes not correct.
 			res.bMarg = this.textConstraints[AscFormat.Constr_type_bMarg];
 			res.tMarg = this.textConstraints[AscFormat.Constr_type_tMarg];
 			res.rMarg = this.textConstraints[AscFormat.Constr_type_rMarg];
-			res.lMarg = this.textConstraints[AscFormat.Constr_type_bMarg];
+			res.lMarg = this.textConstraints[AscFormat.Constr_type_lMarg];
 			return res;
 		};
 		ShapeSmartArtInfo.prototype.getRelFitFontSize = function () {
