@@ -12919,18 +12919,26 @@
 			});
 		};
 		CCustomProperties.prototype.add = function (name, variant, opt_linkTarget) {
+			this.addProperty(this.properties.length, this.createPropertyWithVariant(name, variant, opt_linkTarget));
+		};
+		CCustomProperties.prototype.createPropertyWithVariant = function (name, variant, opt_linkTarget) {
 			var newProperty = new CCustomProperty();
 			newProperty.fmtid = "{D5CDD505-2E9C-101B-9397-08002B2CF9AE}";
 			newProperty.pid = null;
 			newProperty.name = name;
 			newProperty.linkTarget = opt_linkTarget || null;
 			newProperty.content = variant;
-			this.addProperty(this.properties.length, newProperty);
+			return newProperty;
+		};
+		CCustomProperties.prototype.createProperty = function (name, type, value, opt_linkTarget) {
+			let oVariant = new CVariant();
+			oVariant.setType(type);
+			oVariant.setValue(value);
+			return this.createPropertyWithVariant(name, oVariant, opt_linkTarget);
 		};
 		CCustomProperties.prototype.getAllProperties = function () {
-			return this.properties;
+			return [].concat(this.properties);
 		};
-		
 		CCustomProperties.prototype.addProperty = function (idx, pr) {
 			let nInsertIdx = Math.min(this.properties.length, Math.max(0, idx));
 			AscCommon.History.Add(new CChangesDrawingsContentNoId(this, AscDFH.historyitem_CustomPropertiesAddProperty, nInsertIdx, [pr], true));
@@ -12948,14 +12956,36 @@
 			this.removeProperty(idx);
 			this.addProperty(idx, pr);
 		};
+		CCustomProperties.prototype.asc_AddProperty = function (name, type, value) {
+			for(let nIdx = 0; nIdx < this.properties.length; ++nIdx) {
+				let oPr = this.properties[nIdx];
+				if(oPr.name === name) {
+					this.asc_ModifyProperty(nIdx, name, type, value);
+					return;
+				}
+			}
+			AscCommon.History.Create_NewPoint(0);
+			this.addProperty(this.properties.length, this.createProperty(name, type, value, null));
+		};
+		CCustomProperties.prototype.asc_ModifyProperty = function (idx, name, type, value) {
+			AscCommon.History.Create_NewPoint(0);
+			this.modifyProperty(idx, this.createProperty(name, type, value, null));
+		};
+		CCustomProperties.prototype.asc_getAllProperties = function () {
+			return this.getAllProperties();
+		};
+		CCustomProperties.prototype.asc_RemoveProperty = function (idx) {
+			return this.removeProperty(idx);
+		};
 
 		window['AscCommon'].CCustomProperties = CCustomProperties;
 		prot = CCustomProperties.prototype;
 		prot["add"] = prot.add;
-		prot["getAllProperties"] = prot.getAllProperties;
-		prot["addProperty"] = prot.addProperty;
-		prot["removeProperty"] = prot.removeProperty;
-		prot["modifyProperty"] = prot.modifyProperty;
+		prot["asc_getAllProperties"] = prot.asc_getAllProperties;
+		prot["asc_AddProperty"] = prot.asc_AddProperty;
+		prot["asc_ModifyProperty"] = prot.asc_ModifyProperty;
+		prot["asc_RemoveProperty"] = prot.asc_RemoveProperty;
+
 
 		function CCustomProperty() {
 			CBaseNoIdObject.call(this);
@@ -13037,7 +13067,7 @@
 		CCustomProperty.prototype.setContent = function (v) {
 			this.content = v;
 		};
-		CCustomProperty.prototype.asc_getTitle = function() {
+		CCustomProperty.prototype.asc_getName = function() {
 			return this.name;
 		};
 		CCustomProperty.prototype.asc_getType = function() {
@@ -13052,27 +13082,9 @@
 			}
 			return null;
 		};
-		CCustomProperty.prototype.asc_setTitle = function(v) {
-			this.name = v;
-		};
-		CCustomProperty.prototype.asc_setType = function(v) {
-			if(!this.content) {
-				this.setContent(new CVariant(this));
-			}
-			this.content.setType(v);
-		};
-		CCustomProperty.prototype.asc_setValue = function() {
-			if(!this.content) {
-				this.setContent(new CVariant(this));
-			}
-			this.content.setValue(v);
-		};
-		CCustomProperty.prototype["asc_getTitle"] = CCustomProperty.prototype.asc_getTitle;
+		CCustomProperty.prototype["asc_getName"] = CCustomProperty.prototype.asc_getName;
 		CCustomProperty.prototype["asc_getType"] = CCustomProperty.prototype.asc_getType;
 		CCustomProperty.prototype["asc_getValue"] = CCustomProperty.prototype.asc_getValue;
-		CCustomProperty.prototype["asc_setTitle"] = CCustomProperty.prototype.asc_getTitle;
-		CCustomProperty.prototype["asc_setType"] = CCustomProperty.prototype.asc_getType;
-		CCustomProperty.prototype["asc_setValue"] = CCustomProperty.prototype.asc_getValue;
 
 		function CVariantVector() {
 			CBaseNoIdObject.call(this);
