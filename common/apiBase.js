@@ -5108,7 +5108,7 @@
 
 	
 	baseEditorsApi.prototype.asc_removeCustomProperty = function(idx) {
-		this.modifyCustomProperty(idx, name, type, value);
+		this.removeCustomProperty(idx);
 	};
 	
 	baseEditorsApi.prototype.addCustomProperty = function(name, type, value) {
