@@ -715,6 +715,9 @@
 		drawingContentChanges[AscDFH.historyitem_ThemeRemoveExtraClrScheme] = function (oClass) {
 			return oClass.extraClrSchemeLst;
 		};
+		drawingContentChanges[AscDFH.historyitem_CustomPropertiesAddProperty] = function (oClass) {
+			return oClass.properties;
+		};
 
 
 		drawingConstructorsMap[AscDFH.historyitem_ClrMap_SetClr] = CUniColor;
@@ -734,7 +737,7 @@
 
 		drawingConstructorsMap[AscDFH.historyitem_CNvPr_SetHlinkClick] = CT_Hyperlink;
 		drawingConstructorsMap[AscDFH.historyitem_CNvPr_SetHlinkHover] = CT_Hyperlink;
-
+		drawingConstructorsMap[AscDFH.historyitem_CustomPropertiesAddProperty] = CCustomProperty;
 
 		AscDFH.changesFactory[AscDFH.historyitem_DefaultShapeDefinition_SetSpPr] = CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_DefaultShapeDefinition_SetBodyPr] = CChangesDrawingsObjectNoId;
@@ -801,31 +804,9 @@
 		AscDFH.changesFactory[AscDFH.historyitem_HF_SetFtr] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_HF_SetHdr] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_HF_SetSldNum] = CChangesDrawingsBool;
+		AscDFH.changesFactory[AscDFH.historyitem_CustomPropertiesAddProperty] = CChangesDrawingsContentNoId;
 
 
-		AscDFH.changesFactory[AscDFH.historyitem_VariantParent] = CChangesDrawingsObject;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantParent] = CChangesDrawingsObject;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantStrContent] = CChangesDrawingsString;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantIContent] = CChangesDrawingsLong;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantUContent] = CChangesDrawingsLong;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantDContent] = CChangesDrawingsDouble2;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantBContent] = CChangesDrawingsBool;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantVariant] = CChangesDrawingsObject;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantVector] = CChangesDrawingsObject;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantArray] = CChangesDrawingsObject;
-		AscDFH.changesFactory[AscDFH.historyitem_VariantVStream] = CChangesDrawingsObject;
-
-		drawingsChangesMap[AscDFH.historyitem_VariantParent] = function(oClass, value) {oClass.parent = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantParent] = function(oClass, value) {oClass.type = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantStrContent] = function(oClass, value) {oClass.strContent = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantIContent] = function(oClass, value) {oClass.iContent = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantUContent] = function(oClass, value) {oClass.uContent = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantDContent] = function(oClass, value) {oClass.dContent = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantBContent] = function(oClass, value) {oClass.bContent = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantVariant] = function(oClass, value) {oClass.variant = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantVector] = function(oClass, value) {oClass.vector = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantArray] = function(oClass, value) {oClass.array = value;};
-		drawingsChangesMap[AscDFH.historyitem_VariantVStream] = function(oClass, value) {oClass.vStream = value;};
 
 
 // COLOR -----------------------
@@ -13083,6 +13064,11 @@
 			}
 			return null;
 		};
+		CCustomProperty.prototype.Write_ToBinary = function(w) {
+		};
+		CCustomProperty.prototype.Read_FromBinary = function(w) {
+		};
+		
 		CCustomProperty.prototype["asc_getName"] = CCustomProperty.prototype.asc_getName;
 		CCustomProperty.prototype["asc_getType"] = CCustomProperty.prototype.asc_getType;
 		CCustomProperty.prototype["asc_getValue"] = CCustomProperty.prototype.asc_getValue;
