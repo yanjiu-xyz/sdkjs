@@ -1877,7 +1877,6 @@ background-repeat: no-repeat;\
 			let oContentCustomPr = oCustomPrPart.getDocumentContent();
 			if(oContentCustomPr) {
 				let oCustomPrReader = new StaxParser(oContentCustomPr, oCustomPrPart, xmlParserContext);
-				this.WordControl.m_oLogicDocument.CustomPr = new AscCommon.CCustomProperties();
 				this.WordControl.m_oLogicDocument.CustomPr.fromXml(oCustomPrReader, true);
 			}
 		}
@@ -9300,7 +9299,7 @@ background-repeat: no-repeat;\
 
 
 	
-	asc_docs_api.prototype.asc_getCustomProperties = function() {
+	asc_docs_api.prototype.getCustomProperties = function() {
 		let oPresentation = this.private_GetLogicDocument();
 		if(!oPresentation)
 			return null;
@@ -9868,8 +9867,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_CanDeleteMaster"] = asc_docs_api.prototype.asc_CanDeleteMaster;
 	asc_docs_api.prototype["asc_CanDeleteLayout"] = asc_docs_api.prototype.asc_CanDeleteLayout;
 
-	asc_docs_api.prototype["asc_getCustomProperties"] = asc_docs_api.prototype.asc_getCustomProperties;
-	
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;
 	asc_CCommentData.prototype['asc_getText']         = asc_CCommentData.prototype.asc_getText;
 	asc_CCommentData.prototype['asc_putText']         = asc_CCommentData.prototype.asc_putText;

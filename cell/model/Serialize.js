@@ -12462,7 +12462,6 @@
                         case c_oSerTableTypes.CustomProperties:
                             this.stream.Seek2(mtiOffBits);
                             fileStream = this.stream.ToFileStream();
-                            wb.CustomProperties = new AscCommon.CCustomProperties();
                             wb.CustomProperties.fromStream(fileStream);
                             this.stream.FromFileStream(fileStream);
                             break;

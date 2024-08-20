@@ -4866,6 +4866,9 @@
 	window['AscDFH'].historydescription_Document_AddComplexField                    = 0x01b4;
 	window['AscDFH'].historydescription_Document_EditComplexFieldInstruction        = 0x01b5;
 	window['AscDFH'].historydescription_Collaborative_DeletedTextRecovery           = 0x01b6;
+	window['AscDFH'].historydescription_CustomProperties_Add                        = 0x01b7;
+	window['AscDFH'].historydescription_CustomProperties_Remove                     = 0x01b8;
+	window['AscDFH'].historydescription_CustomProperties_Modify                     = 0x01b9;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -14082,12 +14082,36 @@ background-repeat: no-repeat;\
 		
 		AscCommon.CollaborativeEditing.CoHistory.UndoDeletedTextRecovery();
 	};
-	asc_docs_api.prototype.asc_getCustomProperties = function()
+	asc_docs_api.prototype.getCustomProperties = function()
 	{
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument)
 			return null;
 		return oLogicDocument.CustomProperties;
+	};
+
+	asc_docs_api.prototype.addCustomProperty = function(name, type, value)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return;
+		oLogicDocument.AddCustomProperty(name, type, value);
+	};
+
+	asc_docs_api.prototype.modifyCustomProperty = function(idx, name, type, value)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return;
+		oLogicDocument.ModifyCustomProperty(idx, name, type, value);
+	};
+
+	asc_docs_api.prototype.removeCustomProperty = function(idx)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return;
+		oLogicDocument.RemoveCustomProperty(idx);
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------
@@ -14909,8 +14933,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_hideDeletedTextInVersionHistory"]     = asc_docs_api.prototype.asc_hideDeletedTextInVersionHistory;
 
 	asc_docs_api.prototype["asc_getCoHistory"] = asc_docs_api.prototype.asc_getCoHistory;
-
-	asc_docs_api.prototype["asc_getCustomProperties"] = asc_docs_api.prototype.asc_getCustomProperties;
 
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;

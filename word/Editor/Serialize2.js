@@ -7886,7 +7886,6 @@ function BinaryFileReader(doc, openParams)
 				case c_oSerTableTypes.CustomProperties:
 					this.stream.Seek2(mtiOffBits);
 					fileStream = this.stream.ToFileStream();
-					this.Document.CustomProperties = new AscCommon.CCustomProperties();
 					this.Document.CustomProperties.fromStream(fileStream);
 					this.stream.FromFileStream(fileStream);
 					break;

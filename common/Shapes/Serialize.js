@@ -385,7 +385,6 @@ function BinaryPPTYLoader()
                 // CustomProperties
                 s.Seek2(_main_tables["48"]);
 
-                this.presentation.CustomProperties = new AscCommon.CCustomProperties();
                 this.presentation.CustomProperties.fromStream(s);
             }
         }

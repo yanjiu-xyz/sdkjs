@@ -12937,7 +12937,7 @@
 			this.removeProperty(idx);
 			this.addProperty(idx, pr);
 		};
-		CCustomProperties.prototype.asc_AddProperty = function (name, type, value) {
+		CCustomProperties.prototype.AddProperty = function (name, type, value) {
 			for(let nIdx = 0; nIdx < this.properties.length; ++nIdx) {
 				let oPr = this.properties[nIdx];
 				if(oPr.name === name) {
@@ -12945,18 +12945,15 @@
 					return;
 				}
 			}
-			AscCommon.History.Create_NewPoint(0);
 			this.addProperty(this.properties.length, this.createProperty(name, type, value, null));
 		};
-		CCustomProperties.prototype.asc_ModifyProperty = function (idx, name, type, value) {
-			AscCommon.History.Create_NewPoint(0);
+		CCustomProperties.prototype.ModifyProperty = function (idx, name, type, value) {
 			this.modifyProperty(idx, this.createProperty(name, type, value, null));
 		};
 		CCustomProperties.prototype.asc_getAllProperties = function () {
 			return this.getAllProperties();
 		};
-		CCustomProperties.prototype.asc_RemoveProperty = function (idx) {
-			AscCommon.History.Create_NewPoint(0);
+		CCustomProperties.prototype.RemoveProperty = function (idx) {
 			return this.removeProperty(idx);
 		};
 
@@ -13770,7 +13767,7 @@
 				}
 				case c_oVariantTypes.vtDate:
 				case c_oVariantTypes.vtFiletime: {
-					this.setStrContent(val.toISOString().slice(0, 19) + 'Z');
+					this.setStrContent(v.toISOString().slice(0, 19) + 'Z');
 					break;
 				}
 				case c_oVariantTypes.vtBool: {

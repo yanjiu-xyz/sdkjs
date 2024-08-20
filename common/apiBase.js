@@ -5088,9 +5088,38 @@
 			window.g_asc_plugins.onUpdateOptions();
 	};
 
-	baseEditorsApi.prototype.asc_getCustomProperties = function() {
+	baseEditorsApi.prototype.getCustomProperties = function() {
 		return null;
 	};
+
+	baseEditorsApi.prototype.asc_getAllCustomProperties = function() {
+		let oCustomProperties = this.getCustomProperties();
+		if(!oCustomProperties) return [];
+		return oCustomProperties.getAllProperties();
+	};
+	
+	baseEditorsApi.prototype.asc_addCustomProperty = function(name, type, value) {
+		this.addCustomProperty(name, type, value);
+	};
+
+	baseEditorsApi.prototype.asc_modifyCustomProperty = function(idx, name, type, value) {
+		this.modifyCustomProperty(idx, name, type, value);
+	};
+
+	
+	baseEditorsApi.prototype.asc_removeCustomProperty = function(idx) {
+		this.modifyCustomProperty(idx, name, type, value);
+	};
+	
+	baseEditorsApi.prototype.addCustomProperty = function(name, type, value) {
+	};
+
+	baseEditorsApi.prototype.modifyCustomProperty = function(idx, name, type, value) {
+	};
+
+	baseEditorsApi.prototype.removeCustomProperty = function(idx) {
+	};
+	
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
@@ -5173,6 +5202,10 @@
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
 	prot["asc_resetPassword"] = prot.asc_resetPassword;
 
-	prot["asc_getCustomProperties"] = prot.asc_getCustomProperties;
+	//custom properties
+	prot["asc_getAllCustomProperties"] = prot.asc_getAllCustomProperties;
+	prot["asc_addCustomProperty"] = prot.asc_addCustomProperty;
+	prot["asc_modifyCustomProperty"] = prot.asc_modifyCustomProperty;
+	prot["asc_removeCustomProperty"] = prot.asc_removeCustomProperty;
 
 })(window);
