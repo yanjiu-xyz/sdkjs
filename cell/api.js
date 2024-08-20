@@ -9472,22 +9472,36 @@ var editor;
 	spreadsheet_api.prototype.addCustomProperty = function(name, type, value) {
     let oCustomProperties = this.getCustomProperties();
     if(!oCustomProperties) return;
-    AscCommon.History.Create_NewPoint();
-    oCustomProperties.AddProperty(name, type, value);
+    
+		this.checkObjectsLock([oCustomProperties.Id], function(bNoLock) {
+			if(bNoLock) {
+        AscCommon.History.Create_NewPoint();
+        oCustomProperties.AddProperty(name, type, value);
+			}
+		});
 	};
 
 	spreadsheet_api.prototype.modifyCustomProperty = function(idx, name, type, value) {
     let oCustomProperties = this.getCustomProperties();
     if(!oCustomProperties) return;
-    AscCommon.History.Create_NewPoint();
-    oCustomProperties.ModifyProperty(idx, name, type, value)
+    
+		this.checkObjectsLock([oCustomProperties.Id], function(bNoLock) {
+			if(bNoLock) {
+        AscCommon.History.Create_NewPoint();
+        oCustomProperties.ModifyProperty(idx, name, type, value);
+			}
+		});
 	};
 
 	spreadsheet_api.prototype.removeCustomProperty = function(idx) {
     let oCustomProperties = this.getCustomProperties();
     if(!oCustomProperties) return;
-    AscCommon.History.Create_NewPoint();
-    oCustomProperties.RemoveProperty(idx);
+		this.checkObjectsLock([oCustomProperties.Id], function(bNoLock) {
+			if(bNoLock) {
+        AscCommon.History.Create_NewPoint();
+        oCustomProperties.RemoveProperty(idx);
+			}
+		});
 	};
   /*
    * Export
