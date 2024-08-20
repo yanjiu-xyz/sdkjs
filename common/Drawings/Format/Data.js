@@ -755,7 +755,7 @@ Because of this, the display is sometimes not correct.
     const ParameterVal_textAnchorHorizontal_none = 1;
     const ParameterVal_textAnchorVertical_b = 0;
     const ParameterVal_textAnchorVertical_mid = 1;
-    const ParameterVal_textAnchorVertical_top = 2;
+    const ParameterVal_textAnchorVertical_t = 2;
     const ParameterVal_textBlockDirection_horz = 0;
     const ParameterVal_textBlockDirection_vert = 1;
     const ParameterVal_textDirection_fromB = 0;
@@ -4141,8 +4141,8 @@ Because of this, the display is sometimes not correct.
 					switch (this.val) {
 						case "b":
 							return ParameterVal_textAnchorVertical_b;
-						case "top":
-							return ParameterVal_textAnchorVertical_top;
+						case "t":
+							return ParameterVal_textAnchorVertical_t;
 						case "mid":
 							return ParameterVal_textAnchorVertical_mid;
 						default:
@@ -12733,7 +12733,7 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ParameterVal_textAnchorHorizontal_none = ParameterVal_textAnchorHorizontal_none;
     window['AscFormat'].ParameterVal_textAnchorVertical_b = ParameterVal_textAnchorVertical_b;
     window['AscFormat'].ParameterVal_textAnchorVertical_mid = ParameterVal_textAnchorVertical_mid;
-    window['AscFormat'].ParameterVal_textAnchorVertical_top = ParameterVal_textAnchorVertical_top;
+    window['AscFormat'].ParameterVal_textAnchorVertical_t = ParameterVal_textAnchorVertical_t;
     window['AscFormat'].ParameterVal_textBlockDirection_horz = ParameterVal_textBlockDirection_horz;
     window['AscFormat'].ParameterVal_textBlockDirection_vert = ParameterVal_textBlockDirection_vert;
     window['AscFormat'].ParameterVal_textDirection_fromB = ParameterVal_textDirection_fromB;

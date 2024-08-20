@@ -5939,7 +5939,7 @@ function HierarchyAlgorithm() {
 			this.params[AscFormat.Param_type_txAnchorVert] = AscFormat.ParameterVal_textAnchorVertical_mid;
 		}
 		if (this.params[AscFormat.Param_type_txAnchorVertCh] === undefined) {
-			this.params[AscFormat.Param_type_txAnchorVertCh] = AscFormat.ParameterVal_textAnchorVertical_top;
+			this.params[AscFormat.Param_type_txAnchorVertCh] = AscFormat.ParameterVal_textAnchorVertical_t;
 		}
 		if (this.params[AscFormat.Param_type_autoTxRot] === undefined) {
 			this.params[AscFormat.Param_type_autoTxRot] = AscFormat.ParameterVal_autoTextRotation_upr;
@@ -6138,7 +6138,7 @@ function HierarchyAlgorithm() {
 				case AscFormat.ParameterVal_textAnchorVertical_mid:
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 					break;
-				case AscFormat.ParameterVal_textAnchorVertical_top:
+				case AscFormat.ParameterVal_textAnchorVertical_t:
 				default:
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 					break;
@@ -6148,7 +6148,7 @@ function HierarchyAlgorithm() {
 				case AscFormat.ParameterVal_textAnchorVertical_b:
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 					break;
-				case AscFormat.ParameterVal_textAnchorVertical_top:
+				case AscFormat.ParameterVal_textAnchorVertical_t:
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 					break;
 				case AscFormat.ParameterVal_textAnchorVertical_mid:
