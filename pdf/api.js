@@ -2211,6 +2211,9 @@
 		documentRenderer.registerEvent("onFileOpened", function() {
 			_t.disableRemoveFonts = true;
 
+			documentRenderer.isDocumentContentReady = true;
+			_t._openDocumentEndCallback();
+
 			var thumbnailsDivId = "thumbnails-list";
 			if (document.getElementById(thumbnailsDivId))
 			{
@@ -2221,8 +2224,6 @@
 					_t.sendEvent("asc_onViewerThumbnailsZoomUpdate", value);
 				});
 			}
-			documentRenderer.isDocumentContentReady = true;
-			_t._openDocumentEndCallback();
 		});
 		documentRenderer.registerEvent("onHyperlinkClick", function(url){
 			_t.sendEvent("asc_onHyperlinkClick", url);
