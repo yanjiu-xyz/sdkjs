@@ -13065,8 +13065,19 @@
 			return null;
 		};
 		CCustomProperty.prototype.Write_ToBinary = function(w) {
+			let oStream = AscCommon.pptx_content_writer.BinaryFileWriter;
+			var old = new AscCommon.CMemory(true);
+            oStream.ExportToMemory(old);
+            oStream.ImportFromMemory(w);
+            oStream.WriteRecord4(0, this);
+            oStream.ExportToMemory(w);
+            oStream.ImportFromMemory(old);
 		};
-		CCustomProperty.prototype.Read_FromBinary = function(w) {
+		CCustomProperty.prototype.Read_FromBinary = function(r) {
+			let fileStream = r.ToFileStream();
+			fileStream.GetUChar();
+			this.fromStream(fileStream);
+			r.FromFileStream(fileStream);
 		};
 		
 		CCustomProperty.prototype["asc_getName"] = CCustomProperty.prototype.asc_getName;
@@ -13290,7 +13301,6 @@
 		};
 
 		function CVariant(parent) {
-			CBaseObject.call(this);
 			this.type = null;
 			this.strContent = null;
 			this.iContent = null;
@@ -13303,7 +13313,6 @@
 			this.vStream = null;
 			this.parent = parent;
 		}
-		InitClass(CVariant, CBaseObject, AscDFH.historyitem_type_Variant);
 		CVariant.prototype.fromStream = function (s) {
 			var _type;
 			var _len = s.GetULong();
@@ -13399,47 +13408,36 @@
 			s.WriteRecord4(8, this.vStream);
 		};
 		CVariant.prototype.setParent = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantParent, this.parent, pr));
 			this.parent = pr;
 		};
 		CVariant.prototype.setType = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantParent, this.type, pr));
 			this.type = pr;
 		};
 		CVariant.prototype.setStrContent = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_VariantStrContent, this.strContent, pr));
 			this.strContent = pr;
 		};
 		CVariant.prototype.setIContent = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_VariantIContent, this.iContent, pr));
 			this.iContent = pr;
 		};
 		CVariant.prototype.setUContent = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_VariantUContent, this.uContent, pr));
 			this.uContent = pr;
 		};
 		CVariant.prototype.setDContent = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_VariantDContent, this.dContent, pr));
 			this.dContent = pr;
 		};
 		CVariant.prototype.setBContent = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_VariantBContent, this.bContent, pr));
 			this.bContent = pr;
 		};
 		CVariant.prototype.setVariant = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantVariant, this.variant, pr));
 			this.variant = pr;
 		};
 		CVariant.prototype.setVector = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantVector, this.vector, pr));
 			this.vector = pr;
 		};
 		CVariant.prototype.setArray = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantArray, this.array, pr));
 			this.array = pr;
 		};
 		CVariant.prototype.setVStream = function(pr) {
-			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_VariantVStream, this.vStream, pr));
 			this.vStream = pr;
 		};
 		CVariant.prototype.setText = function (val) {

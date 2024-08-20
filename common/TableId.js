@@ -463,8 +463,6 @@
 
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_CustomProperties]              = AscCommon.CCustomProperties;
-		this.m_oFactoryClass[AscDFH.historyitem_type_Variant]                = AscCommon.CVariant;
-
 
 
 		if (window['AscCommonExcel'])

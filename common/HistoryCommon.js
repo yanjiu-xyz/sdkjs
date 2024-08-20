@@ -1836,7 +1836,6 @@
 	window['AscDFH'].historyitem_Pdf_Drawing				= 2219 << 16;
 
 	window['AscDFH'].historyitem_type_CustomProperties      = 2300 << 16;
-	window['AscDFH'].historyitem_type_Variant				= 2301 << 16;
 	
 	
 
@@ -4405,17 +4404,6 @@
 	AscDFH.historyitem_CustomPropertiesAddProperty = AscDFH.historyitem_type_CustomProperties | 0;
 	AscDFH.historyitem_CustomPropertiesRemoveProperty = AscDFH.historyitem_type_CustomProperties | 1;
 
-	AscDFH.historyitem_VariantType = AscDFH.historyitem_type_Variant | 0;
-	AscDFH.historyitem_VariantStrContent = AscDFH.historyitem_type_Variant | 1;
-	AscDFH.historyitem_VariantIContent = AscDFH.historyitem_type_Variant | 2;
-	AscDFH.historyitem_VariantUContent = AscDFH.historyitem_type_Variant | 3;
-	AscDFH.historyitem_VariantDContent = AscDFH.historyitem_type_Variant | 4;
-	AscDFH.historyitem_VariantBContent = AscDFH.historyitem_type_Variant | 5;
-	AscDFH.historyitem_VariantVariant = AscDFH.historyitem_type_Variant | 6;
-	AscDFH.historyitem_VariantVector = AscDFH.historyitem_type_Variant | 7;
-	AscDFH.historyitem_VariantArray	= AscDFH.historyitem_type_Variant | 8;
-	AscDFH.historyitem_VariantVStream = AscDFH.historyitem_type_Variant | 9;
-	AscDFH.historyitem_VariantParent = AscDFH.historyitem_type_Variant | 10;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
