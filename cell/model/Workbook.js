@@ -2511,7 +2511,7 @@
 		this.nActive = 0;
 		this.App = null;
 		this.Core = null;
-		this.CustomProperties = null;
+		this.CustomProperties = new AscCommon.CCustomProperties();
 		this.theme = null;
 		this.clrSchemeMap = null;
 

@@ -582,7 +582,7 @@ function CBinaryFileWriter()
 			this.WriteCore(presentation.Core, presentation.Api);
 
 		// Core
-		if (presentation.CustomProperties)
+		if (presentation.CustomProperties && presentation.CustomProperties.hasProperties())
 			this.WriteCustomProperties(presentation.CustomProperties, presentation.Api);
 
         // ViewProps

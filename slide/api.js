@@ -9305,6 +9305,30 @@ background-repeat: no-repeat;\
 			return null;
 		return oPresentation.CustomProperties;
 	};
+
+	asc_docs_api.prototype.addCustomProperty = function(name, type, value)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return;
+		oLogicDocument.AddCustomProperty(name, type, value);
+	};
+
+	asc_docs_api.prototype.modifyCustomProperty = function(idx, name, type, value)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return;
+		oLogicDocument.ModifyCustomProperty(idx, name, type, value);
+	};
+
+	asc_docs_api.prototype.removeCustomProperty = function(idx)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return;
+		oLogicDocument.RemoveCustomProperty(idx);
+	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};

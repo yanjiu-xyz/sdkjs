@@ -1870,7 +1870,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt
 				pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
 			}});
 		}
-		if (this.Document.CustomProperties) {
+		if (this.Document.CustomProperties && this.Document.CustomProperties.hasProperties()) {
 			this.WriteTable(c_oSerTableTypes.CustomProperties, {Write: function(){
 				var old = new AscCommon.CMemory(true);
 				pptx_content_writer.BinaryFileWriter.ExportToMemory(old);

@@ -6991,7 +6991,7 @@
                     pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
                 }});
             }
-            if (this.wb.CustomProperties) {
+            if (this.wb.CustomProperties && this.wb.CustomProperties.hasProperties()) {
                 this.WriteTable(c_oSerTableTypes.CustomProperties, {Write: function(){
                     var old = new AscCommon.CMemory(true);
                     pptx_content_writer.BinaryFileWriter.ExportToMemory(old);

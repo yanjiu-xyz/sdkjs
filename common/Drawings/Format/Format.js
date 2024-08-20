@@ -12956,6 +12956,9 @@
 		CCustomProperties.prototype.RemoveProperty = function (idx) {
 			return this.removeProperty(idx);
 		};
+		CCustomProperties.prototype.hasProperties = function () {
+			return this.properties.length > 0;
+		};
 
 		window['AscCommon'].CCustomProperties = CCustomProperties;
 		prot = CCustomProperties.prototype;

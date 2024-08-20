@@ -557,7 +557,7 @@ function CPresentation(DrawingDocument) {
 	//Props
 	this.App = null;
 	this.Core = null;
-	this.CustomProperties = null;
+	this.CustomProperties = new AscCommon.CCustomProperties();;
 
 	this.StartPage = 0; // Для совместимости с CDocumentContent
 	this.CurPage = 0;
@@ -11231,6 +11231,24 @@ CPresentation.prototype.getLockApplyBackgroundToAll = function() {
 		}
 	}
 	return false;
+};
+
+CPresentation.prototype.AddCustomProperty = function(name, type, value) {
+	this.StartAction(AscDFH.historydescription_CustomProperties_Add);
+	this.CustomProperties.AddProperty(name, type, value);
+	this.FinalizeAction(true);
+};
+
+CPresentation.prototype.ModifyCustomProperty = function(idx, name, type, value) {
+	this.StartAction(AscDFH.historydescription_CustomProperties_Modify);
+	this.CustomProperties.ModifyProperty(idx, name, type, value);
+	this.FinalizeAction(true);
+};
+
+CPresentation.prototype.RemoveCustomProperty = function(idx) {
+	this.StartAction(AscDFH.historydescription_CustomProperties_Remove);
+	this.CustomProperties.RemoveProperty(idx);
+	this.FinalizeAction(true);
 };
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {
