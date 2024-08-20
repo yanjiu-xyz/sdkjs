@@ -12840,6 +12840,7 @@
 		function CCustomProperties() {
 			CBaseObject.call(this);
 			this.properties = [];
+			this.Lock = new AscCommon.CLock();
 		}
 
 		InitClass(CCustomProperties, CBaseObject, AscDFH.historyitem_type_CustomProperties);

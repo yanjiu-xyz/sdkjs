@@ -9997,6 +9997,17 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 				});
 		}
 	}
+	if (CheckType === AscCommon.changestype_CustomPr) {
+		if (this.CustomProperties) {
+			this.CustomProperties.Lock.Check(
+				{
+					"type": c_oAscLockTypeElemPresentation.Object,
+					"val": this.CustomProperties.Get_Id(),
+					"guid": this.CustomProperties.Get_Id(),
+					"objId": this.CustomProperties.Get_Id()
+				});
+		}
+	}
 
 	if (CheckType === AscCommon.changestype_SlideTransition) {
 
@@ -11234,18 +11245,24 @@ CPresentation.prototype.getLockApplyBackgroundToAll = function() {
 };
 
 CPresentation.prototype.AddCustomProperty = function(name, type, value) {
+	if(!this.Document_Is_SelectionLocked(AscCommon.changestype_CustomPr, null))
+		return;
 	this.StartAction(AscDFH.historydescription_CustomProperties_Add);
 	this.CustomProperties.AddProperty(name, type, value);
 	this.FinalizeAction(true);
 };
 
 CPresentation.prototype.ModifyCustomProperty = function(idx, name, type, value) {
+	if(!this.Document_Is_SelectionLocked(AscCommon.changestype_CustomPr, null))
+		return;
 	this.StartAction(AscDFH.historydescription_CustomProperties_Modify);
 	this.CustomProperties.ModifyProperty(idx, name, type, value);
 	this.FinalizeAction(true);
 };
 
 CPresentation.prototype.RemoveCustomProperty = function(idx) {
+	if(!this.Document_Is_SelectionLocked(AscCommon.changestype_CustomPr, null))
+		return;
 	this.StartAction(AscDFH.historydescription_CustomProperties_Remove);
 	this.CustomProperties.RemoveProperty(idx);
 	this.FinalizeAction(true);

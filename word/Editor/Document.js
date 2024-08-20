@@ -13377,6 +13377,13 @@ CDocument.prototype.private_DocumentIsSelectionLocked = function(CheckType)
 				this.Core.Lock.Check(this.Core.Get_Id());
 			}
 		}
+		else if(AscCommon.changestype_CustomPr === CheckType)
+		{
+			if(this.CustomProperties)
+			{
+				this.CustomProperties.Lock.Check(this.CustomProperties.Get_Id());
+			}
+		}
 		else if (AscCommon.changestype_DocumentProtection === CheckType)
 		{
 			if (this.Settings.DocumentProtection)
@@ -27338,6 +27345,9 @@ CDocument.prototype.isPreventedPreDelete = function()
 
 CDocument.prototype.AddCustomProperty = function(name, type, value)
 {
+	if(this.IsSelectionLocked(AscCommon.changestype_CustomPr, null))
+		return;
+	
 	this.StartAction(AscDFH.historydescription_CustomProperties_Add);
 	this.CustomProperties.AddProperty(name, type, value);
 	this.FinalizeAction(true);
@@ -27345,16 +27355,23 @@ CDocument.prototype.AddCustomProperty = function(name, type, value)
 
 CDocument.prototype.ModifyCustomProperty = function(idx, name, type, value)
 {
+	if(this.IsSelectionLocked(AscCommon.changestype_CustomPr, null))
+		return;
+
 	this.StartAction(AscDFH.historydescription_CustomProperties_Modify);
 	this.CustomProperties.ModifyProperty(idx, name, type, value)
 	this.FinalizeAction(true);
 };
 CDocument.prototype.RemoveCustomProperty = function(idx)
 {
+	if(this.IsSelectionLocked(AscCommon.changestype_CustomPr, null))
+		return;
+
 	this.StartAction(AscDFH.historydescription_CustomProperties_Remove);
 	this.CustomProperties.RemoveProperty(idx)
 	this.FinalizeAction(true);
 };
+
 function CDocumentSelectionState()
 {
     this.Id        = null;
