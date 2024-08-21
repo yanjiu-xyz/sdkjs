@@ -7196,7 +7196,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			if (nOperandType === cElementType.cellsRange3D) {
 				const oParentCell = parserFormula.getParent();
-				if (oParentCell instanceof AscCommonExcel.DefName || oParentCell instanceof CT_WorksheetSource) {
+				if (!(oParentCell instanceof AscCommonExcel.CCellWithFormula)) {
 					return false;
 				}
 				const aRanges = found_operand.getRanges().filter(function (oRange) {
@@ -7443,6 +7443,9 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand, true);
 				t.ca = isRecursiveFormula(found_operand, t);
+				if (t.ca && defName && defName.parsedRef) {
+					defName.parsedRef.ca = t.ca;
+				}
 			}
 
 			/* Numbers*/ else if (parserHelp.isNumber.call(ph, t.Formula, ph.pCurrPos, digitDelim)) {

@@ -4644,7 +4644,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
 					isHiddenCFPart = PRS.ComplexFields.isComplexFieldCode();
 
-					if (Item.IsSeparate() && !isHiddenCFPart)
+					if (Item.IsEnd() && !isHiddenCFPart)
 					{
 						// Специальная ветка, для полей PAGE и NUMPAGES, находящихся в колонтитуле
 						var oComplexField = Item.GetComplexField();
@@ -8308,6 +8308,8 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 		if (para_End === this.Content[nPos].Type)
 			return this.Paragraph.TextPr.Apply_TextPr(TextPr);
 	}
+
+	this.OnTextPrChange();
 };
 ParaRun.prototype.ApplyPr = function(oTextPr)
 {
