@@ -5963,9 +5963,11 @@ function HierarchyAlgorithm() {
 		const arrParagraphs = [];
 		let nBulletLevel = 0;
 
+		const startDepth = contentNodes[0].depth;
 		for (let i = 0; i < contentNodes.length; i += 1) {
 			const contentNode = contentNodes[i];
 			const mainPoint = contentNode.point;
+			const deltaDepth = contentNode.depth - startDepth;
 			if (contentNode.point) {
 				shapeSmartArtInfo.addToLstContentPoint(i, contentNode);
 				const dataContent = mainPoint.t && mainPoint.t.content;
@@ -5973,8 +5975,10 @@ function HierarchyAlgorithm() {
 					const firstParagraph = dataContent.Content[0];
 					if (firstParagraph) {
 						const copyParagraph = firstParagraph.Copy(shapeContent, shapeContent.DrawingDocument);
-						if (i !== 0 || stBulletLvl === 1) {
+						if (stBulletLvl === 1 || stBulletLvl === 2 && deltaDepth > 0) {
 							const oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 0});
+							oBullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_TX;
+
 							copyParagraph.Add_PresentationNumbering(oBullet);
 							copyParagraph.Set_PresentationLevel(nBulletLevel);
 							nBulletLevel = Math.min(nBulletLevel + 1, 8);
@@ -6126,11 +6130,23 @@ function HierarchyAlgorithm() {
 		}
 
 	};
+	function isParentWithChildren(nodes) {
+		if (nodes.length) {
+			const startDepth = nodes[0].depth;
+			for (let i = 1; i < nodes.length; i += 1) {
+				if (nodes[i].depth - startDepth > 0) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
 	TextAlgorithm.prototype.applyVerticalAlignment = function (editorShape) {
 		const node = this.parentNode;
 		const bodyPr = editorShape.getBodyPr().createDuplicate();
 		const stBulletLvl = this.params[AscFormat.Param_type_stBulletLvl];
-		if (node.contentNodes.length > stBulletLvl - 1) {
+		if (isParentWithChildren(node.contentNodes) || stBulletLvl === 1) {
 			switch (this.params[AscFormat.Param_type_txAnchorVertCh]) {
 				case AscFormat.ParameterVal_textAnchorVertical_b:
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
@@ -6175,12 +6191,13 @@ function HierarchyAlgorithm() {
 		const node = this.parentNode;
 		let paragraphLTRAlignment;
 		let paragraphRTLAlignment;
-		if (node.contentNodes.length <= 1) {
-			paragraphLTRAlignment = this.getTextAlignment(AscFormat.Param_type_parTxLTRAlign);
-			paragraphRTLAlignment = this.getTextAlignment(AscFormat.Param_type_parTxRTLAlign);
-		} else {
+		const stBulletLvl = this.params[AscFormat.Param_type_stBulletLvl];
+		if (isParentWithChildren(node.contentNodes) || stBulletLvl === 1) {
 			paragraphLTRAlignment = this.getTextAlignment(AscFormat.Param_type_shpTxLTRAlignCh);
 			paragraphRTLAlignment = this.getTextAlignment(AscFormat.Param_type_shpTxRTLAlignCh);
+		} else {
+			paragraphLTRAlignment = this.getTextAlignment(AscFormat.Param_type_parTxLTRAlign);
+			paragraphRTLAlignment = this.getTextAlignment(AscFormat.Param_type_parTxRTLAlign);
 		}
 
 		for (let i = 0; i < drawingContent.Content.length; i++) {
