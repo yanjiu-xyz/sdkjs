@@ -4581,12 +4581,7 @@
 							const nodeArray = smartArtInfo.adaptFontSizeArray[i];
 							for (let j = 0; j < nodeArray.length; j++) {
 								const presNode = nodeArray[j];
-								let editorShape;
-								if (presNode.isTxXfrm()) {
-									editorShape = presNode.node.getTextNodes().contentNode.getShape().editorShape;
-								} else {
-									editorShape = presNode.getShape().editorShape;
-								}
+								const editorShape = presNode.contentNodes[0] && presNode.contentNodes[0].getContentNode().getShape().editorShape;
 								if (editorShape && !mapShapes[editorShape.GetId()]) {
 									res.push(editorShape);
 									mapShapes[editorShape.GetId()] = true;
@@ -4666,7 +4661,7 @@
 			for (let i = 0; i < adaptRelationArrays.length; i += 1) {
 				const presNodeArray = adaptRelationArrays[i];
 				if (presNodeArray.length) {
-					const editorShape = presNodeArray[0].getShape().editorShape;
+					const editorShape = presNodeArray[0].contentNodes[0] && presNodeArray[0].contentNodes[0].getContentNode().getShape().editorShape;
 					if (editorShape) {
 						const smartArtInfo = editorShape.getSmartArtInfo();
 						if (AscFormat.isRealNumber(smartArtInfo.maxFontSize)) {

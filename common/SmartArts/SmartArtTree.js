@@ -622,26 +622,32 @@
 	};
 	SmartArtAlgorithm.prototype.applyColorsDef = function (shadowShapes) {
 		const colorsDef = this.smartart.getColorsDef();
-		const styleLblsByName = colorsDef.styleLblByName;
+		const stylesDef = this.smartart.getStyleDef();
+		const styleLblsByName = stylesDef.styleLblByName;
+		const colorLblsByName = colorsDef.styleLblByName;
 		const parentObjects = this.getParentObjects();
-		const colorShapesByStyleLbl = {};
+		const shapesByStyleLbl = {};
 		for (let i = 0; i < shadowShapes.length; i += 1) {
 			const shadowShape = shadowShapes[i];
 			const node = shadowShape.node;
 			const styleLbl = node.getPresStyleLbl();
 			if (styleLbl) {
-				if (!colorShapesByStyleLbl[styleLbl]) {
-					colorShapesByStyleLbl[styleLbl] = [];
+				if (!shapesByStyleLbl[styleLbl]) {
+					shapesByStyleLbl[styleLbl] = [];
 				}
-				colorShapesByStyleLbl[styleLbl].push(shadowShape.connectorShape || shadowShape);
+				shapesByStyleLbl[styleLbl].push(shadowShape.connectorShape || shadowShape);
 			}
 		}
-		for (let styleLbl in colorShapesByStyleLbl) {
-			const colorStyleLbl = styleLblsByName[styleLbl];
-			if (colorStyleLbl) {
-				const shapes = colorShapesByStyleLbl[styleLbl];
-					colorStyleLbl.setShapeFill(shapes, parentObjects);
-					colorStyleLbl.setShapeLn(shapes, parentObjects);
+		for (let styleLbl in shapesByStyleLbl) {
+			const colorLbl = colorLblsByName[styleLbl];
+			const shapes = shapesByStyleLbl[styleLbl];
+			if (colorLbl) {
+					colorLbl.setShapeFill(shapes, parentObjects);
+					colorLbl.setShapeLn(shapes, parentObjects);
+			}
+			const quickStyleLbl = styleLblsByName[styleLbl];
+			if (quickStyleLbl) {
+				quickStyleLbl.setShapeStyle(shapes);
 			}
 		}
 	};
@@ -886,24 +892,26 @@
 		this.childs = [];
 		this.algorithm = null;
 		this.depth = AscFormat.isRealNumber(depth) ? depth : null;
-		this.presOf = [];
+		this.presOf = {
+			textNode: null,
+			contentNode: null
+		};
 	}
 	SmartArtDataNodeBase.prototype.addPresOf = function (presNode) {
-		this.presOf.push(presNode);
-	}
-	SmartArtDataNodeBase.prototype.getTextNodes = function () {
-		const presOf = this.presOf;
-		let textNode;
-		let contentNode;
-		for (let i = 0; i < presOf.length; i++) {
-			const node = presOf[i];
-			if (node.algorithm instanceof TextAlgorithm) {
-				textNode = node;
-			} else {
-				contentNode = node;
-			}
+		if (presNode.algorithm instanceof TextAlgorithm) {
+			this.presOf.textNode = presNode;
+		} else {
+			this.presOf.contentNode = presNode;
 		}
-		return {textNode: textNode, contentNode: contentNode};
+	}
+	SmartArtDataNodeBase.prototype.getTextNode = function () {
+		return this.presOf.textNode || this.presOf.contentNode;
+	};
+	SmartArtDataNodeBase.prototype.getContentNode = function () {
+		return this.presOf.contentNode || this.presOf.textNode;
+	};
+	SmartArtDataNodeBase.prototype.getTextNodes = function () {
+		return this.presOf;
 	};
 	SmartArtDataNodeBase.prototype.getDirection = function () {};
 	SmartArtDataNodeBase.prototype._getHierBranchValue = function () {
@@ -1410,8 +1418,8 @@
 		this.fill = null;
 		this.tailLnArrow = null;
 		this.headLnArrow = null;
+		this.style = null;
 		this.shape = null;
-		this.calcInfo = null;
 		this.connectorShape = null;
 		this.customAdj = null;
 		this.customGeom = [];
@@ -1452,11 +1460,6 @@
 	ShadowShape.prototype.moveTo = function (dX, dY) {
 		this.node.moveTo(dX, dY, false);
 	};
-	ShadowShape.prototype.setCalcInfo = function () {
-		this.calcInfo = {
-			isChecked: false
-		};
-	};
 	ShadowShape.prototype.changeSize = function (coefficient, props) {
 		props = props || {};
 		this.x *= coefficient;
@@ -1483,6 +1486,10 @@
 
 	ShadowShape.prototype.setLn = function (ln) {
 		this.ln = ln;
+	}
+
+	ShadowShape.prototype.setStyle = function (style) {
+		this.style = style;
 	}
 
 	ShadowShape.prototype.getEditorLine = function () {
@@ -1650,6 +1657,9 @@
 		}
 		if (this.ln) {
 			spPr.setLn(this.ln);
+		}
+		if (this.style) {
+			editorShape.setStyle(this.style);
 		}
 		if (contentPoint && contentPoint.point.spPr) {
 			spPr.fullMerge(contentPoint.point.spPr);
@@ -6098,37 +6108,44 @@ function HierarchyAlgorithm() {
 	};
 	TextAlgorithm.prototype.applyTextMargins = function (editorShape) {
 		const node = this.parentNode;
-
-
-		if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined &&
-			node.textConstraints[AscFormat.Constr_type_tMarg] === undefined &&
-			node.textConstraints[AscFormat.Constr_type_rMarg] === undefined &&
-			node.textConstraints[AscFormat.Constr_type_lMarg] === undefined) {
-			node.textConstraints[AscFormat.Constr_type_bMarg] = 0.56;
-			node.textConstraints[AscFormat.Constr_type_tMarg] = 0.56;
-			node.textConstraints[AscFormat.Constr_type_lMarg] = 0.56;
-			node.textConstraints[AscFormat.Constr_type_rMarg] = 0.56;
-		} else {
-			const paddings = {};
-			if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined) {
-				paddings.Bottom = node.getConstr(AscFormat.Constr_type_bMarg, true);
+		const paddings = {};
+		if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined) {
+			const bMarg = node.getConstr(AscFormat.Constr_type_bMarg, true, true);
+			if (bMarg !== undefined) {
+				paddings.Bottom = bMarg * g_dKoef_pt_to_mm;
+			} else {
+				node.textConstraints[AscFormat.Constr_type_bMarg] = 0.56;
 			}
-
-			if (node.textConstraints[AscFormat.Constr_type_tMarg] === undefined) {
-				paddings.Top = node.getConstr(AscFormat.Constr_type_tMarg, true);
-			}
-
-			if (node.textConstraints[AscFormat.Constr_type_rMarg] === undefined) {
-				paddings.Right = node.getConstr(AscFormat.Constr_type_rMarg, true);
-			}
-
-			if (node.textConstraints[AscFormat.Constr_type_lMarg] === undefined) {
-				paddings.Left = node.getConstr(AscFormat.Constr_type_lMarg, true);
-			}
-
-			editorShape.setPaddings(paddings, {bNotCopyToPoints: true});
 		}
 
+		if (node.textConstraints[AscFormat.Constr_type_tMarg] === undefined) {
+			const tMarg = node.getConstr(AscFormat.Constr_type_tMarg, true, true);
+			if (tMarg !== undefined) {
+				paddings.Top = tMarg * g_dKoef_pt_to_mm;
+			} else {
+				node.textConstraints[AscFormat.Constr_type_tMarg] = 0.56;
+			}
+		}
+
+		if (node.textConstraints[AscFormat.Constr_type_rMarg] === undefined) {
+			const rMarg = node.getConstr(AscFormat.Constr_type_rMarg, true, true);
+			if (rMarg !== undefined) {
+				paddings.Right = rMarg * g_dKoef_pt_to_mm;
+			} else {
+				node.textConstraints[AscFormat.Constr_type_rMarg] = 0.56;
+			}
+		}
+
+		if (node.textConstraints[AscFormat.Constr_type_lMarg] === undefined) {
+			const lMarg = node.getConstr(AscFormat.Constr_type_lMarg, true, true);
+			if (lMarg !== undefined) {
+				paddings.Left = lMarg * g_dKoef_pt_to_mm;
+			} else {
+				node.textConstraints[AscFormat.Constr_type_lMarg] = 0.56;
+			}
+		}
+
+		editorShape.setPaddings(paddings, {bNotCopyToPoints: true});
 	};
 	function isParentWithChildren(nodes) {
 		if (nodes.length) {
@@ -6759,13 +6776,16 @@ PresNode.prototype.addChild = function (ch, pos) {
 					const refNodes = info.refNodes;
 					for (let i = 0; i < refNodes.length; i += 1) {
 						const refNode = refNodes[i];
-						const shapeInfo = refNode.getShape().editorShape.getSmartArtInfo();
-						const shapeFontSize = shapeInfo.getRelFitFontSize();
-						if (shapeFontSize !== null) {
-							if (shapeFontSize < fontSize) {
-								fontSize = shapeFontSize;
+						const editorShape = refNode.node.getContentNode().getShape().editorShape;
+						if (editorShape) {
+							const shapeInfo = editorShape.getSmartArtInfo();
+							const shapeFontSize = shapeInfo.getRelFitFontSize();
+							if (shapeFontSize !== null) {
+								if (shapeFontSize < fontSize) {
+									fontSize = shapeFontSize;
+								}
+								break;
 							}
-							break;
 						}
 					}
 				}

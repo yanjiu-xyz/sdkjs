@@ -7407,8 +7407,8 @@ Because of this, the display is sometimes not correct.
       if (nIdx > -1 && nIdx < this.styleLbl.length) {
         this.styleLbl[nIdx].setParent(null);
         oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
-        var deleteObj = nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1);
-        delete this.styleLblByName[deleteObj[0].name];
+        var deleteObj = nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1)[0];
+        delete this.styleLblByName[deleteObj.name];
       }
     };
 
@@ -8229,8 +8229,8 @@ Because of this, the display is sometimes not correct.
     changesFactory[AscDFH.historyitem_StyleDefScene3d] = CChangeObject;
     changesFactory[AscDFH.historyitem_StyleDefTitle] = CChangeObject;
     changesFactory[AscDFH.historyitem_StyleDefDesc] = CChangeObject;
-    changesFactory[AscDFH.historyitem_StyleDefAddStyleLbl] = CChangeContent;
-    changesFactory[AscDFH.historyitem_StyleDefRemoveStyleLbl] = CChangeContent;
+    changesFactory[AscDFH.historyitem_StyleDefAddStyleLbl] = CChangesDrawingsContentStyleLbl;
+    changesFactory[AscDFH.historyitem_StyleDefRemoveStyleLbl] = CChangesDrawingsContentStyleLbl;
     drawingsChangesMap[AscDFH.historyitem_StyleDefMinVer] = function (oClass, value) {
       oClass.minVer = value;
     };
@@ -8269,6 +8269,7 @@ Because of this, the display is sometimes not correct.
       this.title = null;
       this.desc = null;
       this.styleLbl = [];
+			this.styleLblByName = {};
     }
 
     InitClass(StyleDef, CBaseFormatObject, AscDFH.historyitem_type_StyleDef);
@@ -8315,16 +8316,18 @@ Because of this, the display is sometimes not correct.
 
     StyleDef.prototype.addToLstStyleLbl = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.styleLbl.length, Math.max(0, nIdx));
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefAddStyleLbl, nInsertIdx, [oPr], true));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_StyleDefAddStyleLbl, nInsertIdx, [oPr], true));
       nInsertIdx === this.styleLbl.length ? this.styleLbl.push(oPr) : this.styleLbl.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
+	    this.styleLblByName[oPr.name] = oPr;
     };
 
     StyleDef.prototype.removeFromLstStyleLbl = function (nIdx) {
       if (nIdx > -1 && nIdx < this.styleLbl.length) {
         this.styleLbl[nIdx].setParent(null);
-        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
-        nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_StyleDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
+        const deleteObj = nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1)[0];
+	      delete this.styleLblByName[deleteObj.name];
       }
     };
 
@@ -8596,6 +8599,14 @@ Because of this, the display is sometimes not correct.
 
     InitClass(StyleDefStyleLbl, CBaseFormatObject, AscDFH.historyitem_type_StyleDefStyleLbl);
 
+	  StyleDefStyleLbl.prototype.setShapeStyle = function (shapes) {
+		  if (this.style) {
+			  for (let i = 0; i < shapes.length; i += 1) {
+				  const shape = shapes[i];
+					shape.setStyle(this.style.createDuplicate());
+			  }
+		  }
+	  }
     StyleDefStyleLbl.prototype.setName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefStyleLblName, this.getName(), pr));
       this.name = pr;
@@ -10473,8 +10484,18 @@ Because of this, the display is sometimes not correct.
     }
 
     SmartArt.prototype.getSmartArtDefaultTxFill = function (shape) {
-      var shapePoint = shape && shape.getSmartArtShapePoint();
-      var defaultTxColorFromShape = shapePoint && this.getDefaultTxColorFromPoint(shapePoint);
+      const smartArtInfo = shape.getSmartArtInfo();
+			let textPoint;
+			if (this.isCanGenerateSmartArt()) {
+				const contentNodes = smartArtInfo.contentPoint;
+				if (contentNodes.length) {
+					const textNode = contentNodes[0].getTextNode();
+					textPoint = textNode && textNode.presPoint;
+				}
+			} else {
+				textPoint = smartArtInfo.shapePoint;
+			}
+      var defaultTxColorFromShape = textPoint && this.getDefaultTxColorFromPoint(textPoint);
       var defaultTxFill;
 
       if (defaultTxColorFromShape) {
@@ -10484,155 +10505,12 @@ Because of this, the display is sometimes not correct.
     }
 
     SmartArt.prototype.getTypeOfSmartArt = function () {
-      // Russian name -> type
-      //
-      //
-      // Акцентируемый рисунок -> AccentedPicture
-      // Баланс -> balance1
-      // Блоки рисунков с названиями -> TitledPictureBlocks
-      // Блоки со смещенными рисунками -> PictureAccentBlocks
-      // Блочный цикл -> cycle5
-      // Венна в столбик -> venn2
-      // Вертикальное уравнение -> equation2
-      // Вертикальный блочный список -> vList5
-      // Вертикальный ломаный процесс -> bProcess4
-      // Вертикальный маркированный список -> vList2
-      // Вертикальный нелинейный список -> VerticalCurvedList
-      // Вертикальный процесс -> process2
-      // Вертикальный список -> list1
-      // Вертикальный список рисунков -> vList4
-      // Вертикальный список с кругами -> VerticalCircleList
-      // Вертикальный список со смещенными рисунками -> vList3
-      // Вертикальный список со стрелкой -> vList6
-      // Вертикальный уголковый список -> chevron2
-      // Вертикальный уголковый список2 -> VerticalAccentList
-      // Вложенная целевая -> target2
-      // Воронка -> funnel1
-      // Восходящая стрелка -> arrow2
-      // Восходящая стрелка процесса -> IncreasingArrowsProcess
-      // Восходящий процесс -> StepUpProcess
-      // Выноска с круглыми рисунками -> CircularPictureCallout
-      // Горизонтальная иерархия -> hierarchy2
-      // Горизонтальная иерархия с подписями -> hierarchy5
-      // Горизонтальная многоуровневая иерархия -> HorizontalMultiLevelHierarchy
-      // Горизонтальная организационная диаграмма -> HorizontalOrganizationChart
-      // Горизонтальный маркированный список -> hList1
-      // Горизонтальный список рисунков -> pList2
-      // Закрытый уголковый процесс -> hChevron3
-      // Иерархический список -> hierarchy3
-      // Иерархия -> hierarchy1
-      // Иерархия с круглыми рисунками -> CirclePictureHierarchy
-      // Иерархия с подписями -> hierarchy6
-      // Инвертированная пирамида -> pyramid3
-      // Кластер шестиугольников -> HexagonCluster
-      // Круг связей -> CircleRelationship
-      // Круглая временная шкала -> CircleAccentTimeline
-      // Круглый ломаный процесс -> bProcess2
-      // Лента со стрелками -> arrow6
-      // Линейная Венна -> venn3
-      // Линия рисунков -> PictureLineup
-      // Линия рисунков с названиями -> TitlePictureLineup
-      // Ломаный список рисунков с подписями -> BendingPictureCaptionList
-      // Ломаный список со смещенными рисунками -> bList2
-      // Матрица с заголовками -> matrix1
-      // Нарастающий процесс с кругами -> IncreasingCircleProcess
-      // Нелинейные рисунки с блоками -> BendingPictureBlocks
-      // Нелинейные рисунки с подписями -> BendingPictureCaption
-      // Нелинейные рисунки с полупрозрачным текстом -> BendingPictureSemiTransparentText
-      // Ненаправленный цикл -> cycle6
-      // Непрерывный блочный процесс -> hProcess9
-      // Непрерывный список с рисунками -> hList7
-      // Непрерывный цикл -> cycle3
-      // Нисходящий блочный список -> BlockDescendingList
-      // Нисходящий процесс -> StepDownProcess
-      // Обратный список -> ReverseList
-      // Организационная диаграмма -> orgChart1
-      // Организационная диаграмма с именами и должностями -> NameandTitleOrganizationalChart
-      // Переменный поток -> hProcess4
-      // Пирамидальный список -> pyramid2
-      // Плюс и минус -> PlusandMinus
-      // Повторяющийся ломаный процесс -> bProcess3
-      // Подписанные рисунки -> CaptionedPictures
-      // Подробный процесс -> hProcess7
-      // Полосы рисунков -> PictureStrips
-      // Полукруглая организационная диаграмма -> HalfCircleOrganizationChart
-      // Поэтапный процесс -> PhasedProcess
-      // Простая Венна -> venn1
-      // Простая временная шкала -> hProcess11
-      // Простая круговая -> chart3
-      // Простая матрица -> matrix3
-      // Простая пирамида -> pyramid1
-      // Простая радиальная -> radial1
-      // Простая целевая -> target1
-      // Простой блочный список -> default
-      // Простой ломаный процесс -> process5
-      // Простой процесс -> process1
-      // Простой уголковый процесс -> chevron1
-      // Простой цикл -> cycle2
-      // Противоположные идеи -> OpposingIdeas
-      // Противостоящие стрелки -> arrow4
-      // Процесс от случайности к результату -> RandomtoResultProcess
-      // Процесс с вложенными шагами -> SubStepProcess
-      // Процесс с круговой диаграммой -> PieProcess
-      // Процесс со смещением -> process3
-      // Процесс со смещенными по возрастанию рисунками -> AscendingPictureAccentProcess
-      // Процесс со смещенными рисунками -> hProcess10
-      // Радиальная Венна -> radial3
-      // Радиальная циклическая -> radial6
-      // Радиальный кластер -> RadialCluster
-      // Радиальный список -> radial2
-      // Разнонаправленный цикл -> cycle7
-      // Расходящаяся радиальная -> radial5
-      // Расходящиеся стрелки -> arrow1
-      // Рисунок с текстом в рамке -> FramedTextPicture
-      // Сгруппированный список -> lProcess2
-      // Сегментированная пирамида -> pyramid4
-      // Сегментированный процесс -> process4
-      // Сегментированный цикл -> cycle8
-      // Сетка рисунков -> PictureGrid
-      // Сетчатая матрица -> matrix2
-      // Спираль рисунков -> SpiralPicture
-      // Список в столбик -> hList9
-      // Список названий рисунков -> pList1
-      // Список процессов -> lProcess1
-      // Список рисунков с выносками -> BubblePictureList
-      // Список с квадратиками -> SquareAccentList
-      // Список с линиями -> LinedList
-      // Список со смещенными рисунками -> hList2
-      // Список со смещенными рисунками и заголовком -> PictureAccentList
-      // Список со снимками -> SnapshotPictureList
-      // Стрелка непрерывного процесса -> hProcess3
-      // Стрелка процесса с кругами -> CircleArrowProcess
-      // Стрелки процесса -> hProcess6
-      // Ступенчатый процесс -> vProcess5
-      // Сходящаяся радиальная -> radial4
-      // Сходящиеся стрелки -> arrow5
-      // Табличная иерархия -> hierarchy4
-      // Табличный список -> hList3
-      // Текстовый цикл -> cycle1
-      // Трапецевидный список -> hList6
-      // Убывающий процесс -> DescendingProcess
-      // Уголковый список -> lProcess3
-      // Уравнение -> equation1
-      // Уравновешивающие стрелки -> arrow3
-      // Целевой список -> target3
-      // Циклическая матрица -> cycle4
-      // Чередующиеся блоки рисунков -> AlternatingPictureBlocks
-      // Чередующиеся круги рисунков -> AlternatingPictureCircles
-      // Чередующиеся шестиугольники -> AlternatingHexagons
-      // Шестеренки -> gear1
-      var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
-      var ptLst = dataModel.ptLst.list;
+	    const layoutDef = this.getLayoutDef();
       var type;
-      ptLst.forEach(function (point) {
-        if (point.type === Point_type_doc) {
-          if (point.prSet && point.prSet.loTypeId) {
-            var typeSplit = point.prSet.loTypeId.split('/');
-            type = typeSplit[typeSplit.length - 1];
-            type = type.split('#')[0];
-          }
-        }
-      });
+			if (layoutDef) {
+				var typeSplit = layoutDef.uniqueId.split('/');
+				type = typeSplit[typeSplit.length - 1].split('#')[0];
+			}
 
       switch (type) {
         case "AccentedPicture": {
