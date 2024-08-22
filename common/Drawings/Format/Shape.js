@@ -4304,7 +4304,7 @@
 			const mainParaTextPr = new AscCommonWord.ParaTextPr({FontSize: (Math.min(fontSize, 300))});
 			let bulletTextPr = mainParaTextPr;
 			if (nBulletParagraphIndex !== undefined && nBulletParagraphIndex > 0) {
-				bulletTextPr = new AscCommonWord.ParaTextPr({FontSize: (Math.min((fontSize * 0.8) >> 0, 300))});
+				bulletTextPr = new AscCommonWord.ParaTextPr({FontSize: (Math.min(Math.round(fontSize * 0.78), 300))});
 			}
 			const bulletFontSize = bulletTextPr.Value.FontSize;
 			let indent;
