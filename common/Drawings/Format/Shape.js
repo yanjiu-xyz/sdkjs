@@ -4574,24 +4574,7 @@
 			if (this.isObjectInSmartArt()) {
 				if (this.group.group.isCanGenerateSmartArt()) {
 					const smartArtInfo = this.getSmartArtInfo();
-					const mapShapes = {};
-					if (smartArtInfo.adaptFontSizeArray) {
-						const res = [];
-						for (let i = 0; i < smartArtInfo.adaptFontSizeArray.length; i++) {
-							const nodeArray = smartArtInfo.adaptFontSizeArray[i];
-							for (let j = 0; j < nodeArray.length; j++) {
-								const presNode = nodeArray[j];
-								const editorShape = presNode.contentNodes[0] && presNode.contentNodes[0].getContentNode().getShape().editorShape;
-								if (editorShape && !mapShapes[editorShape.GetId()]) {
-									res.push(editorShape);
-									mapShapes[editorShape.GetId()] = true;
-								}
-							}
-
-						}
-						return res;
-					}
-					return [];
+					return smartArtInfo.getAdaptFontSizeArray();
 				}
 				return this.group.group.getShapesForFitText(this);
 			}

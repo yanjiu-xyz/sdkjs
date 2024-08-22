@@ -9991,6 +9991,32 @@ Because of this, the display is sometimes not correct.
 			this.adaptFontSizeArray = null;
 
     }
+		ShapeSmartArtInfo.prototype.getAdaptFontSizeArray = function () {
+			if (this.adaptFontSizeArray === null) {
+				const checkShapes = {};
+				const res = [];
+				this.adaptFontSizeArray = res;
+				const checkShapeSmartArtInfos = [this];
+				while (checkShapeSmartArtInfos.length) {
+					const smartArtInfo = checkShapeSmartArtInfos.pop();
+					const shape = smartArtInfo.shape;
+					if (!checkShapes[shape.GetId()]) {
+						res.push(shape);
+						checkShapes[shape.GetId()] = true;
+					}
+
+
+					const fontConstraint = smartArtInfo.textConstraints[AscFormat.Constr_type_primFontSz];
+					if (fontConstraint) {
+						fontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_equ, checkShapeSmartArtInfos, checkShapes);
+						fontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_equ, checkShapeSmartArtInfos, checkShapes, true);
+						fontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_none, checkShapeSmartArtInfos, checkShapes);
+						fontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_lte, checkShapeSmartArtInfos, checkShapes);
+					}
+				}
+			}
+			return this.adaptFontSizeArray;
+		};
 	  ShapeSmartArtInfo.prototype.getChildrenSpacingScale = function () {
 		  if (this.params[AscFormat.Param_type_lnSpAfChP] !== undefined) {
 			  return this.params[AscFormat.Param_type_lnSpAfChP];
@@ -10019,7 +10045,13 @@ Because of this, the display is sometimes not correct.
 				const point = node.point;
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
 			});
-			return isNotPlaceholder ? this.shape.getFirstFontSize() : null;
+			if (isNotPlaceholder) {
+				if (this.maxFontSize === null) {
+					this.setMaxFontSize(this.shape.findFitFontSizeForSmartArt());
+				}
+				return this.maxFontSize;
+			}
+			return null;
 		};
 		ShapeSmartArtInfo.prototype.getMaxConstrFontSize = function () {
 			const textConstraint = this.textConstraints[AscFormat.Constr_type_primFontSz];

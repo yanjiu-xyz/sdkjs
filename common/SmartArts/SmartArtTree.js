@@ -55,7 +55,6 @@
 	const radToDeg = 1 / degToRad;
 	const algDelta = 1e-10;
 	const intDelta = 1e-2;
-	const bulletFontSizeCoefficient = 51 / 65;
 
 	const factRuleState = {
 		default: 0,
@@ -6102,7 +6101,6 @@ function HierarchyAlgorithm() {
 		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
 		shapeSmartArtInfo.textConstraintRelations = node.textConstraintRelations;
 		shapeSmartArtInfo.textConstraints = node.textConstraints;
-		shapeSmartArtInfo.adaptFontSizeArray = node.adaptFontSizeArray;
 		shapeSmartArtInfo.params[AscFormat.Param_type_lnSpAfParP] = this.params[AscFormat.Param_type_lnSpAfParP];
 		shapeSmartArtInfo.params[AscFormat.Param_type_lnSpAfChP] = this.params[AscFormat.Param_type_lnSpAfChP];
 	};
@@ -6290,7 +6288,6 @@ function PresNode(presPoint, contentNode) {
 	this._isTxXfrm = null;
 	this.textConstraints = {};
 	this.textConstraintRelations = [];
-	this.adaptFontSizeArray = [];
 
 	this.cleanRules();
 	this.cleanConstraints();
@@ -6760,6 +6757,20 @@ PresNode.prototype.addChild = function (ch, pos) {
 		this.op[AscFormat.Constr_op_lte] = [];
 		this.rule = null;
 	}
+	TextConstr.prototype.collectShapeSmartArtInfo = function (opType, array, mapShapes, collectRefNodes) {
+		const information = this.op[opType];
+		for (let i = 0; i < information.length; i++) {
+			const info = information[i];
+			const nodes = collectRefNodes ? info.refNodes : info.nodes;
+			for (let j = 0; j < nodes.length; j++) {
+				const node = nodes[j];
+				const editorShape = node.contentNodes[0] && node.contentNodes[0].getContentNode().getShape().editorShape;
+				if (editorShape && !mapShapes[editorShape.GetId()]) {
+					array.push(editorShape.getSmartArtInfo());
+				}
+			}
+		}
+	};
 
 	TextConstr.prototype.getMaxFontSizeFromInfo = function (opType) {
 		const informations = this.op[opType];
@@ -6768,7 +6779,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			const info = informations[i];
 			const constr = info.constr;
 			if (constr) {
-				if (constr.refType === AscFormat.Constr_type_none) {
+				if (constr.refType === AscFormat.Constr_type_none && constr.op !== AscFormat.Constr_op_equ) {
 					if (constr.val < fontSize) {
 						fontSize = constr.val;
 					}
@@ -6776,15 +6787,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 					const refNodes = info.refNodes;
 					for (let i = 0; i < refNodes.length; i += 1) {
 						const refNode = refNodes[i];
-						const editorShape = refNode.node.getContentNode().getShape().editorShape;
+						const editorShape = refNode.contentNodes[0] && refNode.contentNodes[0].getContentNode().getShape().editorShape;
 						if (editorShape) {
 							const shapeInfo = editorShape.getSmartArtInfo();
 							const shapeFontSize = shapeInfo.getRelFitFontSize();
-							if (shapeFontSize !== null) {
-								if (shapeFontSize < fontSize) {
-									fontSize = shapeFontSize;
-								}
-								break;
+							if (shapeFontSize !== null && shapeFontSize < fontSize) {
+								fontSize = shapeFontSize;
 							}
 						}
 					}
@@ -6821,14 +6829,21 @@ PresNode.prototype.addChild = function (ch, pos) {
 			}
 		}
 		for (let i = 0; i < truthNodes.length; i += 1) {
-			const node = truthNodes[i].getConstraintNode(constr.forName, constr.ptType.getVal());
-			if (node) {
+			const node = truthNodes[i];
+			if (!node.textConstraints[constr.type]) {
+				node.textConstraints[constr.type] = new TextConstr();
+			}
+			const calcConstr = node.textConstraints[constr.type];
+			calcConstr.op[constr.op].push({constr: constr, refNodes: truthRefNodes, nodes: truthNodes});
+		}
+		if (constr.op === AscFormat.Constr_op_equ) {
+			for (let i = 0; i < truthRefNodes.length; i++) {
+				const node = truthRefNodes[i];
 				if (!node.textConstraints[constr.type]) {
 					node.textConstraints[constr.type] = new TextConstr();
 				}
 				const calcConstr = node.textConstraints[constr.type];
-				calcConstr.op[constr.op].push({constr: constr, refNodes: truthRefNodes});
-				node.adaptFontSizeArray.push(truthNodes);
+				calcConstr.op[constr.op].push({constr: constr, refNodes: truthNodes, nodes: truthRefNodes});
 			}
 		}
 		if (!(constr.for === constr.refFor && constr.forName === constr.refForName && constr.ptType.getVal() === constr.refPtType.getVal()) && constr.refType !== AscFormat.Constr_type_none) {
