@@ -2230,7 +2230,7 @@ CChartsDrawer.prototype =
 		}
 		
 		if (isNaN(step) || step === 0) {
-			if (manualMax <= 0) {
+			if (AscFormat.isRealNumber(manualMax) && manualMax <= 0) {
 				arrayValues = [-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0];
 			} else {
 				arrayValues = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
@@ -2323,8 +2323,15 @@ CChartsDrawer.prototype =
 					var firstDegreeStep = this._getFirstDegree(newStep);
 					var tempStep = this._getNextStep(firstDegreeStep.val);
 					newStep = tempStep * firstDegreeStep.numPow;
-					res = this._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax);
+					const newRes = this._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax);
 
+					//new array cannot be generated from broken data, example: step is NaN
+					if (!newRes) {
+						break;
+					}
+
+					//after we checked that newRes is working array substitute res
+					res = newRes;
 					if (res.length <= 2) {
 						break;
 					}
@@ -2353,7 +2360,7 @@ CChartsDrawer.prototype =
 
 	_getArrayDataValues: function (step, axisMin, axisMax, manualMin, manualMax, isRadarChart) {
 		if (!AscFormat.isRealNumber(axisMin) || !AscFormat.isRealNumber(axisMax) || !AscFormat.isRealNumber(step)) {
-			return [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+			return null;
 		}
 
 		var arrayValues;
