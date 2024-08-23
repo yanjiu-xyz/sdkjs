@@ -1550,7 +1550,7 @@
 			shape.setParent(initObjects.parent);
 			shape.setWorksheet(initObjects.worksheet);
 
-			this.applyAdjLst(shape);
+			this.applyAdjLst(shape.spPr.geometry);
 			this.applyPostEditorSettings(shape);
 			return shape;
 		}
@@ -1607,10 +1607,9 @@
 		}
 		return null;
 	}
-	ShadowShape.prototype.applyAdjLst = function (editorShape) {
+	ShadowShape.prototype.applyAdjLst = function (geometry) {
 		const adjLst = this.customAdj || (this.shape && this.shape.adjLst);
 		if (adjLst) {
-			const geometry = editorShape.spPr.geometry;
 			for (let i = 0; i < adjLst.list.length; i += 1) {
 				const adj = adjLst.list[i];
 				const adjName = getAdjName(geometry, adj.idx);
@@ -6071,8 +6070,15 @@ function HierarchyAlgorithm() {
 		const shadowShape = this.parentNode.getShape();
 		const txXfrm = new AscFormat.CXfrm();
 		txXfrm.setRot(this.getTextRotate());
-		const geometry = editorShape.spPr.geometry;
+		let geometry = editorShape.spPr.geometry;
+		if (this.parentNode.isTxXfrm()) {
+			geometry = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreateGeometry(shadowShape.getEditorShapeType());},  this, []);
+			shadowShape.applyAdjLst(geometry);
+		}
 		geometry.Recalculate(shadowShape.width, shadowShape.height);
+		const secgeometry = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreateGeometry(shadowShape.getEditorShapeType())});
+		secgeometry.Recalculate(shadowShape.width, shadowShape.height);
+		const secrect = secgeometry.rect;
 		const geometryRect = geometry.rect;
 		let extX;
 		let extY;
@@ -6856,7 +6862,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 				calcConstr.op[constr.op].push({constr: constr, refNodes: truthNodes, nodes: truthRefNodes});
 			}
 		}
-		if (!(constr.for === constr.refFor && constr.forName === constr.refForName && constr.ptType.getVal() === constr.refPtType.getVal()) && constr.refType !== AscFormat.Constr_type_none) {
+		if (constr.op === AscFormat.Constr_op_lte && !(constr.for === constr.refFor && constr.forName === constr.refForName && constr.ptType.getVal() === constr.refPtType.getVal()) && constr.refType !== AscFormat.Constr_type_none) {
 			for (let i = 0; i < truthRefNodes.length; i += 1) {
 				truthRefNodes[i].textConstraintRelations.push(truthNodes);
 			}
