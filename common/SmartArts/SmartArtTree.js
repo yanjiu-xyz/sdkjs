@@ -1352,6 +1352,11 @@
 		matrix.RotateAt(this.rot * radToDeg, this.x + this.width / 2, this.y + this.height / 2);
 		return matrix;
 	};
+	Position.prototype.getReverseMatrix = function () {
+		const matrix = new AscCommon.CMatrix();
+		matrix.RotateAt(-this.rot * radToDeg, this.x + this.width / 2, this.y + this.height / 2);
+		return matrix;
+	};
 	Position.prototype.initFromShape = function () {
 
 	};
@@ -6084,6 +6089,11 @@ function HierarchyAlgorithm() {
 			extX = shadowShape.width;
 			extY = shadowShape.height;
 		}
+		const shapeMatrix = shadowShape.getReverseMatrix();
+		const cx = shapeMatrix.TransformPointX(offX + extX / 2, offY + extY / 2);
+		const cy = shapeMatrix.TransformPointY(offX + extX / 2, offY + extY / 2);
+		offX = cx - extX / 2;
+		offY = cy - extY / 2;
 
 		const newSizes = AscFormat.fGetMaxInscribedRectangle(extX, extY, txXfrm.rot);
 		offX += (extX - newSizes.width) / 2;
