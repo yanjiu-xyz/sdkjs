@@ -4148,6 +4148,14 @@ Because of this, the display is sometimes not correct.
 						default:
 							return this.val;
 					}
+				case Param_type_txAnchorHorz:
+				case Param_type_txAnchorHorzCh:
+					switch (this.val) {
+						case "ctr":
+							return true;
+						default:
+							return false;
+					}
 				case Param_type_lnSpAfParP:
 				case Param_type_lnSpAfChP:
 					return parseFloat(this.val) / 100 * 1.2 * g_dKoef_pt_to_mm;
@@ -10041,7 +10049,8 @@ Because of this, the display is sometimes not correct.
 			return res;
 		};
 		ShapeSmartArtInfo.prototype.getRelFitFontSize = function () {
-			const isNotPlaceholder = this.contentPoint.every(function (node) {
+			const content = this.shape.getDocContent();
+			const isNotPlaceholder = content && !content.Is_Empty({SkipEnd: true, SkipPlcHldr: false}) && this.contentPoint.some(function (node) {
 				const point = node.point;
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
 			});

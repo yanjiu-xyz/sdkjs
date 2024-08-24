@@ -891,25 +891,35 @@
 		this.childs = [];
 		this.algorithm = null;
 		this.depth = AscFormat.isRealNumber(depth) ? depth : null;
-		this.presOf = {
-			textNode: null,
-			contentNode: null
-		};
+		this.presOfArray = [];
+		this.presOf = null;
 	}
 	SmartArtDataNodeBase.prototype.addPresOf = function (presNode) {
-		if (presNode.algorithm instanceof TextAlgorithm) {
-			this.presOf.textNode = presNode;
-		} else {
-			this.presOf.contentNode = presNode;
-		}
+		this.presOfArray.push(presNode);
 	}
 	SmartArtDataNodeBase.prototype.getTextNode = function () {
-		return this.presOf.textNode || this.presOf.contentNode;
+		const textNodes = this.getTextNodes();
+		return textNodes.textNode || textNodes.contentNode;
 	};
 	SmartArtDataNodeBase.prototype.getContentNode = function () {
-		return this.presOf.contentNode || this.presOf.textNode;
+		const textNodes = this.getTextNodes();
+		return textNodes.contentNode || textNodes.textNode;
 	};
 	SmartArtDataNodeBase.prototype.getTextNodes = function () {
+		if (this.presOf === null) {
+			this.presOf = {
+				contentNode: null,
+				textNode: null
+			};
+			while (this.presOfArray.length) {
+				const presNode = this.presOfArray.pop();
+				if (presNode.algorithm instanceof TextAlgorithm) {
+					this.presOf.textNode = presNode;
+				} else if (presNode.layoutInfo.shape && !presNode.layoutInfo.shape.hideGeom) {
+					this.presOf.contentNode = presNode;
+				}
+			}
+		}
 		return this.presOf;
 	};
 	SmartArtDataNodeBase.prototype.getDirection = function () {};
@@ -5917,7 +5927,7 @@ function HierarchyAlgorithm() {
 
 		const textNode = textNodes.textNode;
 		if (textNode && textNodes.contentNode === this.parentNode) {
-			textNodes.textNode.algorithm.applyTextSettings(editorShape, true);
+			textNodes.textNode.algorithm.applyTextSettings(editorShape, this.parentNode.getShape());
 		}
 	};
 	SpaceAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
@@ -6022,14 +6032,14 @@ function HierarchyAlgorithm() {
 			}
 		}
 	};
-	TextAlgorithm.prototype.applyTextSettings = function (editorShape, skipCheckTxXfrm) {
-		if (!skipCheckTxXfrm && this.parentNode.isTxXfrm()) {
+	TextAlgorithm.prototype.applyTextSettings = function (editorShape, contentShadowShape) {
+		if (!contentShadowShape && this.parentNode.isTxXfrm()) {
 			return;
 		}
 		const smartArtInfo = editorShape.getSmartArtInfo();
 		this.applyContentFilling(editorShape);
 		if (smartArtInfo.contentPoint.length) {
-			this.applyTxXfrmSettings(editorShape);
+			this.applyTxXfrmSettings(editorShape, contentShadowShape);
 			this.applyTextMargins(editorShape);
 			this.applyHorizontalAlignment(editorShape);
 			this.applyVerticalAlignment(editorShape);
@@ -6037,8 +6047,8 @@ function HierarchyAlgorithm() {
 
 		this.applyFontRelations(editorShape);
 	};
-	TextAlgorithm.prototype.getTextRotate = function () {
-		const shadowShape = this.parentNode.getShape();
+	TextAlgorithm.prototype.getTextRotate = function (shadowShape) {
+		shadowShape = shadowShape || this.parentNode.getShape();
 		const shapeRotate = shadowShape.rot;
 		switch (this.params[AscFormat.Param_type_autoTxRot]) {
 			case AscFormat.ParameterVal_autoTextRotation_none:
@@ -6066,19 +6076,16 @@ function HierarchyAlgorithm() {
 				return AscFormat.normalizeRotate(rot);
 		}
 	};
-	TextAlgorithm.prototype.applyTxXfrmSettings = function (editorShape) {
+	TextAlgorithm.prototype.applyTxXfrmSettings = function (editorShape, contentShadowShape) {
 		const shadowShape = this.parentNode.getShape();
 		const txXfrm = new AscFormat.CXfrm();
-		txXfrm.setRot(this.getTextRotate());
+		const autoRot = this.getTextRotate(contentShadowShape);
 		let geometry = editorShape.spPr.geometry;
-		if (this.parentNode.isTxXfrm()) {
+		if (contentShadowShape) {
 			geometry = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreateGeometry(shadowShape.getEditorShapeType());},  this, []);
 			shadowShape.applyAdjLst(geometry);
 		}
 		geometry.Recalculate(shadowShape.width, shadowShape.height);
-		const secgeometry = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreateGeometry(shadowShape.getEditorShapeType())});
-		secgeometry.Recalculate(shadowShape.width, shadowShape.height);
-		const secrect = secgeometry.rect;
 		const geometryRect = geometry.rect;
 		let extX;
 		let extY;
@@ -6101,14 +6108,15 @@ function HierarchyAlgorithm() {
 		offX = cx - extX / 2;
 		offY = cy - extY / 2;
 
-		const newSizes = AscFormat.fGetMaxInscribedRectangle(extX, extY, txXfrm.rot);
+		const newSizes = AscFormat.fGetMaxInscribedRectangle(extX, extY, autoRot);
 		offX += (extX - newSizes.width) / 2;
 		offY += (extY - newSizes.height) / 2;
 		txXfrm.setOffX(offX);
 		txXfrm.setOffY(offY);
 		txXfrm.setExtX(newSizes.width);
 		txXfrm.setExtY(newSizes.height);
-
+		const contentShadowShapeRot = /*contentShadowShape && contentShadowShape.shape.rot < 0 ? -contentShadowShape.rot : */0;
+		txXfrm.setRot(AscFormat.normalizeRotate(autoRot + contentShadowShapeRot));
 
 		editorShape.setTxXfrm(txXfrm);
 	};
@@ -6222,13 +6230,16 @@ function HierarchyAlgorithm() {
 		const node = this.parentNode;
 		let paragraphLTRAlignment;
 		let paragraphRTLAlignment;
+		let isCtrHorzAlign;
 		const stBulletLvl = this.params[AscFormat.Param_type_stBulletLvl];
 		if (isParentWithChildren(node.contentNodes) || stBulletLvl === 1) {
 			paragraphLTRAlignment = this.getTextAlignment(AscFormat.Param_type_shpTxLTRAlignCh);
 			paragraphRTLAlignment = this.getTextAlignment(AscFormat.Param_type_shpTxRTLAlignCh);
+			isCtrHorzAlign = !!this.params[AscFormat.Param_type_txAnchorHorzCh];
 		} else {
 			paragraphLTRAlignment = this.getTextAlignment(AscFormat.Param_type_parTxLTRAlign);
 			paragraphRTLAlignment = this.getTextAlignment(AscFormat.Param_type_parTxRTLAlign);
+			isCtrHorzAlign = !!this.params[AscFormat.Param_type_txAnchorHorz];
 		}
 
 		for (let i = 0; i < drawingContent.Content.length; i++) {
@@ -6240,6 +6251,13 @@ function HierarchyAlgorithm() {
 				item.SetParagraphAlign(paragraphLTRAlignment);
 			}
 			item.SetApplyToAll(false);
+		}
+
+		const bodyPr = editorShape.getBodyPr();
+		if (bodyPr.anchorCtr !== isCtrHorzAlign) {
+			const copyBodyPr = bodyPr.createDuplicate();
+			bodyPr.anchorCtr = isCtrHorzAlign;
+			editorShape.txBody.setBodyPr(copyBodyPr);
 		}
 	};
 
@@ -6791,14 +6809,13 @@ PresNode.prototype.addChild = function (ch, pos) {
 	TextConstr.prototype.getMaxFontSizeFromInfo = function (opType) {
 		const informations = this.op[opType];
 		let fontSize = 65;
+		//todo
 		for (let i = 0; i < informations.length; i += 1) {
 			const info = informations[i];
 			const constr = info.constr;
 			if (constr) {
 				if (constr.refType === AscFormat.Constr_type_none && constr.op !== AscFormat.Constr_op_equ) {
-					if (constr.val < fontSize) {
-						fontSize = constr.val;
-					}
+					return constr.val;
 				} else {
 					const refNodes = info.refNodes;
 					for (let i = 0; i < refNodes.length; i += 1) {
@@ -6812,6 +6829,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 							}
 						}
 					}
+					return fontSize;
 				}
 			}
 		}

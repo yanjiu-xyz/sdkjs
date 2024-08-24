@@ -4588,10 +4588,7 @@
 			}
 			return arrMainContentPoints.every(function (node) {
 				const point = node.point;
-				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
-			}) || arrMainContentPoints.every(function (node) {
-				const point = node.point;
-				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && point.prSet.phldr;
+				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT;
 			});
 		};
 
@@ -4601,18 +4598,27 @@
 			for (let i = 0; i < arrShapes.length; i += 1) {
 				const oShape = arrShapes[i];
 				var contentPoints = oShape.getSmartArtPointContent();
-				const isPlaceholder = contentPoints.every(function (node) {
-					const point = node.point;
-					return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && point.prSet.phldr;
-				});
+
 				const isNotPlaceholder = contentPoints.every(function (node) {
 					const point = node.point;
-					return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
+					return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT;
+				}) && contentPoints.some(function (node) {
+					const point = node.point;
+					return point && point.prSet && !point.prSet.phldr;
 				});
-				if (isPlaceholder) {
-					arrPlaceholders.push(oShape);
-				} else if (isNotPlaceholder) {
-					arrFitText.push(oShape);
+				if (isNotPlaceholder) {
+					const oContent = oShape.getDocContent();
+					if (oContent && !oContent.Is_Empty({SkipEnd: true, SkipPlcHldr: false})) {
+						arrFitText.push(oShape);
+					}
+				} else {
+					const isPlaceholder = contentPoints.every(function (node) {
+						const point = node.point;
+						return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && point.prSet.phldr;
+					});
+					if (isPlaceholder) {
+						arrPlaceholders.push(oShape);
+					}
 				}
 			}
 
