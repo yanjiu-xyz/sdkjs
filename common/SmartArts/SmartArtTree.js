@@ -7177,8 +7177,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 			case AscFormat.Constr_type_tMarg:
 			case AscFormat.Constr_type_rMarg:
 			case AscFormat.Constr_type_lMarg:
-				if (constr.refType === AscFormat.Constr_type_primFontSz) {
-					this.textConstraints[constr.type] = constr.fact;
+				if (!this.textConstraints[constr.type] && !constrObject[constr.type]) {
+					if (constr.refType === AscFormat.Constr_type_primFontSz) {
+						this.textConstraints[constr.type] = constr.fact;
+					} else if (AscFormat.isRealNumber(this.textConstraints[constr.refType])) {
+						this.textConstraints[constr.type] = this.textConstraints[constr.refType];
+					}
 				}
 				break;
 			default: {
