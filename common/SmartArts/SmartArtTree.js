@@ -915,7 +915,7 @@
 				const presNode = this.presOfArray.pop();
 				if (presNode.algorithm instanceof TextAlgorithm) {
 					this.presOf.textNode = presNode;
-				} else if (presNode.layoutInfo.shape && !presNode.layoutInfo.shape.hideGeom) {
+				} else if (presNode.layoutInfo.shape && !presNode.layoutInfo.shape.hideGeom && presNode.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none && presNode.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) {
 					this.presOf.contentNode = presNode;
 				}
 			}
@@ -1283,7 +1283,7 @@
 			case AscFormat.ElementType_value_sibTrans:
 				return this.sibNode;
 			case AscFormat.ElementType_value_node:
-				if (this.isNode()) {
+				if (this.isNode() || this.isAsst()) {
 					return this;
 				}
 				break;
@@ -6771,10 +6771,13 @@ PresNode.prototype.addChild = function (ch, pos) {
 						break;
 					}
 					case AscFormat.Constr_type_primFontSz: {
-						if (!this.textConstraints[AscFormat.Constr_type_primFontSz]) {
-							this.textConstraints[AscFormat.Constr_type_primFontSz] = new TextConstr();
+						if (!this.textConstraints[rule.type]) {
+							this.textConstraints[rule.type] = new TextConstr();
 						}
-						this.textConstraints[AscFormat.Constr_type_primFontSz].rule = rule;
+						const textConstr = this.textConstraints[rule.type];
+						if (!textConstr.rule || rule.val < textConstr.rule.val) {
+							textConstr.rule = rule;
+						}
 						break;
 					}
 					default:
@@ -6948,7 +6951,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 				}
 				break;
 			case AscFormat.ElementType_value_node:
-				if (ptType === AscFormat.Point_type_node) {
+				if (ptType === AscFormat.Point_type_node || ptType === AscFormat.Point_type_asst) {
 					return this;
 				}
 				break;

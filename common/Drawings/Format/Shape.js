@@ -4588,7 +4588,7 @@
 			}
 			return arrMainContentPoints.every(function (node) {
 				const point = node.point;
-				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT;
+				return point && point.prSet && !point.prSet.custT;
 			});
 		};
 
@@ -4601,7 +4601,7 @@
 
 				const isNotPlaceholder = contentPoints.every(function (node) {
 					const point = node.point;
-					return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT;
+					return point && point.prSet && !point.prSet.custT;
 				}) && contentPoints.some(function (node) {
 					const point = node.point;
 					return point && point.prSet && !point.prSet.phldr;

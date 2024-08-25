@@ -10052,7 +10052,7 @@ Because of this, the display is sometimes not correct.
 			const content = this.shape.getDocContent();
 			const isNotPlaceholder = content && !content.Is_Empty({SkipEnd: true, SkipPlcHldr: false}) && this.contentPoint.some(function (node) {
 				const point = node.point;
-				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
+				return point && point.prSet && !point.prSet.custT && !point.prSet.phldr;
 			});
 			if (isNotPlaceholder) {
 				if (this.maxFontSize === null) {
