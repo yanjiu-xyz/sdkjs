@@ -6809,7 +6809,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 	};
 
-	TextConstr.prototype.getMaxFontSizeFromInfo = function (opType) {
+	TextConstr.prototype.getMaxFontSizeFromInfo = function (opType, isUseChildrenCoefficient) {
 		const informations = this.op[opType];
 		let fontSize = 65;
 		//todo
@@ -6826,7 +6826,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 						const editorShape = refNode.contentNodes[0] && refNode.contentNodes[0].getContentNode().getShape().editorShape;
 						if (editorShape) {
 							const shapeInfo = editorShape.getSmartArtInfo();
-							const shapeFontSize = shapeInfo.getRelFitFontSize();
+							const shapeFontSize = shapeInfo.getRelFitFontSize(isUseChildrenCoefficient);
 							if (shapeFontSize !== null && shapeFontSize < fontSize) {
 								fontSize = shapeFontSize;
 							}
@@ -6839,9 +6839,9 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 		return fontSize;
 	};
-	TextConstr.prototype.getMaxFontSize = function () {
-		const noneFontSize = this.getMaxFontSizeFromInfo(AscFormat.Constr_op_none);
-		const lteFontSize = this.getMaxFontSizeFromInfo(AscFormat.Constr_op_lte);
+	TextConstr.prototype.getMaxFontSize = function (isUseChildrenCoefficient) {
+		const noneFontSize = this.getMaxFontSizeFromInfo(AscFormat.Constr_op_none, isUseChildrenCoefficient);
+		const lteFontSize = this.getMaxFontSizeFromInfo(AscFormat.Constr_op_lte, isUseChildrenCoefficient);
 		return Math.min(noneFontSize, lteFontSize);
 	};
 	TextConstr.prototype.getMinFontSize = function () {
@@ -6895,8 +6895,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			return;
 		}
 		const valueCache = {};
-		let cacheFor = {};
-		let cacheRefFor = {};
+		const cacheFor = {};
 		for (let i = 0; i < constrLst.length; i++) {
 			const constr = constrLst[i];
 			if (!cacheFor[constr.for]) {
@@ -6905,11 +6904,11 @@ PresNode.prototype.addChild = function (ch, pos) {
 			}
 			const nodes = cacheFor[constr.for];
 
-			if (!cacheRefFor[constr.refFor]) {
-				cacheRefFor[constr.refFor] = [];
-				this.getNodesByAxis(cacheRefFor[constr.refFor], constr.refFor);
+			if (!cacheFor[constr.refFor]) {
+				cacheFor[constr.refFor] = [];
+				this.getNodesByAxis(cacheFor[constr.refFor], constr.refFor);
 			}
-			const refNodes = cacheRefFor[constr.refFor];
+			const refNodes = cacheFor[constr.refFor];
 
 			for (let j = 0; j < refNodes.length; j++) {
 				const calcValue = refNodes[j].getCalcRefConstr(constr, isAdapt, valueCache);

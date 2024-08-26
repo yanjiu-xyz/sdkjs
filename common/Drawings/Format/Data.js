@@ -88,6 +88,10 @@ Because of this, the display is sometimes not correct.
     // consts
     const GRAYSCALE_TRESHHOLD = 150;
 
+	  const smartArtContentFillingType_parentWithChildren = 0x0011;
+	  const smartArtContentFillingType_onlyChildren = 0x0001;
+	  const smartArtContentFillingType_onlyParent = 0x0010;
+
 	  const Point_type_asst = 1;
     const Point_type_doc = 2;
     const Point_type_node = 0;
@@ -9996,14 +10000,42 @@ Because of this, the display is sometimes not correct.
 			this.textConstraints = {};
 			this.params = {};
 			this.textConstraintRelations = [];
-			this.adaptFontSizeArray = null;
+			this.adaptFontSizeShapesInfo = null;
 
     }
-		ShapeSmartArtInfo.prototype.getAdaptFontSizeArray = function () {
-			if (this.adaptFontSizeArray === null) {
+
+	  ShapeSmartArtInfo.prototype.getContentFillingType = function (shapes) {
+
+			let res = 0x00;
+		  for (let i = 0; i < shapes.length; i += 1) {
+			  const shape = shapes[i];
+			  if (!shape.isCanFitFontSize()) {
+				  continue;
+			  }
+				const docContent = shape.getDocContent();
+				if (docContent) {
+					for (let j = 0; j < docContent.Content.length; j++) {
+						const item = docContent.Content[j];
+						if (item.PresentationPr && item.PresentationPr.Bullet && !item.PresentationPr.Bullet.IsNone()) {
+							res |= smartArtContentFillingType_onlyChildren;
+						} else {
+							res |= smartArtContentFillingType_onlyParent;
+						}
+						if (res === smartArtContentFillingType_parentWithChildren) {
+							return res;
+						}
+					}
+				}
+		  }
+			return res;
+	  };
+		ShapeSmartArtInfo.prototype.getAdaptFontSizeInfo = function () {
+			if (this.adaptFontSizeShapesInfo === null) {
 				const checkShapes = {};
-				const res = [];
-				this.adaptFontSizeArray = res;
+
+				this.adaptFontSizeShapesInfo = {};
+				this.adaptFontSizeShapesInfo.shapes = [];
+				const res = this.adaptFontSizeShapesInfo.shapes;
 				const checkShapeSmartArtInfos = [this];
 				while (checkShapeSmartArtInfos.length) {
 					const smartArtInfo = checkShapeSmartArtInfos.pop();
@@ -10022,8 +10054,10 @@ Because of this, the display is sometimes not correct.
 						fontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_lte, checkShapeSmartArtInfos, checkShapes);
 					}
 				}
+				this.adaptFontSizeShapesInfo.contentFillingType = this.getContentFillingType(res);
 			}
-			return this.adaptFontSizeArray;
+
+			return this.adaptFontSizeShapesInfo;
 		};
 	  ShapeSmartArtInfo.prototype.getChildrenSpacingScale = function () {
 		  if (this.params[AscFormat.Param_type_lnSpAfChP] !== undefined) {
@@ -10048,23 +10082,41 @@ Because of this, the display is sometimes not correct.
 			res.lMarg = this.textConstraints[AscFormat.Constr_type_lMarg];
 			return res;
 		};
-		ShapeSmartArtInfo.prototype.getRelFitFontSize = function () {
-			const content = this.shape.getDocContent();
-			const isNotPlaceholder = content && !content.Is_Empty({SkipEnd: true, SkipPlcHldr: false}) && this.contentPoint.some(function (node) {
-				const point = node.point;
-				return point && point.prSet && !point.prSet.custT && !point.prSet.phldr;
-			});
-			if (isNotPlaceholder) {
-				if (this.maxFontSize === null) {
-					this.setMaxFontSize(this.shape.findFitFontSizeForSmartArt());
+		ShapeSmartArtInfo.prototype.getRelFitFontSize = function (isUseChildrenCoefficient) {
+			const adaptInfo = this.getAdaptFontSizeInfo();
+			const shapes = adaptInfo.shapes;
+			let minFontSize = null;
+			for (let i = 0; i < shapes.length; i++) {
+				const shape = shapes[i];
+				const content = shape.getDocContent();
+				const shapeInfo = shape.getSmartArtInfo();
+				const isNotPlaceholder = content && !content.Is_Empty({SkipEnd: true, SkipPlcHldr: false}) && shapeInfo.contentPoint.some(function (node) {
+					const point = node.point;
+					return point && point.prSet && !point.prSet.custT && !point.prSet.phldr;
+				});
+				if (isNotPlaceholder) {
+
+					if (shapeInfo.maxFontSize === null) {
+						this.setMaxFontSize(shape.findFitFontSizeForSmartArt());
+					}
+					if (minFontSize === null || minFontSize > shapeInfo.maxFontSize) {
+						minFontSize = shapeInfo.maxFontSize;
+					}
 				}
-				return this.maxFontSize;
+			if (minFontSize !== null && isUseChildrenCoefficient) {
+				const contentFillingType = this.getContentFillingType(shapes);
+				if (contentFillingType === smartArtContentFillingType_onlyChildren || contentFillingType === smartArtContentFillingType_parentWithChildren) {
+					return minFontSize;
+				} else if (contentFillingType === smartArtContentFillingType_onlyParent) {
+					return Math.round(minFontSize * 0.78);
+				}
 			}
-			return null;
+			}
+			return minFontSize;
 		};
-		ShapeSmartArtInfo.prototype.getMaxConstrFontSize = function () {
+		ShapeSmartArtInfo.prototype.getMaxConstrFontSize = function (isUseChildrenCoefficient) {
 			const textConstraint = this.textConstraints[AscFormat.Constr_type_primFontSz];
-			return textConstraint ? textConstraint.getMaxFontSize() : 65;
+			return textConstraint ? textConstraint.getMaxFontSize(isUseChildrenCoefficient) : 65;
 		};
 	  ShapeSmartArtInfo.prototype.getMinConstrFontSize = function () {
 		  const textConstraint = this.textConstraints[AscFormat.Constr_type_primFontSz];
@@ -12687,5 +12739,9 @@ Because of this, the display is sometimes not correct.
 
     window['AscFormat'].EChOrder_chOrderB = EChOrder_chOrderB;
     window['AscFormat'].EChOrder_chOrderT = EChOrder_chOrderT;
+
+	  window['AscCommon'].smartArtContentFillingType_parentWithChildren = smartArtContentFillingType_parentWithChildren;
+	  window['AscCommon'].smartArtContentFillingType_onlyChildren = smartArtContentFillingType_onlyChildren;
+	  window['AscCommon'].smartArtContentFillingType_onlyParent = smartArtContentFillingType_onlyParent;
 
   })(window)
