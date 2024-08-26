@@ -6047,8 +6047,8 @@ function HierarchyAlgorithm() {
 
 		this.applyFontRelations(editorShape);
 	};
-	TextAlgorithm.prototype.getTextRotate = function (shadowShape) {
-		shadowShape = shadowShape || this.parentNode.getShape();
+	TextAlgorithm.prototype.getTextRotate = function () {
+		const shadowShape = this.parentNode.getShape();
 		const shapeRotate = shadowShape.rot;
 		switch (this.params[AscFormat.Param_type_autoTxRot]) {
 			case AscFormat.ParameterVal_autoTextRotation_none:
@@ -6079,7 +6079,7 @@ function HierarchyAlgorithm() {
 	TextAlgorithm.prototype.applyTxXfrmSettings = function (editorShape, contentShadowShape) {
 		const shadowShape = this.parentNode.getShape();
 		const txXfrm = new AscFormat.CXfrm();
-		const autoRot = this.getTextRotate(contentShadowShape);
+		const autoRot = this.getTextRotate();
 		let geometry = editorShape.spPr.geometry;
 		if (contentShadowShape) {
 			geometry = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreateGeometry(shadowShape.getEditorShapeType());},  this, []);
@@ -6115,7 +6115,7 @@ function HierarchyAlgorithm() {
 		txXfrm.setOffY(offY);
 		txXfrm.setExtX(newSizes.width);
 		txXfrm.setExtY(newSizes.height);
-		const contentShadowShapeRot = /*contentShadowShape && contentShadowShape.shape.rot < 0 ? -contentShadowShape.rot : */0;
+		const contentShadowShapeRot = contentShadowShape ? (shadowShape.rot - contentShadowShape.rot) : 0;
 		txXfrm.setRot(AscFormat.normalizeRotate(autoRot + contentShadowShapeRot));
 
 		editorShape.setTxXfrm(txXfrm);
