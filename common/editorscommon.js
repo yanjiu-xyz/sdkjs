@@ -11537,6 +11537,13 @@
 			|| (0x2670 <= nCharCode && nCharCode <= 0x2671)
 			|| (0xFB1D <= nCharCode && nCharCode <= 0xFB4F));
 	}
+	
+	function IsGeorgianScript(charCode)
+	{
+		return ((0x10A0 <= charCode && charCode <= 0x10FF)
+			|| (0x2D00 <= charCode && charCode <= 0x2D2F)
+			|| (0x1C90 <= charCode && charCode <= 0x1CBF));
+	}
 
 	var g_oIdCounter = new CIdCounter();
 
@@ -14673,6 +14680,7 @@
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
 	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
 	window["AscCommon"].IsComplexScript = IsComplexScript;
+	window["AscCommon"].IsGeorgianScript = IsGeorgianScript;
 	window["AscCommon"].CMathTrack = CMathTrack;
 	window["AscCommon"].CPolygon = CPolygon;
 	window['AscCommon'].CDrawingCollaborativeTargetBase = CDrawingCollaborativeTargetBase;

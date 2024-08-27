@@ -872,13 +872,17 @@
 		var oItem = oRun.GetElement(nInRunPos);
 		if (!oItem || oItem.Type !== para_Text)
 			return false;
+		
+		let codePoint = oItem.GetCodePoint();
+		if (AscCommon.IsGeorgianScript(codePoint))
+			return false;
 
 		if (this.private_IsDocumentLocked())
 			return false;
 
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectFirstLetterOfSentence);
 
-		var oNewItem = new AscWord.CRunText(String.fromCharCode(oItem.Value).toUpperCase().charCodeAt(0));
+		var oNewItem = new AscWord.CRunText(String.fromCharCode(codePoint).toUpperCase().charCodeAt(0));
 		oRun.RemoveFromContent(nInRunPos, 1, true);
 		oRun.AddToContent(nInRunPos, oNewItem, true);
 
