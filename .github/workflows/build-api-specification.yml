@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout main repository
         uses: actions/checkout@v3
+        with:
+          path: sdkjs
 
       - name: Checkout build_tools repository
         uses: actions/checkout@v3
@@ -25,7 +27,7 @@ jobs:
 
       - name: Install Node.js dependencies
         run: |
-          cd build_tools/scripts/sdkjs_common/jsdoc
+          cd sdkjs/build_tools/scripts/sdkjs_common/jsdoc
           npm install
 
       - name: Set up Python
@@ -35,5 +37,5 @@ jobs:
 
       - name: Run Python script to generate docs
         run: |
-          cd build_tools/scripts/sdkjs_common/jsdoc
+          cd sdkjs/build_tools/scripts/sdkjs_common/jsdoc
           python generate_docs_md.py
