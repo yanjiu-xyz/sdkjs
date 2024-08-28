@@ -43,3 +43,9 @@ jobs:
         run: |
           cd build_tools/scripts/sdkjs_common/jsdoc
           python generate_docs_md.py
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: office-js-api/
