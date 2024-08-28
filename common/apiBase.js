@@ -5170,4 +5170,19 @@
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
 	prot["asc_resetPassword"] = prot.asc_resetPassword;
 
+	// NATIVE INITIALIZER (need be in min version)
+	window["InitNativeEditors"] = function()
+	{
+		AscFonts.checkAllFonts();
+
+		let loader = AscCommon.g_font_loader;
+		loader.fontFiles = AscFonts.g_font_files;
+		loader.fontInfos = AscFonts.g_font_infos;
+		loader.map_font_index = AscFonts.g_map_font_index;
+
+		window["InitNativeObject"]();
+		window["InitNativeTextMeasurer"]();
+		window["InitNativeZLib"]();
+	};
+
 })(window);
