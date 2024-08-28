@@ -9,28 +9,26 @@ jobs:
 
     steps:
       - name: Checkout main repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: sdkjs
 
       - name: Checkout build_tools repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ONLYOFFICE/build_tools
           ref: release/v8.2.0
           path: build_tools
 
       - name: Checkout sdkjs-forms repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ONLYOFFICE/sdkjs-forms
           ref: main
           path: sdkjs-forms
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+        uses: actions/setup-node@v4
 
       - name: Install Node.js dependencies
         run: |
