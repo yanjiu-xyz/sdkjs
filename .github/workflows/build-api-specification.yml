@@ -45,7 +45,7 @@ jobs:
           python generate_docs_md.py
 
       - name: Upload documentation artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: documentation
           path: office-js-api/
