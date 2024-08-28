@@ -20,6 +20,13 @@ jobs:
           ref: release/v8.2.0
           path: build_tools
 
+      - name: Checkout sdkjs-forms repository
+        uses: actions/checkout@v3
+        with:
+          repository: ONLYOFFICE/sdkjs-forms
+          ref: main  # Specify the branch or tag you want to check out
+          path: sdkjs-forms
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
