@@ -488,7 +488,7 @@
 
 			if (this.DocInfo.get_Wopi())
 			{
-				this.documentShardKey = this.DocInfo.get_Wopi()["WOPISrc"];
+				this.documentWopiSrc = this.DocInfo.get_Wopi()["WOPISrc"];
 				this.documentUserSessionId = this.DocInfo.get_Wopi()["UserSessionId"];
 				this.documentIsWopi = true;
 			}
@@ -508,7 +508,7 @@
 			}
 			if (!this.documentWopiSrc) {
 				//todo add tenant in origin?
-				this.documentShardKey = this.documentId;
+				this.documentShardKey = this.DocInfo.get_Shardkey() || this.documentId;
 			}
 		}
 
