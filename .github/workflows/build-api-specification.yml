@@ -65,10 +65,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: documentation
-
-      - name: Copy documentation artifacts
-        run: |
-          cp -r office-js-api/* office-js-api/
+          path: office-js-api
 
       - name: Create Pull Request
         run: |
