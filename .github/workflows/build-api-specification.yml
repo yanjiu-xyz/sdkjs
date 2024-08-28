@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ONLYOFFICE/build_tools
+          ref: release/v8.2.0  # Specify the branch you want to check out
           path: build_tools  # Directory where the other repo will be checked out
 
       - name: Set up Node.js
@@ -34,5 +35,5 @@ jobs:
 
       - name: Run Python script to generate docs
         run: |
-          cd build_tools/scripts/sdkjs_common/jsdoc  # Navigate to the directory where the Python script is located
+          cd build_tools/scripts/sdkjs_common/jsdoc  # Navigate to the same folder where the script is located
           python generate_docs_md.py  # Run the Python script
