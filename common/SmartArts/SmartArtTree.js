@@ -162,6 +162,10 @@
 
 	PresOf.prototype.executeAlgorithm = function (smartartAlgorithm) {
 		const currentPresNode = smartartAlgorithm.getCurrentPresNode();
+		//todo change read/write only one instance of presof
+		if (currentPresNode.contentNodes.length) {
+			return;
+		}
 		const nodes = this.getNodesArray(smartartAlgorithm);
 		for (let i = 0; i < nodes.length; i++) {
 			const node = nodes[i];
@@ -3833,6 +3837,20 @@ function HierarchyAlgorithm() {
 		}
 		this.calcValues.defaultBlockHeight = defaultBlockHeight * (parentHeight / sumHeight);
 	};
+	PyramidAlgorithm.prototype.getTextNodeCoefficients = function (contentNode, textNode) {
+		const resultScales = {width: 1, height: 1};
+		const contentWidth = contentNode.getConstr(AscFormat.Constr_type_w, true, true);
+		const contentHeight = contentNode.getConstr(AscFormat.Constr_type_h, true, true);
+		const textWidth = textNode.getConstr(AscFormat.Constr_type_w, true, true);
+		const textHeight = textNode.getConstr(AscFormat.Constr_type_h, true, true);
+		if (contentWidth && textWidth) {
+			resultScales.width = textWidth / contentWidth;
+		}
+		if (contentHeight && textHeight) {
+			resultScales.height = textHeight / contentHeight;
+		}
+		return resultScales;
+	};
 	PyramidAlgorithm.prototype.setPyramidParametersForNode = function (child, x, y, height, width, cleanHeight, cleanWidth, adjValue) {
 		const shape = child.getShape(false);
 		if (shape) {
@@ -3851,6 +3869,17 @@ function HierarchyAlgorithm() {
 			adj.setIdx(1);
 			adjLst.addToLst(0, adj);
 			shape.customAdj = adjLst;
+
+			const textNodes = child.contentNodes[0] && child.contentNodes[0].getTextNodes();
+			if (textNodes && textNodes.contentNode === child && textNodes.textNode) {
+				const txNode = textNodes.textNode;
+				const coefficients = this.getTextNodeCoefficients(child, txNode);
+				const textShape = txNode.getShape();
+				textShape.height = shape.height * coefficients.height;
+				textShape.width = shape.width * coefficients.width;
+				textShape.x = shape.x + (shape.width - textShape.width) / 2;
+				textShape.y = shape.y + (shape.height - textShape.height) / 2;
+			}
 		}
 	};
 	PyramidAlgorithm.prototype.getPyramidChildren = function (node) {
@@ -4053,6 +4082,25 @@ function HierarchyAlgorithm() {
 			acctShape.rot = Math.PI;
 		}
 		shapeContainer.push(acctShape);
+
+		const txNode = acctNode.contentNodes[0] && acctNode.contentNodes[0].getTextNode();
+		if (txNode) {
+			const textShape = txNode.getShape();
+			if (this.isAfterAcct()) {
+				textShape.x = mainShape.x + mainShape.width;
+				textShape.y = acctShape.y;
+				textShape.height = acctShape.height;
+				textShape.width = acctShape.width - (textShape.x - acctShape.x);
+				textShape.rot = acctShape.rot;
+			} else {
+				textShape.x = acctShape.x;
+				textShape.y = acctShape.y;
+				textShape.height = acctShape.height;
+				textShape.width = acctShape.width;
+				textShape.rot = acctShape.rot;
+			}
+
+		}
 	};
 
 	function CycleAlgorithm() {
@@ -6610,6 +6658,14 @@ PresNode.prototype.getNamedNode = function (name) {
 					moveShape.y += deltaY;
 				}
 			}
+			const textNodes = this.contentNodes[0] && this.contentNodes[0].getTextNodes();
+			if (textNodes && textNodes.contentNode === this && textNodes.textNode) {
+				const moveShape = textNodes.textNode.getShape(isCalcScaleCoefficient);
+				if (moveShape) {
+					moveShape.x += deltaX;
+					moveShape.y += deltaY;
+				}
+			}
 		}
 		this.algorithm.moveToHierarchyOffsets(deltaX, deltaY);
 	};
@@ -6770,7 +6826,8 @@ PresNode.prototype.addChild = function (ch, pos) {
 						this.valRules[rule.type] = rule.val;
 						break;
 					}
-					case AscFormat.Constr_type_primFontSz: {
+					case AscFormat.Constr_type_primFontSz:
+					case AscFormat.Constr_type_secFontSz: {
 						if (!this.textConstraints[rule.type]) {
 							this.textConstraints[rule.type] = new TextConstr();
 						}
@@ -6794,6 +6851,19 @@ PresNode.prototype.addChild = function (ch, pos) {
 		this.op[AscFormat.Constr_op_lte] = [];
 		this.rule = null;
 	}
+	TextConstr.prototype.getSecondaryFontSizeCoefficient = function () {
+		const info = this.op[AscFormat.Constr_op_none];
+
+		for (let i = 0; i < info.length; i += 1) {
+			const constr = info[i].constr;
+			if (constr.type === AscFormat.Constr_type_primFontSz && constr.refType === AscFormat.Constr_type_secFontSz) {
+				return 1 / constr.fact;
+			} else if (constr.refType === AscFormat.Constr_type_primFontSz && constr.type === AscFormat.Constr_type_secFontSz) {
+				return constr.fact;
+			}
+		}
+		return null;
+	};
 	TextConstr.prototype.collectShapeSmartArtInfo = function (opType, array, mapShapes, collectRefNodes) {
 		const information = this.op[opType];
 		for (let i = 0; i < information.length; i++) {
@@ -6819,7 +6889,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			if (constr) {
 				if (constr.refType === AscFormat.Constr_type_none && constr.op !== AscFormat.Constr_op_equ) {
 					return constr.val;
-				} else {
+				} else if (!(constr.for === constr.refFor && constr.forName === constr.refForName && constr.ptType.getVal() === constr.refPtType.getVal())) {
 					const refNodes = info.refNodes;
 					for (let i = 0; i < refNodes.length; i += 1) {
 						const refNode = refNodes[i];
@@ -6922,6 +6992,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			if (isAdapt) {
 				switch (constr.type) {
 					case AscFormat.Constr_type_primFontSz:
+					case AscFormat.Constr_type_secFontSz:
 						checkFontSizeConstraints(constr, refNodes, nodes, smartartAlgorithm);
 						break;
 					default:
@@ -7042,11 +7113,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 			const curConstrObject = isAdapt ? this.adaptConstr : this.constr;
 
 			let factor = this.getFactRule(constr);
-			if (refConstrObject[constr.refType]) {
-				if ( refNode === this && refConstrObject[constr.refType] * factor !== curConstrObject[constr.type]) {
-					refConstrObject[constr.refType] = curConstrObject[constr.type];
+			const refType = constr.refType === AscFormat.Constr_type_none && constr.refForName ? constr.type : constr.refType;
+			if (refConstrObject[refType]) {
+				if ( refNode === this && refConstrObject[refType] * factor !== curConstrObject[constr.type]) {
+					refConstrObject[refType] = curConstrObject[constr.type];
 				} else {
-					curConstrObject[constr.type] = refConstrObject[constr.refType] * factor;
+					curConstrObject[constr.type] = refConstrObject[refType] * factor;
 				}
 			}
 		}
@@ -7176,8 +7248,8 @@ PresNode.prototype.addChild = function (ch, pos) {
 			case AscFormat.Constr_type_tMarg:
 			case AscFormat.Constr_type_rMarg:
 			case AscFormat.Constr_type_lMarg:
-				if (!this.textConstraints[constr.type] && !constrObject[constr.type]) {
-					if (constr.refType === AscFormat.Constr_type_primFontSz) {
+				if (this.textConstraints[constr.type] === undefined && constrObject[constr.type] === undefined) {
+					if (constr.refType === AscFormat.Constr_type_primFontSz || constr.refType === AscFormat.Constr_type_secFontSz) {
 						this.textConstraints[constr.type] = constr.fact;
 					} else if (AscFormat.isRealNumber(this.textConstraints[constr.refType])) {
 						this.textConstraints[constr.type] = this.textConstraints[constr.refType];
@@ -7188,7 +7260,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 				break;
 			}
 		}
-		if (this.valRules[constr.type] !== Infinity) {
+		if (this.valRules[constr.type] !== Infinity && constr.refType !== AscFormat.Constr_type_primFontSz && constr.refType !== AscFormat.Constr_type_secFontSz) {
 			constrObject[constr.type] = value;
 		}
 		return true;
@@ -7659,6 +7731,19 @@ PresNode.prototype.addChild = function (ch, pos) {
 				moveNode.setMoveScaleCoefficients(widthCoef, heightCoef);
 			}
 			moveNode.setMoveRot(moveRot);
+		}
+		const textNodes = this.contentNodes[0] && this.contentNodes[0].getTextNodes();
+		if (textNodes && textNodes.contentNode === this && textNodes.textNode) {
+			if (textNodes.textNode.isInitShape(isCalculateCoefficients)) {
+				const moveShape = textNodes.textNode.getShape(isCalculateCoefficients);
+				const scaleMoveWidth = moveShape.width * widthCoef;
+				const scaleMoveHeight = moveShape.height * heightCoef;
+				const moveOffX = (shape.x + (moveShape.x - x) * widthCoef) - moveShape.x;
+				const moveOffY = (moveShape.height - scaleMoveHeight) / 2;
+				moveShape.width = scaleMoveWidth;
+				moveShape.height = scaleMoveHeight;
+				textNodes.textNode.moveTo(moveOffX, moveOffY, isCalculateCoefficients);
+			}
 		}
 
 		shape.cleanParams = {

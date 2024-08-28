@@ -4290,10 +4290,11 @@
 			const shapeInfo = this.getSmartArtInfo();
 			const contentPoints = this.getSmartArtPointContent();
 			const nBulletParagraphIndex = this.getFirstBulletParagraphIndex();
-			const mainParaTextPr = new AscCommonWord.ParaTextPr({FontSize: (Math.min(fontSize, 300))});
+			const mainParaTextPr = new AscCommonWord.ParaTextPr({FontSize: fontSize});
 			let bulletTextPr = mainParaTextPr;
 			if (isParentWithChildren) {
-				bulletTextPr = new AscCommonWord.ParaTextPr({FontSize: (Math.min(Math.round(fontSize * 0.78), 300))});
+				const fontSizeScale = shapeInfo.getSecondaryFontSizeCoefficient();
+				bulletTextPr = new AscCommonWord.ParaTextPr({FontSize: Math.round(fontSize * fontSizeScale)});
 			}
 			const bulletFontSize = bulletTextPr.Value.FontSize;
 			let indent;
