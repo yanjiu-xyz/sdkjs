@@ -4086,6 +4086,7 @@ function HierarchyAlgorithm() {
 		const txNode = acctNode.contentNodes[0] && acctNode.contentNodes[0].getTextNode();
 		if (txNode) {
 			const textShape = txNode.getShape();
+			textShape.type = AscFormat.LayoutShapeType_shapeType_rect;
 			if (this.isAfterAcct()) {
 				textShape.x = mainShape.x + mainShape.width;
 				textShape.y = acctShape.y;
@@ -4096,7 +4097,7 @@ function HierarchyAlgorithm() {
 				textShape.x = acctShape.x;
 				textShape.y = acctShape.y;
 				textShape.height = acctShape.height;
-				textShape.width = acctShape.width;
+				textShape.width = acctShape.width - acctHelper;
 				textShape.rot = acctShape.rot;
 			}
 
@@ -6879,7 +6880,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 	};
 
-	TextConstr.prototype.getMaxFontSizeFromInfo = function (opType, isUseChildrenCoefficient) {
+	TextConstr.prototype.getMaxFontSizeFromInfo = function (opType, isUseChildrenCoefficient, isReturnFirstFindFontSize) {
 		const informations = this.op[opType];
 		let fontSize = 65;
 		//todo
@@ -6888,7 +6889,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 			const constr = info.constr;
 			if (constr) {
 				if (constr.refType === AscFormat.Constr_type_none && constr.op !== AscFormat.Constr_op_equ) {
-					return constr.val;
+					if (constr.val < fontSize) {
+						fontSize = constr.val;
+					}
+					if (isReturnFirstFindFontSize) {
+						break;
+					}
 				} else if (!(constr.for === constr.refFor && constr.forName === constr.refForName && constr.ptType.getVal() === constr.refPtType.getVal())) {
 					const refNodes = info.refNodes;
 					for (let i = 0; i < refNodes.length; i += 1) {
@@ -6902,7 +6908,9 @@ PresNode.prototype.addChild = function (ch, pos) {
 							}
 						}
 					}
-					return fontSize;
+					if (isReturnFirstFindFontSize) {
+						break;
+					}
 				}
 			}
 		}
@@ -6910,7 +6918,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		return fontSize;
 	};
 	TextConstr.prototype.getMaxFontSize = function (isUseChildrenCoefficient) {
-		const noneFontSize = this.getMaxFontSizeFromInfo(AscFormat.Constr_op_none, isUseChildrenCoefficient);
+		const noneFontSize = this.getMaxFontSizeFromInfo(AscFormat.Constr_op_none, isUseChildrenCoefficient, true);
 		const lteFontSize = this.getMaxFontSizeFromInfo(AscFormat.Constr_op_lte, isUseChildrenCoefficient);
 		return Math.min(noneFontSize, lteFontSize);
 	};
@@ -7254,13 +7262,15 @@ PresNode.prototype.addChild = function (ch, pos) {
 					} else if (AscFormat.isRealNumber(this.textConstraints[constr.refType])) {
 						this.textConstraints[constr.type] = this.textConstraints[constr.refType];
 					}
+				} else if (constr.refType === AscFormat.Constr_type_primFontSz || constr.refType === AscFormat.Constr_type_secFontSz) {
+					return;
 				}
 				break;
 			default: {
 				break;
 			}
 		}
-		if (this.valRules[constr.type] !== Infinity && constr.refType !== AscFormat.Constr_type_primFontSz && constr.refType !== AscFormat.Constr_type_secFontSz) {
+		if (this.valRules[constr.type] !== Infinity) {
 			constrObject[constr.type] = value;
 		}
 		return true;
