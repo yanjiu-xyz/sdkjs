@@ -5824,43 +5824,13 @@ CMathContent.prototype.SplitContentByContentPos = function()
 
     return arrContent;
 };
-CMathContent.prototype.ConvertSpacesAfterConvertOldEquation = function ()
+CMathContent.prototype.ProcessingOldEquationConvert  = function ()
 {
-    function recursiveMathProcessing(oContent)
-    {
-        if (oContent)
-        {
-            if (oContent.Type === 52) // CMathText
-            {
-                switch (oContent.value)
-                {
-                    case 8202:
-                    case 8201: return "HSP";
-                    case 8203: return "ZWSP"
-                }
-            }
-            else if (oContent.Content && oContent.Content.length > 0)
-            {
-                for (let i = 0; i < oContent.Content.length; i++)
-                {
-                    let CurrentContent = oContent.Content[i];
-                    let outStr = recursiveMathProcessing(CurrentContent);
-                    if (outStr === "HSP")
-                    {
-                        oContent.Remove_FromContent(i, 1);
-                        i--;
-                    }
-                    else if (outStr === "ZWSP")
-                    {
-                        oContent.Content[i].add("⥂".charCodeAt(0));
-                    }
-                }
-            }
-        }
-    }
-
-    recursiveMathProcessing(this);
-}
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		this.Content[i].ProcessingOldEquationConvert();
+	}
+};
 CMathContent.prototype.Process_AutoCorrect = function (oElement)
 {
 	if (!AscMath.GetAutoConvertation())
