@@ -6103,7 +6103,7 @@ function HierarchyAlgorithm() {
 			case AscFormat.ParameterVal_autoTextRotation_none:
 				return 0;
 			case AscFormat.ParameterVal_autoTextRotation_grav:
-				if ((shapeRotate > Math.PI / 2) && (shapeRotate <= Math.PI)) {
+				if ((shapeRotate > Math.PI / 2) && (shapeRotate < Math.PI * 3 / 2)) {
 					return Math.PI;
 				}
 				return 0;
@@ -6113,13 +6113,13 @@ function HierarchyAlgorithm() {
 				if (shapeRotate > Math.PI / 4) {
 					rot -= Math.PI / 2;
 				}
-				if (shapeRotate > Math.PI * 3 / 4) {
+				if (shapeRotate >= Math.PI * 3 / 4) {
 					rot -= Math.PI / 2;
 				}
 				if (shapeRotate > Math.PI * 5 / 4) {
 					rot -= Math.PI / 2;
 				}
-				if (shapeRotate > Math.PI * 7 / 4) {
+				if (shapeRotate >= Math.PI * 7 / 4) {
 					rot -= Math.PI / 2;
 				}
 				return AscFormat.normalizeRotate(rot);
