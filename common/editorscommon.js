@@ -13373,7 +13373,7 @@
 		
 		var rect;
 		if (!AscBrowser.isIE)
-			rect = element.getBoundingClientRect();
+			rect = AscCommon.UI.getBoundingClientRect(element);
 		else {
 			function getCanvasBoundingClientRect(canvas) {
 				const offsetLeft	= canvas.offsetLeft;
