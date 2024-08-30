@@ -7748,8 +7748,8 @@ PresNode.prototype.addChild = function (ch, pos) {
 				const moveShape = textNodes.textNode.getShape(isCalculateCoefficients);
 				const scaleMoveWidth = moveShape.width * widthCoef;
 				const scaleMoveHeight = moveShape.height * heightCoef;
-				const moveOffX = (shape.x + (moveShape.x - x) * widthCoef) - moveShape.x;
-				const moveOffY = (moveShape.height - scaleMoveHeight) / 2;
+				const moveOffX = shape.x + shape.width / 2 + (moveShape.x + moveShape.width / 2 - (x + width / 2)) * widthCoef - (moveShape.x + scaleMoveWidth / 2);
+				const moveOffY = shape.y + shape.height / 2 + (moveShape.y + moveShape.height / 2 - (y + height / 2)) * heightCoef - (moveShape.y + scaleMoveHeight / 2);
 				moveShape.width = scaleMoveWidth;
 				moveShape.height = scaleMoveHeight;
 				textNodes.textNode.moveTo(moveOffX, moveOffY, isCalculateCoefficients);
