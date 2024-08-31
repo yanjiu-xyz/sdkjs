@@ -233,8 +233,9 @@ AscBrowser.convertToRetinaValue = function(value, isScale)
 var UI = {
 	getBoundingClientRect : function(element)
 	{
+		let rect = element.getBoundingClientRect();
 		if (!AscBrowser.isOffsetUsedZoom())
-			return element.getBoundingClientRect();
+			return rect;
 
 		let koef = AscCommon.AscBrowser.zoom;
 		let newRect = {}
