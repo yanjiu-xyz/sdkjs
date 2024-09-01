@@ -576,7 +576,7 @@
 		if (!this.DocumentRenderer)
 			return "";
 		
-		bClearText = typeof(bClearText) === "boolean" ? bClearText : false;
+		bClearText = (bClearText === true);
 		
 		let oDoc		= this.getPDFDoc();
 		let oTxObject	= oDoc.getTextController();

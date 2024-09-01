@@ -12209,7 +12209,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_GetSelectedText = function(bClearText, select_Pr)
 	{
-		bClearText = typeof(bClearText) === "boolean" ? bClearText : false;
+		bClearText = (bClearText === true);
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return "";
