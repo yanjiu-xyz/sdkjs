@@ -10247,6 +10247,10 @@ Because of this, the display is sometimes not correct.
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
 
+		SmartArt.prototype.setRecalculateInfo = function () {
+			CGroupShape.prototype.setRecalculateInfo.call(this);
+			this.recalcInfo.generateDrawingPart = true;
+		};
     SmartArt.prototype.getObjectType = function() {
       return AscDFH.historyitem_type_SmartArt;
     };
@@ -10362,14 +10366,13 @@ Because of this, the display is sometimes not correct.
 			}
 		};
     SmartArt.prototype.generateDrawingPart = function () {
-      const smartArtAlgorithm = new AscFormat.SmartArtAlgorithm(this);
-      smartArtAlgorithm.startFromBegin();
+      this.smartArtTree.startFromBegin();
       const drawing = this.getDrawing();
       const shapeLength = drawing.spTree.length;
       for (let i = 0; i < shapeLength; i++) {
         drawing.removeFromSpTreeByPos(0);
       }
-      const shapes = smartArtAlgorithm.getShapes();
+      const shapes = this.smartArtTree.getShapes();
       for (let i = shapes.length - 1; i >= 0; i -= 1) {
         drawing.addToSpTree(0, shapes[i]);
       }
@@ -10443,12 +10446,21 @@ Because of this, the display is sometimes not correct.
         if (oldParaMarks) {
           editor.ShowParaMarks = false;
         }
+				if (this.recalcInfo.generateDrawingPart && this.isCanGenerateSmartArt()) {
+					this.generateDrawingPart();
+				}
 	      if (this.bFirstRecalculate) {
 		      if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN || AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) {
 			      this.generateDrawingPart();
 		      }
 	      }
         CGroupShape.prototype.recalculate.call(this);
+	      if (this.recalcInfo.generateDrawingPart) {
+		      this.recalcInfo.generateDrawingPart = false;
+					if (this.isCanGenerateSmartArt()) {
+						this.fitFontSize();
+					}
+	      }
         if (this.bFirstRecalculate) {
           this.bFirstRecalculate = false;
 	        if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN || AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) {
@@ -11866,6 +11878,9 @@ Because of this, the display is sometimes not correct.
         var nType = oStream.GetUChar();
         this.readChild(nType, pReader);
       }
+			if (this.isCanGenerateSmartArt()) {
+				// this.setDrawing(null);
+			}
     };
 
     SmartArt.prototype.toPPTY = function(pWriter) {

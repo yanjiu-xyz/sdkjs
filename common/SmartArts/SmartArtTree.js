@@ -623,6 +623,24 @@
 		const smartart = this.smartart;
 		return smartart.getParentObjects();
 	};
+	SmartArtAlgorithm.prototype.getInitObjects = function () {
+		const api = Asc.editor;
+		if (!api) {
+			return null;
+		}
+		const smartart = this.smartart;
+		const initObjects = Object.create(this.getParentObjects());
+		initObjects.worksheet = null;
+		initObjects.parent = null;
+		initObjects.drawingDocument = api.getDrawingDocument();
+		const editorId = api.getEditorId();
+		if (editorId === AscCommon.c_oEditorId.Spreadsheet) {
+			initObjects.worksheet = smartart.worksheet;
+		} else if (editorId === AscCommon.c_oEditorId.Presentation) {
+			initObjects.parent = smartart.parent;
+		}
+		return initObjects;
+	};
 	SmartArtAlgorithm.prototype.applyColorsDef = function (shadowShapes) {
 		const colorsDef = this.smartart.getColorsDef();
 		const stylesDef = this.smartart.getStyleDef();
@@ -1510,13 +1528,9 @@
 		this.style = style;
 	}
 
-	ShadowShape.prototype.getEditorLine = function () {
-		const initObjects = AscFormat.CShape.getInitObjects();
-		const parentObjects = initObjects.parentObjects;
-		if (!parentObjects) {
-			return null;
-		}
-		const shapeTrack = new AscFormat.NewShapeTrack("", this.x, this.y, parentObjects.theme || AscFormat.GetDefaultTheme(), parentObjects.master, parentObjects.layout, parentObjects.slide, initObjects.page);
+	ShadowShape.prototype.getEditorLine = function (initObjects) {
+
+		const shapeTrack = new AscFormat.NewShapeTrack("", this.x, this.y, initObjects.theme, initObjects.master, initObjects.layout, initObjects.slide, 0);
 		shapeTrack.track({}, this.x + this.width, this.y + this.height);
 		const shape = shapeTrack.getShape(false, initObjects.drawingDocument, null);
 		const spPr = shape.spPr;
@@ -1537,25 +1551,20 @@
 		this.applyPostEditorSettings(shape);
 		return shape;
 	};
-	ShadowShape.prototype.getEditorShape = function (isLine) {
+	ShadowShape.prototype.getEditorShape = function (isLine, initObjects) {
 		if (this.connectorShape) {
-			return this.connectorShape.getEditorShape(this.connectorShape.type === AscFormat.LayoutShapeType_outputShapeType_conn);
+			return this.connectorShape.getEditorShape(this.connectorShape.type === AscFormat.LayoutShapeType_outputShapeType_conn, initObjects);
 		}
 
 		if (isLine) {
-			return this.getEditorLine();
+			return this.getEditorLine(initObjects);
 		} else {
 			const shapeType = this.getEditorShapeType();
 			if (typeof shapeType !== 'string') {
 				return null;
 			}
-			const initObjects = AscFormat.CShape.getInitObjects();
-			const parentObjects = initObjects.parentObjects;
-			if (!parentObjects) {
-				return null;
-			}
 
-			const shapeTrack = new AscFormat.NewShapeTrack(this.getEditorShapeType(), this.x, this.y, parentObjects.theme || AscFormat.GetDefaultTheme(), parentObjects.master, parentObjects.layout, parentObjects.slide, initObjects.page);
+			const shapeTrack = new AscFormat.NewShapeTrack(this.getEditorShapeType(), this.x, this.y, initObjects.theme, initObjects.master, initObjects.layout, initObjects.slide, 0);
 			shapeTrack.track({}, this.x + this.width, this.y + this.height);
 			const shape = shapeTrack.getShape(false, initObjects.drawingDocument, null);
 			shape.spPr.xfrm.setExtX(this.width);
@@ -1640,6 +1649,10 @@
 
 		const presNode = this.node;
 		shapeSmartArtInfo.setShapePoint(presNode.presPoint);
+		for (let i = presNode.contentNodes.length - 1; i >= 0; i -= 1) {
+			const contentNode =  presNode.contentNodes[i];
+			shapeSmartArtInfo.addToLstContentPoint(0, contentNode);
+		}
 
 		this.applyTextSettings(editorShape);
 		this.applyShapeRot(editorShape);
@@ -1834,12 +1847,16 @@
 	};
 	BaseAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
 		const shapes = [];
+		const initObjects = smartartAlgorithm.getInitObjects();
+		if (!initObjects) {
+			return shapes;
+		}
 		const shadowShapes = this.parentNode.getShadowShapesByZOrder();
 		const correctShadowShapes = shadowShapes.filter(function (shadowShape) {
 			if (shadowShape.height === 0 && shadowShape.width === 0 && shadowShape.node.algorithm instanceof TextAlgorithm) {
 				return false;
 			}
-			if (shadowShape.shape.hideGeom && shadowShape.shape.type === AscFormat.LayoutShapeType_shapeType_rect && shadowShape.node.algorithm instanceof TextAlgorithm && !shadowShape.node.isTxXfrm() && shadowShape.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none) {
+			if (shadowShape.shape.hideGeom && shadowShape.shape.type === AscFormat.LayoutShapeType_shapeType_rect && shadowShape.node.algorithm instanceof TextAlgorithm && !shadowShape.node.isTxXfrm()) {
 				return true;
 			}
 			return !shadowShape.shape.hideGeom && !shadowShape.node.isTxXfrm() && shadowShape.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none;
@@ -1849,7 +1866,7 @@
 		}));
 		for (let i = 0; i < correctShadowShapes.length; i++) {
 			const shadowShape = correctShadowShapes[i];
-			const editorShape = shadowShape.getEditorShape();
+			const editorShape = shadowShape.getEditorShape(false, initObjects);
 			if (editorShape) {
 				shadowShape.editorShape = editorShape;
 				shapes.push(editorShape);
@@ -6021,13 +6038,13 @@ function HierarchyAlgorithm() {
 		}
 	};
 	TextAlgorithm.prototype.applyContentFilling = function (editorShape) {
-		const presNode = this.parentNode;
-		const contentNodes = presNode.contentNodes;
+		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
+		const contentNodes = shapeSmartArtInfo.contentPoint;
 		if (!contentNodes.length) {
 			return;
 		}
 
-		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
+
 		const stBulletLvl = this.params[AscFormat.Param_type_stBulletLvl];
 		editorShape.createTextBody();
 		const shapeContent = editorShape.txBody.content;
@@ -6041,7 +6058,6 @@ function HierarchyAlgorithm() {
 			const mainPoint = contentNode.point;
 			const deltaDepth = contentNode.depth - startDepth;
 			if (contentNode.point) {
-				shapeSmartArtInfo.addToLstContentPoint(i, contentNode);
 				const dataContent = mainPoint.t && mainPoint.t.content;
 				if (dataContent) {
 					const firstParagraph = dataContent.Content[0];

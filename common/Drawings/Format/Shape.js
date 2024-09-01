@@ -953,34 +953,6 @@
 		}
 
 		AscFormat.InitClass(CShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_Shape);
-		CShape.getInitObjects = function () {
-			let oRes = {word: true, worksheet: null, parent: null, page: 0};
-			const oApi = Asc.editor;
-			if (!oApi) {
-				return oRes;
-			}
-			var oShape = new AscFormat.CShape();
-			if (AscCommon.c_oEditorId.Spreadsheet === oApi.getEditorId()) {
-				oShape.setWorksheet(oApi.wb.getWorksheet().model);
-				oRes.worksheet = oApi.wb.getWorksheet().model;
-				oRes.word = false;
-
-			} else {
-				const oLogicDocument = oApi.getLogicDocument();
-				if (oLogicDocument && Array.isArray(oLogicDocument.Slides)) {
-					const oSLide = oLogicDocument.Slides[oLogicDocument.CurPage];
-					if (oSLide) {
-						oShape.setParent(oSLide);
-						oRes.parent = oSLide;
-						oRes.word = false;
-					}
-					oRes.page = oLogicDocument.CurPage;
-				}
-			}
-			oRes.parentObjects = oShape.getParentObjects();
-			oRes.drawingDocument = oApi.getDrawingDocument();
-			return oRes;
-		};
 		CShape.prototype.setCustT = function (value) {
 			var pointContent = this.getSmartArtPointContent();
 			if (pointContent) {
