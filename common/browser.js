@@ -239,15 +239,15 @@ var UI = {
 
 		let koef = AscCommon.AscBrowser.zoom;
 		let newRect = {}
-		if (rect.x) newRect.x = rect.x * koef;
-		if (rect.y) newRect.y = rect.y * koef;
-		if (rect.width) newRect.width = rect.width * koef;
-		if (rect.height) newRect.height = rect.height * koef;
+		if (undefined !== rect.x)      newRect.x      = rect.x * koef;
+		if (undefined !== rect.y)      newRect.y      = rect.y * koef;
+		if (undefined !== rect.width)  newRect.width  = rect.width * koef;
+		if (undefined !== rect.height) newRect.height = rect.height * koef;
 
-		if (rect.left) newRect.left = rect.left * koef;
-		if (rect.top) newRect.top = rect.top * koef;
-		if (rect.right) newRect.right = rect.right * koef;
-		if (rect.bottom) newRect.bottom = rect.bottom * koef;
+		if (undefined !== rect.left)   newRect.left   = rect.left * koef;
+		if (undefined !== rect.top)    newRect.top    = rect.top * koef;
+		if (undefined !== rect.right)  newRect.right  = rect.right * koef;
+		if (undefined !== rect.bottom) newRect.bottom = rect.bottom * koef;
 		return newRect;
 	},
 
