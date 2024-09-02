@@ -575,7 +575,9 @@
 	PDFEditorApi.prototype.asc_GetSelectedText = function(bClearText, select_Pr) {
 		if (!this.DocumentRenderer)
 			return "";
-
+		
+		bClearText = (bClearText === true);
+		
 		let oDoc		= this.getPDFDoc();
 		let oTxObject	= oDoc.getTextController();
 		let textObj		= {Text : ""};
@@ -588,7 +590,7 @@
 			this.DocumentRenderer.Copy(textObj);
 		}
 		
-		if (textObj.Text.trim() === "")
+		if (!textObj.Text || textObj.Text.trim() === "")
 			return "";
 		
 		return textObj.Text;
