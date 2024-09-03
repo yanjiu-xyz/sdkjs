@@ -10184,9 +10184,16 @@ function parserFormula( formula, parent, _ws ) {
 
 			if (area && area.length < 1) {
 				// let emptyElem = new cEmpty();
-				// empty array, fill with empty elements or return empty array
+				// if array is empty - add info about range size and set missedValue
 				retArr.setRealArraySize(dimension.row, dimension.col);
 				retArr.missedValue = new cEmpty();
+
+				/* we add one element to the array so as not to return a completely empty array to the formula */
+				if (!retArr.countElement) {
+					retArr.addRow();
+					retArr.addElement(retArr.missedValue);
+				}
+
 			} else {
 				for ( let iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
 					for ( let iCol = 0; iCol < colCount; iCol++ ) {
