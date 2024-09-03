@@ -737,7 +737,7 @@ MasterSlide.prototype.getPlaceholdersControls = function () {
     return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
 };
 MasterSlide.prototype.getDrawingObjects = function() {
-    return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
+    return AscCommonSlide.Slide.prototype.getDrawingObjects.call(this);
 };
 MasterSlide.prototype.getParentObjects = function () {
     return {

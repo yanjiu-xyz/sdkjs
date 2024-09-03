@@ -834,7 +834,7 @@ SlideLayout.prototype.getMaster = function(){
         return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
     };
     SlideLayout.prototype.getDrawingObjects = function() {
-        return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
+        return AscCommonSlide.Slide.prototype.getDrawingObjects.call(this);
     };
     SlideLayout.prototype.showChartSettings = function () {
         return AscCommonSlide.Slide.prototype.showChartSettings.call(this);
