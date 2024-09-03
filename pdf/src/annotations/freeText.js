@@ -1349,8 +1349,7 @@
                     oContent.RecalculateCurPos();
 
                     oDrDoc.UpdateTargetFromPaint = true;
-                    oDrDoc.TargetStart();
-                    oDrDoc.showTarget(true);
+                    oDrDoc.TargetStart(true);
                     this.SetInTextBox(true);
 
                     oDoc.SetGlobalHistory();

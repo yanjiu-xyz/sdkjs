@@ -517,8 +517,7 @@
 			}
 		}
 
-		drDoc.showTarget(true);
-		drDoc.TargetStart();
+		drDoc.TargetStart(true);
 		
 		if (docContent.IsSelectionUse() && !docContent.IsSelectionEmpty())
 			drDoc.TargetEnd();

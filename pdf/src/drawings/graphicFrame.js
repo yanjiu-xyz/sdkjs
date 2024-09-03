@@ -379,7 +379,7 @@
 			} else {
 				graphicObject.RecalculateCurPos();
 				oDrDoc.UpdateTargetTransform(this.transform);
-				oDrDoc.TargetShow();
+				oDrDoc.TargetStart(true);
 			}
 		} else {
 			oDrDoc.UpdateTargetTransform(null);

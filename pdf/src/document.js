@@ -688,8 +688,7 @@ var CPresentation = CPresentation || function(){};
                     oDrDoc.UpdateTargetFromPaint = true;
                     oDrDoc.m_lCurrentPage = 0;
                     oDrDoc.m_lPagesCount = oViewer.file.pages.length;
-                    oDrDoc.showTarget(true);
-                    oDrDoc.TargetStart();
+                    oDrDoc.TargetStart(true);
                     if (oNextForm.content.IsSelectionUse())
                         oNextForm.content.RemoveSelection();
     
@@ -772,8 +771,7 @@ var CPresentation = CPresentation || function(){};
                     oDrDoc.UpdateTargetFromPaint = true;
                     oDrDoc.m_lCurrentPage = 0;
                     oDrDoc.m_lPagesCount = oViewer.file.pages.length;
-                    oDrDoc.showTarget(true);
-                    oDrDoc.TargetStart();
+                    oDrDoc.TargetStart(true);
                     if (oNextForm.content.IsSelectionUse())
                         oNextForm.content.RemoveSelection();
     
@@ -1025,7 +1023,7 @@ var CPresentation = CPresentation || function(){};
                 oMouseDownObject.onMouseDown(x, y, e, pageObject.index);
             }
             
-            if (((oMouseDownObject.IsDrawing() && oMouseDownObject.IsTextShape()) || (oMouseDownObject.IsAnnot() && oMouseDownObject.IsFreeText())) && false == oMouseDownObject.IsInTextBox()) {
+            if ((oMouseDownObject.IsDrawing() || (oMouseDownObject.IsAnnot() && oMouseDownObject.IsFreeText())) && false == oMouseDownObject.IsInTextBox()) {
                 oDrDoc.TargetEnd();
             }
         }
@@ -2723,8 +2721,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oContent) {
-            oDrDoc.TargetStart();
-            oDrDoc.showTarget(true);
+            oDrDoc.TargetStart(true);
         }
         else {
             oDrDoc.TargetEnd();
@@ -2757,8 +2754,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oContent) {
-            oDrDoc.showTarget(true);
-            oDrDoc.TargetStart();
+            oDrDoc.TargetStart(true);
         }
     };
     
@@ -3550,12 +3546,8 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oContent) {
-            oDrDoc.TargetStart();
-            // сбрасываем счетчик до появления курсора
-            if (!isShiftKey) {
-                oDrDoc.showTarget(true);
-            }
-
+            oDrDoc.TargetStart(true);
+            
             if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
                 oDrDoc.TargetEnd();
 
@@ -3598,11 +3590,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oContent) {
-            oDrDoc.TargetStart();
-            // сбрасываем счетчик до появления курсора
-            if (!isShiftKey) {
-                oDrDoc.showTarget(true);
-            }
+            oDrDoc.TargetStart(true);
 
             if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
                 oDrDoc.TargetEnd();
@@ -3634,11 +3622,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oContent) {
-            oDrDoc.TargetStart();
-            // сбрасываем счетчик до появления курсора
-            if (!isShiftKey) {
-                oDrDoc.showTarget(true);
-            }
+            oDrDoc.TargetStart(true);
 
             if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
                 oDrDoc.TargetEnd();
@@ -3684,11 +3668,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oContent) {
-            oDrDoc.TargetStart();
-            // сбрасываем счетчик до появления курсора
-            if (!isShiftKey) {
-                oDrDoc.showTarget(true);
-            }
+            oDrDoc.TargetStart(true);
 
             if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
                 oDrDoc.TargetEnd();
@@ -3775,8 +3755,7 @@ var CPresentation = CPresentation || function(){};
         }
         
         oDrDoc.UpdateTargetFromPaint = true;
-        oDrDoc.TargetStart();
-        oDrDoc.showTarget(true);
+        oDrDoc.TargetStart(true);
     };
     CPDFDoc.prototype.SelectionSetEnd = function(x, y, e) {
         let oDrDoc      = this.GetDrawingDocument();
@@ -3811,8 +3790,7 @@ var CPresentation = CPresentation || function(){};
                 oDrDoc.TargetEnd();
             }
             else {
-                oDrDoc.TargetStart();
-                oDrDoc.showTarget(true);
+                oDrDoc.TargetStart(true);
             }
         }
     };

@@ -295,15 +295,13 @@
                             }
                             content.RecalculateCurPos();
 
-                            drawing_document.TargetStart();
-                            drawing_document.TargetShow();
+                            drawing_document.TargetStart(true);
                         }
                     }
                 } else {
                     content.RecalculateCurPos();
 
-                    drawing_document.TargetStart();
-                    drawing_document.TargetShow();
+                    drawing_document.TargetStart(true);
                 }
             } else {
                 drawing_document.UpdateTargetTransform(new AscCommon.CMatrix());
