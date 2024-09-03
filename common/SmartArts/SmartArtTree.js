@@ -632,10 +632,12 @@
 		const initObjects = Object.create(this.getParentObjects());
 		initObjects.worksheet = null;
 		initObjects.parent = null;
+		initObjects.drawingObjects = null;
 		initObjects.drawingDocument = api.getDrawingDocument();
 		const editorId = api.getEditorId();
 		if (editorId === AscCommon.c_oEditorId.Spreadsheet) {
 			initObjects.worksheet = smartart.worksheet;
+			initObjects.drawingObjects = smartart.drawingObjects;
 		} else if (editorId === AscCommon.c_oEditorId.Presentation) {
 			initObjects.parent = smartart.parent;
 		}
@@ -1532,7 +1534,7 @@
 
 		const shapeTrack = new AscFormat.NewShapeTrack("", this.x, this.y, initObjects.theme, initObjects.master, initObjects.layout, initObjects.slide, 0);
 		shapeTrack.track({}, this.x + this.width, this.y + this.height);
-		const shape = shapeTrack.getShape(false, initObjects.drawingDocument, null);
+		const shape = shapeTrack.getShape(false, initObjects.drawingDocument, initObjects.drawingObjects);
 		const spPr = shape.spPr;
 		spPr.xfrm.setExtX(this.width);
 		spPr.xfrm.setExtY(this.height);
@@ -1566,7 +1568,7 @@
 
 			const shapeTrack = new AscFormat.NewShapeTrack(this.getEditorShapeType(), this.x, this.y, initObjects.theme, initObjects.master, initObjects.layout, initObjects.slide, 0);
 			shapeTrack.track({}, this.x + this.width, this.y + this.height);
-			const shape = shapeTrack.getShape(false, initObjects.drawingDocument, null);
+			const shape = shapeTrack.getShape(false, initObjects.drawingDocument, initObjects.drawingObjects);
 			shape.spPr.xfrm.setExtX(this.width);
 			shape.spPr.xfrm.setExtY(this.height);
 			shape.setBDeleted(false);
@@ -1649,6 +1651,7 @@
 
 		const presNode = this.node;
 		shapeSmartArtInfo.setShapePoint(presNode.presPoint);
+		editorShape.setModelId(presNode.presPoint.getModelId());
 		for (let i = presNode.contentNodes.length - 1; i >= 0; i -= 1) {
 			const contentNode =  presNode.contentNodes[i];
 			shapeSmartArtInfo.addToLstContentPoint(0, contentNode);
@@ -7878,10 +7881,11 @@ PresNode.prototype.addChild = function (ch, pos) {
 	}
 
 	PresNode.prototype.initRootConstraints = function (smartArt, smartartAlgorithm) {
-		this.constr[AscFormat.Constr_type_w] = smartArt.spPr.xfrm.extX;
-		this.constr[AscFormat.Constr_type_h] = smartArt.spPr.xfrm.extY;
-		this.adaptConstr[AscFormat.Constr_type_w] = smartArt.spPr.xfrm.extX;
-		this.adaptConstr[AscFormat.Constr_type_h] = smartArt.spPr.xfrm.extY;
+		const sizes = smartArt.getSizes();
+		this.constr[AscFormat.Constr_type_w] = sizes.width;
+		this.constr[AscFormat.Constr_type_h] = sizes.height;
+		this.adaptConstr[AscFormat.Constr_type_w] = sizes.width;
+		this.adaptConstr[AscFormat.Constr_type_h] = sizes.height;
 	};
 	PresNode.prototype.getModelId = function () {
 		return this.presPoint.getModelId();

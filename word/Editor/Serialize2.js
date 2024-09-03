@@ -8320,6 +8320,7 @@ function BinaryFileReader(doc, openParams)
 				api && api.asc_addRestriction(restrictionType);
 			}
 		}
+	    pptx_content_loader.Reader.GenerateSmartArts();
 		
 		//чтобы удалялся stream с бинарником
 		pptx_content_loader.Clear(true);

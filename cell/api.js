@@ -6503,7 +6503,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.getGraphicController = function () {
-      var ws = this.wb.getWorksheet();
+      var ws = this.wb && this.wb.getWorksheet();
       return ws && ws.objectRender && ws.objectRender.controller;
   };
 

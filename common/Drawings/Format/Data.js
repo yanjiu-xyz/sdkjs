@@ -10215,6 +10215,7 @@ Because of this, the display is sometimes not correct.
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtDrawing] = function (oClass, value) {
       oClass.drawing = value;
+			oClass.isLocalDrawingPart = false;
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtLayoutDef] = function (oClass, value) {
       oClass.layoutDef = value;
@@ -10243,13 +10244,14 @@ Because of this, the display is sometimes not correct.
 
       this.calcGeometry = null;
       this.bFirstRecalculate = true;
+			this.isLocalDrawingPart = true;
     }
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
 
 		SmartArt.prototype.setRecalculateInfo = function () {
 			CGroupShape.prototype.setRecalculateInfo.call(this);
-			this.recalcInfo.generateDrawingPart = true;
+			this.recalcInfo.fitFontSize = true;
 		};
     SmartArt.prototype.getObjectType = function() {
       return AscDFH.historyitem_type_SmartArt;
@@ -10365,8 +10367,61 @@ Because of this, the display is sometimes not correct.
 					return false;
 			}
 		};
+	  SmartArt.prototype.getSizes = function () {
+			const sizes = {width: 0, height: 0};
+			if (this.drawingBase) {
+				const drawingMetrics = this.drawingBase.getGraphicObjectMetrics();
+				sizes.width = drawingMetrics.extX;
+				sizes.height = drawingMetrics.extY;
+			} else {
+				sizes.width = this.spPr.xfrm.extX;
+				sizes.height = this.spPr.xfrm.extY;
+			}
+			return sizes;
+	  };
+		SmartArt.prototype.generateLocalDrawingPart = function () {
+			if (this.isLocalDrawingPart) {
+				AscFormat.ExecuteNoHistory(function () {
+					this.generateDrawingPart();
+				}, this, []);
+			}
+		};
+		SmartArt.prototype.checkDrawingPartWithHistory = function (controller) {
+			if (this.isLocalDrawingPart && AscCommon.History.CanAddChanges()) {
+				this.isLocalDrawingPart = false;
+				const oldDrawing = this.drawing;
+				const selectedObjects = this.getMainGroup().selectedObjects;
+				const mapShapes = {};
+				const targetDocContent = controller.getTargetDocContent();
+				for (let i = 0; i < oldDrawing.spTree.length; i += 1) {
+					const shape = oldDrawing.spTree[i];
+					mapShapes[shape.GetId()] = {index: i, state: null};
+					if (targetDocContent && targetDocContent === shape.getDocContent()) {
+						mapShapes[shape.GetId()].state = targetDocContent.GetSelectionState();
+					}
+				}
+
+				const copyDrawing = this.drawing.createDuplicate();
+				this.setDrawing(copyDrawing);
+				for (let i = 0; i < selectedObjects.length; i += 1) {
+					const shapeInfo = mapShapes[selectedObjects[i].Id];
+					if (shapeInfo) {
+						copyDrawing.spTree[shapeInfo.index].selectStartPage = selectedObjects[i].selectStartPage;
+						selectedObjects[i] = copyDrawing.spTree[shapeInfo.index];
+						selectedObjects[i].selected = true;
+						if (shapeInfo.state) {
+							selectedObjects[i].SetSelectionState(shapeInfo.state);
+						}
+					}
+				}
+				copyDrawing.setBDeleted2(false);
+			}
+		};
     SmartArt.prototype.generateDrawingPart = function () {
-      this.smartArtTree.startFromBegin();
+			if (!this.isCanGenerateSmartArt()) {
+				return;
+			}
+	    this.smartArtTree.startFromBegin();
       const drawing = this.getDrawing();
       const shapeLength = drawing.spTree.length;
       for (let i = 0; i < shapeLength; i++) {
@@ -10446,28 +10501,22 @@ Because of this, the display is sometimes not correct.
         if (oldParaMarks) {
           editor.ShowParaMarks = false;
         }
-				if (this.recalcInfo.generateDrawingPart && this.isCanGenerateSmartArt()) {
-					this.generateDrawingPart();
-				}
 	      if (this.bFirstRecalculate) {
 		      if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN || AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) {
 			      this.generateDrawingPart();
 		      }
 	      }
         CGroupShape.prototype.recalculate.call(this);
-	      if (this.recalcInfo.generateDrawingPart) {
-		      this.recalcInfo.generateDrawingPart = false;
-					if (this.isCanGenerateSmartArt()) {
-						this.fitFontSize();
-					}
-	      }
         if (this.bFirstRecalculate) {
           this.bFirstRecalculate = false;
 	        if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN || AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) {
 		        this.fitFontSize();
 	        }
-          // this.fitFontSize();
         }
+				if (this.recalcInfo.fitFontSize) {
+					this.recalcInfo.fitFontSize = false;
+					this.fitFontSize();
+				}
         if (oldParaMarks) {
           editor.ShowParaMarks = oldParaMarks;
         }
@@ -11360,7 +11409,9 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.setColorsDef = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtColorsDef, this.getColorsDef(), oPr));
       this.colorsDef = oPr;
-      oPr.setParent(this);
+			if (oPr) {
+				oPr.setParent(this);
+			}
     };
     SmartArt.prototype.setType = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SmartArtType, this.type, oPr));
@@ -11369,22 +11420,30 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.setDrawing = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDrawing, this.getDrawing(), oPr));
       this.drawing = oPr;
-      oPr.setParent(this);
+	    if (oPr) {
+		    oPr.setParent(this);
+	    }
     };
     SmartArt.prototype.setLayoutDef = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtLayoutDef, this.getLayoutDef(), oPr));
       this.layoutDef = oPr;
-      oPr.setParent(this);
+	    if (oPr) {
+		    oPr.setParent(this);
+	    }
     };
     SmartArt.prototype.setDataModel = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
-      oPr.setParent(this);
+	    if (oPr) {
+		    oPr.setParent(this);
+	    }
     };
     SmartArt.prototype.setStyleDef = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtStyleDef, this.getStyleDef(), oPr));
       this.styleDef = oPr;
-      oPr.setParent(this);
+	    if (oPr) {
+		    oPr.setParent(this);
+	    }
     };
     SmartArt.prototype.getColorsDef = function () {
       return this.colorsDef;
@@ -11595,6 +11654,7 @@ Because of this, the display is sometimes not correct.
       switch (nType) {
         case 0: {
           this.setDrawing(new Drawing());
+					this.drawing.setBDeleted(false);
           pReader.ReadSmartArtGroup(this.drawing);
           this.drawing.setGroup(this);
           this.addToSpTree(0, this.drawing);
@@ -11878,9 +11938,6 @@ Because of this, the display is sometimes not correct.
         var nType = oStream.GetUChar();
         this.readChild(nType, pReader);
       }
-			if (this.isCanGenerateSmartArt()) {
-				// this.setDrawing(null);
-			}
     };
 
     SmartArt.prototype.toPPTY = function(pWriter) {
@@ -11947,6 +12004,7 @@ Because of this, the display is sometimes not correct.
         copy.cachedPixW = this.cachedPixW;
       }
       copy.setLocks(this.locks);
+			copy.smartArtTree = new AscFormat.SmartArtAlgorithm(copy);
       copy.setConnections2();
       return copy;
     };

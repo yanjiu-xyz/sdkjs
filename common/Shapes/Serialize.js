@@ -173,6 +173,7 @@ function BinaryPPTYLoader()
 	this.oConnectedObjects = {};
 	this.map_shapes_by_id = {};
 	this.fields = [];
+	this.smartarts = [];
 
 
 	this.ClearConnectedObjects = function(){
@@ -312,6 +313,12 @@ function BinaryPPTYLoader()
 
         this.ImageMapChecker = null;
     };
+		this.GenerateSmartArts = function () {
+			while (this.smartarts.length) {
+				const smartart = this.smartarts.pop();
+				smartart.generateDrawingPart();
+			}
+		};
 
     this.LoadDocument = function()
     {
@@ -691,6 +698,11 @@ function BinaryPPTYLoader()
 				}
 			}
         }
+				if (this.IsThemeLoader) {
+					this.smartarts.length = 0;
+				} else {
+					this.GenerateSmartArts();
+				}
 
         if (this.Api != null && !this.IsThemeLoader)
         {
@@ -7145,6 +7157,7 @@ function BinaryPPTYLoader()
                 case 8://smartArt
                 {
                     _smartArt = this.ReadSmartArt();
+										this.smartarts.push(_smartArt);
                     break;
                 }
                 case 9:
