@@ -5165,7 +5165,17 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Check_MergeData = function() {};
     CPDFDoc.prototype.Set_SelectionState2 = function() {};
     CPDFDoc.prototype.ResumeRecalculate = function() {};
-    CPDFDoc.prototype.RecalculateByChanges = function() {};
+    CPDFDoc.prototype.RecalculateByChanges = function(arrChanges, nStartIndex, nEndIndex) {
+        this.ClearSearch();
+
+        // Обновляем позицию курсора
+        this.NeedUpdateTarget = true;
+
+        // Увеличиваем номер пересчета
+        this.RecalcId++;
+
+        this.History.Get_RecalcData(null, arrChanges, nStartIndex, nEndIndex);
+    };
     CPDFDoc.prototype.UpdateTracks = function() {};
     CPDFDoc.prototype.GetOFormDocument = function() {};
     CPDFDoc.prototype.Continue_FastCollaborativeEditing = function() {
@@ -5278,8 +5288,10 @@ var CPresentation = CPresentation || function(){};
             oTargetObj.GetDocumentPositionFromObject(CursorPos);
             this.CollaborativeEditing.Add_ForeignCursor(UserId, CursorPos, UserShortId);
         
-            if (true === Show)
+            if (true === Show) {
                 this.CollaborativeEditing.Update_ForeignCursorPosition(UserId, oTargetObj, InRunPos, true);
+                this.GetDrawingDocument().Collaborative_TargetsUpdate();
+            }
         }
         else {
             this.Remove_ForeignCursor(UserId);
