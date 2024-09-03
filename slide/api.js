@@ -6113,6 +6113,7 @@ background-repeat: no-repeat;\
 					}
 				}
 				this.WordControl.m_oLogicDocument.Recalculate({Drawings : {All : true, Map : {}}});
+				AscCommon.History.private_ClearRecalcData();
 				var presentation = this.WordControl.m_oLogicDocument;
 
 				presentation.DrawingDocument.OnEndRecalculate();

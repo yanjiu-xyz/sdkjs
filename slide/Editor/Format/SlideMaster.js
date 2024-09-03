@@ -248,13 +248,13 @@ MasterSlide.prototype.drawNoPlaceholders = function(graphics, slide) {
     if(slide) {
         if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
             this.lastRecalcSlideIndex = slide.num;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
         }
     }
     else {
         if(-1 !== this.lastRecalcSlideIndex){
             this.lastRecalcSlideIndex = -1;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
 
         }
     }
@@ -271,13 +271,13 @@ MasterSlide.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
     if(slide) {
         if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
             this.lastRecalcSlideIndex = slide.num;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
         }
     }
     else {
         if(-1 !== this.lastRecalcSlideIndex){
             this.lastRecalcSlideIndex = -1;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
 
         }
     }
@@ -293,13 +293,13 @@ MasterSlide.prototype.draw = function (graphics, slide) {
 	if(slide) {
 		if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
 			this.lastRecalcSlideIndex = slide.num;
-			this.cSld.refreshAllContentsFields();
+			this.cSld.refreshAllContentsFields(true);
 		}
 	}
     else {
         if(-1 !== this.lastRecalcSlideIndex){
             this.lastRecalcSlideIndex = -1;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
 
         }
     }

@@ -453,13 +453,13 @@ SlideLayout.prototype.getMaster = function(){
         if(slide) {
             if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
                 this.lastRecalcSlideIndex = slide.num;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
             }
         }
         else {
             if(-1 !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = -1;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
 
             }
         }
@@ -479,13 +479,13 @@ SlideLayout.prototype.getMaster = function(){
         if(slide) {
             if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
                 this.lastRecalcSlideIndex = slide.num;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
             }
         }
         else {
             if(-1 !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = -1;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
 
             }
         }
@@ -501,14 +501,14 @@ SlideLayout.prototype.getMaster = function(){
         if(slide){
             if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = slide.num;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
 
             }
         }
         else {
             if(-1 !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = -1;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
 
             }
         }

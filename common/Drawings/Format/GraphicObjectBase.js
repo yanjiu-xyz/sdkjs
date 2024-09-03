@@ -3734,8 +3734,8 @@
 	CGraphicObjectBase.prototype.checkPlaceholders = function(oPlaceholders) {
 		if(this.isDependentPlaceholder(oPlaceholders)) {
 			this.setRecalculateInfo();
-			this.recalculate();
 			this.handleUpdateTheme();
+			this.recalculate();
 			return true;
 		}
 		return false;
