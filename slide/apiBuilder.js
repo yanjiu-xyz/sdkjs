@@ -352,6 +352,10 @@
 	 * @see office-js-api/Examples/Enumerations/NumFormat.js
 	 */
 
+    /**
+     * @typedef {("body" | "chart" | "clipArt" | "ctrTitle" | "diagram" | "date" | "footer" | "header" | "media" | "object" | "picture" | "sldImage" | "sldNumber" | "subTitle" | "table" | "title")} PlaceholderType - Available placeholder types.
+     */
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // Base Api
@@ -2140,10 +2144,11 @@
     {
         return "placeholder";
     };
+
     /**
      * Sets the placeholder type.
      * @typeofeditors ["CPE"]
-     * @param {string} sType - Placeholder type ("body", "chart", "clipArt", "ctrTitle", "diagram", "date", "footer", "header", "media", "object", "picture", "sldImage", "sldNumber", "subTitle", "table", "title").
+     * @param {PlaceholderType} sType - Placeholder type
      * @returns {boolean} - returns false if placeholder type doesn't exist.
      * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/SetType.js
 	 */
@@ -2206,6 +2211,120 @@
 
         this.Placeholder.setType(nType);
     };
+
+    /**
+     * Gets the placeholder type.
+     * @typeofeditors ["CPE"]
+     * @returns {PlaceholderType} - returns placeholder type
+     * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/GetType.js
+	 */
+    ApiPlaceholder.prototype.GetType = function()
+    {
+        let nType = this.Placeholder.getType();
+        let sType;
+
+        switch (nType)
+        {
+            case 0:
+                sType = "body";
+                break;
+            case 1:
+                sType = "chart";
+                break;
+            case 2:
+                sType = "clipArt";
+                break;
+            case 3:
+                sType = "ctrTitle";
+                break;
+            case 4:
+                sType = "diagram";
+                break;
+            case 5:
+                sType = "date";
+                break;
+            case 6:
+                sType = "footer";
+                break;
+            case 7:
+                sType = "header";
+                break;
+            case 8:
+                sType = "media";
+                break;
+            case 9:
+                sType = "object";
+                break;
+            case 10:
+                sType = "picture";
+                break;
+            case 11:
+                sType = "sldImage";
+                break;
+            case 12:
+                sType = "sldNumber";
+                break;
+            case 13:
+                sType = "subTitle";
+                break;
+            case 14:
+                sType = "table";
+                break;
+            case 15:
+                sType = "title";
+                break;
+            default:
+                sType = "unknown";
+        }
+
+        return sType;
+    };
+
+    Object.defineProperty(ApiPlaceholder.prototype, "Type", {
+		get: function () {
+			return this.GetType();
+		},
+		set: function (sType) {
+			this.SetType(sType);
+		}
+	});
+
+    /**
+     * Sets the placeholder index.
+     * @typeofeditors ["CPE"]
+     * @param {number} nIdx - placeholder index
+     * @returns {boolean} - returns false if placeholder index wasn't set.
+     * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/SetIndex.js
+	 */
+    ApiPlaceholder.prototype.SetIndex = function(nIdx)
+    {
+        if (typeof(nIdx) != 'number' || nIdx < 0) {
+            return false;
+        }
+
+        nIdx >>= 0;
+        this.Placeholder.setIdx(nIdx);
+    };
+
+    /**
+     * Gets the placeholder index.
+     * @typeofeditors ["CPE"]
+     * @returns {number | undefined} - returns placeholder index
+     * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/GetIndex.js
+	 */
+    ApiPlaceholder.prototype.GetIndex = function()
+    {
+        return this.Placeholder.getIdx();
+    };
+
+    Object.defineProperty(ApiPlaceholder.prototype, "Index", {
+		get: function () {
+			return this.GetIndex();
+		},
+		set: function (nIndex) {
+			this.SetIndex(nIndex);
+		}
+	});
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -4541,6 +4660,9 @@
 
     ApiPlaceholder.prototype["GetClassType"]              = ApiPlaceholder.prototype.GetClassType;
     ApiPlaceholder.prototype["SetType"]                   = ApiPlaceholder.prototype.SetType;
+    ApiPlaceholder.prototype["GetType"]                   = ApiPlaceholder.prototype.GetType;
+    ApiPlaceholder.prototype["SetIndex"]                  = ApiPlaceholder.prototype.SetIndex;
+    ApiPlaceholder.prototype["GetIndex"]                  = ApiPlaceholder.prototype.GetIndex;
 
     ApiTheme.prototype["GetClassType"]                    = ApiTheme.prototype.GetClassType;
     ApiTheme.prototype["GetMaster"]                       = ApiTheme.prototype.GetMaster;
