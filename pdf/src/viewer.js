@@ -3028,9 +3028,7 @@
 			{
 				if (null === this.file.pages[i].text)
 				{
-					let text = this.file.getText(i);
-					this.file.pages[i].text = null === text ? undefined : text;
-
+					this.file.pages[i].text = this.file.getText(i);
 					isCommands = true;
 				}
 			}
@@ -3045,10 +3043,7 @@
 						this.pagesInfo.countTextPages++;
 						continue;
 					}
-
-					let text = this.file.getText(this.pagesInfo.countTextPages);
-
-					this.file.pages[this.pagesInfo.countTextPages].text = null === text ? undefined : text;
+					this.file.pages[this.pagesInfo.countTextPages].text = this.file.getText(this.pagesInfo.countTextPages);
 					if (null !== this.file.pages[this.pagesInfo.countTextPages].text)
 					{
 						this.pagesInfo.countTextPages++;

@@ -643,7 +643,7 @@ void main() {\n\
     CFile.prototype.getPageTextStream = function(pageIndex)
     {
         var textCommands = this.pages[pageIndex].text;
-        if (!textCommands)
+        if (!textCommands || 0 === textCommands.length)
             return null;
 
         return new TextStreamReader(textCommands, textCommands.length);
