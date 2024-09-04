@@ -470,6 +470,7 @@ $(function () {
 			Test(`(a/(c/(z/x)))`, [["ParaRun", ""], ["CDelimiter", "(a/(c/(z/x)))"], ["ParaRun", ""]], false, "Check fraction content", true);
 			Test(`1¦2`, [["ParaRun", ""], ["CFraction", "1¦2"], ["ParaRun", ""]], false, "Check fraction content", true);
 			Test(`(1¦2)`, [["ParaRun", ""], ["CDelimiter", "(1¦2)"], ["ParaRun", ""]], false, "Check fraction content", true);
+			Test("(sin⁡θ)/(cos⁡θ) ", [["ParaRun", ""], ["CFraction", "(sin⁡θ)/(cos⁡θ)"], ["ParaRun", ""]], false, "Check functions");
 		})
 
 		QUnit.module( "Horizontal brackets", function ()

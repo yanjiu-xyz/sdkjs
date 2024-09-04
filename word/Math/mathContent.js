@@ -3076,49 +3076,54 @@ CMathContent.prototype.private_LoadFromMenuBracket = function(Type, Pr, oSelecte
 CMathContent.prototype.private_LoadFromMenuFunction = function(Type, Pr, oSelectedContent)
 {
 	var oFunction = null;
-    switch(Type)
-    {
-        case c_oAscMathType.Function_Sin : oFunction = this.Add_Function(Pr, "sin", null); break;
-        case c_oAscMathType.Function_Cos : oFunction = this.Add_Function(Pr, "cos", null); break;
-        case c_oAscMathType.Function_Tan : oFunction = this.Add_Function(Pr, "tan", null); break;
-        case c_oAscMathType.Function_Csc : oFunction = this.Add_Function(Pr, "csc", null); break;
-        case c_oAscMathType.Function_Sec : oFunction = this.Add_Function(Pr, "sec", null); break;
-        case c_oAscMathType.Function_Cot : oFunction = this.Add_Function(Pr, "cot", null); break;
+	switch(Type)
+	{
+		case c_oAscMathType.Function_Sin : oFunction = this.Add_Function(Pr, "sin", null); break;
+		case c_oAscMathType.Function_Cos : oFunction = this.Add_Function(Pr, "cos", null); break;
+		case c_oAscMathType.Function_Tan : oFunction = this.Add_Function(Pr, "tan", null); break;
+		case c_oAscMathType.Function_Csc : oFunction = this.Add_Function(Pr, "csc", null); break;
+		case c_oAscMathType.Function_Sec : oFunction = this.Add_Function(Pr, "sec", null); break;
+		case c_oAscMathType.Function_Cot : oFunction = this.Add_Function(Pr, "cot", null); break;
 
-        case c_oAscMathType.Function_1_Sin : oFunction = this.Add_Function_1(Pr, "sin", null); break;
-        case c_oAscMathType.Function_1_Cos : oFunction = this.Add_Function_1(Pr, "cos", null); break;
-        case c_oAscMathType.Function_1_Tan : oFunction = this.Add_Function_1(Pr, "tan", null); break;
-        case c_oAscMathType.Function_1_Csc : oFunction = this.Add_Function_1(Pr, "csc", null); break;
-        case c_oAscMathType.Function_1_Sec : oFunction = this.Add_Function_1(Pr, "sec", null); break;
-        case c_oAscMathType.Function_1_Cot : oFunction = this.Add_Function_1(Pr, "cot", null); break;
+		case c_oAscMathType.Function_1_Sin : oFunction = this.Add_Function_1(Pr, "sin", null); break;
+		case c_oAscMathType.Function_1_Cos : oFunction = this.Add_Function_1(Pr, "cos", null); break;
+		case c_oAscMathType.Function_1_Tan : oFunction = this.Add_Function_1(Pr, "tan", null); break;
+		case c_oAscMathType.Function_1_Csc : oFunction = this.Add_Function_1(Pr, "csc", null); break;
+		case c_oAscMathType.Function_1_Sec : oFunction = this.Add_Function_1(Pr, "sec", null); break;
+		case c_oAscMathType.Function_1_Cot : oFunction = this.Add_Function_1(Pr, "cot", null); break;
 
-        case c_oAscMathType.Function_Sinh : oFunction = this.Add_Function(Pr, "sinh", null); break;
-        case c_oAscMathType.Function_Cosh : oFunction = this.Add_Function(Pr, "cosh", null); break;
-        case c_oAscMathType.Function_Tanh : oFunction = this.Add_Function(Pr, "tanh", null); break;
-        case c_oAscMathType.Function_Csch : oFunction = this.Add_Function(Pr, "csch", null); break;
-        case c_oAscMathType.Function_Sech : oFunction = this.Add_Function(Pr, "sech", null); break;
-        case c_oAscMathType.Function_Coth : oFunction = this.Add_Function(Pr, "coth", null); break;
+		case c_oAscMathType.Function_Sinh : oFunction = this.Add_Function(Pr, "sinh", null); break;
+		case c_oAscMathType.Function_Cosh : oFunction = this.Add_Function(Pr, "cosh", null); break;
+		case c_oAscMathType.Function_Tanh : oFunction = this.Add_Function(Pr, "tanh", null); break;
+		case c_oAscMathType.Function_Csch : oFunction = this.Add_Function(Pr, "csch", null); break;
+		case c_oAscMathType.Function_Sech : oFunction = this.Add_Function(Pr, "sech", null); break;
+		case c_oAscMathType.Function_Coth : oFunction = this.Add_Function(Pr, "coth", null); break;
 
-        case c_oAscMathType.Function_1_Sinh : oFunction = this.Add_Function_1(Pr, "sinh", null); break;
-        case c_oAscMathType.Function_1_Cosh : oFunction = this.Add_Function_1(Pr, "cosh", null); break;
-        case c_oAscMathType.Function_1_Tanh : oFunction = this.Add_Function_1(Pr, "tanh", null); break;
-        case c_oAscMathType.Function_1_Csch : oFunction = this.Add_Function_1(Pr, "csch", null); break;
-        case c_oAscMathType.Function_1_Sech : oFunction = this.Add_Function_1(Pr, "sech", null); break;
-        case c_oAscMathType.Function_1_Coth : oFunction = this.Add_Function_1(Pr, "coth", null); break;
+		case c_oAscMathType.Function_1_Sinh : oFunction = this.Add_Function_1(Pr, "sinh", null); break;
+		case c_oAscMathType.Function_1_Cosh : oFunction = this.Add_Function_1(Pr, "cosh", null); break;
+		case c_oAscMathType.Function_1_Tanh : oFunction = this.Add_Function_1(Pr, "tanh", null); break;
+		case c_oAscMathType.Function_1_Csch : oFunction = this.Add_Function_1(Pr, "csch", null); break;
+		case c_oAscMathType.Function_1_Sech : oFunction = this.Add_Function_1(Pr, "sech", null); break;
+		case c_oAscMathType.Function_1_Coth : oFunction = this.Add_Function_1(Pr, "coth", null); break;
 
-        case c_oAscMathType.Function_Custom_1 : this.Add_Function(Pr, "sin", String.fromCharCode(952)); break;
-        case c_oAscMathType.Function_Custom_2 : this.Add_Function(Pr, "cos", "2x"); break;
-        case c_oAscMathType.Function_Custom_3 :
-            var Theta = String.fromCharCode(952);
-            this.Add_Function(Pr, "tan", Theta);
-            this.Add_Text("=", this.Paragraph);
-            var Fraction = this.Add_Fraction(Pr, null, null);
-            var NumMathContent = Fraction.getNumeratorMathContent();
-            var DenMathContent = Fraction.getDenominatorMathContent();
-            NumMathContent.Add_Function(Pr, "sin", Theta);
-            DenMathContent.Add_Function(Pr, "cos", Theta);
-            break;
-    }
+		case c_oAscMathType.Function_Custom_1 : this.Add_Function(Pr, "sin", String.fromCharCode(952)); break;
+		case c_oAscMathType.Function_Custom_2 : this.Add_Function(Pr, "cos", "2x"); break;
+		case c_oAscMathType.Function_Custom_3 :
+			let Theta = String.fromCharCode(952);
+
+			this.Add_Function(Pr, "tan", Theta);
+			this.Add_Text("=", this.Paragraph);
+
+			let Fraction		= this.Add_Fraction(Pr, null, null);
+			let NumMathContent	= Fraction.getNumeratorMathContent();
+			let DenMathContent	= Fraction.getDenominatorMathContent();
+
+			NumMathContent.Add_Function(Pr, "sin", Theta);
+			DenMathContent.Add_Function(Pr, "cos", Theta);
+
+			this.Add_Element(new ParaRun(this.Paragraph, true));
+			break;
+	}
 
 	if (oFunction && oSelectedContent)
 		oFunction.getArgument().private_FillSelectedContent(oSelectedContent);
@@ -5927,6 +5932,7 @@ CMathContent.prototype.haveMixedContent = function(isLaTeX)
 				|| oCurrentContent instanceof CDegree
 				|| oCurrentContent instanceof CDegreeSubSup
 				|| oCurrentContent instanceof CLimit
+				|| oCurrentContent instanceof CMathFunc
 			)
 				return true;
 			
