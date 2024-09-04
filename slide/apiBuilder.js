@@ -356,6 +356,11 @@
      * @typedef {("body" | "chart" | "clipArt" | "ctrTitle" | "diagram" | "date" | "footer" | "header" | "media" | "object" | "picture" | "sldImage" | "sldNumber" | "subTitle" | "table" | "title")} PlaceholderType - Available placeholder types.
      */
 
+    /**
+     * Any valid drawing element
+     * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiTable )} Drawing
+	 */
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // Base Api
@@ -1721,19 +1726,18 @@
     /**
      * Returns an array with all the drawing objects from the slide master.
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing[]}
+     * @returns {Drawing[]}
      * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllDrawings.js
 	 */
     ApiMaster.prototype.GetAllDrawings = function(){
-        var apiDrawingObjects = [];
-        if (this.Master)
-        {
-            var drawingObjects = this.Master.cSld.spTree;
-            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
-                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        if (!this.Master) {
+            return [];
         }
-           
-        return apiDrawingObjects;
+
+        let drawingObjects = this.Master.cSld.spTree;
+        return drawingObjects.map(function(drawing) {
+            return private_GetDrawingApi(drawing);
+        });
     };
 
     /**
@@ -1807,7 +1811,7 @@
 	 * @memberof ApiMaster
      * @typeofeditors ["CPE"]
      * @param {PlaceholderType} sType - placeholders type
-	 * @returns {ApiDrawing[]}
+	 * @returns {Drawing[]}
 	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetDrawingsByPlaceholderType.js
 	 */
     ApiMaster.prototype.GetDrawingsByPlaceholderType = function(sType) {
@@ -2047,19 +2051,18 @@
     /**
      * Returns an array with all the drawing objects from the slide layout.
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing[]}
+     * @returns {Drawing[]}
      * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllDrawings.js
 	 */
     ApiLayout.prototype.GetAllDrawings = function(){
-        var apiDrawingObjects = [];
-        if (this.Layout)
-        {
-            var drawingObjects = this.Layout.cSld.spTree;
-            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
-                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        if (!this.Layout) {
+            return [];
         }
-           
-        return apiDrawingObjects;
+
+        let drawingObjects = this.Layout.cSld.spTree;
+        return drawingObjects.map(function(drawing) {
+            return private_GetDrawingApi(drawing);
+        });
     };
 
     /**
@@ -2150,7 +2153,7 @@
 	 * @memberof ApiLayout
      * @typeofeditors ["CPE"]
      * @param {PlaceholderType} sType - placeholders type
-	 * @returns {ApiDrawing[]}
+	 * @returns {Drawing[]}
 	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetDrawingsByPlaceholderType.js
 	 */
     ApiLayout.prototype.GetDrawingsByPlaceholderType = function(sType) {
@@ -3189,19 +3192,18 @@
     /**
      * Returns an array with all the drawing objects from the slide.
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing[]} 
+     * @returns {Drawing[]} 
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetAllDrawings.js
 	 */
     ApiSlide.prototype.GetAllDrawings = function(){
-        var apiDrawingObjects = [];
-        if (this.Slide)
-        {
-            var drawingObjects = this.Slide.getDrawingObjects();
-            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
-                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        if (!this.Slide) {
+            return [];
         }
-           
-        return apiDrawingObjects;
+
+        let drawingObjects = this.Slide.getDrawingObjects();
+        return drawingObjects.map(function(drawing) {
+            return private_GetDrawingApi(drawing);
+        });
     };
 
     /**
@@ -3283,7 +3285,7 @@
 	 * @memberof ApiSlide
      * @typeofeditors ["CPE"]
      * @param {PlaceholderType} sType - placeholders type
-	 * @returns {ApiDrawing[]}
+	 * @returns {Drawing[]}
 	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetDrawingsByPlaceholderType.js
 	 */
     ApiSlide.prototype.GetDrawingsByPlaceholderType = function(sType) {
@@ -5018,6 +5020,23 @@
         return sType;
     }
 
+    function private_GetDrawingApi(drawing) {
+        switch (drawing.getObjectType()) {
+            case AscDFH.historyitem_type_Shape:
+                return new ApiShape(drawing);
+            case AscDFH.historyitem_type_ImageShape:
+                return new ApiImage(drawing);
+            case AscDFH.historyitem_type_GroupShape:
+                return new ApiGroup(drawing);
+            case AscDFH.historyitem_type_OleObject:
+                return new ApiOleObject(drawing);
+            case AscDFH.historyitem_type_GraphicFrame:
+                return new ApiTable(drawing);
+        }
+
+        return null;
+    }
+    
 	function private_GetAllDrawingsWithType(aDrawings, nObjectType, fCreateBuilderWrapper) {
 		let aWrappers = [];
 		for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
