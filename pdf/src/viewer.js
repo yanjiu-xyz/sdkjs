@@ -1958,11 +1958,8 @@
 			{
 				if (2 === mouseButton)
 				{
-					var posX = e.pageX || e.clientX;
-					var posY = e.pageY || e.clientY;
-
-					var x = posX - oThis.x;
-					var y = posY - oThis.y;
+					var x = AscCommon.global_mouseEvent.X - oThis.x;
+					var y = AscCommon.global_mouseEvent.Y - oThis.y;
 
 					var isInSelection = false;
 					
@@ -4193,7 +4190,7 @@
 		oEditorPage.checkBodySize();
 		oEditorPage.m_oBody.Resize(oEditorPage.Width * g_dKoef_pix_to_mm, oEditorPage.Height * g_dKoef_pix_to_mm, this);
 
-		var rect = this.canvas.getBoundingClientRect();
+		var rect = AscCommon.UI.getBoundingClientRect(this.canvas);
 		this.x = rect.left;
 		this.y = rect.top;
 		
