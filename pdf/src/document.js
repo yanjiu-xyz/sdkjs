@@ -2136,6 +2136,18 @@ var CPresentation = CPresentation || function(){};
         else
             oViewer.pagesInfo.pages.splice(nPos, 0, new AscPDF.CPageInfo());
 
+        oViewer.thumbnails._addPage(nPos);
+        oViewer.resize(true);
+
+        for (let i = 0; i < oViewer.file.pages.length; i++) {
+            oController.mergeDrawings(i);
+        }
+        this.GetDrawingDocument().m_lPagesCount = oViewer.file.pages.length;
+
+        oViewer.sendEvent("onPagesCount", oFile.pages.length);
+
+        this.History.Add(new CChangesPDFDocumentAddPage(this, nPos, [oPage]));
+
         for (let nPage = nPos + 1; nPage < oViewer.pagesInfo.pages.length; nPage++) {
             if (oViewer.pagesInfo.pages[nPage].fields) {
                 oViewer.pagesInfo.pages[nPage].fields.forEach(function(field) {
@@ -2153,18 +2165,6 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
-
-        oViewer.thumbnails._addPage(nPos);
-        oViewer.resize(true);
-
-        for (let i = 0; i < oViewer.file.pages.length; i++) {
-            oController.mergeDrawings(i);
-        }
-        this.GetDrawingDocument().m_lPagesCount = oViewer.file.pages.length;
-
-        oViewer.sendEvent("onPagesCount", oFile.pages.length);
-
-        this.History.Add(new CChangesPDFDocumentAddPage(this, nPos, [oPage]));
 
         oViewer.paint();
     };
@@ -2211,6 +2211,18 @@ var CPresentation = CPresentation || function(){};
 		oViewer.drawingPages.splice(nPos, 1);
         oViewer.pagesInfo.pages.splice(nPos, 1);
         
+        oViewer.thumbnails._deletePage(nPos);
+
+        oViewer.checkVisiblePages();
+        oViewer.resize(true);
+        for (let i = 0; i < oViewer.file.pages.length; i++) {
+            oController.mergeDrawings(i);
+        }
+        this.GetDrawingDocument().m_lPagesCount = oViewer.file.pages.length;
+        oViewer.sendEvent("onPagesCount", oFile.pages.length);
+
+        this.History.Add(new CChangesPDFDocumentRemovePage(this, nPos, aPages));
+
         // проставляем новые номера страниц объектам на остальных страницах
         for (let nPage = nPos; nPage < oViewer.pagesInfo.pages.length; nPage++) {
             if (oViewer.pagesInfo.pages[nPage].fields) {
@@ -2229,18 +2241,6 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
-        
-        oViewer.thumbnails._deletePage(nPos);
-
-        oViewer.checkVisiblePages();
-        oViewer.resize(true);
-        for (let i = 0; i < oViewer.file.pages.length; i++) {
-            oController.mergeDrawings(i);
-        }
-        this.GetDrawingDocument().m_lPagesCount = oViewer.file.pages.length;
-        oViewer.sendEvent("onPagesCount", oFile.pages.length);
-
-        this.History.Add(new CChangesPDFDocumentRemovePage(this, nPos, aPages));
 
         oViewer.paint();
     };
