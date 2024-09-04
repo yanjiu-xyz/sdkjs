@@ -358,7 +358,7 @@
 
     /**
      * Any valid drawing element
-     * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiTable | )} Drawing
+     * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiTable )} Drawing
 	 */
 
     //------------------------------------------------------------------------------------------------------------------
@@ -1726,19 +1726,18 @@
     /**
      * Returns an array with all the drawing objects from the slide master.
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing[]}
+     * @returns {Drawing[]}
      * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllDrawings.js
 	 */
     ApiMaster.prototype.GetAllDrawings = function(){
-        var apiDrawingObjects = [];
-        if (this.Master)
-        {
-            var drawingObjects = this.Master.cSld.spTree;
-            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
-                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        if (!this.Master) {
+            return [];
         }
-           
-        return apiDrawingObjects;
+
+        let drawingObjects = this.Master.cSld.spTree;
+        return drawingObjects.map(function(drawing) {
+            return private_GetDrawingApi(drawing);
+        });
     };
 
     /**
@@ -1819,23 +1818,8 @@
         let aDrawings = this.GetAllDrawings();
 
         let nType = private_GetPlaceholderInnerType(sType);
-        let aFiltered = aDrawings.filter(function(drawing) {
+        return aDrawings.filter(function(drawing) {
             return drawing.Drawing.getPlaceholderType() == nType;
-        });
-
-        return aFiltered.map(function(drawing) {
-            switch (drawing.Drawing.getObjectType()) {
-                case AscDFH.historyitem_type_Shape:
-                    return new ApiShape(drawing.Drawing);
-                case AscDFH.historyitem_type_ImageShape:
-                    return new ApiImage(drawing.Drawing);
-                case AscDFH.historyitem_type_GroupShape:
-                    return new ApiGroup(drawing.Drawing);
-                case AscDFH.historyitem_type_OleObject:
-                    return new ApiOleObject(drawing.Drawing);
-                case AscDFH.historyitem_type_GraphicFrame:
-                    return new ApiTable(drawing.Drawing);
-            }
         });
     };
 
@@ -2067,19 +2051,18 @@
     /**
      * Returns an array with all the drawing objects from the slide layout.
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing[]}
+     * @returns {Drawing[]}
      * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllDrawings.js
 	 */
     ApiLayout.prototype.GetAllDrawings = function(){
-        var apiDrawingObjects = [];
-        if (this.Layout)
-        {
-            var drawingObjects = this.Layout.cSld.spTree;
-            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
-                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        if (!this.Layout) {
+            return [];
         }
-           
-        return apiDrawingObjects;
+
+        let drawingObjects = this.Layout.cSld.spTree;
+        return drawingObjects.map(function(drawing) {
+            return private_GetDrawingApi(drawing);
+        });
     };
 
     /**
@@ -2177,23 +2160,8 @@
         let aDrawings = this.GetAllDrawings();
 
         let nType = private_GetPlaceholderInnerType(sType);
-        let aFiltered = aDrawings.filter(function(drawing) {
+        return aDrawings.filter(function(drawing) {
             return drawing.Drawing.getPlaceholderType() == nType;
-        });
-
-        return aFiltered.map(function(drawing) {
-            switch (drawing.Drawing.getObjectType()) {
-                case AscDFH.historyitem_type_Shape:
-                    return new ApiShape(drawing.Drawing);
-                case AscDFH.historyitem_type_ImageShape:
-                    return new ApiImage(drawing.Drawing);
-                case AscDFH.historyitem_type_GroupShape:
-                    return new ApiGroup(drawing.Drawing);
-                case AscDFH.historyitem_type_OleObject:
-                    return new ApiOleObject(drawing.Drawing);
-                case AscDFH.historyitem_type_GraphicFrame:
-                    return new ApiTable(drawing.Drawing);
-            }
         });
     };
 
@@ -3224,19 +3192,18 @@
     /**
      * Returns an array with all the drawing objects from the slide.
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing[]} 
+     * @returns {Drawing[]} 
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetAllDrawings.js
 	 */
     ApiSlide.prototype.GetAllDrawings = function(){
-        var apiDrawingObjects = [];
-        if (this.Slide)
-        {
-            var drawingObjects = this.Slide.getDrawingObjects();
-            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
-                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        if (!this.Slide) {
+            return [];
         }
-           
-        return apiDrawingObjects;
+
+        let drawingObjects = this.Slide.getDrawingObjects();
+        return drawingObjects.map(function(drawing) {
+            return private_GetDrawingApi(drawing);
+        });
     };
 
     /**
@@ -3325,23 +3292,8 @@
         let aDrawings = this.GetAllDrawings();
 
         let nType = private_GetPlaceholderInnerType(sType);
-        let aFiltered = aDrawings.filter(function(drawing) {
+        return aDrawings.filter(function(drawing) {
             return drawing.Drawing.getPlaceholderType() == nType;
-        });
-
-        return aFiltered.map(function(drawing) {
-            switch (drawing.Drawing.getObjectType()) {
-                case AscDFH.historyitem_type_Shape:
-                    return new ApiShape(drawing.Drawing);
-                case AscDFH.historyitem_type_ImageShape:
-                    return new ApiImage(drawing.Drawing);
-                case AscDFH.historyitem_type_GroupShape:
-                    return new ApiGroup(drawing.Drawing);
-                case AscDFH.historyitem_type_OleObject:
-                    return new ApiOleObject(drawing.Drawing);
-                case AscDFH.historyitem_type_GraphicFrame:
-                    return new ApiTable(drawing.Drawing);
-            }
         });
     };
 
@@ -5068,6 +5020,23 @@
         return sType;
     }
 
+    function private_GetDrawingApi(drawing) {
+        switch (drawing.getObjectType()) {
+            case AscDFH.historyitem_type_Shape:
+                return new ApiShape(drawing);
+            case AscDFH.historyitem_type_ImageShape:
+                return new ApiImage(drawing);
+            case AscDFH.historyitem_type_GroupShape:
+                return new ApiGroup(drawing);
+            case AscDFH.historyitem_type_OleObject:
+                return new ApiOleObject(drawing);
+            case AscDFH.historyitem_type_GraphicFrame:
+                return new ApiTable(drawing);
+        }
+
+        return null;
+    }
+    
 	function private_GetAllDrawingsWithType(aDrawings, nObjectType, fCreateBuilderWrapper) {
 		let aWrappers = [];
 		for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
