@@ -717,6 +717,11 @@
 					aAllDrawings[i].GraphicObj.recalculate();
 				}
 			}
+			let aTables = oDocContent.GetAllTables();
+			for(let nIdx = 0; nIdx < aTables.length; ++nIdx) {
+				let oTable = aTables[nIdx];
+				oTable.RecalcInfo.Recalc_AllCells();
+			}
 			oDocContent.Recalculate_Page(0, true);
 			fHandleContent(oDocContent.Content, oMaxWidth);
 			if (oMaxWidth.max_width === 0) {
