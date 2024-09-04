@@ -5240,16 +5240,16 @@ var CPresentation = CPresentation || function(){};
         if (!oActiveObj) {
             return;
         }
-
-        if (oActiveObj.IsDrawing()) {
+        
+        if (oActiveObj.IsDrawing() && oActiveObj.IsInTextBox()) {
             let oContent = oActiveObj.GetDocContent();
             if (oContent) {
                 let aDocPos = oContent.getDocumentContentPosition();
                 return aDocPos[aDocPos.length - 1];
             }
         }
-        else if ((oActiveObj.IsAnnot() && oActiveObj.IsFreeText() && oActiveObj.IsInTextBox()) || oActiveObj.IsForm()) {
-            return {Class: oActiveObj, Position: 0};
+        else {
+            return {Class: oActiveObj, Position: undefined};
         }
     };
     CPDFDoc.prototype.Update_ForeignCursor = function(CursorInfo, UserId, Show, UserShortId) {
@@ -5276,10 +5276,17 @@ var CPresentation = CPresentation || function(){};
         let InRunPos = Reader.GetLong();
     
         let oTargetObj = AscCommon.g_oTableId.Get_ById(oObjId);
-        if (!oTargetObj)
-        {
-            this.Remove_ForeignCursor(UserId);
+        let bUpdateOverlayOnRemoveCursor = false;
+        if (Array.isArray(this.CollaborativeEditing.m_oSelectedObjects[UserId]) && this.CollaborativeEditing.m_oSelectedObjects[UserId].length != 0) {
+            bUpdateOverlayOnRemoveCursor = true;
+        }
+
+        this.Remove_ForeignCursor(UserId);
+        if (bUpdateOverlayOnRemoveCursor) {
             this.Viewer.onUpdateOverlay();
+        }
+
+        if (!oTargetObj) {
             return;
         }
     
@@ -5287,14 +5294,15 @@ var CPresentation = CPresentation || function(){};
             let CursorPos = [{Class : oTargetObj, Position : InRunPos}];
             oTargetObj.GetDocumentPositionFromObject(CursorPos);
             this.CollaborativeEditing.Add_ForeignCursor(UserId, CursorPos, UserShortId);
-        
+            
             if (true === Show) {
                 this.CollaborativeEditing.Update_ForeignCursorPosition(UserId, oTargetObj, InRunPos, true);
                 this.GetDrawingDocument().Collaborative_TargetsUpdate();
             }
+
+            this.CollaborativeEditing.Show_ForeignCursorLabel(UserId);
         }
         else {
-            this.Remove_ForeignCursor(UserId);
             this.CollaborativeEditing.Add_ForeignSelectedObject(UserId, oTargetObj, UserShortId);
             let color = AscCommon.getUserColorById(UserShortId, null, true);
             this.Show_ForeignSelectedObjectLabel(UserId, oTargetObj, color);

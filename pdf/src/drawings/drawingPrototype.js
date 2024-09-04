@@ -213,6 +213,15 @@
 
         return aInfo;
     };
+    CPdfDrawingPrototype.prototype.GetOrigRect = function() {
+        let oFile = this.GetDocument().Viewer.file;
+        let nPage = this.GetPage();
+        let nKoeff = (96 / oFile.pages[nPage].Dpi) * g_dKoef_pix_to_mm;
+
+        let oXfrm = this.getXfrm();
+
+        return [oXfrm.offX / nKoeff, oXfrm.offY / nKoeff, (oXfrm.offX + this.extX) / nKoeff, (oXfrm.offY + this.extY) / nKoeff];
+    }
     CPdfDrawingPrototype.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;
     };
