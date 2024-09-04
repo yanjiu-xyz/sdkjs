@@ -762,14 +762,13 @@ CComplexField.prototype.private_UpdateTOC = function()
 
 	var oStyles          = this.LogicDocument.Get_Styles();
 	var arrOutline;
-	var sCaption = this.Instruction.GetCaption(); //flag c
+	var sCaption         = this.Instruction.GetCaption(); //flag c
 	var sCaptionOnlyText = this.Instruction.GetCaptionOnlyText();//flag a
-	var sResultCaption = sCaption;
+	
 	var oBookmarksManager = this.LogicDocument.GetBookmarksManager();
-	if(typeof sCaptionOnlyText === "string" && sCaptionOnlyText.length > 0)
-	{
-		sResultCaption = sCaptionOnlyText;
-	}
+	if (undefined === sCaption && undefined !== sCaptionOnlyText)
+		sCaption = sCaptionOnlyText;
+	
 	var oOutlinePr = {
 		OutlineStart : this.Instruction.GetHeadingRangeStart(),
 		OutlineEnd   : this.Instruction.GetHeadingRangeEnd(),
@@ -777,7 +776,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 	};
 	var bTOF = false;
 	var bSkipCaptionLbl = false;
-	if(sCaption !== undefined || sCaptionOnlyText !== undefined)
+	if (undefined !== sCaption)
 	{
 		bTOF = true;
 		var aStyles = this.Instruction.GetStylesArray();
@@ -788,22 +787,16 @@ CComplexField.prototype.private_UpdateTOC = function()
 		else
 		{
 			arrOutline = [];
-			if(sCaptionOnlyText !== undefined)
-			{
+			if (sCaptionOnlyText !== undefined)
 				bSkipCaptionLbl = true;
-			}
-			if(typeof sResultCaption === "string" && sResultCaption.length > 0)
+			
+			var aParagraphs = this.LogicDocument.GetAllCaptionParagraphs(sCaption);
+			var oCurPara;
+			for (var nParagraph = 0; nParagraph < aParagraphs.length; ++nParagraph)
 			{
-				var aParagraphs = this.LogicDocument.GetAllCaptionParagraphs(sResultCaption);
-				var oCurPara;
-				for(var nParagraph = 0; nParagraph < aParagraphs.length; ++nParagraph)
-				{
-					oCurPara = aParagraphs[nParagraph];
-					if(!bSkipCaptionLbl || oCurPara.CanAddRefAfterSEQ(sResultCaption))
-					{
-						arrOutline.push({Paragraph: oCurPara, Lvl: 0});
-					}
-				}
+				oCurPara = aParagraphs[nParagraph];
+				if (!bSkipCaptionLbl || oCurPara.CanAddRefAfterSEQ(sCaption))
+					arrOutline.push({Paragraph : oCurPara, Lvl : 0});
 			}
 		}
 	}
