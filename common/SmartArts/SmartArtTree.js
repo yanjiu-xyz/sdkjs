@@ -767,9 +767,43 @@
 		const algorithm = this.presRoot.algorithm;
 		return algorithm ? algorithm.getShapes(this) : [];
 	}
+	SmartArtAlgorithm.prototype.connectShapeSmartArtInfo = function () {
+		const spTree = this.smartart.drawing.spTree;
+		const mapEditorShapes = {};
+		for (let i = 0; i < spTree.length; i++) {
+			const shape = spTree[i];
+			mapEditorShapes[shape.getModelId()] = shape;
+		}
+		this.forEachPresFromBottom(function (presNode) {
+			const point = presNode.presPoint;
+			const editorShape = mapEditorShapes[point.getModelId()];
+			if (editorShape) {
+				const shadowShape = presNode.getShape();
+				shadowShape.setShapeSmartArtInfo(editorShape);
+				shadowShape.editorShape = editorShape;
+				const textNodes = presNode.contentNodes[0] && presNode.contentNodes[0].getTextNodes();
+				if (textNodes) {
+					if (presNode === textNodes.textNode) {
+						presNode.algorithm.applyFontRelations(editorShape);
+					} else if (presNode === textNodes.contentNode && textNodes.textNode) {
+						textNodes.textNode.algorithm.applyFontRelations(editorShape);
+					}
+				}
+			}
+		});
+	};
 
 
+	SmartArtAlgorithm.prototype.cleanDrawingShapeInfo = function () {
+		const smartart = this.smartart;
+		const drawing = smartart.drawing;
+		for (let i = 0; i < drawing.spTree.length; i++) {
+			const shape = drawing.spTree[i];
+			shape.setShapeSmartArtInfo(null);
+		}
+	};
 	SmartArtAlgorithm.prototype.startFromBegin = function () {
+		this.cleanDrawingShapeInfo();
 		this.addCurrentNode(this.dataRoot);
 		const mockPresNode = new PresNode();
 		this.addCurrentPresNode(mockPresNode);
@@ -1645,7 +1679,7 @@
 		}
 
 	}
-	ShadowShape.prototype.applyPostEditorSettings = function (editorShape) {
+	ShadowShape.prototype.setShapeSmartArtInfo = function (editorShape) {
 		const shapeSmartArtInfo = new AscFormat.ShapeSmartArtInfo();
 		editorShape.setShapeSmartArtInfo(shapeSmartArtInfo);
 
@@ -1656,11 +1690,14 @@
 			const contentNode =  presNode.contentNodes[i];
 			shapeSmartArtInfo.addToLstContentPoint(0, contentNode);
 		}
+	};
 
+	ShadowShape.prototype.applyPostEditorSettings = function (editorShape) {
+		this.setShapeSmartArtInfo(editorShape);
 		this.applyTextSettings(editorShape);
 		this.applyShapeRot(editorShape);
 		this.applyShapeSettings(editorShape);
-	}
+	};
 
 	ShadowShape.prototype.applyShapeRot = function (editorShape) {
 		const presNode = this.node;

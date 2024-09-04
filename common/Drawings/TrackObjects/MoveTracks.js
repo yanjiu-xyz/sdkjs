@@ -251,7 +251,16 @@ function MoveShapeImageTrack(originalObject)
         }
         this.overlayObject.draw(overlay);
     };
+	this.checkDrawingPartWithHistory = function () {
+		if (this.originalObject.checkDrawingPartWithHistory) {
 
+			const newObject = this.originalObject.checkDrawingPartWithHistory();
+			if (newObject) {
+				this.originalObject = newObject;
+				this.originalShape = newObject;
+			}
+		}
+	};
     this.trackEnd = function(bWord, bNoResetCnx)
     {
         if(!this.bIsTracked)
@@ -574,7 +583,11 @@ function MoveGroupTrack(originalObject)
         bounds_checker.Bounds.extY = this.originalObject.extY;
         return bounds_checker.Bounds;
     };
-
+	this.checkDrawingPartWithHistory = function () {
+		if (this.originalObject.checkDrawingPartWithHistory) {
+			this.originalObject.checkDrawingPartWithHistory();
+		}
+	};
     this.trackEnd = function(bWord)
     {
         if(!this.bIsTracked){
@@ -659,6 +672,7 @@ function MoveComment(comment)
         boundsChecker.Bounds.extY = H;
         return boundsChecker.Bounds;
     };
+	this.checkDrawingPartWithHistory = function () {};
 }
 
 function MoveAnnotationTrack(originalObject)
@@ -790,6 +804,7 @@ function MoveAnnotationTrack(originalObject)
     {
         return {x: this.x, y: this.y};
     };
+	this.checkDrawingPartWithHistory = function () {};
     
     this.initCanvas(true);
 }
@@ -903,6 +918,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         boundsChecker.Bounds.extY = oObject.extY;
         return boundsChecker.Bounds;
     };
+	this.checkDrawingPartWithHistory = function () {};
 }
 
 
@@ -1001,6 +1017,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         oBounds.extY = oBounds.max_y - oBounds.min_y;
         return oBounds;
     };
+	CGuideTrack.prototype.checkDrawingPartWithHistory = function () {};
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};

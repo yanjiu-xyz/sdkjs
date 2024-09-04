@@ -967,7 +967,9 @@
 
 		CShape.prototype.setShapeSmartArtInfo = function (pr) {
 			this.shapeSmartArtInfo = pr;
-			this.shapeSmartArtInfo.setShape(this);
+			if (this.shapeSmartArtInfo) {
+				this.shapeSmartArtInfo.setShape(this);
+			}
 		}
 		CShape.prototype.isActiveBlipFillPlaceholder = function () {
 			const shapePoint = this.getSmartArtShapePoint();
@@ -1197,7 +1199,9 @@
 				this.txXfrm.setParent(this);
 			}
 		};
-
+		CShape.prototype.getModelId = function () {
+			return this.modelId;
+		};
 		CShape.prototype.setModelId = function (pr) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetModelId, this.modelId, pr));
 			this.modelId = pr;
@@ -7124,6 +7128,11 @@
 				}
 			}
 			return  oCurCandidate;
+		};
+		CShape.prototype.checkDrawingPartWithHistory = function () {
+			if (this.isObjectInSmartArt()) {
+				return this.group.group.checkDrawingPartWithHistory(this);
+			}
 		};
 
 		function CreateBinaryReader(szSrc, offset, srcLen) {

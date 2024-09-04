@@ -1570,6 +1570,14 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 			}
 
 		};
+    this.checkDrawingPartWithHistory = function () {
+	    if (this.originalObject.checkDrawingPartWithHistory) {
+		    const newObject = this.originalObject.checkDrawingPartWithHistory();
+				if (newObject) {
+					this.originalObject = newObject;
+				}
+	    }
+    };
     }, this, []);
 }
 
@@ -2300,6 +2308,15 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
 
 
         };
+	    this.checkDrawingPartWithHistory = function () {
+				if (this.originalObject.getObjectType && this.originalObject.getObjectType() === AscDFH.historyitem_type_SmartArt) {
+					this.originalObject.checkDrawingPartWithHistory();
+				}
+		    for(var i = 0; i < this.childs.length; ++i)
+		    {
+			    this.childs[i].checkDrawingPartWithHistory();
+		    }
+	    };
     }, this, []);
 
 
@@ -2460,6 +2477,7 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
             if(this.parentTrack)
                 global_MatrixTransformer.MultiplyAppend(t, this.parentTrack.transform);
         };
+	    this.checkDrawingPartWithHistory = function () {};
     }, this, []);
 }
 

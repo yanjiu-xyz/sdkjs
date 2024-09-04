@@ -250,4 +250,11 @@ CGroupShape.prototype.recalculate = function()
             this.worksheet.contentChanges.Refresh();
         }
     };
+	CGroupShape.prototype.checkDrawingPartWithHistory = function() {
+		for (let i = 0; i < this.spTree.length; i++) {
+			if (this.spTree[i].checkDrawingPartWithHistory) {
+				this.spTree[i].checkDrawingPartWithHistory();
+			}
+		}
+	};
 })(window);

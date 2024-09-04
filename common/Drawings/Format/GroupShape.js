@@ -1700,6 +1700,7 @@
 			}
 			return oCurCandidate;
 		};
+		CGroupShape.prototype.checkDrawingPartWithHistory = function() {};
 
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};

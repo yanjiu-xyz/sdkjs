@@ -10003,7 +10003,6 @@ Because of this, the display is sometimes not correct.
 			this.adaptFontSizeShapesInfo = null;
 	    this.secondaryFontSizeScale = null;
     }
-
 	  ShapeSmartArtInfo.prototype.getContentFillingType = function (shapes) {
 
 			let res = 0x00;
@@ -10215,7 +10214,10 @@ Because of this, the display is sometimes not correct.
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtDrawing] = function (oClass, value) {
       oClass.drawing = value;
-			oClass.isLocalDrawingPart = false;
+			if (oClass.isLocalDrawingPart) {
+				oClass.reconnectSmartArtShapes();
+				oClass.isLocalDrawingPart = false;
+			}
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtLayoutDef] = function (oClass, value) {
       oClass.layoutDef = value;
@@ -10386,23 +10388,30 @@ Because of this, the display is sometimes not correct.
 				}, this, []);
 			}
 		};
-		SmartArt.prototype.checkDrawingPartWithHistory = function (controller) {
-			if (this.isLocalDrawingPart && AscCommon.History.CanAddChanges()) {
+	  SmartArt.prototype.reconnectSmartArtShapes = function () {
+		  this.smartArtTree = new AscFormat.SmartArtAlgorithm(this);
+		  this.smartArtTree.startFromBegin();
+		  this.smartArtTree.connectShapeSmartArtInfo();
+	  };
+		SmartArt.prototype.checkDrawingPartWithHistory = function (handleShape) {
+			if (this.worksheet && this.isLocalDrawingPart && AscCommon.History.CanAddChanges()) {
 				this.isLocalDrawingPart = false;
 				const oldDrawing = this.drawing;
-				const selectedObjects = this.getMainGroup().selectedObjects;
+				const mainGroup = this.getMainGroup();
+				const selectedObjects = mainGroup.selectedObjects;
 				const mapShapes = {};
-				const targetDocContent = controller.getTargetDocContent();
 				for (let i = 0; i < oldDrawing.spTree.length; i += 1) {
 					const shape = oldDrawing.spTree[i];
 					mapShapes[shape.GetId()] = {index: i, state: null};
-					if (targetDocContent && targetDocContent === shape.getDocContent()) {
-						mapShapes[shape.GetId()].state = targetDocContent.GetSelectionState();
+					const docContent = shape.getDocContent();
+					if (docContent) {
+						mapShapes[shape.GetId()].state = docContent.GetSelectionState();
 					}
 				}
 
-				const copyDrawing = this.drawing.createDuplicate();
-				this.setDrawing(copyDrawing);
+				const copyDrawing = this.drawing.copy();
+				copyDrawing.setWorksheet(this.drawing.worksheet);
+				copyDrawing.setDrawingObjects(this.drawing.drawingObjects);
 				for (let i = 0; i < selectedObjects.length; i += 1) {
 					const shapeInfo = mapShapes[selectedObjects[i].Id];
 					if (shapeInfo) {
@@ -10410,11 +10419,27 @@ Because of this, the display is sometimes not correct.
 						selectedObjects[i] = copyDrawing.spTree[shapeInfo.index];
 						selectedObjects[i].selected = true;
 						if (shapeInfo.state) {
-							selectedObjects[i].SetSelectionState(shapeInfo.state);
+							const docContent = selectedObjects[i].getDocContent();
+							docContent && docContent.SetSelectionState(shapeInfo.state);
 						}
 					}
 				}
-				copyDrawing.setBDeleted2(false);
+				if (mainGroup.selection.textSelection) {
+					const info = mapShapes[mainGroup.selection.textSelection.GetId()];
+					if (info) {
+						mainGroup.selection.textSelection = copyDrawing.spTree[info.index];
+					}
+				}
+				this.removeFromSpTreeByPos(0);
+				this.addToSpTree(0, copyDrawing);
+				this.setDrawing(copyDrawing);
+				this.reconnectSmartArtShapes();
+				if (handleShape) {
+					const info = mapShapes[handleShape.GetId()];
+					if (info) {
+						return copyDrawing.spTree[info.index];
+					}
+				}
 			}
 		};
     SmartArt.prototype.generateDrawingPart = function () {
@@ -11419,7 +11444,7 @@ Because of this, the display is sometimes not correct.
     };
     SmartArt.prototype.setDrawing = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDrawing, this.getDrawing(), oPr));
-      this.drawing = oPr;
+			this.drawing = oPr;
 	    if (oPr) {
 		    oPr.setParent(this);
 	    }
