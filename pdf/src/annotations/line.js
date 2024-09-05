@@ -342,14 +342,17 @@
 
         let oRGB    = this.GetRGBColor(aColor);
         let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        let oLine   = this.pen;
+        let oLine   = this.spPr.ln;
         oLine.setFill(oFill);
+        this.handleUpdateLn();
     };
     CAnnotationLine.prototype.SetOpacity = function(value) {
         this._opacity = value;
         this.SetWasChanged(true);
 
-        this.pen.Fill.transparent = value * 100 * 2.55;
+        let oLine = this.spPr.ln;
+        oLine.Fill.transparent = value * 100 * 2.55;
+        this.handleUpdateLn();
     };
     CAnnotationLine.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];
@@ -358,8 +361,9 @@
         this._width = nWidthPt; 
 
         nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        let oLine = this.pen;
+        let oLine = this.spPr.ln;
         oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+        this.handleUpdateLn();
     };
     CAnnotationLine.prototype.GetLinePoints = function() {
         return this._points;
@@ -374,7 +378,7 @@
         this._lineStart = nType;
 
         this.SetWasChanged(true);
-        let oLine = this.pen;
+        let oLine = this.spPr.ln;
         oLine.setHeadEnd(new AscFormat.EndArrow());
         let nLineEndType;
         switch (nType) {
@@ -412,12 +416,13 @@
 
         oLine.headEnd.setType(nLineEndType);
         oLine.headEnd.setLen(AscFormat.LineEndSize.Mid);
+        this.handleUpdateLn();
     };
     CAnnotationLine.prototype.SetLineEnd = function(nType) {
         this._lineEnd = nType;
         
         this.SetWasChanged(true);
-        let oLine = this.pen;
+        let oLine = this.spPr.ln;
         oLine.setTailEnd(new AscFormat.EndArrow());
         let nLineEndType;
         switch (nType) {
@@ -455,6 +460,7 @@
 
         oLine.tailEnd.setType(nLineEndType);
         oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
+        this.handleUpdateLn();
     };
     CAnnotationLine.prototype.GetLineStart = function() {
         return this._lineStart;

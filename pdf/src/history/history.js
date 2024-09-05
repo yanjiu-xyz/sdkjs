@@ -63,12 +63,12 @@
         return !this.UndoRedoInProgress && AscCommon.CHistory.prototype.CanAddChanges.call(this);
     };
     History.prototype.StartNoHistoryMode = function() {
-        if (this.IsOn() == true)
-            this.TurnOff();
+        this.TurnOff();
+        AscCommon.g_oTableId.TurnOff();
     };
     History.prototype.EndNoHistoryMode = function() {
-        if (this.IsOn() == false)
-            this.TurnOn();
+        this.TurnOn();
+        AscCommon.g_oTableId.TurnOn();
     };
 	History.prototype.Add = function(_Class, Data) {
 		if (!this.CanAddChanges())

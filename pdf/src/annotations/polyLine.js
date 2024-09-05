@@ -216,7 +216,7 @@
         this._lineStart = nType;
 
         this.SetWasChanged(true);
-        let oLine = this.pen;
+        let oLine = this.spPr.ln;
         oLine.setHeadEnd(new AscFormat.EndArrow());
         let nLineEndType;
         switch (nType) {
@@ -257,12 +257,13 @@
 
         oLine.headEnd.setType(nLineEndType);
         oLine.headEnd.setLen(AscFormat.LineEndSize.Mid);
+        this.handleUpdateLn();
     };
     CAnnotationPolyLine.prototype.SetLineEnd = function(nType) {
         this._lineEnd = nType;
         
         this.SetWasChanged(true);
-        let oLine = this.pen;
+        let oLine = this.spPr.ln;
         oLine.setTailEnd(new AscFormat.EndArrow());
         let nLineEndType;
         switch (nType) {
@@ -303,6 +304,7 @@
 
         oLine.tailEnd.setType(nLineEndType);
         oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
+        this.handleUpdateLn();
     };
     CAnnotationPolyLine.prototype.GetLineStart = function() {
         return this._lineStart;
