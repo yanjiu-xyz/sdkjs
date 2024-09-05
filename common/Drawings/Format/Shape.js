@@ -7135,11 +7135,7 @@
 			}
 			return  oCurCandidate;
 		};
-		CShape.prototype.checkDrawingPartWithHistory = function () {
-			if (this.isObjectInSmartArt()) {
-				return this.group.group.checkDrawingPartWithHistory(this);
-			}
-		};
+		CShape.prototype.checkDrawingPartWithHistory = function () {};
 
 		function CreateBinaryReader(szSrc, offset, srcLen) {
 			var memoryData = AscCommon.Base64.decode(szSrc, true, srcLen, offset);
