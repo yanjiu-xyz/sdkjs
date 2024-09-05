@@ -3360,7 +3360,7 @@
 							oActiveObj.SetNeedRecalc(true);
 						}
 
-						oDrDoc.showTarget(true);
+						oDrDoc.TargetStart(true);
 						oDoc.SetNeedUpdateTarget(true);
 						this._checkTargetUpdate();
 					}

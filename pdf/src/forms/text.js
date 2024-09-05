@@ -683,8 +683,7 @@
         if (this.content.IsSelectionEmpty()) {
             this.content.RemoveSelection();
             if (false == oDoc.GetActionsQueue().IsInProgress()) {
-                oDrDoc.TargetStart();
-                oDrDoc.showTarget(true);
+                oDrDoc.TargetStart(true);
             }
         }
 

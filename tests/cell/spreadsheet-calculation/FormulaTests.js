@@ -18357,6 +18357,184 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(8) - 0, 4123263.96483545);
 
+		let sheetName = ws.getName();
+		ws.getRange2("A100:A102").setValue("");
+		ws.getRange2("B100").setValue("1");
+		ws.getRange2("B101").setValue("2");
+		ws.getRange2("B102").setValue("3");
+		ws.getRange2("C100").setValue("1");
+		ws.getRange2("C101").setValue("2");
+		ws.getRange2("C102").setValue("3");
+
+		ws.getRange2("D100").setValue("123");
+		ws.getRange2("D101").setValue("123s");
+
+		oParser = new parserFormula("FORECAST.ETS(B100:B102,B100:B102,B100:B102)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "FORECAST.ETS(B100:B102,B100:B102,B100:B102)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of FORECAST.ETS(B100:B102,B100:B102,B100:B102)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of FORECAST.ETS(B100:B102,B100:B102,B100:B102)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, "Result of FORECAST.ETS(B100:B102,B100:B102,B100:B102)[2,0]");
+
+		oParser = new parserFormula("FORECAST.ETS("+sheetName+"!B100:B102,B100:B102,B100:B102)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "FORECAST.ETS("+sheetName+"!B100:B102,B100:B102,B100:B102)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of FORECAST.ETS("+sheetName+"!B100:B102,B100:B102,B100:B102)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of FORECAST.ETS("+sheetName+"!B100:B102,B100:B102,B100:B102)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, "Result of FORECAST.ETS("+sheetName+"!B100:B102,B100:B102,B100:B102)[2,0]");
+
+		oParser = new parserFormula("FORECAST.ETS({1,2,3},B100:B102,B100:B102)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "FORECAST.ETS({1,2,3},B100:B102,B100:B102)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of FORECAST.ETS({1,2,3},B100:B102,B100:B102)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, "Result of FORECAST.ETS({1,2,3},B100:B102,B100:B102)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 3, "Result of FORECAST.ETS({1,2,3},B100:B102,B100:B102)[0,2]");
+
+		oParser = new parserFormula("FORECAST.ETS({1;2;3},B100:B102,B100:B102)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "FORECAST.ETS({1;2;3},B100:B102,B100:B102)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of FORECAST.ETS({1;2;3},B100:B102,B100:B102)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of FORECAST.ETS({1;2;3},B100:B102,B100:B102)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, "Result of FORECAST.ETS({1;2;3},B100:B102,B100:B102)[2,0]");
+
+		oParser = new parserFormula("FORECAST.ETS(123,{1;2;3},B100:B102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(123,{1;2;3},B100:B102)");
+		assert.strictEqual(oParser.calculate().getValue(), 123, "Result of FORECAST.ETS(123,{1;2;3},B100:B102)");
+
+		oParser = new parserFormula("FORECAST.ETS(123,{1;2;3},{1;2;3})", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(123,{1;2;3},{1;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), 123, "Result of FORECAST.ETS(123,{1;2;3},{1;2;3})");
+
+		oParser = new parserFormula("FORECAST.ETS(123,A100:A102,A100:A102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(123,A100:A102,A100:A102) - empty array in 2 and 3 arguments");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST.ETS(123,A100:A102,A100:A102) - empty array in 2 and 3 arguments");
+
+		oParser = new parserFormula("FORECAST.ETS(123,A100:A102,B100:B102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(123,A100:A102,B100:B102) - empty array in 2 argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST.ETS(123,A100:A102,B100:B102) - empty array in 2 argument");
+
+		oParser = new parserFormula("FORECAST.ETS(123,B100:B102,A100:A102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(123,B100:B102,A100:A102) - empty array in 3 argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of FORECAST.ETS(123,B100:B102,A100:A102) - empty array in 3 argument");		// in the editor returns #N/A
+
+		oParser = new parserFormula("FORECAST.ETS(123,B100:B102,C100:C102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(123,B100:B102,C100:C102)");
+		assert.strictEqual(oParser.calculate().getValue(), 123, "Result of FORECAST.ETS(123,B100:B102,C100:C102)");
+
+		// base type checks
+		oParser = new parserFormula('FORECAST.ETS("123",B100:B102,C100:C102)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST.ETS("123",B100:B102,C100:C102)');
+		assert.strictEqual(oParser.calculate().getValue(), 123, 'Result of FORECAST.ETS("123",B100:B102,C100:C102)');
+
+		oParser = new parserFormula('FORECAST.ETS(D100,B100:B102,C100:C102)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST.ETS(D100,B100:B102,C100:C102)');
+		assert.strictEqual(oParser.calculate().getValue(), 123, 'Result of FORECAST.ETS(D100,B100:B102,C100:C102)');
+
+		oParser = new parserFormula('FORECAST.ETS("123s",B100:B102,C100:C102)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST.ETS("123s",B100:B102,C100:C102)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FORECAST.ETS("123s",B100:B102,C100:C102)');
+
+		oParser = new parserFormula('FORECAST.ETS(D101,B100:B102,C100:C102)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST.ETS(D101,B100:B102,C100:C102)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FORECAST.ETS(D101,B100:B102,C100:C102)');
+
+		oParser = new parserFormula("FORECAST.ETS(#N/A,B100:B102,C100:C102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(#N/A,B100:B102,C100:C102)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST.ETS(#N/A,B100:B102,C100:C102)");
+
+		oParser = new parserFormula("FORECAST.ETS(123,#N/A,C100:C102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(123,#N/A,C100:C102)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST.ETS(123,#N/A,C100:C102)");
+
+		oParser = new parserFormula("FORECAST.ETS(123,B100:B102,#N/A)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(123,B100:B102,#N/A)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST.ETS(123,B100:B102,#N/A)");
+
+		oParser = new parserFormula("FORECAST.ETS(#N/A,#NUM!,C100:C102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS(#N/A,#NUM!,C100:C102)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST.ETS(#N/A,#NUM!,C100:C102)");
+
+	});
+
+	QUnit.test("Test: \"FORECAST.ETS.CONFINT\"", function (assert) {
+		putDataForForecastEts();
+
+		ws.getRange2("A100:A102").setValue("");
+		ws.getRange2("B100").setValue("1");
+		ws.getRange2("B101").setValue("2");
+		ws.getRange2("B102").setValue("3");
+		ws.getRange2("C100").setValue("1");
+		ws.getRange2("C101").setValue("2");
+		ws.getRange2("C102").setValue("3");
+
+		ws.getRange2("D100").setValue("123");
+		ws.getRange2("D101").setValue("123s");
+
+		oParser = new parserFormula("FORECAST.ETS.CONFINT(123,A100:A102,A100:A102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS.CONFINT(123,A100:A102,A100:A102) - empty array in 2 and 3 arguments");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST.ETS.CONFINT(123,A100:A102,A100:A102) - empty array in 2 and 3 arguments");	// #DIV/0! 
+
+		oParser = new parserFormula("FORECAST.ETS.CONFINT(123,A100:A102,B100:B102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS.CONFINT(123,A100:A102,B100:B102) - empty array in 2 argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST.ETS.CONFINT(123,A100:A102,B100:B102) - empty array in 2 argument");		// #DIV/0!
+
+		oParser = new parserFormula("FORECAST.ETS.CONFINT(123,B100:B102,A100:A102)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST.ETS.CONFINT(123,B100:B102,A100:A102) - empty array in 3 argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT(123,B100:B102,A100:A102) - empty array in 3 argument");		// #DIV/0!
+
+		oParser = new parserFormula("FORECAST.ETS.CONFINT(B100:B102,B100:B102,B100:B102)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "FORECAST.ETS.CONFINT(B100:B102,B100:B102,B100:B102)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT(B100:B102,B100:B102,B100:B102)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT(B100:B102,B100:B102,B100:B102)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT(B100:B102,B100:B102,B100:B102)[2,0]");
+
+		oParser = new parserFormula("FORECAST.ETS.CONFINT({1;2;3},B100:B102,B100:B102)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "FORECAST.ETS.CONFINT({1;2;3},B100:B102,B100:B102)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT({1;2;3},B100:B102,B100:B102)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT({1;2;3},B100:B102,B100:B102)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT({1;2;3},B100:B102,B100:B102)[2,0]");
+
+		// base type checks
+		oParser = new parserFormula("FORECAST.ETS.CONFINT(123,B100:B102,C100:C102)", "A1", ws);	
+		assert.ok(oParser.parse(), "FORECAST.ETS.CONFINT(123,B100:B102,C100:C102)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT(123,B100:B102,C100:C102)");		// 0
+
+		oParser = new parserFormula("FORECAST.ETS.CONFINT(0,B100:B102,C100:C102)", "A1", ws);	
+		assert.ok(oParser.parse(), "FORECAST.ETS.CONFINT(0,B100:B102,C100:C102)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT(0,B100:B102,C100:C102)");
+
+		oParser = new parserFormula("FORECAST.ETS.CONFINT(-1,B100:B102,C100:C102)", "A1", ws);	
+		assert.ok(oParser.parse(), "FORECAST.ETS.CONFINT(-1,B100:B102,C100:C102)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of FORECAST.ETS.CONFINT(-1,B100:B102,C100:C102)");
+
+		oParser = new parserFormula('FORECAST.ETS.CONFINT("123s",B100:B102,C100:C102)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST.ETS.CONFINT("123s",B100:B102,C100:C102)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FORECAST.ETS.CONFINT("123s",B100:B102,C100:C102)');
+
+		oParser = new parserFormula('FORECAST.ETS.CONFINT(D101,B100:B102,C100:C102)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST.ETS.CONFINT(D101,B100:B102,C100:C102)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FORECAST.ETS.CONFINT(D101,B100:B102,C100:C102)');
+
+		oParser = new parserFormula('FORECAST.ETS.CONFINT(FALSE,B100:B102,C100:C102)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST.ETS.CONFINT(FALSE,B100:B102,C100:C102)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of FORECAST.ETS.CONFINT(FALSE,B100:B102,C100:C102)');
+
+		oParser = new parserFormula('FORECAST.ETS.CONFINT(TRUE,B100:B102,C100:C102)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST.ETS.CONFINT(TRUE,B100:B102,C100:C102)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of FORECAST.ETS.CONFINT(TRUE,B100:B102,C100:C102)');
+
+		oParser = new parserFormula('FORECAST.ETS.CONFINT(#N/A,B100:B102,C100:C102)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST.ETS.CONFINT(#N/A,B100:B102,C100:C102)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of FORECAST.ETS.CONFINT(#N/A,B100:B102,C100:C102)');
+
 	});
 
 	QUnit.test("Test: \"FORECAST.ETS.SEASONALITY\"", function (assert) {

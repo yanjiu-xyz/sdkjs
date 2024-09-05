@@ -5902,27 +5902,31 @@ CMathContent.prototype.ProcessingOldEquationConvert  = function ()
 		this.Content[i].ProcessingOldEquationConvert();
 	}
 };
-CMathContent.prototype.Process_AutoCorrect = function (oElement)
+CMathContent.prototype.Process_AutoCorrect = function(oElement)
 {
 	if (!AscMath.GetAutoConvertation())
 		return;
 
-	let oLogicDocument = this.GetLogicDocument();
-	let nInputType = oLogicDocument
-		? oLogicDocument. Api.getMathInputType()
+	let logicDocument = this.GetLogicDocument();
+	let nInputType = logicDocument
+		? logicDocument. Api.getMathInputType()
 		: Asc.c_oAscMathInputType.Unicode;
 
-	const arrNextContent = this.SplitContentByPos(this.CurPos, true);
-	if (arrNextContent === false)
-		return;
+	AscCommon.ExecuteEditorAction({description : AscDFH.historydescription_Document_AutoCorrectMath},
+		function()
+		{
+			const arrNextContent = this.SplitContentByPos(this.CurPos, true);
+			if (arrNextContent === false)
+				return;
 
-	if (nInputType === 0)
-		AscMath.StartAutoCorrectionMath(this);
+			if (nInputType === 0)
+				AscMath.StartAutoCorrectionMath(this);
 
-	if (arrNextContent.length > 0)
-		this.AddContentForAutoCorrection(arrNextContent, true);
-
-	return;
+			if (arrNextContent.length > 0)
+				this.AddContentForAutoCorrection(arrNextContent, true);
+		},
+		logicDocument, this
+	);
 };
 CMathContent.prototype.GetLastContent = function ()
 {

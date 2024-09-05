@@ -61,13 +61,13 @@ CChangesPDFFormValue.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseContentChange}
+ * @extends {AscDFH.CChangesDrawingsContent}
  */
 function CChangesPDFFormAddKid(Class, Pos, Items)
 {
-	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+	AscDFH.CChangesDrawingsContent.call(this, Class, this.Type, Pos, Items, true);
 }
-CChangesPDFFormAddKid.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFFormAddKid.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
 CChangesPDFFormAddKid.prototype.constructor = CChangesPDFFormAddKid;
 CChangesPDFFormAddKid.prototype.Type = AscDFH.historyitem_Pdf_Form_Add_Kid;
 
@@ -108,13 +108,13 @@ CChangesPDFFormAddKid.prototype.Redo = function()
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseContentChange}
+ * @extends {AscDFH.CChangesDrawingsContent}
  */
 function CChangesPDFFormRemoveKid(Class, Pos, Items)
 {
-	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+	AscDFH.CChangesDrawingsContent.call(this, Class, this.Type, Pos, Items, false);
 }
-CChangesPDFFormRemoveKid.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFFormRemoveKid.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
 CChangesPDFFormRemoveKid.prototype.constructor = CChangesPDFFormRemoveKid;
 CChangesPDFFormRemoveKid.prototype.Type = AscDFH.historyitem_Pdf_Form_Remove_Kid;
 
