@@ -5391,9 +5391,11 @@ PasteProcessor.prototype =
 		for (let i = 0; i < selectedContent2.length; i++) {
 			let oPdfContent = selectedContent2[i].content;
 
-			selectedContent2[i].content = new PresentationSelectedContent();
-			selectedContent2[i].content.Drawings = oPdfContent.Drawings || [];
-			selectedContent2[i].content.DocContent = oPdfContent.DocContent;
+			selectedContent2[i].content = oPdfContent ? new PresentationSelectedContent(): null;
+			if (oPdfContent) {
+				selectedContent2[i].content.Drawings = oPdfContent.Drawings || [];
+				selectedContent2[i].content.DocContent = oPdfContent.DocContent;
+			}
 		}
 
 		if (multipleParamsCount) {
