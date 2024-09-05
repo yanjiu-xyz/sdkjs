@@ -3330,6 +3330,45 @@ CMathContent.prototype.Add_Element = function(Element)
     this.Internal_Content_Add(this.CurPos, Element, false);
     this.CurPos++;
 };
+/**
+ * If text grouped by style
+ * @param text
+ * @param paragraph
+ * @param mathStyle
+ * @param oAdditionalData
+ */
+CMathContent.prototype.AddGroupedByStyleText = function (text, paragraph, mathStyle, oAdditionalData)
+{
+	let oMathRun = new AscWord.CRun(paragraph, true);
+
+	AscWord.TextToMathRunElements(text, function(item)
+	{
+		oMathRun.private_AddItemToRun(oMathRun.State.ContentPos, item);
+	});
+
+	if (mathStyle)
+		oMathRun.Math_Apply_Style(mathStyle);
+
+	if (oAdditionalData)
+	{
+		if (oAdditionalData.IsAdditionalStyleData())
+			oMathRun.SetPr(oAdditionalData.GetAdditionalStyleData());
+
+		if (oAdditionalData.reviewData.reviewInfo)
+		{
+			oMathRun.SetReviewTypeWithInfo(
+				oAdditionalData.reviewData.reviewType,
+				oAdditionalData.reviewData.reviewInfo,
+			);
+		}
+	}
+
+	oMathRun.Set_RFont_ForMathRun();
+
+	this.AddToContent(this.Content.length, oMathRun, false);
+
+	this.CurPos++;
+};
 CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAdditionalData)
 {
 	if (!text)
@@ -3374,7 +3413,7 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 	oMathRun.Set_RFont_ForMathRun();
 
 	if (this.Content[this.Content.length - 1] !== oMathRun)
-		this.AddToContent(this.CurPos, oMathRun, false);
+		this.AddToContent(this.Content.length, oMathRun, false);
 
 	this.CurPos++;
 };
@@ -5732,102 +5771,129 @@ CMathContent.prototype.SplitSelectedContentPos = function(pos)
         }
     }
 };
+CMathContent.prototype.AddDataFromFlatMathTextAndStyles = function (arrData)
+{
+	for (let i = 0; i < arrData.length; i++)
+	{
+		this.AddGroupedByStyleText(
+			arrData[i].text,
+			this.Paragraph,
+			undefined,
+			arrData[i].additionalMathData
+		);
+	}
+};
 CMathContent.prototype.ConvertContentView = function(intStart, intEnd, nInputType, isToLinear)
 {
-    if (this.Content.length === 0)
-        return;
+	if (this.Content.length === 0)
+		return;
 
-    let MathText = new AscMath.MathTextAndStyles(nInputType);
+	let MathText = new AscMath.MathTextAndStyles(nInputType);
 
-    if (intStart >= 0 && intEnd <= this.Content.length)
-    {
-        let intCount = (intEnd - intStart) + 1;
+	if (intStart >= 0 && intEnd <= this.Content.length)
+	{
+		let intCount = (intEnd - intStart) + 1;
 
-        for (let i = intStart, j = 0; i <= intEnd; i++)
-        {
-            let oElement = this.Content[i];
+		for (let i = intStart, j = 0; i <= intEnd; i++)
+		{
+			let oElement = this.Content[i];
 
-            if (undefined !== oElement)
-                MathText.Add(oElement, false);
-        }
+			if (undefined !== oElement)
+				MathText.Add(oElement, false);
+		}
 
-        if (MathText.IsEmpty())
-        	return;
+		if (MathText.IsEmpty())
+			return;
 
-        if ((isToLinear || undefined === nInputType || null === nInputType))
-        {
-            this.Remove_FromContent(intStart, intCount);
+		if ((isToLinear || undefined === nInputType || null === nInputType))
+		{
+			let arrContentAfterConvert = this.SplitContentByPos(intStart + intCount);
+			this.Remove_FromContent(intStart, intCount);
+			let nStartPos = this.Content.length;
 
-            this.Add_MathStyleText({pos:intStart}, MathText);
-            this.Content[intStart].SelectAll();
+			this.AddDataFromFlatMathTextAndStyles(MathText.Flat())
 
-            this.Selection.Use      = true;
-            this.Selection.StartPos = intStart;
-            this.Selection.EndPos   = intStart;
-        }
-        else
-        {
-            let oTempContent = new CMathContent();
+			let nEndPos = this.Content.length - 1;
 
-            if (nInputType === Asc.c_oAscMathInputType.Unicode)
-                AscMath.CUnicodeConverter(MathText, oTempContent);
-            else if (nInputType === Asc.c_oAscMathInputType.LaTeX)
-                AscMath.ConvertLaTeXToTokensList(MathText, oTempContent);
+			this.ConcatToContent(this.Content.length, arrContentAfterConvert);
 
-            this.Remove_FromContent(intStart, intCount);
-            this.RemoveSelection();
+			// select only converted content
+			this.CurPos					= nEndPos;
+			this.Selection.Use			= true;
+			this.Selection.StartPos		= nStartPos;
+			this.Selection.EndPos		= nEndPos;
+			this.State.ContentPos		= nEndPos;
 
-            for (let i = 0; i < oTempContent.Content.length; i++)
-            {
-                this.Add_ToContent(intStart + i, oTempContent.Content[i], false);
-                this.Content[intStart + i].SelectAll();
+			for (let i = nStartPos; i <= nEndPos; i++)
+			{
+				this.Content[i].SelectAll(1);
+			}
+		}
+		else
+		{
+			let oTempContent = new CMathContent();
 
-                if (i === 0)
-                {
-                    this.Selection.Use      = true;
-                    this.Selection.StartPos = intStart +  i;
-                    this.Selection.EndPos   = intStart +  i;
-                }
-                else
-                {
-                    this.Selection.EndPos   = intStart +  i;
-                }
-            }
+			if (nInputType === Asc.c_oAscMathInputType.Unicode)
+				AscMath.CUnicodeConverter(MathText, oTempContent);
+			else if (nInputType === Asc.c_oAscMathInputType.LaTeX)
+				AscMath.ConvertLaTeXToTokensList(MathText, oTempContent);
 
-            this.Correct_Content(true)
-            this.Correct_Selection();
-        }
-    }
-}
-CMathContent.prototype.SplitContentByContentPos = function()
+			this.Remove_FromContent(intStart, intCount);
+			this.RemoveSelection();
+
+			for (let i = 0; i < oTempContent.Content.length; i++)
+			{
+				this.Add_ToContent(intStart + i, oTempContent.Content[i], false);
+				this.Content[intStart + i].SelectAll();
+
+				if (i === 0)
+				{
+					this.Selection.Use      = true;
+					this.Selection.StartPos = intStart +  i;
+					this.Selection.EndPos   = intStart +  i;
+				}
+				else
+				{
+					this.Selection.EndPos   = intStart +  i;
+				}
+			}
+
+			this.Correct_Content(true)
+			this.Correct_Selection();
+		}
+	}
+};
+CMathContent.prototype.SplitContentByPos = function (nPos, isCurPos)
 {
-    let oCurrentObj = this.Content[this.CurPos];
-    let nCursorPos = oCurrentObj.State.ContentPos;
-    let arrContent = [];
+	let oCurrentObj = this.Content[nPos];
+	let nCursorPos = oCurrentObj instanceof ParaRun ? oCurrentObj.State.ContentPos : null;
+	let arrContent = [];
 
-    if (nCursorPos < oCurrentObj.Content.length)
-    {
-        if (oCurrentObj.Split_Run)
-        {
-            let oNewRun = oCurrentObj.Split_Run(nCursorPos);
-            arrContent.push(oNewRun);
-        }
-        else
-        {
-            // контент в котором мы находимся не является ParaRun
-            // значит делить не нужно т.к мы в обертке - выходим и отменяем автокоррекцию
-            return false;
-        }
-    }
+	if (nCursorPos !== null && nCursorPos < oCurrentObj.Content.length)
+	{
+		if (oCurrentObj.Split_Run)
+		{
+			let oNewRun = oCurrentObj.Split_Run(nCursorPos);
+			arrContent.push(oNewRun);
+		}
+		else
+		{
+			// контент в котором мы находимся не является ParaRun
+			// значит делить не нужно т.к мы в обертке - выходим и отменяем автокоррекцию
+			return false;
+		}
+	}
 
-    for (let i = this.CurPos + 1; i < this.Content.length; i++)
-    {
-        arrContent.push(this.Content[i].Copy());
-    }
+	for (let i = isCurPos ? nPos + 1 : nPos; i < this.Content.length; i++)
+	{
+		arrContent.push(this.Content[i].Copy());
+	}
 
-    this.Remove_FromContent(this.CurPos + 1, this.Content.length - this.CurPos - 1);
+	let nStartPos = isCurPos ? nPos + 1 : nPos;
+	let nEndPos = isCurPos ? nPos - 1 : nPos;
 
-    return arrContent;
+	this.Remove_FromContent(nStartPos, this.Content.length - nEndPos);
+	return arrContent;
 };
 CMathContent.prototype.ProcessingOldEquationConvert  = function ()
 {
@@ -5846,12 +5912,12 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
 		? oLogicDocument. Api.getMathInputType()
 		: Asc.c_oAscMathInputType.Unicode;
 
-	const arrNextContent = this.SplitContentByContentPos();
+	const arrNextContent = this.SplitContentByPos(this.CurPos, true);
 	if (arrNextContent === false)
 		return;
 
 	if (nInputType === 0)
-		new AscMath.ProceedTokens(this);
+		AscMath.StartAutoCorrectionMath(this);
 
 	if (arrNextContent.length > 0)
 		this.AddContentForAutoCorrection(arrNextContent, true);
