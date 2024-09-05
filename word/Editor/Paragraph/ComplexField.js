@@ -839,7 +839,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 			var oParaForCopy = oSrcParagraph;
 			if(bSkipCaptionLbl)
 			{
-				sBookmarkName = oSrcParagraph.AddBookmarkForCaption(sResultCaption, true, true);
+				sBookmarkName = oSrcParagraph.AddBookmarkForCaption(sCaption, true, true);
 				if(!sBookmarkName)
 				{
 					sBookmarkName = oSrcParagraph.AddBookmarkForTOC();
