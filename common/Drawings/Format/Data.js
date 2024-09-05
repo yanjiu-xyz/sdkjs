@@ -10385,6 +10385,7 @@ Because of this, the display is sometimes not correct.
 			if (this.isLocalDrawingPart) {
 				AscFormat.ExecuteNoHistory(function () {
 					this.generateDrawingPart();
+					this.isLocalDrawingPart = true;
 				}, this, []);
 			}
 		};
@@ -10444,6 +10445,7 @@ Because of this, the display is sometimes not correct.
 			}
 		};
     SmartArt.prototype.generateDrawingPart = function () {
+	    this.isLocalDrawingPart = false;
 			if (!this.isCanGenerateSmartArt()) {
 				return;
 			}
@@ -10458,6 +10460,7 @@ Because of this, the display is sometimes not correct.
         drawing.addToSpTree(0, shapes[i]);
       }
     };
+	  SmartArt.prototype.generateSmartArtDrawingPart = SmartArt.prototype.generateDrawingPart;
 	  SmartArt.prototype.findConnector = function (x, y) {
 		  return null;
 	  };

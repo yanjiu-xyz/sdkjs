@@ -3767,6 +3767,7 @@
 		return false;
 	};
 	CGraphicObjectBase.prototype.generateLocalDrawingPart = function () {};
+	CGraphicObjectBase.prototype.generateSmartArtDrawingPart = function () {};
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
 

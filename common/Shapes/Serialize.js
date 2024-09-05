@@ -11357,6 +11357,7 @@ function BinaryPPTYLoader()
             this.BaseReader = null;
             if(!bClearStreamOnly)
                 this.ImageMapChecker = {};
+	        this.Reader.smartarts.length = 0;
         };
     }
 
