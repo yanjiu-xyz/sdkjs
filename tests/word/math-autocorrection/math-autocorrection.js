@@ -36,6 +36,7 @@ $(function () {
 
     function Init() {
 		logicDocument = AscTest.CreateLogicDocument();
+		logicDocument.Start_SilentMode();
         logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
 
         let p1 = new AscWord.Paragraph();
