@@ -10412,6 +10412,11 @@ Because of this, the display is sometimes not correct.
 				const copyDrawing = this.drawing.copy();
 				copyDrawing.setWorksheet(this.drawing.worksheet);
 				copyDrawing.setDrawingObjects(this.drawing.drawingObjects);
+				this.removeFromSpTreeByPos(0);
+				this.addToSpTree(0, copyDrawing);
+				this.setDrawing(copyDrawing);
+				this.reconnectSmartArtShapes();
+				copyDrawing.recalculate();
 				for (let i = 0; i < selectedObjects.length; i += 1) {
 					const shapeInfo = mapShapes[selectedObjects[i].Id];
 					if (shapeInfo) {
@@ -10430,10 +10435,6 @@ Because of this, the display is sometimes not correct.
 						mainGroup.selection.textSelection = copyDrawing.spTree[info.index];
 					}
 				}
-				this.removeFromSpTreeByPos(0);
-				this.addToSpTree(0, copyDrawing);
-				this.setDrawing(copyDrawing);
-				this.reconnectSmartArtShapes();
 				if (handleShape) {
 					const info = mapShapes[handleShape.GetId()];
 					if (info) {

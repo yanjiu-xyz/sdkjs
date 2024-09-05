@@ -4620,6 +4620,8 @@
 				const smartArtInfo = oShape.getSmartArtInfo();
 				if (nCurrentFontSize !== nFitFontSize) {
 					oShape.setFontSizeInSmartArt(nFitFontSize, true, isParentWithChildren);
+				} else {
+					oShape.recalculate();
 				}
 
 				smartArtInfo.collectTextConstraintRelations(adaptRelationArrays);
@@ -4649,9 +4651,13 @@
 					const nPlaceholderFontSize = Math.min(oPlaceholderSmartArtInfo.maxFontSize, nFitFontSize);
 					if (nCurrentFontSize !== nPlaceholderFontSize) {
 						oShape.setFontSizeInSmartArt(nPlaceholderFontSize, true, isParentWithChildren);
+					} else {
+						oShape.recalculate();
 					}
 				} else if (nCurrentFontSize !== nFitFontSize) {
 					oShape.setFontSizeInSmartArt(nFitFontSize, true, isParentWithChildren);
+				} else {
+					oShape.recalculate();
 				}
 			}
 		}
@@ -4673,7 +4679,7 @@
 				arrShapes = this.getShapesForFitText();
 				const oSmartArtInfo = this.getSmartArtInfo();
 				if (oSmartArtInfo) {
-					oSmartArtInfo.setMaxFontSize(this.findFitFontSizeForSmartArt(arrShapes.contentFillingType === AscCommon.smartArtContentFillingType_parentWithChildren));
+					oSmartArtInfo.setMaxFontSize(null);
 				}
 			}
 

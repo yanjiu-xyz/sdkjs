@@ -2583,8 +2583,10 @@
 								text_object.checkDocContent();
 							}
 							if (text_object.checkDrawingPartWithHistory) {
-								text_object.checkDrawingPartWithHistory();
-								text_object = getTargetTextObject(this);
+								const newTextObject = text_object.checkDrawingPartWithHistory();
+								if (newTextObject) {
+									text_object = newTextObject;
+								}
 							}
 						}
 						return text_object.getDocContent();
@@ -2954,6 +2956,7 @@
 								this.selectedObjects[0].graphicObject.MoveCursorToStartPos(false);
 								this.selectedObjects[0].applyTextFunction(docContentFunction, tableFunction, args);
 							} else {
+								this.selectedObjects[0].checkDrawingPartWithHistory && this.selectedObjects[0].checkDrawingPartWithHistory();
 								var oDocContent = this.selectedObjects[0].getDocContent();
 								if (oDocContent) {
 									oDocContent.MoveCursorToEndPos(false);
