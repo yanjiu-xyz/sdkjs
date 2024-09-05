@@ -16205,14 +16205,175 @@ $(function () {
 
 	QUnit.test("Test: \"AVERAGEIF\"", function (assert) {
 
+		ws.getRange2("F2:F3").setValue("");
+
 		ws.getRange2("E2").setValue("10");
 		ws.getRange2("E3").setValue("20");
 		ws.getRange2("E4").setValue("28");
 		ws.getRange2("E5").setValue("30");
+		ws.getRange2("E6").setValue("1");
+		ws.getRange2("E7").setValue("0");
 
 		oParser = new parserFormula("AVERAGEIF(E2:E5,\">15\")", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 26);
+
+		oParser = new parserFormula("AVERAGEIF(E2:E5,20)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 20);
+
+		oParser = new parserFormula("AVERAGEIF(E2:E7,30)", "A1", ws);
+		assert.ok(oParser.parse(), "AVERAGEIF(E2:E7,30)");
+		assert.strictEqual(oParser.calculate().getValue(), 30, "Result of AVERAGEIF(E2:E7,30)");
+
+		oParser = new parserFormula('AVERAGEIF(E2:E7,"1")', "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(E2:E7,"1")');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of AVERAGEIF(E2:E7,"1")');
+
+		oParser = new parserFormula('AVERAGEIF(E2:E7,"1s")', "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(E2:E7,"1s")');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AVERAGEIF(E2:E7,"1s")');
+
+		oParser = new parserFormula("AVERAGEIF(E2:E7,TRUE)", "A1", ws);
+		assert.ok(oParser.parse(), "AVERAGEIF(E2:E7,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of AVERAGEIF(E2:E7,TRUE)");
+
+		oParser = new parserFormula("AVERAGEIF(E2:E7,FALSE)", "A1", ws);
+		assert.ok(oParser.parse(), "AVERAGEIF(E2:E7,FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of AVERAGEIF(E2:E7,FALSE)");
+
+		let sheetName = ws.getName();
+		oParser = new parserFormula("AVERAGEIF(E2:E3,\"<>0\")", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(E2:E3,\"<>0\")');
+		assert.strictEqual(oParser.calculate().getValue(), 15, 'Result of AVERAGEIF(E2:E3,\"<>0\")');
+
+		oParser = new parserFormula("AVERAGEIF(E2:E3,\"<>0\",E4:E5)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(E2:E3,\"<>0\",E4:E5)');
+		assert.strictEqual(oParser.calculate().getValue(), 29, 'Result of AVERAGEIF(E2:E3,\"<>0\",E4:E5)');
+
+		oParser = new parserFormula("AVERAGEIF("+sheetName+"!E2:E3,\"<>0\")", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF('+sheetName+'!E2:E3,\"<>0\")');
+		assert.strictEqual(oParser.calculate().getValue(), 15, 'Result of AVERAGEIF('+sheetName+'!E2:E3,\"<>0\")');
+
+		oParser = new parserFormula("AVERAGEIF("+sheetName+"!E2:E3,\"<>0\", "+sheetName+"!E4:E5)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF('+sheetName+'!E2:E3,\"<>0\",'+sheetName+'!E4:E5)")');
+		assert.strictEqual(oParser.calculate().getValue(), 29, 'Result of AVERAGEIF('+sheetName+'!E2:E3,\"<>0\",'+sheetName+'!E4:E5)")');
+
+		// empty range check
+		oParser = new parserFormula("AVERAGEIF(F2:F3,\"<>0\")", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(F2:F3,\"<>0\") - empty range in the first argument');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AVERAGEIF(F2:F3,\"<>0\")');
+
+		oParser = new parserFormula("AVERAGEIF(F2:F3,\"<>0\",F2:F3)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(F2:F3,\"<>0\",F2:F3) - empty range in the first and third args');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AVERAGEIF(F2:F3,\"<>0\",F2:F3)');
+
+		oParser = new parserFormula("AVERAGEIF(F2:F3,\"<>0\",E2:E3)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(F2:F3,\"<>0\",E2:E3) - empty range in the first argument, normal range in third arg');
+		assert.strictEqual(oParser.calculate().getValue(), 15, 'Result of AVERAGEIF(F2:F3,\"<>0\",E2:E3)');
+
+		oParser = new parserFormula("AVERAGEIF(E2:E3,\"<>0\",F2:F3)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(E2:E3,\"<>0\",F2:F3) - normal range in the first arg, empty range in third arg');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AVERAGEIF(E2:E3,\"<>0\",F2:F3)');
+
+		oParser = new parserFormula("AVERAGEIF("+sheetName+"!F2:F3,\"<>0\")", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF('+sheetName+'!F2:F3,\"<>0\") - empty 3D range in the first argument');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AVERAGEIF('+sheetName+'!F2:F3,\"<>0\")');
+
+		oParser = new parserFormula("AVERAGEIF("+sheetName+"!F2:F3,\"<>0\","+sheetName+"!E2:E3)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF('+sheetName+'!F2:F3,\"<>0\",'+sheetName+'!E2:E3) - empty 3D range in the first arg, normal 3Drange in third arg');
+		assert.strictEqual(oParser.calculate().getValue(), 15, 'Result of AVERAGEIF('+sheetName+'!F2:F3,\"<>0\",'+sheetName+'!E2:E3)');
+		
+		// type check
+		ws.getRange2("G1").setValue("str1");
+		ws.getRange2("G2").setValue("str2");
+		ws.getRange2("I1").setValue("TRUE");
+		ws.getRange2("I2").setValue("FALSE");
+
+		oParser = new parserFormula("AVERAGEIF(G1,\"<>0\")", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(G1,\"<>0\") - string in the first arg');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AVERAGEIF(G1,\"<>0\")');
+
+		oParser = new parserFormula("AVERAGEIF(G1,\"<>0\",E2)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(G1,\"<>0\",E2) - string in the first arg');
+		assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of AVERAGEIF(G1,\"<>0\",E2)');
+
+		oParser = new parserFormula("AVERAGEIF(G1,\"<>0\",E2:E3)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(G1,\"<>0\",E2:E3) - string in the first arg');
+		assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of AVERAGEIF(G1,\"<>0\",E2:E3)');
+
+		oParser = new parserFormula("AVERAGEIF(E2:E3,\"<>0\",G1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(E2:E3,\"<>0\",G1) - string in the third arg');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AVERAGEIF(E2:E3,\"<>0\",G1)');
+
+
+		oParser = new parserFormula("AVERAGEIF(I1,\"<>0\")", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(I1,\"<>0\") - bool in the first arg');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AVERAGEIF(I1,\"<>0\")');
+
+		oParser = new parserFormula("AVERAGEIF(I2,\"<>0\")", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(I2,\"<>0\") - bool in the first arg');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AVERAGEIF(I2,\"<>0\")');
+
+		oParser = new parserFormula("AVERAGEIF(I1,\"<>0\",E2)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(I1,\"<>0\",E2) - bool in the first arg');
+		assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of AVERAGEIF(I1,\"<>0\",E2)');
+
+		oParser = new parserFormula("AVERAGEIF(I1,\"<>0\",E2:E3)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(I1,\"<>0\",E2:E3) - bool in the first arg');
+		assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of AVERAGEIF(I1,\"<>0\",E2:E3)');
+
+		oParser = new parserFormula("AVERAGEIF(I2,\"<>0\",E2)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(I2,\"<>0\",E2) - bool in the first arg');
+		assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of AVERAGEIF(I2,\"<>0\",E2)');
+
+		oParser = new parserFormula("AVERAGEIF(I2,\"<>0\",E2:E3)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(I2,\"<>0\",E2:E3) - bool in the first arg');
+		assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of AVERAGEIF(I2,\"<>0\",E2:E3)');
+
+		/* exact types for arg0, arg2 check */
+		let calculateResult = new AscCommonExcel.CalculateResult(true);
+
+		oParser = new parserFormula("AVERAGEIF({1,2,3},A2:A9,A2)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF({1,2,3},A2:A9,A2) - arg0 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF({1,2,3},A2:A9,A2)');
+
+		oParser = new parserFormula("AVERAGEIF(12,A2:A9,A2)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(12,A2:A9,A2) - arg0 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF(12,A2:A9,A2)');
+
+		oParser = new parserFormula('AVERAGEIF("str",A2:A9,A2)', "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF("str",A2:A9,A2) - arg0 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF("str",A2:A9,A2)');
+
+		oParser = new parserFormula('AVERAGEIF(TRUE,A2:A9,A2)', "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(TRUE,A2:A9,A2) - arg0 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF(TRUE,A2:A9,A2)');
+
+		oParser = new parserFormula('AVERAGEIF(#N/A,A2:A9,A2)', "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(#N/A,A2:A9,A2) - arg0 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF(#N/A,A2:A9,A2)');
+
+		oParser = new parserFormula("AVERAGEIF(A2,A2:A9,{1,2,3})", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(A2,A2:A9,{1,2,3}) - arg2 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF(A2,A2:A9,{1,2,3})');
+
+		oParser = new parserFormula("AVERAGEIF(A2,A2:A9,12)", "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(A2,A2:A9,12) - arg2 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF(A2,A2:A9,12)');
+
+		oParser = new parserFormula('AVERAGEIF(A2,A2:A9,"str")', "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(A2,A2:A9,"str") - arg2 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF(A2,A2:A9,"str")');
+
+		oParser = new parserFormula('AVERAGEIF(A2,A2:A9,TRUE)', "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(A2,A2:A9,TRUE) - arg2 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF(A2,A2:A9,TRUE)');
+
+		oParser = new parserFormula('AVERAGEIF(A2,A2:A9,#N/A)', "A1", ws);
+		assert.ok(oParser.parse(), 'AVERAGEIF(A2,A2:A9,#N/A) - arg2 exact type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of AVERAGEIF(A2,A2:A9,#N/A)');
+
 
 		testArrayFormula2(assert, "AVERAGEIF", 2, 3, null, true);
 	});

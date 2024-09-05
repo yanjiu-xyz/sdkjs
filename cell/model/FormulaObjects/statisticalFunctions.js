@@ -4029,13 +4029,14 @@ function (window, undefined) {
 	cAVERAGEIF.prototype.argumentsMin = 2;
 	cAVERAGEIF.prototype.argumentsMax = 3;
 	cAVERAGEIF.prototype.arrayIndexes = {0: 1, 2: 1};
+	cAVERAGEIF.prototype.exactTypes = {0: 1, 2: 1};
 	cAVERAGEIF.prototype.argumentsType = [argType.reference, argType.any, argType.reference];
 	cAVERAGEIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, _count = 0, matchingInfo, ws;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, _count = 0, matchingInfo, ws;
 		if ((cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type && cElementType.cellsRange !==
-			arg0.type) ||
+			arg0.type && cElementType.cellsRange3D !== arg0.type) ||
 			(cElementType.cell !== arg2.type && cElementType.cell3D !== arg2.type && cElementType.cellsRange !==
-				arg2.type)) {
+				arg2.type && cElementType.cellsRange3D !== arg2.type)) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
@@ -4051,17 +4052,17 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		var r = arg0.getRange();
-		var r2 = arg2.getRange();
+		let r = arg0.getRange(), r2 = arg2.getRange();
+
 		ws = arg0.getWS();
 		matchingInfo = AscCommonExcel.matchingValue(arg1);
-		if (cElementType.cellsRange === arg0.type) {
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0.foreach2(function (v, cell, row, col) {
 				if (matching(v, matchingInfo)) {
 					let offset = new AscCommon.CellBase(row - r.bbox.r1, col - r.bbox.c1);
 					r2.setOffset(offset);
 
-					var val;
+					let val;
 					ws._getCellNoEmpty(r2.bbox.r1, r2.bbox.c1, function (cell) {
 						val = checkTypeCell(cell);
 					});
@@ -4078,10 +4079,7 @@ function (window, undefined) {
 			})
 		} else {
 			if (matching(arg0.getValue(), matchingInfo)) {
-				var val;
-				ws._getCellNoEmpty(r.bbox.r1, r2.bbox.c1, function (cell) {
-					val = checkTypeCell(cell);
-				});
+				let val = arg2.getFirstElement ? arg2.getFirstElement() : arg2.getValue();
 				if (cElementType.number === val.type) {
 					_sum += val.getValue();
 					_count++;
