@@ -1081,9 +1081,11 @@ $(function () {
 		Test("\\infty", [["ParaRun", "\\infty"]], true, "Check LaTeX words");
 		Test("\\sum_{\\begin{matrix}0\\lei\\lem\\\\0<j<n\\\\\\end{matrix}}{P\\left(i,j\\right)}", [["ParaRun", ""], ["CNary", "\\sum_{\\begin{matrix}0\\lei\\lem\\\\0<j<n\\\\\\end{matrix}}{P\\left(i,j\\right)}"]], true, "Check LaTeX words");
 		Test("1\\ 2", [["ParaRun", "1\\ 2"]], true, "Check LaTeX words");
+		Test("\\dot{}\\lim\\below{n\\rightarrow\\infty}{\\left(1+\\frac{1}{n}\\right)^n}", [["ParaRun", ""], ["CAccent", "\\dot{}"], ["ParaRun", ""], ["CMathFunc", "\\lim\\below{n\\to\\infty}{{\\left(1+\\frac{1}{n}\\right)}^n}"],], true, "Check LaTeX words");
 
 		QUnit.module( "accent", function ()
 		{
+			Test("\\dot{}", [["ParaRun", ""], ["CAccent", "\\dot{}"],["ParaRun", ""]], true, "Check LaTeX words");
 			Test("\\dot{a}", [["ParaRun", ""], ["CAccent", "\\dot{a}"],["ParaRun", ""]], true, "Check LaTeX words");
 			Test("\\ddot{b}", [["ParaRun", ""], ["CAccent", "\\ddot{b}"],["ParaRun", ""]], true, "Check LaTeX words");
 			Test("\\acute{c}", [["ParaRun", ""], ["CAccent", "\\acute{c}"],["ParaRun", ""]], true, "Check LaTeX words");

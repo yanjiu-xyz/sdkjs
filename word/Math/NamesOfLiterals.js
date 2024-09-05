@@ -2004,22 +2004,6 @@
 	{
 		return this._cursor < this._string.length;
 	};
-	Tokenizer.prototype.GetTextOfToken = function (intIndex, isLaTeX)
-	{
-		let arrToken = arrTokensCheckerList[intIndex];
-
-		if (typeof arrToken[0] !== "function")
-		{
-			if (isLaTeX && arrToken[1] !== undefined)
-			{
-				return arrToken[0];
-			}
-			else if (!isLaTeX && arrToken[1] !== undefined)
-			{
-				return arrToken[1];
-			}
-		}
-	};
 	Tokenizer.prototype.GetNextToken = function ()
 	{
 		if (!this.IsHasMoreTokens())
@@ -4919,7 +4903,13 @@
 
 			this.DelEmptyContainer();
 			if (oMath.IsEmpty())
+			{
+				// in LaTeX mode, despite the fact that there is no content, add brackets to wrap the content
+				if (this.IsLaTeX() && Wrap === 2)
+					this.AddText(new MathText('{}', oContent));
+
 				return this.GetLastPos();
+			}
 
 			this.Increase();
 			let oPos = this.AddPosition(this.nPos - nPosCopy);

@@ -134,20 +134,10 @@
 			}
 			else
 			{
-				let strValue = this.oTokenizer.GetTextOfToken(this.oLookahead.class, true);
-				let oStyle;
-				if (undefined === strValue)
-				{
-					let oData = this.oLookahead;
-					this.EatToken(this.oLookahead.class);
-
-					strValue = oData.data;
-					oStyle = oData.style;
-				}
-				else
-				{
-					this.EatToken(this.oLookahead.class);
-				}
+				let oData = this.oLookahead;
+				this.EatToken(this.oLookahead.class);
+				let strValue = oData.data;
+				let oStyle = oData.style;
 
 				if ("\\bmod" === strValue) // todo в новой версии конвертора добавить отдельный модуль для такого типа токенов
 				{
