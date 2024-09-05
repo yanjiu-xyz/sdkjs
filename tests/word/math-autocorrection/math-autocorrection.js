@@ -1068,6 +1068,32 @@ $(function () {
 				assert.strictEqual(nRPlus.ReviewType, 2, 'Is "+" is reviewtype_Add');
 				assert.strictEqual(nRPlus.ReviewInfo, reviewInfo, 'Check reviewInfo');
 			})
+
+			QUnit.test('Bug 64357', function (assert)
+			{
+				Clear();
+
+				logicDocument.SetMathInputType(0);
+				let matrix = MathContent.Root.Add_Matrix(new CTextPr(), 1, 2, false, []);
+				let oContent = matrix.getContentElement(0, 0);
+				assert.ok(true, "Add matrix for example");
+
+				let r = new ParaRun(matrix.Paragraph, true);
+				r.AddMathPlaceholder();
+				oContent.Add_Element(r);
+				oContent.Select_Element(r);
+				matrix.Paragraph.Select_Math(MathContent);
+				assert.ok(true, "Select content inside matrix content");
+
+				logicDocument.TurnOff_Recalculate();
+				logicDocument.ConvertMathView(true);
+				logicDocument.TurnOn_Recalculate();
+
+				assert.ok(true, "Convert to linear view");
+
+				let isNotMatrix = !(MathContent.Root.Content[1] instanceof CMathMatrix);
+				assert.strictEqual(isNotMatrix, true, 'We must get not Matrix');
+			})
 		})
 	})
 
