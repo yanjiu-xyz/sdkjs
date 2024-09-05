@@ -34,27 +34,23 @@
 
 (function(window)
 {
-	window['AscWord'] = window['AscWord'] || {};
+	/**
+	 * @constructor
+	 * @extends AscWord.FieldInstructionBase
+	 */
+	function CFieldInstructionFORMCHECKBOX()
+	{
+		AscWord.FieldInstructionBase.call(this);
+	}
+	CFieldInstructionFORMCHECKBOX.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
+	CFieldInstructionFORMCHECKBOX.prototype.constructor = CFieldInstructionFORMCHECKBOX;
+	CFieldInstructionFORMCHECKBOX.prototype.Type = AscWord.fieldtype_FORMCHECKBOX;
 	
-	window['AscWord'].fieldtype_UNKNOWN      = 0x0000;
-	window['AscWord'].fieldtype_MERGEFIELD   = 0x0001;
-	window['AscWord'].fieldtype_PAGENUM      = 0x0002;
-	window['AscWord'].fieldtype_PAGECOUNT    = 0x0003;
-	window['AscWord'].fieldtype_FORMTEXT     = 0x0004;
-	window['AscWord'].fieldtype_TOC          = 0x0005;
-	window['AscWord'].fieldtype_PAGEREF      = 0x0006;
-	window['AscWord'].fieldtype_PAGE         = window['AscWord'].fieldtype_PAGENUM;
-	window['AscWord'].fieldtype_NUMPAGES     = window['AscWord'].fieldtype_PAGECOUNT;
-	window['AscWord'].fieldtype_ASK          = 0x0007;
-	window['AscWord'].fieldtype_REF          = 0x0008;
-	window['AscWord'].fieldtype_HYPERLINK    = 0x0009;
-	window['AscWord'].fieldtype_TIME         = 0x000A;
-	window['AscWord'].fieldtype_DATE         = 0x000B;
-	window['AscWord'].fieldtype_FORMULA      = 0x0010;
-	window['AscWord'].fieldtype_SEQ          = 0x0011;
-	window['AscWord'].fieldtype_STYLEREF     = 0x0012;
-	window['AscWord'].fieldtype_NOTEREF      = 0x0013;
-	window['AscWord'].fieldtype_ADDIN        = 0x0014;
-	window['AscWord'].fieldtype_FORMCHECKBOX = 0x0015;
+	CFieldInstructionFORMCHECKBOX.prototype.ToString = function()
+	{
+		return " FORMCHECKBOX ";
+	};
+	//--------------------------------------------------------export----------------------------------------------------
+	window['AscWord'].CFieldInstructionFORMCHECKBOX = CFieldInstructionFORMCHECKBOX;
 	
 })(window);
