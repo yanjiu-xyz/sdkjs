@@ -6572,7 +6572,11 @@ ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 	let rangePos = this.getRangePos(searchState.line, searchState.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
-	if (startPos >= endPos)
+
+	if (startPos > endPos)
+		return;
+	// внутри формулы нужно иметь возможность выставлять курсор на ParaRun без контента
+	if (startPos === endPos && !this.IsMathRun())
 		return;
 	
 	for (let pos = startPos; pos < endPos; ++pos)
