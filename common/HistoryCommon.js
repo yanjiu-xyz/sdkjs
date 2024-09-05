@@ -4872,6 +4872,7 @@
 	window['AscDFH'].historydescription_Document_AddComplexField                    = 0x01b4;
 	window['AscDFH'].historydescription_Document_EditComplexFieldInstruction        = 0x01b5;
 	window['AscDFH'].historydescription_Collaborative_DeletedTextRecovery           = 0x01b6;
+	window['AscDFH'].historydescription_Document_AutoCorrectMath                    = 0x01b7;
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;
 	window['AscDFH'].historydescription_Pdf_FreeTextGeom		= 0x29b;

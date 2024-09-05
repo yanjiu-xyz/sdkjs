@@ -10626,8 +10626,7 @@
 	{
 		if (!logicDocument
 			|| !logicDocument.IsDocumentEditor
-			|| !logicDocument.IsDocumentEditor()
-			|| !logicDocument.IsTrackRevisions())
+			|| !logicDocument.IsDocumentEditor())
 			return f.apply(t, args);
 		
 		let description = actionPr && actionPr.description ? actionPr.description : AscDFH.historydescription_Unknown;
