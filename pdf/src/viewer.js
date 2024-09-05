@@ -4446,6 +4446,12 @@
 				oMemory = new AscCommon.CMemory(true);
 				oMemory.Init(memoryInitSize);
 				oMemory.images = [];
+
+				// compiled changes signature
+				oMemory.WriteByte("%".charCodeAt(0));
+				oMemory.WriteByte("P".charCodeAt(0));
+				oMemory.WriteByte("D".charCodeAt(0));
+				oMemory.WriteByte("F".charCodeAt(0));
 			}
 
 			let nStartPos = oMemory.GetCurPosition();

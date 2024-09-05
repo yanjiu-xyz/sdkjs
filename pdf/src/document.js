@@ -158,6 +158,12 @@ var CPresentation = CPresentation || function(){};
 		AscCommon.g_oTableId.Add(this, this._id);
         
 		this.History        = new AscPDF.History(this);
+        if (AscCommon.History)
+        {
+            this.History.UserSaveMode   = AscCommon.History.UserSaveMode;
+            this.History.UserSavedIndex = AscCommon.History.UserSavedIndex;
+        }
+
 		this.LocalHistory   = new AscPDF.History(this);
 		AscCommon.History = this.History;
 
