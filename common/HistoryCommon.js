@@ -4428,6 +4428,7 @@
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	window['AscDFH'].historydescription_Unknown                                     = 0x0000;
 	window['AscDFH'].historydescription_Cut                                         = 0x0001;
 	window['AscDFH'].historydescription_PasteButtonIE                               = 0x0002;
 	window['AscDFH'].historydescription_PasteButtonNotIE                            = 0x0003;

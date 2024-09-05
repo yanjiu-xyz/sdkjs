@@ -10622,6 +10622,24 @@
 		return result;
 	}
 	
+	function ExecuteEditorAction(actionPr, f, logicDocument, t, args)
+	{
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor
+			|| !logicDocument.IsDocumentEditor()
+			|| !logicDocument.IsTrackRevisions())
+			return f.apply(t, args);
+		
+		let description = actionPr && actionPr.description ? actionPr.description : AscDFH.historydescription_Unknown;
+		let flags       = actionPr && actionPr.flags ? actionPr.flags : ACTION_FLAGS.UPDATEALL_RECALCULATE;
+		
+		logicDocument.StartAction(description, null, flags);
+		let result = f.apply(t, args);
+		logicDocument.FinalizeAction();
+		
+		return result;
+	}
+	
 	function AddAndExecuteChange(change)
 	{
 		AscCommon.History.Add(change);
@@ -14661,6 +14679,7 @@
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
 	window["AscCommon"].executeNoRevisions = executeNoRevisions;
+	window["AscCommon"].ExecuteEditorAction = ExecuteEditorAction;
 	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;
