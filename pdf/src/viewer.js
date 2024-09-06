@@ -2652,8 +2652,8 @@
 				oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
 				ctx.globalAlpha = 1.0;
 				oDoc.Draw_ForeingSelection(i);
+				oDoc.CollaborativeEditing.Update_ForeignSelectedObjectsLabelsPositions(i);
 			}
-			
 		};
 
 		this.checkVisiblePages = function()

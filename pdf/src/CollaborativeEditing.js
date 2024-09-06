@@ -81,6 +81,21 @@ CPDFCollaborativeEditing.prototype.Check_ForeignSelectedObjectsLabels = function
         }
     }
 };
+CPDFCollaborativeEditing.prototype.Update_ForeignSelectedObjectsLabelsPositions = function(PageIndex) {
+    let oDoc = this.GetLogicDocument();
+
+    for (let UserId in this.m_oSelectedObjects) {
+        let aObjects = this.m_oSelectedObjects[UserId];
+        for (let i = 0; i < aObjects.length; i++) {
+            if (aObjects[i].GetPage() !== PageIndex || aObjects[i].LabelTimer == null) {
+                continue;
+            }
+
+            let color = AscCommon.getUserColorById(this.m_aForeignCursorsId[UserId], null, true);
+            oDoc.Show_ForeignSelectedObjectLabel(UserId, aObjects[i], color);
+        }
+    }
+};
 CPDFCollaborativeEditing.prototype.GetDocumentPositionBinary = function(oWriter, PosInfo) {
     if (!PosInfo)
         return '';
