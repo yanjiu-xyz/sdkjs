@@ -2142,7 +2142,11 @@ var CPresentation = CPresentation || function(){};
         else
             oViewer.pagesInfo.pages.splice(nPos, 0, new AscPDF.CPageInfo());
 
-        oViewer.thumbnails._addPage(nPos);
+        // can be uninitialized on Apply_Changes
+        if (oViewer.thumbnails) {
+            oViewer.thumbnails._addPage(nPos);
+        }
+
         oViewer.resize(true);
 
         for (let i = 0; i < oViewer.file.pages.length; i++) {
@@ -2217,7 +2221,10 @@ var CPresentation = CPresentation || function(){};
 		oViewer.drawingPages.splice(nPos, 1);
         oViewer.pagesInfo.pages.splice(nPos, 1);
         
-        oViewer.thumbnails._deletePage(nPos);
+        // can be uninitialized on Apply_Changes
+        if (oViewer.thumbnails) {
+            oViewer.thumbnails._deletePage(nPos);
+        }
 
         oViewer.checkVisiblePages();
         oViewer.resize(true);

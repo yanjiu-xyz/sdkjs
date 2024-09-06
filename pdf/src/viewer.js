@@ -3028,7 +3028,7 @@
 			{
 				if (null === this.file.pages[i].text)
 				{
-					this.file.pages[i].text = this.file.getText(i);
+					this.file.pages[i].text = this.file.getText(this.file.pages[i].originIndex);
 					isCommands = true;
 				}
 			}
@@ -3043,7 +3043,7 @@
 						this.pagesInfo.countTextPages++;
 						continue;
 					}
-					this.file.pages[this.pagesInfo.countTextPages].text = this.file.getText(this.pagesInfo.countTextPages);
+					this.file.pages[this.pagesInfo.countTextPages].text = this.file.getText(this.file.pages[this.pagesInfo.countTextPages].originIndex);
 					if (null !== this.file.pages[this.pagesInfo.countTextPages].text)
 					{
 						this.pagesInfo.countTextPages++;
