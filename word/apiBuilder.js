@@ -6921,6 +6921,56 @@
 		}
 	};
 	/**
+	 * Updates all fields in the document
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [bBySelection=false] - update all fields within selection
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/UpdateAllFields.js
+	 */
+	ApiDocument.prototype.UpdateAllFields = function(bBySelection)
+	{
+		let oDocument = this.Document;
+		let arrFields = oDocument.GetAllFields(bBySelection);
+
+		if (arrFields.length <= 0)
+		{
+			let oInfo = oDocument.GetSelectedElementsInfo();
+			arrFields = oInfo.GetComplexFields();
+		}
+
+		let oDocState = oDocument.SaveDocumentState();
+
+		let arrParagraphs = [];
+		for (let nIndex = 0, nCount = arrFields.length; nIndex < nCount; ++nIndex)
+		{
+			let oField = arrFields[nIndex];
+			if (oField instanceof CComplexField)
+			{
+				oField.SelectField();
+				arrParagraphs = arrParagraphs.concat(oDocument.GetCurrentParagraph(false, true));
+			}
+			else if (oField instanceof ParaField)
+			{
+				if (oField.GetParagraph())
+					arrParagraphs.push(oField.GetParagraph());
+			}
+		}
+
+		if (!oDocument.Document_Is_SelectionLocked(changestype_None, {
+				Type      : changestype_2_ElementsArray_and_Type,
+				Elements  : arrParagraphs,
+				CheckType : changestype_Paragraph_Content
+			}))
+		{
+			for (let nIndex = 0, nCount = arrFields.length; nIndex < nCount; ++nIndex)
+			{
+				arrFields[nIndex].Update(false, false);
+			}
+
+			oDocument.LoadDocumentState(oDocState);
+		}
+	};
+	/**
 	 * Converts the ApiDocument object into the JSON object.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -21508,6 +21558,7 @@
 	ApiDocument.prototype["ToJSON"]                  = ApiDocument.prototype.ToJSON;
 	ApiDocument.prototype["UpdateAllTOC"]		     = ApiDocument.prototype.UpdateAllTOC;
 	ApiDocument.prototype["UpdateAllTOF"]		     = ApiDocument.prototype.UpdateAllTOF;
+	ApiDocument.prototype["UpdateAllFields"]		 = ApiDocument.prototype.UpdateAllFields;
 	ApiDocument.prototype["AddTableOfContents"]		 = ApiDocument.prototype.AddTableOfContents;
 	ApiDocument.prototype["AddTableOfFigures"]		 = ApiDocument.prototype.AddTableOfFigures;
 
