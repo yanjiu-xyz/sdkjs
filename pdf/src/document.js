@@ -2818,6 +2818,7 @@ var CPresentation = CPresentation || function(){};
         editor.sync_RemoveComment(Id);
         oController.resetSelection();
         oController.resetTrackState();
+        this.private_UpdateTargetForCollaboration(true);
     };
 
     CPDFDoc.prototype.RemoveDrawing = function(Id) {
@@ -2850,6 +2851,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         this.ClearSearch();
+        this.private_UpdateTargetForCollaboration(true);
     };
 
     CPDFDoc.prototype.RemoveForm = function(oForm) {

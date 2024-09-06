@@ -205,6 +205,7 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 	}
 
 	oDocument.mouseDownAnnot = null;
+	oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 {
@@ -245,6 +246,7 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 	}
 	
 	oDocument.mouseDownAnnot = null;
+	oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentRemoveItem.prototype.private_RemoveInArrayLoad = function()
 {
