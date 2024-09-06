@@ -2581,7 +2581,9 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
 {
 	this.sendEvent("asc_onUserActionStart");
 	
-	var isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
+	let isNewPoint = false;
+	if (!this.Action.Start || this.Action.Description !== AscDFH.historydescription_BuilderScript)
+		isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
 
 	if (true === this.Action.Start)
 	{
@@ -2626,6 +2628,10 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
 CDocument.prototype.IsActionStarted = function()
 {
 	return this.Action.Start;
+};
+CDocument.prototype.IsPostActionLockCheck = function()
+{
+	return this.Action.CheckLock;
 };
 /**
  * Сообщаем документу, что потребуется пересчет
@@ -13211,6 +13217,9 @@ CDocument.prototype.CanPerformAction = function(isIgnoreCanEditFlag)
 };
 CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, AdditionalData, DontLockInFastMode, isIgnoreCanEditFlag, fCallback)
 {
+	if (this.IsActionStarted() && this.IsPostActionLockCheck())
+		return false;
+	
 	if (!this.CanPerformAction(isIgnoreCanEditFlag))
 	{
 		if (fCallback)
