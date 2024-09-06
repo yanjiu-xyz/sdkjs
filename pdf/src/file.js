@@ -278,7 +278,7 @@
 
     CFile.prototype.getText = function(pageIndex)
     {
-        return this.nativeFile ? this.nativeFile["getGlyphs"](pageIndex) : [];
+        return this.nativeFile && undefined != pageIndex ? this.nativeFile["getGlyphs"](pageIndex) : [];
     };
 
     CFile.prototype.destroyText = function()
