@@ -3905,6 +3905,11 @@ CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, 
 		this.Content[pos].recalculateCursorPosition(positionCalculator, isCurrent && pos === this.CurPos);
 	}
 };
+CMathContent.prototype.getParagraphContentPosByXY = function(searchState)
+{
+	searchState.reset();
+	CParagraphContentWithParagraphLikeContent.prototype.getParagraphContentPosByXY.call(this, searchState);
+};
 CMathContent.prototype.GetCurrentParaPos = function(align)
 {
 	if (this.CurPos >= 0 && this.CurPos < this.Content.length)
