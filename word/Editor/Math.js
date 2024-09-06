@@ -3190,12 +3190,13 @@ ParaMath.prototype.ConvertFromLaTeX = function()
 ParaMath.prototype.ConvertToLaTeX = function()
 {
 	let oLaTeXContent = this.GetTextOfElement(true);
-	oLaTeXContent.Flat(this.Root);
+	this.Root.Remove_Content(0,this.Root.Content.length);
+	this.Root.AddDataFromFlatMathTextAndStyles(oLaTeXContent.Flat());
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function()
 {
 	let oUnicode = this.GetTextOfElement(false);
-	this.Root.Remove_Content(0,this.Root.Content.length);
+	this.Root.Remove_Content(0, this.Root.Content.length);
 	this.Root.CurPos = 0;
 	AscMath.CUnicodeConverter(oUnicode, this.Root);
 	this.Root.Correct_Content(true);
@@ -3204,7 +3205,8 @@ ParaMath.prototype.ConvertFromUnicodeMath = function()
 ParaMath.prototype.ConvertToUnicodeMath = function()
 {
 	let oUnicodeContent = this.GetTextOfElement(false);
-	oUnicodeContent.Flat(this.Root);
+	this.Root.Remove_Content(0,this.Root.Content.length);
+	this.Root.AddDataFromFlatMathTextAndStyles(oUnicodeContent.Flat());
 	this.Paragraph.updateTrackRevisions();
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
@@ -3263,12 +3265,6 @@ ParaMath.prototype._convertViewBySelection = function(isToLinear, nInputType)
         nInputType,
         isToLinear
     );
-};
-ParaMath.prototype.SplitSelectedContent = function()
-{
-    var oSelection = this.GetSelectContent();
-    var oContent = oSelection.Content;
-    oContent.SplitSelectedContent();
 };
 ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 {

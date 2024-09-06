@@ -27278,8 +27278,9 @@ CDocument.prototype.ConvertMathView = function(isToLinear)
 	{
 		this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
 		let nInputType = this.Api.getMathInputType();
-		
-		if (!this.IsTextSelectionUse())
+
+		// if an empty placeholder is selected, convert the entire math equation
+		if (!this.IsTextSelectionUse() || oMath.IsMathContentPlaceholder())
 		{
 			this.RemoveTextSelection();
 			oMath.ConvertView(isToLinear, nInputType);

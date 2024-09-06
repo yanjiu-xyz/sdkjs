@@ -5218,9 +5218,9 @@
 			return this.AddText(new AscMath.MathText(str));
 		}
 	};
-	MathTextAndStyles.prototype.Flat = function (oCMathContent)
+	MathTextAndStyles.prototype.Flat = function ()
 	{
-		let newArr = [];
+		let arrData = [];
 		let Flat = function (arr)
 		{
 			for (let i = 0; i < arr.length; i++)
@@ -5232,26 +5232,34 @@
 				}
 				else if (oCurrentElement instanceof MathText)
 				{
-					newArr.push(oCurrentElement);
+					arrData.push(oCurrentElement);
 				}
 				else
 				{
-					newArr.push(new MathText(oCurrentElement));
+					arrData.push(new MathText(oCurrentElement));
 				}
 			}
 		}
 		Flat(this.arr);
 
-		oCMathContent.Remove_Content(0,oCMathContent.Content.length);
-		this.AddTextToMathContent(newArr, oCMathContent);
-		oCMathContent.Correct_Content(true);
-	};
-	MathTextAndStyles.prototype.AddTextToMathContent = function (newArr, oCMathContent)
-	{
-		for (let i = 0; i < newArr.length; i++)
+		for (let i = 0; i < arrData.length; i++)
 		{
-			oCMathContent.Add_Text(newArr[i].text, undefined, undefined, newArr[i].additionalMathData);
+			let oCurrentText = arrData[i];
+			for (let nNext = i + 1; nNext < arrData.length; nNext++)
+			{
+				let oNextText = arrData[nNext];
+				if (oCurrentText.IsAdditionalDataEqual(oNextText.GetAdditionalData())){
+					oCurrentText.text += oNextText.text;
+
+					arrData.splice(nNext, 1);
+					nNext--;
+				}
+				else
+					break;
+			}
 		}
+
+		return arrData;
 	};
 	MathTextAndStyles.prototype.GetLastContent = function ()
 	{
@@ -5401,7 +5409,7 @@
 		}
 		else
 		{
-			oPr = oContent.CompiledCtrPrp;
+			oPr = oContent.CtrPrp;
 		}
 
 		this.SetAdditionalStyleData(oPr);
@@ -5669,7 +5677,21 @@
 		}
 	};
 
-	function ProceedTokens(oCMathContent, isNotCorrect)
+	const oAutoCorrection = new ProceedTokens();
+
+	function StartAutoCorrectionMath(oCMathContent, isNotCorrect)
+	{
+		if (!oCMathContent)
+			return;
+
+		oAutoCorrection.Start(oCMathContent, isNotCorrect);
+	}
+
+	function ProceedTokens()
+	{
+		this.oCMathContent = null;
+	}
+	ProceedTokens.prototype.Start = function (oCMathContent, isNotCorrect)
 	{
 		this.oCMathContent = oCMathContent;
 
@@ -5680,7 +5702,7 @@
 
 		if (!isNotCorrect)
 			this.StartAutoCorrection();
-	}
+	};
 	ProceedTokens.prototype.Reset = function ()
 	{
 		this.oAbsoluteLastId = undefined;
@@ -6110,7 +6132,7 @@
 			let oMathContent	= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			GetConvertContent(0, oMathContent, this.oCMathContent);
-			oDivide.AddTextToMathContent(oDivide.arr, this.oCMathContent);
+			this.oCMathContent.AddDataFromFlatMathTextAndStyles(oDivide.Flat());
 			return true;
 		}
 
@@ -6946,7 +6968,7 @@
 
 				let nPrev = this.position[1]; // decrease pos in RunPos
 
-				if (arrContent[this.GetMathPos()].Type === para_Run)
+				if (arrContent[this.position[0]].Type === para_Math_Run)
 				{
 					this.position[1]	= arrContent[this.position[0]].Content.length - 1;
 					this.ref = arrContent[this.position[0]].Content;
@@ -7228,7 +7250,7 @@
 	window["AscMath"].MathTextAndStyles				= MathTextAndStyles;
 	window["AscMath"].GetAutoConvertation			= GetAutoConvertation;
 	window["AscMath"].SetAutoConvertation			= SetAutoConvertation;
-	window["AscMath"].ProceedTokens					= ProceedTokens;
+	window["AscMath"].StartAutoCorrectionMath		= StartAutoCorrectionMath;
 	window["AscMath"].GetLaTeXFont					= GetLaTeXFont;
 	window["AscMath"].GetNamesTypeFontLaTeX			= GetNamesTypeFontLaTeX;
 	window["AscMath"].oStandardFont					= oStandardFont;

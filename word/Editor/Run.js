@@ -6572,7 +6572,8 @@ ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 	let rangePos = this.getRangePos(searchState.line, searchState.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
-	if (startPos >= endPos)
+
+	if (startPos > endPos)
 		return;
 	
 	for (let pos = startPos; pos < endPos; ++pos)
