@@ -5308,7 +5308,7 @@
 				oElement instanceof ApiBlockLvlSdt || oElement instanceof ApiInlineLvlSdt || oElement instanceof ApiTable ||
 				oElement instanceof ApiRun)
 				{
-					return oElement.AddComment(sText, sAuthor);
+					return oElement.AddComment(sText, sAuthor, sUserId);
 				}
 		}
 		// Проверка на массив с ранами
