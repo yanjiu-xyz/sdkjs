@@ -2798,6 +2798,18 @@ PasteProcessor.prototype =
             dCellWidth -= nMarginLeft + nMarginRight;
         return dCellWidth;
     },
+	CheckCopyDrawingsBeforePaste: function () {
+			const allDrawings = [];
+		for (let i = 0; i < this.aContent.length; i += 1) {
+			this.aContent[i].GetAllDrawingObjects(allDrawings);
+		}
+		for (let i = 0; i < allDrawings.length; i += 1) {
+			const drawing = allDrawings[i];
+			if (drawing.GraphicObj) {
+				drawing.GraphicObj.generateSmartArtDrawingPart();
+			}
+		}
+	},
     InsertInDocument : function(dNotShowOptions)
     {
         var oDocument = this.oDocument;
@@ -2808,6 +2820,7 @@ PasteProcessor.prototype =
         var nInsertLength = this.aContent.length;
         if(nInsertLength > 0)
         {
+					this.CheckCopyDrawingsBeforePaste();
 			this.InsertInPlace(oDocument, this.aContent);
 
             if(false === PasteElementsId.g_bIsDocumentCopyPaste)

@@ -10214,10 +10214,8 @@ Because of this, the display is sometimes not correct.
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtDrawing] = function (oClass, value) {
       oClass.drawing = value;
-			if (oClass.isLocalDrawingPart) {
-				oClass.reconnectSmartArtShapes();
-				oClass.isLocalDrawingPart = false;
-			}
+	    oClass.isLocalDrawingPart = false;
+			oClass.recalcSmartArtConnections();
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtLayoutDef] = function (oClass, value) {
       oClass.layoutDef = value;
@@ -10250,10 +10248,16 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
-
+	  SmartArt.prototype.recalcFitFontSize = function () {
+		  this.recalcInfo.fitFontSize = true;
+	  };
+	  SmartArt.prototype.recalcSmartArtConnections = function () {
+		  this.recalcInfo.reconnectSmartArtShapes = true;
+	  };
 		SmartArt.prototype.setRecalculateInfo = function () {
 			CGroupShape.prototype.setRecalculateInfo.call(this);
 			this.recalcInfo.fitFontSize = true;
+			this.recalcInfo.reconnectSmartArtShapes = true;
 		};
     SmartArt.prototype.getObjectType = function() {
       return AscDFH.historyitem_type_SmartArt;
@@ -10391,8 +10395,12 @@ Because of this, the display is sometimes not correct.
 		};
 	  SmartArt.prototype.reconnectSmartArtShapes = function () {
 		  this.smartArtTree = new AscFormat.SmartArtAlgorithm(this);
-		  this.smartArtTree.startFromBegin();
-		  this.smartArtTree.connectShapeSmartArtInfo();
+			if (this.isCanGenerateSmartArt()) {
+				this.smartArtTree.startFromBegin();
+				this.smartArtTree.connectShapeSmartArtInfo();
+			} else {
+				this.setConnections2();
+			}
 	  };
 		SmartArt.prototype.checkDrawingPartWithHistory = function (handleShape) {
 			if (this.worksheet && this.isLocalDrawingPart && AscCommon.History.CanAddChanges()) {
@@ -10446,9 +10454,11 @@ Because of this, the display is sometimes not correct.
 		};
     SmartArt.prototype.generateDrawingPart = function () {
 	    this.isLocalDrawingPart = false;
+	    this.recalcInfo.reconnectSmartArtShapes = false;
 			if (!this.isCanGenerateSmartArt()) {
 				return;
 			}
+			this.smartArtTree = new AscFormat.SmartArtAlgorithm(this);
 	    this.smartArtTree.startFromBegin();
       const drawing = this.getDrawing();
       const shapeLength = drawing.spTree.length;
@@ -10459,6 +10469,7 @@ Because of this, the display is sometimes not correct.
       for (let i = shapes.length - 1; i >= 0; i -= 1) {
         drawing.addToSpTree(0, shapes[i]);
       }
+			this.recalcFitFontSize();
     };
 	  SmartArt.prototype.generateSmartArtDrawingPart = SmartArt.prototype.generateDrawingPart;
 	  SmartArt.prototype.findConnector = function (x, y) {
@@ -10535,6 +10546,10 @@ Because of this, the display is sometimes not correct.
 			      this.generateDrawingPart();
 		      }
 	      }
+				if (this.recalcInfo.reconnectSmartArtShapes) {
+					this.recalcInfo.reconnectSmartArtShapes = false;
+					this.reconnectSmartArtShapes();
+				}
         CGroupShape.prototype.recalculate.call(this);
         if (this.bFirstRecalculate) {
           this.bFirstRecalculate = false;
@@ -11692,10 +11707,6 @@ Because of this, the display is sometimes not correct.
         case 1: {
           this.setDataModel(new DiagramData());
           this.dataModel.fromPPTY(pReader);
-					this.smartArtTree = new AscFormat.SmartArtAlgorithm(this);
-/*					if (!this.isCanGenerateSmartArt()) {*/
-						this.setConnections2();
-/*					}*/
           break;
         }
         case 2: {
@@ -12033,8 +12044,6 @@ Because of this, the display is sometimes not correct.
         copy.cachedPixW = this.cachedPixW;
       }
       copy.setLocks(this.locks);
-			copy.smartArtTree = new AscFormat.SmartArtAlgorithm(copy);
-      copy.setConnections2();
       return copy;
     };
     SmartArt.prototype.handleUpdateFill = function() {

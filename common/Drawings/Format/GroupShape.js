@@ -1703,7 +1703,7 @@
 		CGroupShape.prototype.checkDrawingPartWithHistory = function() {};
 		CGroupShape.prototype.generateSmartArtDrawingPart = function () {
 			for (let i = 0; i < this.spTree.length; i += 1) {
-				this.spTree.generateSmartArtDrawingPart();
+				this.spTree[i].generateSmartArtDrawingPart();
 			}
 		};
 
