@@ -6929,46 +6929,7 @@
 	 */
 	ApiDocument.prototype.UpdateAllFields = function(bBySelection)
 	{
-		let oDocument = this.Document;
-		let arrFields = oDocument.GetAllFields(bBySelection);
-
-		if (arrFields.length <= 0)
-		{
-			let oInfo = oDocument.GetSelectedElementsInfo();
-			arrFields = oInfo.GetComplexFields();
-		}
-
-		let oDocState = oDocument.SaveDocumentState();
-
-		let arrParagraphs = [];
-		for (let nIndex = 0, nCount = arrFields.length; nIndex < nCount; ++nIndex)
-		{
-			let oField = arrFields[nIndex];
-			if (oField instanceof CComplexField)
-			{
-				oField.SelectField();
-				arrParagraphs = arrParagraphs.concat(oDocument.GetCurrentParagraph(false, true));
-			}
-			else if (oField instanceof ParaField)
-			{
-				if (oField.GetParagraph())
-					arrParagraphs.push(oField.GetParagraph());
-			}
-		}
-
-		if (!oDocument.Document_Is_SelectionLocked(changestype_None, {
-				Type      : changestype_2_ElementsArray_and_Type,
-				Elements  : arrParagraphs,
-				CheckType : changestype_Paragraph_Content
-			}))
-		{
-			for (let nIndex = 0, nCount = arrFields.length; nIndex < nCount; ++nIndex)
-			{
-				arrFields[nIndex].Update(false, false);
-			}
-
-			oDocument.LoadDocumentState(oDocState);
-		}
+		this.Document.UpdateFields(bBySelection);
 	};
 	/**
 	 * Converts the ApiDocument object into the JSON object.
@@ -7229,7 +7190,7 @@
      * @returns {ApiShape[] | ApiImage[] | ApiChart[] | ApiDrawing[]}
      * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetSelectedDrawings.js
 	 */
-	ApiDocument.prototype.GetSelectedDrawings = function() 
+	ApiDocument.prototype.GetSelectedDrawings = function()
 	{
 		var aSelected = this.Document.DrawingObjects.selectedObjects;
 		var aResult = [];
@@ -21554,13 +21515,13 @@
 	ApiDocument.prototype["ReplaceDrawing"]              = ApiDocument.prototype.ReplaceDrawing;
 	ApiDocument.prototype["AcceptAllRevisionChanges"]    = ApiDocument.prototype.AcceptAllRevisionChanges;
 	ApiDocument.prototype["RejectAllRevisionChanges"]    = ApiDocument.prototype.RejectAllRevisionChanges;
-
+	
 	ApiDocument.prototype["ToJSON"]                  = ApiDocument.prototype.ToJSON;
-	ApiDocument.prototype["UpdateAllTOC"]		     = ApiDocument.prototype.UpdateAllTOC;
-	ApiDocument.prototype["UpdateAllTOF"]		     = ApiDocument.prototype.UpdateAllTOF;
-	ApiDocument.prototype["UpdateAllFields"]		 = ApiDocument.prototype.UpdateAllFields;
-	ApiDocument.prototype["AddTableOfContents"]		 = ApiDocument.prototype.AddTableOfContents;
-	ApiDocument.prototype["AddTableOfFigures"]		 = ApiDocument.prototype.AddTableOfFigures;
+	ApiDocument.prototype["UpdateAllTOC"]            = ApiDocument.prototype.UpdateAllTOC;
+	ApiDocument.prototype["UpdateAllTOF"]            = ApiDocument.prototype.UpdateAllTOF;
+	ApiDocument.prototype["UpdateAllFields"]         = ApiDocument.prototype.UpdateAllFields;
+	ApiDocument.prototype["AddTableOfContents"]      = ApiDocument.prototype.AddTableOfContents;
+	ApiDocument.prototype["AddTableOfFigures"]       = ApiDocument.prototype.AddTableOfFigures;
 
 	ApiDocument.prototype["GetAllForms"]             = ApiDocument.prototype.GetAllForms;
 	ApiDocument.prototype["ClearAllFields"]          = ApiDocument.prototype.ClearAllFields;
