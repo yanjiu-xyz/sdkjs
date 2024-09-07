@@ -9860,13 +9860,13 @@ background-repeat: no-repeat;\
 		// Разрешаем всегда выполнять скрипт билдера, даже если это вьювер, а скрипт меняет содержимое
 		// В конце действия по выполненным изменениям проверяем можно ли оставлять данные изменения
 		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
+		logicDocument.CheckActionLock();
 		return true;
 	};
 	asc_docs_api.prototype.onEndBuilderScript = function()
 	{
 		let logicDocument = this.getLogicDocument();
 		logicDocument.Recalculate();
-		logicDocument.CheckActionLock();
 		logicDocument.UpdateSelection();
 		logicDocument.UpdateInterface();
 		return logicDocument.FinalizeAction();
