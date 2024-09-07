@@ -4536,7 +4536,7 @@ background-repeat: no-repeat;\
 			oSlide.addToSpTreeToPos(oSlide.cSld.spTree.length, oSmartArt);
 		}
 		oSmartArt.checkDrawingBaseCoords();
-		oSmartArt.fitFontSize();
+		oSmartArt.generateDrawingPart();
 		oController.checkChartTextSelection();
 		oController.resetSelection();
 		oSmartArt.select(oController, 0);

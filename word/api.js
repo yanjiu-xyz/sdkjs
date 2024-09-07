@@ -12557,9 +12557,8 @@ background-repeat: no-repeat;\
 				const oSmartArt = new AscFormat.SmartArt();
 				oSmartArt.fillByPreset(nSmartArtType);
 				oSmartArt.fitToPageSize();
-				oSmartArt.fitFontSize();
-				oSmartArt.recalculateBounds();
 				oThis.WordControl.m_oLogicDocument.AddInlineImage(null, null, null, oSmartArt);
+				oSmartArt.generateDrawingPart();
 				AscFonts.IsCheckSymbols = false;
 
 				AscFonts.FontPickerByCharacter.checkText("", oThis, function() {

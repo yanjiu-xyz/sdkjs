@@ -4516,7 +4516,7 @@ var editor;
 		oSmartArt.setWorksheet(oWSModel);
 		oSmartArt.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
 		oSmartArt.checkDrawingBaseCoords();
-		oSmartArt.fitFontSize();
+		oSmartArt.generateDrawingPart();
 		oController.checkChartTextSelection();
 		oController.resetSelection();
 		oSmartArt.select(oController, 0);
