@@ -6142,6 +6142,7 @@ function HierarchyAlgorithm() {
 			return;
 		}
 		const smartArtInfo = editorShape.getSmartArtInfo();
+		this.applyFontRelations(editorShape);
 		this.applyContentFilling(editorShape);
 		if (smartArtInfo.contentPoint.length) {
 			this.applyTxXfrmSettings(editorShape, contentShadowShape);
@@ -6149,8 +6150,6 @@ function HierarchyAlgorithm() {
 			this.applyHorizontalAlignment(editorShape);
 			this.applyVerticalAlignment(editorShape);
 		}
-
-		this.applyFontRelations(editorShape);
 	};
 	TextAlgorithm.prototype.getTextRotate = function () {
 		const shadowShape = this.parentNode.getShape();
@@ -6225,8 +6224,40 @@ function HierarchyAlgorithm() {
 
 		editorShape.setTxXfrm(txXfrm);
 	};
+	TextAlgorithm.prototype.initDefaultMarginScales = function () {
+		const node = this.parentNode;
+
+		if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined) {
+			const bMarg = node.getConstr(AscFormat.Constr_type_bMarg, true, true);
+			if (bMarg === undefined) {
+				node.textConstraints[AscFormat.Constr_type_bMarg] = 0.56;
+			}
+		}
+		if (node.textConstraints[AscFormat.Constr_type_tMarg] === undefined) {
+			const tMarg = node.getConstr(AscFormat.Constr_type_tMarg, true, true);
+			if (tMarg === undefined) {
+				node.textConstraints[AscFormat.Constr_type_tMarg] = 0.56;
+			}
+		}
+
+		if (node.textConstraints[AscFormat.Constr_type_rMarg] === undefined) {
+			const rMarg = node.getConstr(AscFormat.Constr_type_rMarg, true, true);
+			if (rMarg === undefined) {
+				node.textConstraints[AscFormat.Constr_type_rMarg] = 0.56;
+			}
+		}
+
+		if (node.textConstraints[AscFormat.Constr_type_lMarg] === undefined) {
+			const lMarg = node.getConstr(AscFormat.Constr_type_lMarg, true, true);
+			if (lMarg === undefined) {
+				node.textConstraints[AscFormat.Constr_type_lMarg] = 0.56;
+			}
+		}
+	};
 	TextAlgorithm.prototype.applyFontRelations = function (editorShape) {
 		const node = this.parentNode;
+		this.initDefaultMarginScales();
+
 		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
 		shapeSmartArtInfo.textConstraintRelations = node.textConstraintRelations;
 		shapeSmartArtInfo.textConstraints = node.textConstraints;
@@ -6237,39 +6268,19 @@ function HierarchyAlgorithm() {
 		const node = this.parentNode;
 		const paddings = {};
 		if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined) {
-			const bMarg = node.getConstr(AscFormat.Constr_type_bMarg, true, true);
-			if (bMarg !== undefined) {
-				paddings.Bottom = bMarg * g_dKoef_pt_to_mm;
-			} else {
-				node.textConstraints[AscFormat.Constr_type_bMarg] = 0.56;
-			}
+			paddings.Bottom = node.getConstr(AscFormat.Constr_type_bMarg, true) * g_dKoef_pt_to_mm;
 		}
 
 		if (node.textConstraints[AscFormat.Constr_type_tMarg] === undefined) {
-			const tMarg = node.getConstr(AscFormat.Constr_type_tMarg, true, true);
-			if (tMarg !== undefined) {
-				paddings.Top = tMarg * g_dKoef_pt_to_mm;
-			} else {
-				node.textConstraints[AscFormat.Constr_type_tMarg] = 0.56;
-			}
+			paddings.Top = node.getConstr(AscFormat.Constr_type_tMarg, true) * g_dKoef_pt_to_mm;
 		}
 
 		if (node.textConstraints[AscFormat.Constr_type_rMarg] === undefined) {
-			const rMarg = node.getConstr(AscFormat.Constr_type_rMarg, true, true);
-			if (rMarg !== undefined) {
-				paddings.Right = rMarg * g_dKoef_pt_to_mm;
-			} else {
-				node.textConstraints[AscFormat.Constr_type_rMarg] = 0.56;
-			}
+			paddings.Right = node.getConstr(AscFormat.Constr_type_rMarg, true) * g_dKoef_pt_to_mm;
 		}
 
 		if (node.textConstraints[AscFormat.Constr_type_lMarg] === undefined) {
-			const lMarg = node.getConstr(AscFormat.Constr_type_lMarg, true, true);
-			if (lMarg !== undefined) {
-				paddings.Left = lMarg * g_dKoef_pt_to_mm;
-			} else {
-				node.textConstraints[AscFormat.Constr_type_lMarg] = 0.56;
-			}
+			paddings.Left = node.getConstr(AscFormat.Constr_type_lMarg, true) * g_dKoef_pt_to_mm;
 		}
 
 		editorShape.setPaddings(paddings, {bNotCopyToPoints: true});
