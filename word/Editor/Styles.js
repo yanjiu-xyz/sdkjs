@@ -16278,8 +16278,8 @@ CParaPr.prototype.createDuplicateForSmartArt = function (bCopyPrChange, oPr) {
 	if (undefined != this.Spacing)
 		ParaPr.Spacing = this.Spacing.Copy();
 
-	if (undefined != this.Ind) // TODO: apply only changed ind
-		ParaPr.Ind = this.Ind.Copy();
+	// if (undefined != this.Ind) // TODO: apply only changed ind
+	// 	ParaPr.Ind = this.Ind.Copy();
 
 	if (undefined != this.Tabs)
 		ParaPr.Tabs = this.Tabs.Copy();
