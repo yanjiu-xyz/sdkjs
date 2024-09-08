@@ -1566,7 +1566,7 @@
 
 	ShadowShape.prototype.getEditorLine = function (initObjects) {
 
-		const shapeTrack = new AscFormat.NewShapeTrack("", this.x, this.y, initObjects.theme, initObjects.master, initObjects.layout, initObjects.slide, 0);
+		const shapeTrack = new AscFormat.NewShapeTrack("", this.x, this.y, initObjects.theme, initObjects.master, initObjects.layout, initObjects.slide, 0, undefined, undefined, undefined, true);
 		shapeTrack.track({}, this.x + this.width, this.y + this.height);
 		const shape = shapeTrack.getShape(false, initObjects.drawingDocument, initObjects.drawingObjects);
 		const spPr = shape.spPr;
