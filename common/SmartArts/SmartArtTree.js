@@ -6301,7 +6301,10 @@ function HierarchyAlgorithm() {
 		const node = this.parentNode;
 		const bodyPr = editorShape.getBodyPr().createDuplicate();
 		const stBulletLvl = this.params[AscFormat.Param_type_stBulletLvl];
-		if (isParentWithChildren(node.contentNodes) || stBulletLvl === 1) {
+		const firstNodeBodyPr = node.contentNodes[0].txBody.bodyPr;
+		if (firstNodeBodyPr && typeof firstNodeBodyPr.anchor === "number") {
+			bodyPr.setAnchor(firstNodeBodyPr.anchor);
+		} else if (isParentWithChildren(node.contentNodes) || stBulletLvl === 1) {
 			switch (this.params[AscFormat.Param_type_txAnchorVertCh]) {
 				case AscFormat.ParameterVal_textAnchorVertical_b:
 					bodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
@@ -6360,6 +6363,9 @@ function HierarchyAlgorithm() {
 
 		for (let i = 0; i < drawingContent.Content.length; i++) {
 			const item = drawingContent.Content[i];
+			if (typeof item.Pr.Jc === "number") {
+				continue;
+			}
 			item.SetApplyToAll(true);
 			if (item.isRtlDirection()) {
 				item.SetParagraphAlign(paragraphRTLAlignment);
@@ -6370,7 +6376,12 @@ function HierarchyAlgorithm() {
 		}
 
 		const bodyPr = editorShape.getBodyPr();
-		if (bodyPr.anchorCtr !== isCtrHorzAlign) {
+		const firstNodeBodyPr = node.contentNodes[0].txBody.bodyPr;
+		if (firstNodeBodyPr && typeof firstNodeBodyPr.anchorCtr === "boolean") {
+			const copyBodyPr = bodyPr.createDuplicate();
+			bodyPr.anchorCtr = firstNodeBodyPr.anchorCtr;
+			editorShape.txBody.setBodyPr(copyBodyPr);
+		} else if (bodyPr.anchorCtr !== isCtrHorzAlign) {
 			const copyBodyPr = bodyPr.createDuplicate();
 			bodyPr.anchorCtr = isCtrHorzAlign;
 			editorShape.txBody.setBodyPr(copyBodyPr);
