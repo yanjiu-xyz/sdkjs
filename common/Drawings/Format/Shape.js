@@ -4209,13 +4209,12 @@
 			if (this.txBody && oContent) {
 				const currentFontSize = this.getFirstFontSize();
 				const oBodyPr = this.txBody.getBodyPr();
-				if (oBodyPr) {
+				const pointContent = this.getSmartArtPointContent();
+				if (oBodyPr && pointContent) {
 					const paddings = {};
-					const pointContent = this.getSmartArtPointContent();
 					const point = pointContent && pointContent[0].point;
-					const isRecalculateInsets = point.isRecalculateInsets();
 					if (point) {
-
+						const isRecalculateInsets = point.isRecalculateInsets();
 						const smartArt = this.group && this.group.group;
 						if (smartArt && smartArt.isCanGenerateSmartArt()) {
 							const shapeInfo = this.getSmartArtInfo();
@@ -4255,13 +4254,21 @@
 					// While there is no recalculation, we consider new insets as a dependency on the previous font size.
 					this.setPaddings(paddings, {bNotCopyToPoints: true});
 				}
-				this.applySmartArtIndents(fontSize, isParentWithChildren);
+				if (pointContent) {
+					this.applySmartArtFontSize(fontSize, isParentWithChildren);
+				} else {
+					const bOldApplyToAll = oContent.ApplyToAll;
+					oContent.ApplyToAll = true;
+					oContent.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize:fontSize}), false);
+					oContent.ApplyToAll = bOldApplyToAll;
+				}
+
 				if (!bSkipRecalculateContent2) {
 					this.recalculateContent2();
 				}
 			}
 		};
-		CShape.prototype.applySmartArtIndents = function (fontSize, isParentWithChildren) {
+		CShape.prototype.applySmartArtFontSize = function (fontSize, isParentWithChildren) {
 			const oContent = this.txBody && this.txBody.content;
 			const shapeInfo = this.getSmartArtInfo();
 			const contentPoints = this.getSmartArtPointContent();
