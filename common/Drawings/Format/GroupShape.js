@@ -1434,7 +1434,7 @@
 				}
 			}
 		};
-
+		CGroupShape.prototype.recalcSmartArtConnections = function () {};
 		CGroupShape.prototype.Refresh_RecalcData = function (oData) {
 			if (oData) {
 				switch (oData.Type) {
@@ -1449,6 +1449,13 @@
 					case AscDFH.historyitem_GroupShapeRemoveFromSpTree: {
 						if (!this.bDeleted) {
 							this.handleUpdateSpTree();
+							this.recalcSmartArtConnections();
+						}
+						break;
+					}
+					case AscDFH.historyitem_SmartArtDrawing: {
+						if (!this.bDeleted) {
+							this.addToRecalculate();
 						}
 						break;
 					}

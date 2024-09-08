@@ -8957,6 +8957,11 @@ Because of this, the display is sometimes not correct.
 
     InitClass(Drawing, CGroupShape, AscDFH.historyitem_type_SmartArtDrawing);
 
+		Drawing.prototype.recalcSmartArtConnections = function () {
+			if (this.group) {
+				this.group.recalcSmartArtConnections();
+			}
+		};
     Drawing.prototype.getObjectType = function () {
       return AscDFH.historyitem_type_SmartArtDrawing;
     }
@@ -10214,7 +10219,7 @@ Because of this, the display is sometimes not correct.
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtDrawing] = function (oClass, value) {
       oClass.drawing = value;
-	    oClass.isLocalDrawingPart = false;
+			oClass.isLocalDrawingPart = oClass.localDrawingId !== null ? oClass.localDrawingId === (value && value.Get_Id()) : false;
 			oClass.recalcSmartArtConnections();
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtLayoutDef] = function (oClass, value) {
@@ -10245,6 +10250,7 @@ Because of this, the display is sometimes not correct.
       this.calcGeometry = null;
       this.bFirstRecalculate = true;
 			this.isLocalDrawingPart = true;
+			this.localDrawingId = null;
     }
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
@@ -10390,10 +10396,14 @@ Because of this, the display is sometimes not correct.
 				AscFormat.ExecuteNoHistory(function () {
 					this.generateDrawingPart();
 					this.isLocalDrawingPart = true;
+					this.localDrawingId = this.drawing.Get_Id();
 				}, this, []);
 			}
 		};
 	  SmartArt.prototype.reconnectSmartArtShapes = function () {
+			if (!this.dataModel) {
+				return;
+			}
 		  this.smartArtTree = new AscFormat.SmartArtAlgorithm(this);
 			if (this.isCanGenerateSmartArt()) {
 				this.smartArtTree.startFromBegin();
@@ -10454,7 +10464,6 @@ Because of this, the display is sometimes not correct.
 		};
     SmartArt.prototype.generateDrawingPart = function () {
 	    this.isLocalDrawingPart = false;
-	    this.recalcInfo.reconnectSmartArtShapes = false;
 			if (!this.isCanGenerateSmartArt()) {
 				return;
 			}
@@ -10599,6 +10608,7 @@ Because of this, the display is sometimes not correct.
 		      this.readChild(pReader.stream.GetUChar(), pReader);
 		      this.readChild(pReader.stream.GetUChar(), pReader);
 		      this.readChild(pReader.stream.GetUChar(), pReader);
+		      this.readChild(pReader.stream.GetUChar(), pReader);
 		      this.checkNodePointsAfterRead(true);
 	      }
         this.setSpPr(new AscFormat.CSpPr());
@@ -10730,6 +10740,9 @@ Because of this, the display is sometimes not correct.
 
     SmartArt.prototype.getSmartArtDefaultTxFill = function (shape) {
       const smartArtInfo = shape.getSmartArtInfo();
+			if (!smartArtInfo) {
+				return;
+			}
 			let textPoint;
 			if (this.isCanGenerateSmartArt()) {
 				const contentNodes = smartArtInfo.contentPoint;
