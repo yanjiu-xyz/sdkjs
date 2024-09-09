@@ -207,11 +207,6 @@ Because of this, the display is sometimes not correct.
     const If_op_gte = 4;
     const If_op_lte = 5;
 
-    const boolOperator_none = 0;
-    const boolOperator_equ = 1;
-    const boolOperator_gte = 2;
-    const boolOperator_lte = 3;
-
     const If_func_cnt = 0;
     const If_func_depth = 6;
     const If_func_maxDepth = 7;
@@ -10465,6 +10460,18 @@ Because of this, the display is sometimes not correct.
 				}
 			}
 		};
+	  SmartArt.prototype.initDrawing = function () {
+			if (!this.drawing) {
+				this.drawing = new Drawing();
+				this.drawing.setBDeleted(false);
+				this.addToSpTree(0, this.drawing);
+				if (!this.drawing.spPr) {
+					const spPr = new AscFormat.CSpPr();
+					this.drawing.setSpPr(spPr);
+					spPr.setParent(this.drawing);
+				}
+			}
+	  }
     SmartArt.prototype.generateDrawingPart = function () {
 	    this.isLocalDrawingPart = false;
 			if (!this.isCanGenerateSmartArt()) {
@@ -12314,11 +12321,6 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].If_op_lt = If_op_lt;
     window['AscFormat'].If_op_gte = If_op_gte;
     window['AscFormat'].If_op_lte = If_op_lte;
-
-    window['AscFormat'].boolOperator_none = boolOperator_none;
-    window['AscFormat'].boolOperator_equ = boolOperator_equ;
-    window['AscFormat'].boolOperator_gte = boolOperator_gte;
-    window['AscFormat'].boolOperator_lte = boolOperator_lte;
 
     window['AscFormat'].If_func_cnt = If_func_cnt;
     window['AscFormat'].If_func_depth = If_func_depth;
