@@ -3342,9 +3342,11 @@ function CDrawingDocument()
 	};
 	this.CheckRasterImageOnScreen = function (src)
 	{
-		let bRedraw = false;
 		const oPresentation = oThis.m_oWordControl.m_oLogicDocument;
 		let oCurSlide = oPresentation.GetCurrentSlide();
+		if(!oCurSlide)
+			return;
+		let bRedraw = false;
 		let sCheckImage = AscCommon.getFullImageSrc2(src);
 		let nCurIdx = oPresentation.GetSlideIndex(oCurSlide);
 		if(oCurSlide.checkImageDraw(sCheckImage))
