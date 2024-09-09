@@ -430,7 +430,6 @@ module.exports = function(grunt) {
 		}
 	}
 	function getOtherCopyConfig(o, noJSFiles) {
-		console.log(noJSFiles)
 		return {
 			copy: {
 				sdkjs: {
@@ -498,7 +497,4 @@ module.exports = function(grunt) {
 	}
 	grunt.registerTask('default', defaultTasks);
 	grunt.registerTask('develop', ['clean-develop', 'build-develop']);
-
-	// todo remove
-	grunt.registerTask('tester', ['clean-deploy', 'compile-slide']);
 };
