@@ -1599,7 +1599,7 @@
 				return null;
 			}
 
-			const shapeTrack = new AscFormat.NewShapeTrack(this.getEditorShapeType(), this.x, this.y, initObjects.theme, initObjects.master, initObjects.layout, initObjects.slide, 0);
+			const shapeTrack = new AscFormat.NewShapeTrack(this.getEditorShapeType(), this.x, this.y, initObjects.theme, initObjects.master, initObjects.layout, initObjects.slide, 0, undefined, undefined, undefined, true);
 			shapeTrack.track({}, this.x + this.width, this.y + this.height);
 			const shape = shapeTrack.getShape(false, initObjects.drawingDocument, initObjects.drawingObjects);
 			shape.spPr.xfrm.setExtX(this.width);
@@ -1693,9 +1693,9 @@
 
 	ShadowShape.prototype.applyPostEditorSettings = function (editorShape) {
 		this.setShapeSmartArtInfo(editorShape);
+		this.applyShapeSettings(editorShape);
 		this.applyTextSettings(editorShape);
 		this.applyShapeRot(editorShape);
-		this.applyShapeSettings(editorShape);
 	};
 
 	ShadowShape.prototype.applyShapeRot = function (editorShape) {
@@ -6136,6 +6136,15 @@ function HierarchyAlgorithm() {
 			}
 		}
 	};
+	TextAlgorithm.prototype.applyDataBodyPr = function (editorShape) {
+		const node = this.parentNode;
+		const contentNode = node.contentNodes[0];
+		const bodyPr = contentNode.point.t && contentNode.point.t.bodyPr;
+		if (bodyPr) {
+			const copyBodyPr = bodyPr.createDuplicate();
+			editorShape.txBody.setBodyPr(copyBodyPr);
+		}
+	};
 	TextAlgorithm.prototype.applyTextSettings = function (editorShape, contentShadowShape) {
 		if (!contentShadowShape && this.parentNode.isTxXfrm()) {
 			return;
@@ -6145,6 +6154,7 @@ function HierarchyAlgorithm() {
 		this.applyContentFilling(editorShape);
 		if (smartArtInfo.contentPoint.length) {
 			this.applyTxXfrmSettings(editorShape, contentShadowShape);
+			this.applyDataBodyPr(editorShape);
 			this.applyTextMargins(editorShape);
 			this.applyHorizontalAlignment(editorShape);
 			this.applyVerticalAlignment(editorShape);
@@ -6266,19 +6276,20 @@ function HierarchyAlgorithm() {
 	TextAlgorithm.prototype.applyTextMargins = function (editorShape) {
 		const node = this.parentNode;
 		const paddings = {};
-		if (node.textConstraints[AscFormat.Constr_type_bMarg] === undefined) {
+		const isApplyInsets = node.contentNodes[0].point.isRecalculateInsets();
+		if (isApplyInsets.Bottom && node.textConstraints[AscFormat.Constr_type_bMarg] === undefined) {
 			paddings.Bottom = node.getConstr(AscFormat.Constr_type_bMarg, true) * g_dKoef_pt_to_mm;
 		}
 
-		if (node.textConstraints[AscFormat.Constr_type_tMarg] === undefined) {
+		if (isApplyInsets.Top && node.textConstraints[AscFormat.Constr_type_tMarg] === undefined) {
 			paddings.Top = node.getConstr(AscFormat.Constr_type_tMarg, true) * g_dKoef_pt_to_mm;
 		}
 
-		if (node.textConstraints[AscFormat.Constr_type_rMarg] === undefined) {
+		if (isApplyInsets.Right && node.textConstraints[AscFormat.Constr_type_rMarg] === undefined) {
 			paddings.Right = node.getConstr(AscFormat.Constr_type_rMarg, true) * g_dKoef_pt_to_mm;
 		}
 
-		if (node.textConstraints[AscFormat.Constr_type_lMarg] === undefined) {
+		if (isApplyInsets.Left && node.textConstraints[AscFormat.Constr_type_lMarg] === undefined) {
 			paddings.Left = node.getConstr(AscFormat.Constr_type_lMarg, true) * g_dKoef_pt_to_mm;
 		}
 
@@ -6300,7 +6311,7 @@ function HierarchyAlgorithm() {
 		const node = this.parentNode;
 		const bodyPr = editorShape.getBodyPr().createDuplicate();
 		const stBulletLvl = this.params[AscFormat.Param_type_stBulletLvl];
-		const firstNodeBodyPr = node.contentNodes[0].txBody.bodyPr;
+		const firstNodeBodyPr = node.contentNodes[0].point.t.bodyPr;
 		if (firstNodeBodyPr && typeof firstNodeBodyPr.anchor === "number") {
 			bodyPr.setAnchor(firstNodeBodyPr.anchor);
 		} else if (isParentWithChildren(node.contentNodes) || stBulletLvl === 1) {
@@ -6359,23 +6370,29 @@ function HierarchyAlgorithm() {
 			paragraphRTLAlignment = this.getTextAlignment(AscFormat.Param_type_parTxRTLAlign);
 			isCtrHorzAlign = !!this.params[AscFormat.Param_type_txAnchorHorz];
 		}
-
+		let skipSettingAlignment = false;
 		for (let i = 0; i < drawingContent.Content.length; i++) {
 			const item = drawingContent.Content[i];
 			if (typeof item.Pr.Jc === "number") {
-				continue;
+				skipSettingAlignment = true;
+				break;
 			}
-			item.SetApplyToAll(true);
-			if (item.isRtlDirection()) {
-				item.SetParagraphAlign(paragraphRTLAlignment);
-			} else {
-				item.SetParagraphAlign(paragraphLTRAlignment);
+		}
+		if (!skipSettingAlignment) {
+			for (let i = 0; i < drawingContent.Content.length; i++) {
+				const item = drawingContent.Content[i];
+				item.SetApplyToAll(true);
+				if (item.isRtlDirection()) {
+					item.SetParagraphAlign(paragraphRTLAlignment);
+				} else {
+					item.SetParagraphAlign(paragraphLTRAlignment);
+				}
+				item.SetApplyToAll(false);
 			}
-			item.SetApplyToAll(false);
 		}
 
 		const bodyPr = editorShape.getBodyPr();
-		const firstNodeBodyPr = node.contentNodes[0].txBody.bodyPr;
+		const firstNodeBodyPr = node.contentNodes[0].point.t.bodyPr;
 		if (firstNodeBodyPr && typeof firstNodeBodyPr.anchorCtr === "boolean") {
 			const copyBodyPr = bodyPr.createDuplicate();
 			bodyPr.anchorCtr = firstNodeBodyPr.anchorCtr;
