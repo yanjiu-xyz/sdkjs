@@ -1885,6 +1885,7 @@ background-repeat: no-repeat;\
 		}
 		var context = reader.context;
 		this.WordControl.m_oLogicDocument.ImageMap = context.loadDataLinks();
+		context.GenerateSmartArts();
 		jsZlib.close();
 		return true;
 	};
