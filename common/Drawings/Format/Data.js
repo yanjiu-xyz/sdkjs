@@ -10248,7 +10248,6 @@ Because of this, the display is sometimes not correct.
       this.bNeedUpdatePosition = true;
 
       this.calcGeometry = null;
-      this.bFirstRecalculate = true;
 			this.isLocalDrawingPart = true;
 			this.localDrawingId = null;
     }
@@ -10550,22 +10549,11 @@ Because of this, the display is sometimes not correct.
         if (oldParaMarks) {
           editor.ShowParaMarks = false;
         }
-	      if (this.bFirstRecalculate) {
-		      if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN || AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) {
-			      this.generateDrawingPart();
-		      }
-	      }
 				if (this.recalcInfo.reconnectSmartArtShapes) {
 					this.recalcInfo.reconnectSmartArtShapes = false;
 					this.reconnectSmartArtShapes();
 				}
         CGroupShape.prototype.recalculate.call(this);
-        if (this.bFirstRecalculate) {
-          this.bFirstRecalculate = false;
-	        if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN || AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) {
-		        this.fitFontSize();
-	        }
-        }
 				if (this.recalcInfo.fitFontSize) {
 					this.recalcInfo.fitFontSize = false;
 					this.fitFontSize();

@@ -33,9 +33,8 @@
 "use strict";
 
 (function (window) {
-	const IS_DEBUG_DRAWING = true;
-	const IS_ADD_HTML = false;
-	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = false;
+	// const IS_DEBUG_DRAWING = true;
+	// const IS_ADD_HTML = false;
 	AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN = false;
 
 	const LayoutNode = AscFormat.LayoutNode;
@@ -8108,7 +8107,7 @@ function CConnectionDistanceResolver() {
 
 
 
-	if (IS_DEBUG_DRAWING) {
+/*	if (IS_DEBUG_DRAWING) {
 		AscCommon.InitDebugSmartArt = function () {
 
 			const SMARTART_PREVIEW_SIZE_MM = 8128000 * AscCommonWord.g_dKoef_emu_to_mm;
@@ -8241,7 +8240,7 @@ function CConnectionDistanceResolver() {
 				}
 			});
 		}
-	}
+	}*/
 
 	AscFormat.SmartArtAlgorithm = SmartArtAlgorithm;
 })(window);
