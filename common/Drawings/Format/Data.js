@@ -10392,6 +10392,10 @@ Because of this, the display is sometimes not correct.
 	  };
 		SmartArt.prototype.generateLocalDrawingPart = function () {
 			if (this.isLocalDrawingPart) {
+				if (!this.isCanGenerateSmartArt()) {
+					this.isLocalDrawingPart = false;
+					return;
+				}
 				AscFormat.ExecuteNoHistory(function () {
 					this.generateDrawingPart();
 					this.isLocalDrawingPart = true;
