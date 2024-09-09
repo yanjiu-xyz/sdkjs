@@ -6215,6 +6215,22 @@ PasteProcessor.prototype =
 				for (var key in oFontMap) {
 					fonts.push(new CFont(key));
 				}
+				let dPresW = presentationSelectedContent.PresentationWidth;
+				let dPresH = presentationSelectedContent.PresentationHeight;
+				if(AscFormat.isRealNumber(dPresW) && AscFormat.isRealNumber(dPresH)) {
+					let aMasters = presentationSelectedContent.Masters;
+					if(Array.isArray(aMasters)) {
+						for(let nIdx = 0; nIdx < aMasters.length; ++nIdx) {
+							aMasters[nIdx].setSlideSize(dPresW, dPresH);
+						}
+					}
+					let aLayouts = presentationSelectedContent.Layouts;
+					if(Array.isArray(aLayouts)) {
+						for(let nIdx = 0; nIdx < aLayouts.length; ++nIdx) {
+							aLayouts[nIdx].setSlideSize(dPresW, dPresH);
+						}
+					}
+				}
 			}
 			if (bIsEmptyContent) {
 				presentationSelectedContent = null;
