@@ -10630,7 +10630,7 @@
 			return f.apply(t, args);
 		
 		let description = actionPr && actionPr.description ? actionPr.description : AscDFH.historydescription_Unknown;
-		let flags       = actionPr && actionPr.flags ? actionPr.flags : ACTION_FLAGS.UPDATEALL_RECALCULATE;
+		let flags       = actionPr && actionPr.flags ? actionPr.flags : AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE;
 		
 		logicDocument.StartAction(description, null, flags);
 		let result = f.apply(t, args);
