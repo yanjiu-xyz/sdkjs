@@ -14621,6 +14621,48 @@
 	Cell.prototype.getQuotePrefix = function () {
 		return this.xfs && this.xfs.getQuotePrefix();
 	};
+
+	/**
+	 * Checks "areaMap" belongs formula that ignores recursion rules
+	 * @param {[]} aOutStack
+	 * @param {object} oAreaMap
+	 * @returns {boolean}
+	 * @private
+	 */
+	function _isExcludeFormula(aOutStack, oAreaMap) {
+		const aExcludeFormulas = AscCommonExcel.aExcludeRecursiveFomulas;
+		for (let i = 0, length = aOutStack.length; i < length; i++) {
+			const oElem = aOutStack[i];
+			if (oElem.type === cElementType.func && aExcludeFormulas.includes(oElem.name)) {
+				let nIndexOfArgCount = i - 1;
+				let nArgCount = aOutStack[nIndexOfArgCount];
+				let nStartArgIndex = nIndexOfArgCount - nArgCount;
+				let bBelongToFormula = false;
+				for (let j = nStartArgIndex; j < nIndexOfArgCount; j++) {
+					let oArgElem = aOutStack[j];
+					let oBbox = null;
+					let aRef = [cElementType.cell, cElementType.cell3D, cElementType.cellsRange, cElementType.cellsRange3D];
+					if (!aRef.includes(oArgElem.type)) {
+						continue;
+					}
+					if (oArgElem.type === cElementType.name || oArgElem.type === cElementType.name3D) {
+						const oElemValue = oArgElem.getValue();
+						if (!aRef.includes(oElemValue.type)) {
+							continue;
+						}
+						oBbox = oElemValue.getBBox0();
+					}  else {
+						oBbox = oArgElem.getBBox0();
+					}
+					bBelongToFormula = oBbox.containsRange(oAreaMap.bbox);
+					if (bBelongToFormula) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
 	/**
 	 * Method returns listeners of cell
 	 * @returns {object}
@@ -14672,7 +14714,8 @@
 			return oSheetListeners.cellMap[nCellIndex];
 		} else {
 			for (let nIndex in oSheetListeners.areaMap) {
-				if (oSheetListeners.areaMap[nIndex].bbox.contains(this.nCol, this.nRow)) {
+				if (oSheetListeners.areaMap[nIndex].bbox.contains(this.nCol, this.nRow)
+					&& !_isExcludeFormula(aOutStack, oSheetListeners.areaMap[nIndex])) {
 					return oSheetListeners.areaMap[nIndex];
 				}
 			}
@@ -14718,7 +14761,7 @@
 			} else {
 				nListenerCellIndex = getCellIndex(oListenerCell.nRow, oListenerCell.nCol);
 			}
-			if (nListenerCellIndex == null) {
+			if (nListenerCellIndex == null || isNaN(nListenerCellIndex)) {
 				continue;
 			}
 			if (oListenerCell instanceof Asc.CT_WorksheetSource) {

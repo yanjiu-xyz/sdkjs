@@ -1287,6 +1287,27 @@ $(function () {
 		bCaFromSelectedCell = getCaFromSelectedCell("B1038");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: Sequence chain with disabled iterative calculation. B1038 - flag ca: true");
 		bCaFromSelectedCell = null;
+		// Case: Exception formulas that ignores rules of recursion recognition
+		ws.getRange2("A1039").setValue("=ROW(A1039)");
+		assert.strictEqual(ws.getRange2("A1039").getValue(), "1039", "Test: Exception formulas that ignores rules of recursion recognition. A1039 - 1039. Formula - ROW");
+		bCaFromSelectedCell = getCaFromSelectedCell("A1039");
+		assert.strictEqual(bCaFromSelectedCell, false, "Test: Exception formulas that ignores rules of recursion recognition. A1039 - flag ca: false");
+		bCaFromSelectedCell = null;
+		ws.getRange2("B1039").setValue("=COLUMN(B1039)");
+		assert.strictEqual(ws.getRange2("B1039").getValue(), "2", "Test: Exception formulas that ignores rules of recursion recognition. B1039 - 2. Formula - COLUMN");
+		bCaFromSelectedCell = getCaFromSelectedCell("B1039");
+		assert.strictEqual(bCaFromSelectedCell, false, "Test: Exception formulas that ignores rules of recursion recognition. B1039 - flag ca: false");
+		bCaFromSelectedCell = null;
+		ws.getRange2("C1039").setValue("=ISFORMULA(C1039)");
+		assert.strictEqual(ws.getRange2("C1039").getValue(), "TRUE", "Test: Exception formulas that ignores rules of recursion recognition. C1039 - TRUE. Formula - ISFORMULA");
+		bCaFromSelectedCell = getCaFromSelectedCell("C1039");
+		assert.strictEqual(bCaFromSelectedCell, false, "Test: Exception formulas that ignores rules of recursion recognition. C1039 - flag ca: false");
+		bCaFromSelectedCell = null;
+		ws.getRange2("D1039").setValue("=SHEETS(D1039)");
+		assert.strictEqual(ws.getRange2("D1039").getValue(), "1", "Test: Exception formulas that ignores rules of recursion recognition. D1039 - 1. Formula - SHEETS");
+		bCaFromSelectedCell = getCaFromSelectedCell("D1039");
+		assert.strictEqual(bCaFromSelectedCell, false, "Test: Exception formulas that ignores rules of recursion recognition. D1039 - flag ca: false");
+		bCaFromSelectedCell = null;
 		// -- Test changeLinkedCell method.
 		oCell = selectCell("A1000");
 		let oCellNeedEnableRecalc = selectCell("B1000");
