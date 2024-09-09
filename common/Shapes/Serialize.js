@@ -319,6 +319,9 @@ function BinaryPPTYLoader()
 				smartart.generateDrawingPart();
 			}
 		};
+	this.ClearSmartArts = function () {
+		this.smartarts.length = 0;
+	};
 
     this.LoadDocument = function()
     {
@@ -699,7 +702,7 @@ function BinaryPPTYLoader()
 			}
         }
 				if (this.IsThemeLoader) {
-					this.smartarts.length = 0;
+					this.ClearSmartArts();
 				} else {
 					this.GenerateSmartArts();
 				}
@@ -11357,7 +11360,7 @@ function BinaryPPTYLoader()
             this.BaseReader = null;
             if(!bClearStreamOnly)
                 this.ImageMapChecker = {};
-	        this.Reader.smartarts.length = 0;
+	        this.Reader.ClearSmartArts();
         };
     }
 
