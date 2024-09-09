@@ -1414,6 +1414,9 @@ StaxParser.prototype.GetDoubleOrNaN = function (val, def) {
     if(val === "NaN") {
         return NaN;
     }
+		if (val === "INF") {
+			return Infinity;
+		}
     return this.GetDouble(val, def);
 };
 StaxParser.prototype.GetValueBool = function () {

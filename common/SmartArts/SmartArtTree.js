@@ -1602,6 +1602,9 @@
 			const shapeTrack = new AscFormat.NewShapeTrack(this.getEditorShapeType(), this.x, this.y, initObjects.theme, initObjects.master, initObjects.layout, initObjects.slide, 0, undefined, undefined, undefined, true);
 			shapeTrack.track({}, this.x + this.width, this.y + this.height);
 			const shape = shapeTrack.getShape(false, initObjects.drawingDocument, initObjects.drawingObjects);
+			const nvSpPr = new AscFormat.UniNvPr();
+			nvSpPr.cNvPr.setId(0);
+			shape.setNvSpPr(nvSpPr);
 			shape.spPr.xfrm.setExtX(this.width);
 			shape.spPr.xfrm.setExtY(this.height);
 			shape.setBDeleted(false);

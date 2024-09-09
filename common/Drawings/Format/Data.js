@@ -10465,11 +10465,12 @@ Because of this, the display is sometimes not correct.
 				this.drawing = new Drawing();
 				this.drawing.setBDeleted(false);
 				this.addToSpTree(0, this.drawing);
-				if (!this.drawing.spPr) {
-					const spPr = new AscFormat.CSpPr();
-					this.drawing.setSpPr(spPr);
-					spPr.setParent(this.drawing);
-				}
+				const spPr = new AscFormat.CSpPr();
+				this.drawing.setSpPr(spPr);
+				spPr.setParent(this.drawing);
+				const nvSpPr = new AscFormat.UniNvPr();
+				nvSpPr.cNvPr.setId(0);
+				this.drawing.setNvSpPr(nvSpPr);
 			}
 	  }
     SmartArt.prototype.generateDrawingPart = function () {
