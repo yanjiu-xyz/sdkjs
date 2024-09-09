@@ -553,6 +553,8 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case AscWord.fieldtype_NOTEREF:
 			this.private_UpdateNOTEREF();
 			break;
+		case AscWord.fieldtype_FORMCHECKBOX:
+		case AscWord.fieldtype_FORMTEXT:
 		case AscWord.fieldtype_ADDIN:
 			break;
 	}
@@ -612,10 +614,11 @@ CComplexField.prototype.CalculateValue = function()
 		case AscWord.fieldtype_NOTEREF:
 			sResult = this.private_CalculateNOTEREF();
 			break;
+		case AscWord.fieldtype_FORMCHECKBOX:
+		case AscWord.fieldtype_FORMTEXT:
 		case AscWord.fieldtype_ADDIN:
 			sResult = "";
 			break;
-
 	}
 
 	return sResult;

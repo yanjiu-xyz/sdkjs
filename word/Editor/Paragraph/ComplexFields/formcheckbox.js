@@ -46,11 +46,19 @@
 	CFieldInstructionFORMCHECKBOX.prototype.constructor = CFieldInstructionFORMCHECKBOX;
 	CFieldInstructionFORMCHECKBOX.prototype.Type = AscWord.fieldtype_FORMCHECKBOX;
 	
+	CFieldInstructionFORMCHECKBOX.prototype.IsEnabled = function()
+	{
+		return true;
+	};
+	CFieldInstructionFORMCHECKBOX.prototype.IsChecked = function()
+	{
+		return false;
+	};
 	CFieldInstructionFORMCHECKBOX.prototype.ToString = function()
 	{
 		return " FORMCHECKBOX ";
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].CFieldInstructionFORMCHECKBOX = CFieldInstructionFORMCHECKBOX;
+	AscWord.CFieldInstructionFORMCHECKBOX = CFieldInstructionFORMCHECKBOX;
 	
 })(window);
