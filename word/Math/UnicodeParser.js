@@ -393,6 +393,14 @@
                     style: ctrlPr,
 				};
 			}
+			else
+			{
+				return {
+					type: Struc.box,
+					value: {},
+					style: ctrlPr,
+				};
+			}
 		}
 		return this.WriteSavedTokens();
 	};
@@ -415,6 +423,14 @@
 					type: Struc.rect,
 					value: oToken,
                 	style: oCtrPr,
+				};
+			}
+			else
+			{
+				return {
+					type: Struc.rect,
+					value: {},
+					style: oCtrPr,
 				};
 			}
 		}
@@ -1262,6 +1278,9 @@
 
 			if (this.oLookahead.class === Literals.space.id)
 				this.EatToken(this.oLookahead.class);
+
+			if (undefined === oFirstElement)
+				oFirstElement = {};
 
 			// Get second element
 			if (this.oLookahead.data === "^" && !this.isOneSubSup)
@@ -2222,13 +2241,13 @@
 	{
 		const token = this.oLookahead;
 
-		if (token === null) {
-			console.log('Unexpected end of input, expected: "' + tokenType + '"');
-		}
-
-		if (token.class !== tokenType) {
-			console.log('Unexpected token: "' + token.class + '", expected: "' + tokenType + '"');
-		}
+		// if (token === null) {
+		// 	console.log('Unexpected end of input, expected: "' + tokenType + '"');
+		// }
+		//
+		// if (token.class !== tokenType) {
+		// 	console.log('Unexpected token: "' + token.class + '", expected: "' + tokenType + '"');
+		// }
 
 		if (this.isSaveTokens)
 			this.arrSavedTokens.push(this.oLookahead);

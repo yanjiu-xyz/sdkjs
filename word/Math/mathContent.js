@@ -3366,8 +3366,7 @@ CMathContent.prototype.AddGroupedByStyleText = function (text, paragraph, mathSt
 	oMathRun.Set_RFont_ForMathRun();
 
 	this.AddToContent(this.Content.length, oMathRun, false);
-
-	this.CurPos++;
+	this.CurPos = this.Content.length;
 };
 CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAdditionalData)
 {
@@ -3413,9 +3412,10 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 	oMathRun.Set_RFont_ForMathRun();
 
 	if (this.Content[this.Content.length - 1] !== oMathRun)
+	{
 		this.AddToContent(this.Content.length, oMathRun, false);
-
-	this.CurPos++;
+		this.CurPos = this.Content.length;
+	}
 };
 CMathContent.prototype.Add_ToPrevParaRun = function(text)
 {
@@ -5897,7 +5897,8 @@ CMathContent.prototype.SplitContentByPos = function (nPos, isCurPos)
 	let nStartPos = isCurPos ? nPos + 1 : nPos;
 	let nEndPos = isCurPos ? nPos - 1 : nPos;
 
-	this.Remove_FromContent(nStartPos, this.Content.length - nEndPos);
+	if (nStartPos < this.Content.length)
+		this.Remove_FromContent(nStartPos, this.Content.length - nEndPos);
 	return arrContent;
 };
 CMathContent.prototype.ProcessingOldEquationConvert  = function ()

@@ -952,7 +952,7 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
                 this.Root.Remove_FromContent(0, 1);
                 return true;
             }
-            else if ((true === oElement.IsPlaceholder() && !bOnAddText) || (false === oElement.Remove(Direction) && true !== this.bSelectionUse))
+            else if ((true === oElement.IsPlaceholder() && !bOnAddText) || (false === oElement.IsPlaceholder() && false === oElement.Remove(Direction) && true !== this.bSelectionUse))
             {
                 if ((Direction > 0 && oContent.Content.length - 1 === nStartPos) || (Direction < 0 && 0 === nStartPos))
                 {
@@ -1141,6 +1141,13 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
         }
         oContent.Correct_Content();
         oContent.Correct_ContentPos(Direction);
+
+		// если в контенте остался только плейсхолдер, то нам нужно выделить его
+		if (oContent.IsPlaceholder())
+		{
+			oContent.SelectThisElement(1);
+			oContent.SelectAll(1);
+		}
     }
 };
 

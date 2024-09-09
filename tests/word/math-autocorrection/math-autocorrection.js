@@ -164,6 +164,13 @@ $(function () {
 	};
 
 
+	QUnit.testStart(function (){
+		AscTest.ClearDocument();
+		AscCommon.History.Clear();
+		Clear();
+		Init();
+	})
+
 	QUnit.module( "Unicode", function ()
 	{
 		QUnit.module( "Auto-convert rules", function ()
@@ -215,20 +222,24 @@ $(function () {
 
 		QUnit.module( "Box and Rect", function ()
 		{
-			QUnit.module( "auto-convert");
+			QUnit.module("auto-convert");
 			Test("□(1+2) ", [["ParaRun", ""], ["CBox", "□(1+2)"]], false, "Check Unicode Box");
 			Test("□1 ", [["ParaRun", ""], ["CBox", "□1"]], false, "Check Unicode Box");
+			Test("□ ", [["ParaRun", ""], ["CBox", "□"]], false, "Check Unicode Box");
 			Test("□1/2 ", [["ParaRun", ""], ["CFraction", "□1/2"]], false, "Check Unicode Box");
 			Test("▭(1+2) ", [["ParaRun", ""], ["CBorderBox", "▭(1+2)"]], false, "Check Unicode Box");
 			Test("▭1 ", [["ParaRun", ""], ["CBorderBox", "▭1"]], false, "Check Unicode Box");
+			Test("▭ ", [["ParaRun", ""], ["CBorderBox", "▭"]], false, "Check Unicode Box");
 			Test("▭1/2 ", [["ParaRun", ""], ["CFraction", "▭1/2"]], false, "Check Unicode Box");
 
-			QUnit.module( "convert");
+			QUnit.module("convert");
 			Test("□(1+2)", [["ParaRun", ""], ["CBox", "□(1+2)"]], false, "Check Unicode Box", true);
 			Test("□1", [["ParaRun", ""], ["CBox", "□1"]], false, "Check Unicode Box", true);
+			Test("□", [["ParaRun", ""], ["CBox", "□"]], false, "Check Unicode Box", true);
 			Test("□1/2", [["ParaRun", ""], ["CFraction", "□1/2"]], false, "Check Unicode Box", true);
 			Test("▭(1+2)", [["ParaRun", ""], ["CBorderBox", "▭(1+2)"]], false, "Check Unicode Box", true);
 			Test("▭1", [["ParaRun", ""], ["CBorderBox", "▭1"]], false, "Check Unicode Box", true);
+			Test("▭", [["ParaRun", ""], ["CBorderBox", "▭"]], false, "Check Unicode Box", true);
 			Test("▭1/2", [["ParaRun", ""], ["CFraction", "▭1/2"]], false, "Check Unicode Box", true);
 
 			Test("\\rect ", [["ParaRun", "▭"]], false, "Check box literal");
@@ -472,6 +483,7 @@ $(function () {
 			Test(`1¦2`, [["ParaRun", ""], ["CFraction", "1¦2"], ["ParaRun", ""]], false, "Check fraction content", true);
 			Test(`(1¦2)`, [["ParaRun", ""], ["CDelimiter", "(1¦2)"], ["ParaRun", ""]], false, "Check fraction content", true);
 			Test("(sin⁡θ)/(cos⁡θ) ", [["ParaRun", ""], ["CFraction", "(sin⁡θ)/(cos⁡θ)"], ["ParaRun", ""]], false, "Check functions");
+			Test("(1/2)/", [["ParaRun", ""], ["CDelimiter", "(1/2)"], ["ParaRun", "/"]], false, "Check devide");
 		})
 
 		QUnit.module( "Horizontal brackets", function ()
@@ -746,6 +758,7 @@ $(function () {
 			Test("1/2+1/2=x/y ", [["ParaRun", ""], ["CFraction", "1/2"], ["ParaRun", "+"], ["CFraction", "1/2"], ["ParaRun", "="], ["CFraction", "x/y"], ["ParaRun", ""]], false);
 
 			Test("x_y ", [["ParaRun", ""], ["CDegree", "x_y"], ["ParaRun", ""]], false, "Check degree");
+			Test("x_ ", [["ParaRun", ""], ["CDegree", "x_"], ["ParaRun", ""]], false, "Check degree");
 			Test("_ ", [["ParaRun", ""], ["CDegree", "_"]], false, "Check degree");
 			Test("x_1 ", [["ParaRun", ""], ["CDegree", "x_1"], ["ParaRun", ""]], false, "Check degree");
 			Test("1_x ", [["ParaRun", ""], ["CDegree", "1_x"], ["ParaRun", ""]], false, "Check degree");
@@ -775,7 +788,7 @@ $(function () {
 			Test("𝑊^3𝛽_𝛿1𝜌1𝜎2 ", [["ParaRun", ""], ["CDegreeSubSup", "𝑊_𝛿1𝜌1𝜎2^3𝛽"], ["ParaRun", ""]], false, "Check index degree with Unicode symbols");
 
 			QUnit.module( "pre-script");
-			// Test("(_1^f)f ", [["ParaRun", ""], ["CDegreeSubSup", "(_1^f)f"], ["ParaRun", ""]], false, "Check prescript index degree");
+			Test("(_1^f)f ", [["ParaRun", ""], ["CDegreeSubSup", "(_1^f)f"], ["ParaRun", ""]], false, "Check prescript index degree");
 			// Test("(_(1/2)^y)f ", [["ParaRun", ""], ["CDegreeSubSup", "(_(1/2)^y)f"], ["ParaRun", ""]], false, "Check prescript index degree");
 			// Test("(_(1/2)^[x_i])x/y  ", [["ParaRun", ""], ["CDegreeSubSup", "(_(1/2)^[x_i])x/y"], ["ParaRun", ""]], false, "Check prescript index degree");
 		})
@@ -969,12 +982,12 @@ $(function () {
 			Test("sec a", [["ParaRun", ""], ["CMathFunc", "sec⁡a"], ["ParaRun", ""]], false, "Check functions");
 			Test("cot a", [["ParaRun", ""], ["CMathFunc", "cot⁡a"], ["ParaRun", ""]], false, "Check functions");
 
-			Test("sin (1+2_i) ", [["ParaRun", ""], ["CMathFunc", "sin⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions");
-			Test("cos (1+2_i) ", [["ParaRun", ""], ["CMathFunc", "cos⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions");
-			Test("tan (1+2_i) ", [["ParaRun", ""], ["CMathFunc", "tan⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions");
-			Test("csc (1+2_i) ", [["ParaRun", ""], ["CMathFunc", "csc⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions");
-			Test("sec (1+2_i) ", [["ParaRun", ""], ["CMathFunc", "sec⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions");
-			Test("cot (1+2_i) ", [["ParaRun", ""], ["CMathFunc", "cot⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions");
+			Test("sin⁡(1+2_i)", [["ParaRun", ""], ["CMathFunc", "sin⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions", true);
+			Test("cos⁡(1+2_i)", [["ParaRun", ""], ["CMathFunc", "cos⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions", true);
+			Test("tan⁡(1+2_i)", [["ParaRun", ""], ["CMathFunc", "tan⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions", true);
+			Test("csc⁡(1+2_i)", [["ParaRun", ""], ["CMathFunc", "csc⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions", true);
+			Test("sec⁡(1+2_i)", [["ParaRun", ""], ["CMathFunc", "sec⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions", true);
+			Test("cot⁡(1+2_i)", [["ParaRun", ""], ["CMathFunc", "cot⁡(1+2_i)"], ["ParaRun", ""]], false, "Check functions", true);
 
 			// Test("lim_a ", [["ParaRun", ""], ["CMathFunc", "lim_a⁡"], ["ParaRun", ""]], false, "In one session we must save what type of token used for limit _ or ┬");
 			// Test("lim┬a ", [["ParaRun", ""], ["CMathFunc", "lim┬a⁡"], ["ParaRun", ""]], false, "In one session we must save what type of token used for limit _ or ┬");
@@ -1030,8 +1043,6 @@ $(function () {
 
 		QUnit.module( "Bugs", function ()
 		{
-			Test("(1/2)/", [["ParaRun", ""], ["CDelimiter", "(1/2)"], ["ParaRun", "/"]], false, "Check devide");
-
 			QUnit.test('Check review info convert math; bug #67505', function (assert)
 			{
 				Clear();
@@ -1095,6 +1106,101 @@ $(function () {
 				let isNotMatrix = !(MathContent.Root.Content[1] instanceof CMathMatrix);
 				assert.strictEqual(isNotMatrix, true, 'We must get not Matrix');
 			})
+		})
+	})
+
+	QUnit.module("Cursor", function ()
+	{
+		QUnit.test('Check cursor position after convert empty math func (cos, sin..)', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+
+			AddText('cos ');
+
+			let cont = MathContent.Root;
+			let func = cont.Content[1];
+			let arg = func.getArgument();
+
+			assert.strictEqual(cont.CurPos, 1, 'Cursor inside function');
+			assert.strictEqual(func.CurPos, 1, 'Cursor in func argument');
+			assert.strictEqual(arg.CurPos, 0, 'Cursor selected first paraRun in func argument');
+		})
+
+		QUnit.test('Check cursor position after convert math func with content (cos, sin..)', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+			AddText('cos\\funcapply(1+2) ');
+
+			let cont = MathContent.Root;
+
+			assert.strictEqual(cont.CurPos, 2, 'Cursor after function');
+		})
+
+		QUnit.test('Check cursor pos after del content inside math func argument', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+
+			AddText('cos ');
+
+			let cont = MathContent.Root;
+			let func = cont.Content[1];
+
+			AddText('2_x ');
+
+			AscTest.PressKey(8);
+			AscTest.PressKey(8);
+
+			assert.strictEqual(func.CurPos, 1, 'Cursor inside func argument');
+		})
+
+		QUnit.test('Check degree pos after convert inside math content', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+			AscMath.SetAutoConvertation(false);
+			AddText('1/ ');
+			MathContent.ConvertView(false, Asc.c_oAscMathInputType.Unicode);
+			AscMath.SetAutoConvertation(true);
+
+			let cont = MathContent.Root;
+			let frac = cont.Content[1];
+			let den = frac.getDenominator();
+
+			den.SelectThisElement(1);
+			den.SelectAll(1);
+
+			AddText('2_x ');
+
+			assert.strictEqual(den.CurPos, 2, 'Cursor after degree');
+		})
+
+		QUnit.test('Undo for empty math content placeholder', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+
+			let delimiter			= MathContent.Root.Add_DelimiterEx(new CTextPr(), 1, [null],  null,  null);
+			let oDelimiterContent	= delimiter.getElementMathContent(0);
+			assert.ok(true, "Add empty bracket block ()");
+
+			MathContent.Root.Correct_Content(true);
+			oDelimiterContent.SelectThisElement(1);
+			oDelimiterContent.SelectAll(1);
+			assert.ok(true, "Select empty placeholder inside bracket block");
+
+			AscTest.EnterText("1");
+			assert.ok(true, "Enter '1'");
+
+			logicDocument.Document_Undo();
+			assert.ok(true, "Undo");
+			let r = oDelimiterContent.getElem(0);
+
+			let strR = r.GetTextOfElement().GetText();
+			assert.strictEqual(strR, '', 'Inside bracket block empty string: \"'+ strR + '\"');
+			assert.strictEqual(r.IsPlaceholder(), true, 'only placeholder');
 		})
 	})
 

@@ -1441,12 +1441,12 @@
 	{
 		if (tokenType !== undefined && this.oLookahead.class === tokenType) {
 			const oToken = this.oLookahead;
-			if (oToken === null) {
-				console.log('Unexpected end of input, expected: ' + tokenType);
-			}
-			if (oToken.class !== tokenType) {
-				console.log('Unexpected token: ' + oToken.class + ', expected: ' + tokenType);
-			}
+			// if (oToken === null) {
+			// 	console.log('Unexpected end of input, expected: ' + tokenType);
+			// }
+			// if (oToken.class !== tokenType) {
+			// 	console.log('Unexpected token: ' + oToken.class + ', expected: ' + tokenType);
+			// }
 			this.oLookahead = this.oTokenizer.GetNextToken();
 			return oToken;
 		}
