@@ -7350,7 +7350,9 @@ function parserFormula( formula, parent, _ws ) {
 						found_operand = new cArea3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, wsT, externalLink);
 					}
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
-					t.ca = isRecursiveFormula(found_operand, t);
+					if (local) {
+						t.ca = isRecursiveFormula(found_operand, t);
+					}
 				} else if (parserHelp.isRef.call(ph, t.Formula, ph.pCurrPos)) {
 					if (!(wsF && wsT)) {
 						//for edit formula mode
@@ -7362,12 +7364,16 @@ function parserFormula( formula, parent, _ws ) {
 						found_operand = new cRef3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, externalLink);
 					}
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
-					t.ca = isRecursiveFormula(found_operand, t);
+					if (local) {
+						t.ca = isRecursiveFormula(found_operand, t);
+					}
 				} else {
 					parserHelp.isName.call(ph, t.Formula, ph.pCurrPos);
 					found_operand = new cName3D(ph.operand_str, wsF, externalLink);
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
-					t.ca = isRecursiveFormula(found_operand, t);
+					if (local) {
+						t.ca = isRecursiveFormula(found_operand, t);
+					}
 				}
 			}
 
@@ -7377,7 +7383,9 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				found_operand = new cArea(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
-				t.ca = isRecursiveFormula(found_operand, t);
+				if (local) {
+					t.ca = isRecursiveFormula(found_operand, t);
+				}
 			}
 			/* Referens to cell A4 */ else if (parserHelp.isRef.call(ph, t.Formula, ph.pCurrPos)) {
 				if (!_checkReferenceCount(1)) {
@@ -7386,7 +7394,9 @@ function parserFormula( formula, parent, _ws ) {
 				found_operand = new cRef(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
 
-				t.ca = isRecursiveFormula(found_operand, t);
+				if (local) {
+					t.ca = isRecursiveFormula(found_operand, t);
+				}
 			} else if (_tableTMP = parserHelp.isTable.call(ph, t.Formula, ph.pCurrPos, local)) {
 				found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws, tablesMap);
 
@@ -7444,7 +7454,9 @@ function parserFormula( formula, parent, _ws ) {
 					needAssemble = true;
 				}
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand, true);
-				t.ca = isRecursiveFormula(found_operand, t);
+				if (local) {
+					t.ca = isRecursiveFormula(found_operand, t);
+				}
 				if (t.ca && defName && defName.parsedRef) {
 					defName.parsedRef.ca = t.ca;
 				}
