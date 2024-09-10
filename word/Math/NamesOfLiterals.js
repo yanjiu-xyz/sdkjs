@@ -6331,12 +6331,17 @@
 	{
 		if ( this.Tokens.brackets.Pairs.length > 0)
 		{
-			let oParamsCutContent	= {oDelMark : this.Tokens.brackets.Pairs[0][1], isCopy : true, isDelLastSpace: true};
-			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
-			let strMathContent		= oMathContent.GetText();
+			return AscFormat.ExecuteNoHistory(
+				function () {
+					let oParamsCutContent	= {oDelMark : this.Tokens.brackets.Pairs[0][1], isCopy : true, isDelLastSpace: true};
+					let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
+					let strMathContent		= oMathContent.GetText();
 
-			if (strMathContent.split("_").length === 2 && strMathContent.split("^").length === 2)
-				return this.Tokens.brackets.Pairs.length > 0;
+					if (strMathContent.split("_").length === 2 && strMathContent.split("^").length === 2)
+						return this.Tokens.brackets.Pairs.length > 0;
+				},
+				this,
+			);
 		}
 	};
 	ProceedTokens.prototype.ConvertPreScript = function ()
