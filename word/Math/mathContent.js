@@ -5780,7 +5780,7 @@ CMathContent.prototype.AddDataFromFlatMathTextAndStyles = function (arrData)
 {
 	for (let i = 0; i < arrData.length; i++)
 	{
-		this.AddGroupedByStyleText(
+		this.Add_Text(
 			arrData[i].text,
 			this.Paragraph,
 			undefined,
