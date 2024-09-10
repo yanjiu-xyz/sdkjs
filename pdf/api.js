@@ -153,7 +153,7 @@
 			"H": 25.4 * page.H / page.Dpi
 		}
 	};
-	PDFEditorApi.prototype["asc_nativeOpenFile"] = function(base64File, version) {
+	PDFEditorApi.prototype["asc_nativeOpenFile"] = function(data, version) {
 		this.SpellCheckUrl = '';
 
 		this.User = new AscCommon.asc_CUser();
@@ -171,10 +171,16 @@
 		if (undefined !== version)
 			AscCommon.CurFileVersion = version;
 
-		let openParams        = {};
-		let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
-		if (!oBinaryFileReader.Read(base64File))
-			this.sendEvent("asc_onError", Asc.c_oAscError.ID.MobileUnexpectedCharCount, Asc.c_oAscError.Level.Critical);
+		let viewer = this.DocumentRenderer;
+		viewer.file = window["AscViewer"].createFile(data);
+
+		if (viewer.file)
+		{
+			viewer.SearchResults = viewer.file.SearchResults;
+			viewer.file.viewer = viewer;
+		}
+
+		viewer.afterOpen();
 
 		AscCommon.g_oIdCounter.Set_Load(false);
 		this.LoadedObject = 1;
@@ -192,6 +198,21 @@
 			};
 		}
 	};
+	PDFEditorApi.prototype["asc_nativeCalculate"] = function()
+	{
+	};
+	PDFEditorApi.prototype["asc_nativePrintPagesCount"] = function()
+	{
+		// the result is unimportant
+		return 0;
+	};
+	PDFEditorApi.prototype["asc_nativeGetPDF"] = function(options)
+	{
+		if (this.DocumentRenderer)
+			return this.DocumentRenderer.Save();
+		return null;
+	};
+
 	PDFEditorApi.prototype.Undo           = function()
 	{
 		var oDoc = this.getPDFDoc();

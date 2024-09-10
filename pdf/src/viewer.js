@@ -870,14 +870,19 @@
 				this.Api.sendEvent("asc_onDocumentPassword", "" !== this.savedPassword);
 			}
 
+			this.afterOpen();
+		};
+
+		this.afterOpen = function()
+		{
 			this.pagesInfo.setCount(this.file.pages.length);
 			let oDoc = this.getPDFDoc();
-            oDoc.GetDrawingDocument().m_lPagesCount = this.file.pages.length;
-			
+			oDoc.GetDrawingDocument().m_lPagesCount = this.file.pages.length;
+
 			for (let i = 0; i < this.file.pages.length; i++) {
 				this.DrawingObjects.mergeDrawings(i);
 			}
-			
+
 			let standardFonts = this.file.nativeFile["getInteractiveFormsStandardFonts"]();
 			let embeddedFonts = this.file.nativeFile["getInteractiveFormsEmbeddedFonts"]();
 			AscFonts.initEmbeddedFonts(standardFonts.concat(embeddedFonts));
@@ -894,9 +899,9 @@
 
 			g_fontApplication.GetFontInfo = g_fontApplication.GetFontInfoWithEmbed;
 			g_fontApplication.LoadFont = g_fontApplication.LoadFontWithEmbed;
-			
+
 			this.checkLoadCMap();
-			
+
 			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
 
 			if (this.file && !this.file.isNeedPassword() && !this.file.isValid())
@@ -904,6 +909,7 @@
 
 			this.Api.WordControl.m_oOverlayApi = this.overlay;
 		};
+
 		this.close = function()
 		{
 			if (!this.file || !this.file.isValid())
@@ -4179,6 +4185,10 @@
 		let oControl = editor.WordControl.m_oBody.Controls.find(function(control) {
 			return control.HtmlElement.id == "id_main";
 		});
+
+		if (!oControl)
+			oControl = {};
+
 		oControl.HtmlElement = document.getElementById("id_main");
 		
 		this.id_main = oControl.HtmlElement;
@@ -4206,6 +4216,9 @@
 	};
 	CHtmlPage.prototype.resize = function(isDisablePaint)
 	{
+		if (window["NATIVE_EDITOR_ENJINE"])
+			return;
+
 		AscCommon.AscBrowser.checkZoom();
 
 		let oThis		= this;
