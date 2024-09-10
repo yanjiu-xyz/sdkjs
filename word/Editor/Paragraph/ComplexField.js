@@ -95,14 +95,44 @@ ParaFieldChar.prototype.Measure = function(Context, textPr, sectPr)
 };
 ParaFieldChar.prototype.Draw = function(x, y, context)
 {
-	if (!this.IsEnd() || null === this.numText)
+	if (!this.IsVisual())
 		return;
 	
-	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
-	for (let index = 0; index < this.graphemes.length; ++index)
+	if (this.numText)
 	{
-		AscFonts.DrawGrapheme(this.graphemes[index], context, x, y, fontSize);
-		x += this.widths[index] * fontSize;
+		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		for (let index = 0; index < this.graphemes.length; ++index)
+		{
+			AscFonts.DrawGrapheme(this.graphemes[index], context, x, y, fontSize);
+			x += this.widths[index] * fontSize;
+		}
+	}
+	else if (this.checkBox)
+	{
+		let shift = 0.75 * g_dKoef_pt_to_mm;
+		let penW  = 0.75 * g_dKoef_pt_to_mm;
+		
+		let w = this.GetWidth();
+		
+		let y0 = y - 0.815 * w + shift;
+		let y1 = y + 0.185 * w - shift;
+		let x0 = x + shift;
+		let x1 = x + w - shift;
+		
+		context.drawHorLineExt(c_oAscLineDrawingRule.Top, y0, x0, x1, penW, 0, 0);
+		context.drawHorLineExt(c_oAscLineDrawingRule.Bottom, y1, x0, x1, penW, 0, 0);
+		context.drawVerLine(c_oAscLineDrawingRule.Left, x0, y0, y1, penW);
+		context.drawVerLine(c_oAscLineDrawingRule.Right, x1, y0, y1, penW);
+		
+		context.p_width(0.5 * g_dKoef_pt_to_mm * 1000);
+		let penW_2 = penW / 2;
+		context._m(x0 + penW_2, y0 + penW_2);
+		context._l(x1 - penW_2, y1 - penW_2);
+		context.ds();
+		
+		context._m(x1 - penW_2, y0 + penW_2);
+		context._l(x0 + penW_2, y1 - penW_2);
+		context.ds();
 	}
 };
 ParaFieldChar.prototype.IsBegin = function()
@@ -225,12 +255,7 @@ ParaFieldChar.prototype.SetFormulaValue = function(value)
 ParaFieldChar.prototype.SetFormCheckBox = function(checked)
 {
 	this.checkBox = checked;
-	
-	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
-	let totalWidth = (fontSize * g_dKoef_pt_to_mm * AscWord.TEXTWIDTH_DIVIDER) | 0;
-	
-	this.Width        = totalWidth;
-	this.WidthVisible = totalWidth;
+	this.private_UpdateWidth();
 };
 ParaFieldChar.prototype.GetNumFormat = function()
 {
@@ -268,21 +293,30 @@ ParaFieldChar.prototype.UpdatePageCount = function(pageCount)
 };
 ParaFieldChar.prototype.private_UpdateWidth = function()
 {
-	if (null === this.numText)
-		return;
-	
-	AscWord.stringShaper.Shape(this.numText.codePointsArray(), this.textPr);
-	
-	this.graphemes = AscWord.stringShaper.GetGraphemes();
-	this.widths    = AscWord.stringShaper.GetWidths();
-	
 	let totalWidth = 0;
-	for (let index = 0; index < this.widths.length; ++index)
+	
+	if (this.numText)
 	{
-		totalWidth += this.widths[index];
+		AscWord.stringShaper.Shape(this.numText.codePointsArray(), this.textPr);
+		
+		this.graphemes = AscWord.stringShaper.GetGraphemes();
+		this.widths    = AscWord.stringShaper.GetWidths();
+		
+		for (let index = 0; index < this.widths.length; ++index)
+		{
+			totalWidth += this.widths[index];
+		}
+		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		totalWidth   = (totalWidth * fontSize * AscWord.TEXTWIDTH_DIVIDER) | 0;
 	}
-	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
-	totalWidth = (totalWidth * fontSize * AscWord.TEXTWIDTH_DIVIDER) | 0;
+	else if (this.checkBox)
+	{
+		// TODO: Использовать ffData
+		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		
+		totalWidth = (1.15 * fontSize * g_dKoef_pt_to_mm * AscWord.TEXTWIDTH_DIVIDER) | 0;
+	}
+	
 
 	this.Width        = totalWidth;
 	this.WidthVisible = totalWidth;
