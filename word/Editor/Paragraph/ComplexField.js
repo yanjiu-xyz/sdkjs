@@ -50,8 +50,9 @@ function ParaFieldChar(Type, LogicDocument)
 	this.Y             = 0;
 	this.PageAbs       = 0;
 
-	this.numText = null;
-	this.textPr  = null;
+	this.numText  = null;
+	this.textPr   = null;
+	this.checkBox = null;
 }
 ParaFieldChar.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaFieldChar.prototype.constructor = ParaFieldChar;
@@ -221,6 +222,16 @@ ParaFieldChar.prototype.SetFormulaValue = function(value)
 	this.numText = "" + value;
 	this.private_UpdateWidth();
 };
+ParaFieldChar.prototype.SetFormCheckBox = function(checked)
+{
+	this.checkBox = checked;
+	
+	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+	let totalWidth = (fontSize * g_dKoef_pt_to_mm * AscWord.TEXTWIDTH_DIVIDER) | 0;
+	
+	this.Width        = totalWidth;
+	this.WidthVisible = totalWidth;
+};
 ParaFieldChar.prototype.GetNumFormat = function()
 {
 	let numFormat = Asc.c_oAscNumberingFormat.Decimal;
@@ -280,9 +291,13 @@ ParaFieldChar.prototype.IsNumValue = function()
 {
 	return (this.IsEnd() && null !== this.numText);
 };
+ParaFieldChar.prototype.IsVisual = function()
+{
+	return (this.IsEnd() && (null !== this.numText || null !== this.checkBox));
+};
 ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 {
-	return this.IsNumValue();
+	return this.IsVisual();
 };
 ParaFieldChar.prototype.SaveRecalculateObject = function(isCopy)
 {
@@ -1727,8 +1742,11 @@ CComplexField.prototype.IsHidden = function()
 		return false;
 	
 	if (this.EndChar
-		&& this.EndChar.IsNumValue()
-		&& (AscWord.fieldtype_NUMPAGES === oInstruction.GetType() || AscWord.fieldtype_PAGE === oInstruction.GetType() || AscWord.fieldtype_FORMULA === oInstruction.GetType()))
+		&& this.EndChar.IsVisual()
+		&& (AscWord.fieldtype_NUMPAGES === oInstruction.GetType()
+			|| AscWord.fieldtype_PAGE === oInstruction.GetType()
+			|| AscWord.fieldtype_FORMULA === oInstruction.GetType()
+			|| AscWord.fieldtype_FORMCHECKBOX === oInstruction.GetType()))
 		return true;
 	
 	if (!this.BeginChar || !this.SeparateChar)

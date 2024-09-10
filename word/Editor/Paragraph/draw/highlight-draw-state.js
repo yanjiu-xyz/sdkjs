@@ -525,7 +525,7 @@
 			}
 			case para_FieldChar:
 			{
-				if (element.IsNumValue())
+				if (element.IsVisual())
 				{
 					if (this.DrawComments && this.comments.length > 0)
 						flags |= FLAG_COMMENT;
