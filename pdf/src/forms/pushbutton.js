@@ -88,10 +88,10 @@
 		this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
         oDoc.EndNoHistoryMode();
 
-        this._imgData           = {
-            normal:     null,
-            mouseDown:  null,
-            rollover:   null,
+        this._imgData = {
+            normal:     undefined,
+            mouseDown:  undefined,
+            rollover:   undefined,
 
             // регистрируем что картинки изменились, нужно при записи, чтобы не писать исходные картинки снова
             changedInfo: {
@@ -137,14 +137,14 @@
                 field.SetWasChanged(true);
                 field.DoInitialRecalc();
                 field.SetNeedRecalc(true);
-                field.SetImageData(oImgData, nAPType);
+                field.SetImageRasterId(AscFormat.checkRasterImageId(oImgData.src), nAPType);
     
                 let sTargetSrc;
                 if (nAPType != AscPDF.APPEARANCE_TYPE.rollover && nAPType != AscPDF.APPEARANCE_TYPE.mouseDown) {
                     sTargetSrc = oImgData.src;
                 }
     
-                field.SetImage(Object.assign({}, oImgData, {src: sTargetSrc}));
+                field.SetImage(sTargetSrc);
             });
             
             if (oViewer.IsOpenFormsInProgress == false) {
@@ -186,38 +186,41 @@
     /**
      * Sets image only for this pushbutton (without commiting). Needs for history.
      * @memberof CPushButtonField
-     * @param {number} nType - BUTTON_HIGHLIGHT_TYPES
+     * @param {number} nAPType - appearence type
      * @typeofeditors ["PDF"]
      */
-    CPushButtonField.prototype.AddImage2 = function(oImgData, nAPType) {
-        if (!oImgData) {
-            return;
-        }
-        const oHTMLImg = oImgData.Image;
-        if (!oHTMLImg || oHTMLImg.width === 0 || oHTMLImg.height === 0) {
+    CPushButtonField.prototype.AddImage2 = function(sRasterId, nAPType) {
+        this.RemoveImage();
+
+        if (!sRasterId) {
             return;
         }
 
-        this.SetImageData(oImgData, nAPType);
-        this.SetImage(oImgData);
+        this.DoInitialRecalc();
+        this.SetImageRasterId(sRasterId, nAPType);
+        this.SetImage(sRasterId);
     };
     /**
-     * Sets image without any changes.
+     * Sets image without any history changes.
      * @memberof CPushButtonField
+     * @param {string} sRasterId
      * @typeofeditors ["PDF"]
      */
-    CPushButtonField.prototype.SetImage = function(oImgData) {
+    CPushButtonField.prototype.SetImage = function(sRasterId) {
         let oDoc = this.GetDocument();
+        let oImgData = null;
+
+        if (sRasterId) {
+            oImgData = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(sRasterId)];
+        }
 
         if (!oImgData) {
             return;
         }
-        const oHTMLImg = oImgData.Image;
-        if (!oHTMLImg || oHTMLImg.width === 0 || oHTMLImg.height === 0) {
-            return;
-        }
 
-        oDoc.StartNoHistoryMode();
+        let oHTMLImg = oImgData.Image;
+
+        AscCommon.History.StartNoHistoryMode();
         this.RemoveImage();
         
         const dImgW = Math.max((oHTMLImg.width * g_dKoef_pix_to_mm), 1);
@@ -301,7 +304,7 @@
         oDrawing.Set_DrawingType(drawing_Inline);
         
         let oImgShape = new AscFormat.CImageShape();
-        AscFormat.fillImage(oImgShape, oImgData.src, 0, 0, dDrawingW, dDrawingH);
+        AscFormat.fillImage(oImgShape, sRasterId, 0, 0, dDrawingW, dDrawingH);
 
         oImgShape.setParent(oDrawing);
         oDrawing.Set_GraphicObject(oImgShape);
@@ -370,9 +373,11 @@
         let oIconPos = this.GetIconPosition();
         this.SetIconPosition(oIconPos.X, oIconPos.Y);
 
-        oDoc.EndNoHistoryMode();
+        AscCommon.History.EndNoHistoryMode();
     };
     CPushButtonField.prototype.RemoveImage = function() {
+        AscCommon.History.StartNoHistoryMode();
+
         let oExistDrawing = this.GetDrawing();
         if (oExistDrawing) {
             oExistDrawing.PreDelete();
@@ -386,6 +391,8 @@
                 oFirstRun.RemoveFromContent(oFirstRun.GetElementsCount() - 1, 1);
             }
         }
+
+        AscCommon.History.EndNoHistoryMode();
     };
     
     /**
@@ -691,33 +698,38 @@
         }
         
     };
-    CPushButtonField.prototype.SetImageData = function(oImgData, nAPType) {
-        let oPrevImgData;
+    CPushButtonField.prototype.SetImageRasterId = function(sRasterId, nAPType) {
+        let sPrevRasterId;
         let oViewer = Asc.editor.getDocumentRenderer();
         let oDoc    = this.GetDocument();
 
+        if (undefined == nAPType) {
+            nAPType = AscPDF.APPEARANCE_TYPE.normal;
+        }
+
         switch (nAPType) {
             case AscPDF.APPEARANCE_TYPE.rollover:
-                oPrevImgData            = this._imgData.rollover;
-                this._imgData.rollover  = oImgData;
+                sPrevRasterId            = this._imgData.rollover;
+                this._imgData.rollover  = sRasterId;
                 this._imgData.changedInfo.rollover = true;
                 break;
             case AscPDF.APPEARANCE_TYPE.mouseDown:
-                oPrevImgData                = this._imgData.mouseDown;
-                this._imgData.mouseDown     = oImgData;
+                sPrevRasterId                = this._imgData.mouseDown;
+                this._imgData.mouseDown     = sRasterId;
                 this._imgData.changedInfo.mouseDown = true;
                 break;
             case AscPDF.APPEARANCE_TYPE.normal:
-            default:
-                oPrevImgData            = this._imgData.normal;
-                this._imgData.normal    = oImgData;
+                sPrevRasterId            = this._imgData.normal;
+                this._imgData.normal    = sRasterId;
                 this._imgData.changedInfo.normal = true;
                 break;
         }
 
         if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
-            oDoc.History.Add(new CChangesPDFPushbuttonImage(this, [oPrevImgData, nAPType], [oImgData, nAPType]));
+            oDoc.History.Add(new CChangesPDFPushbuttonImage(this, sPrevRasterId, sRasterId, nAPType));
         }
+
+        this.SetWasChanged(true);
     };
     CPushButtonField.prototype.DrawPressed = function() {
         this.SetPressed(true);
@@ -728,29 +740,29 @@
         }
              
         let sTargetCaption;
-        let oTargetImgData;
+        let sTargetImgRasterId;
         let sMouseDownCaption   = this.GetCaption(CAPTION_TYPES.mouseDown);
         let sNormalCaption      = this.GetCaption(CAPTION_TYPES.normal);
         let oCaptionRun         = this.GetCaptionRun();
 
         if (this._imgData.mouseDown || sMouseDownCaption) {
             sTargetCaption = sMouseDownCaption;
-            oTargetImgData = this._imgData.mouseDown;
+            sTargetImgRasterId = this._imgData.mouseDown;
         }
         else if (this._imgData.normal || sNormalCaption) {
             sTargetCaption = sNormalCaption;
-            oTargetImgData = this._imgData.normal;
+            sTargetImgRasterId = this._imgData.normal;
         }
 
-        if (oTargetImgData || sTargetCaption) {
+        if (sTargetImgRasterId || sTargetCaption) {
 
             if (oCaptionRun && sTargetCaption) {
                 oCaptionRun.ClearContent();
                 oCaptionRun.AddText(sTargetCaption);
             }
 
-            if (oTargetImgData) {
-                this.SetImage(oTargetImgData);
+            if (sTargetImgRasterId) {
+                this.SetImage(sTargetImgRasterId);
             }
             else {
                 this.RemoveImage();
@@ -772,7 +784,7 @@
         }
         
         if (this._imgData.mouseDown || this.GetCaption(CAPTION_TYPES.normal) || this.GetCaption(CAPTION_TYPES.rollover)) {
-            let oTargetImgData = this.IsHovered() && this.GetCaption(CAPTION_TYPES.rollover) ? this._imgData.rollover : this._imgData.normal;
+            let sTargetImgRasterId = this.IsHovered() && this.GetCaption(CAPTION_TYPES.rollover) ? this._imgData.rollover : this._imgData.normal;
             let sTargetCaption = this.IsHovered() && this.GetCaption(CAPTION_TYPES.rollover) ? this.GetCaption(CAPTION_TYPES.rollover) : this.GetCaption(CAPTION_TYPES.normal);
 
             let oCaptionRun         = this.GetCaptionRun();
@@ -783,8 +795,8 @@
                 oCaptionRun.AddText(sTargetCaption);
             }
 
-            if (oTargetImgData) {
-                this.SetImage(oTargetImgData);
+            if (sTargetImgRasterId) {
+                this.SetImage(sTargetImgRasterId);
             }
             else {
                 this.RemoveImage();
@@ -917,9 +929,9 @@
         let oDrawing = this.GetDrawing();
         if (!oDrawing && !this.IsNeedDrawFromStream()) {
             this.DoInitialRecalc();
-            let oImgData = this._imgData.normal;
-            if (oImgData)
-                this.SetImage(oImgData);
+            let sImgRasterId = this._imgData.normal;
+            if (sImgRasterId)
+                this.SetImage(sImgRasterId);
 
             this.imageChecked = true;
         }

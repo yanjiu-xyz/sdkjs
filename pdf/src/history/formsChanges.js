@@ -191,15 +191,84 @@ CChangesPDFListFormCurIdxs.prototype.private_SetValue = function(Value)
  * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
  */
-function CChangesPDFPushbuttonImage(Class, Old, New, Color)
+function CChangesPDFPushbuttonImage(Class, sOldRasterId, sNewRasterId, nAPType, Color)
 {
-	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseStringProperty.call(this, Class, sOldRasterId, sNewRasterId, Color);
+	this.APType = nAPType;
 }
 CChangesPDFPushbuttonImage.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
 CChangesPDFPushbuttonImage.prototype.constructor = CChangesPDFPushbuttonImage;
 CChangesPDFPushbuttonImage.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Image;
 CChangesPDFPushbuttonImage.prototype.private_SetValue = function(Value)
 {
-	var oField = this.Class;
-	oField.AddImage2(Value[0], Value[1]);
+	let oButtonField = this.Class;
+	oButtonField.AddImage2(Value, this.APType);
+
+	if (this.FromLoad && typeof Value === "string" && Value.length > 0) {
+		AscCommon.CollaborativeEditing.Add_NewImage(Value);
+		AscCommon.CollaborativeEditing.m_aEndLoadCallbacks.push(oButtonField.AddImage2.bind(oButtonField, Value, this.APType));
+	}
+};
+
+CChangesPDFPushbuttonImage.prototype.WriteToBinary = function(Writer)
+{
+	let nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.APType)
+		nFlags |= 2;
+
+	if (undefined === this.New)
+		nFlags |= 3;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+	
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.APType)
+		Writer.WriteLong(this.APType);
+
+	if (undefined !== this.New)
+		Writer.WriteString2(this.New);
+
+	if (undefined !== this.Old)
+		Writer.WriteString2(this.Old);
+};
+CChangesPDFPushbuttonImage.prototype.ReadFromBinary = function(Reader)
+{
+	this.FromLoad = true;
+
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// long : New
+	// long : Old
+
+
+	var nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+		this.APType = undefined;
+	else
+		this.APType = Reader.GetLong();
+
+	if (nFlags & 3)
+		this.New = undefined;
+	else
+		this.New = Reader.GetString2();
+
+	if (nFlags & 4)
+		this.Old = undefined;
+	else
+		this.Old = Reader.GetString2();
 };

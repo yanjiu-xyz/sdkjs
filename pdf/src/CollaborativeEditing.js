@@ -42,6 +42,7 @@ function CPDFCollaborativeEditing(oDoc) {
     this.m_aSkipContentControlsOnCheckEditingLock = {};
     this.m_oLogicDocument = oDoc;
     this.m_oSelectedObjects = {};
+    this.m_aEndLoadCallbacks = [];
 }
 
 CPDFCollaborativeEditing.prototype = Object.create(AscCommon.CWordCollaborativeEditing.prototype);
@@ -249,9 +250,10 @@ CPDFCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 	this.m_oLogicDocument.RecalculateByChanges(this.CoHistory.GetAllChanges(), this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, undefined);
 	this.m_oLogicDocument.UpdateTracks();
 	
-	let oform = this.m_oLogicDocument.GetOFormDocument();
-	if (oform)
-		oform.onEndLoadChanges();
+    this.m_aEndLoadCallbacks.forEach(function(callback) {
+        callback();
+    });
+    this.m_aEndLoadCallbacks.length = 0;
 
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };
