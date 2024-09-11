@@ -434,7 +434,7 @@
 				settings.isVerticalScroll = true;
 				settings.isHorizontalScroll = false;
 				this.vsbApi.canvasH = null;
-				this.reinitScrollY(settings, ws.getFirstVisibleRow(true), ws.getVerticalScrollRange(), ws.getVerticalScrollMax());
+				this.reinitScrollY(settings, ws.workbook.getSmoothScrolling() ? ws.getFirstVisibleRowSmoothScroll(true) : ws.getFirstVisibleRow(true), ws.getVerticalScrollRange(), ws.getVerticalScrollMax());
 				this.vsbApi.settings = settings;
 			}
 			if (this.hsbApi) {
