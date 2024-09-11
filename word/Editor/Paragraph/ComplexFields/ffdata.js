@@ -52,6 +52,24 @@
 		this.tabIndex   = undefined; // int
 		this.textInput  = undefined; // TextInput
 	}
+	FFData.prototype.Copy = function()
+	{
+		let ffData = new FFData();
+		
+		ffData.calcOnExit = this.calcOnExit;
+		ffData.checkBox   = this.checkBox ? this.checkBox.Copy() : undefined;
+		ffData.ddList     = this.ddList ? this.ddList.Copy() : undefined;
+		ffData.enabled    = this.enabled;
+		ffData.entryMacro = this.entryMacro;
+		ffData.exitMacro  = this.exitMacro;
+		ffData.helpText   = this.helpText ? this.helpText.Copy() : undefined;
+		ffData.label      = this.label;
+		ffData.name       = this.name;
+		ffData.statusText = this.statusText ? this.statusText.Copy() : undefined;
+		ffData.tabIndex   = this.tabIndex;
+		ffData.textInput  = this.textInput ? this.textInput.Copy() : undefined;
+		return ffData;
+	};
 	
 	/**
 	 * ffData.checkBox

@@ -39,12 +39,13 @@ var fldchartype_End      = 2;
 function ParaFieldChar(Type, LogicDocument)
 {
 	AscWord.CRunElementBase.call(this);
-
+	
 	this.LogicDocument = LogicDocument;
 	this.Use           = true;
 	this.CharType      = undefined === Type ? fldchartype_Begin : Type;
 	this.ComplexField  = (this.CharType === fldchartype_Begin) ? new CComplexField(LogicDocument) : null;
-	this.fldData   = null;
+	this.fldData       = null;
+	this.ffData        = null;
 	this.Run           = null;
 	this.X             = 0;
 	this.Y             = 0;
@@ -70,7 +71,7 @@ ParaFieldChar.prototype.Init = function(Type, LogicDocument)
 };
 ParaFieldChar.prototype.Copy = function()
 {
-	let oChar = new ParaFieldChar(this.CharType, this.LogicDocument)
+	let oChar = new ParaFieldChar(this.CharType, this.LogicDocument);
 
 	let oComplexField = this.GetComplexField();
 	if (oComplexField && oComplexField.IsUpdate())
@@ -79,6 +80,7 @@ ParaFieldChar.prototype.Copy = function()
 		oComplexField.ReplaceChar(oChar);
 	}
 	//todo fldData
+	oChar.ffData = this.ffData ? this.ffData.Copy() : null;
 
 	return oChar;
 };
@@ -163,18 +165,37 @@ ParaFieldChar.prototype.SetComplexField = function(oComplexField)
 {
 	this.ComplexField = oComplexField;
 };
-ParaFieldChar.prototype.Write_ToBinary = function(Writer)
+ParaFieldChar.prototype.Write_ToBinary = function(writer)
 {
 	// Long : Type
 	// Long : CharType
-	Writer.WriteLong(this.Type);
-	Writer.WriteLong(this.CharType);
+	writer.WriteLong(this.Type);
+	writer.WriteLong(this.CharType);
+	
+	if (this.ffData)
+	{
+		writer.WriteBool(true);
+		this.ffData.toBinary(writer);
+	}
+	else
+	{
+		writer.WriteBool(false);
+	}
+	
 	//todo fldData
 };
-ParaFieldChar.prototype.Read_FromBinary = function(Reader)
+ParaFieldChar.prototype.Read_FromBinary = function(reader)
 {
 	// Long : CharType
-	this.Init(Reader.GetLong(), editor.WordControl.m_oLogicDocument);
+	
+	let charType = reader.GetLong();
+	
+	this.Init(charType, editor.WordControl.m_oLogicDocument);
+	if (reader.GetBool())
+	{
+		this.ffData = AscWord.FFData.fromBinary();
+	}
+	
 	//todo fldData
 };
 ParaFieldChar.prototype.SetParent = function(oParent)

@@ -5680,6 +5680,13 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		this.bs.WriteItem(c_oSer_FldSimpleType.CharType, function() {
 			oThis.memory.WriteByte(fldChar.CharType);
 		});
+		
+		if (fldChar.ffData) {
+			this.bs.WriteItem(c_oSer_FldSimpleType.FFData, function () {
+				oThis.WriteFFData(fldChar.ffData);
+			});
+		}
+		
 		if (null !== fldChar.fldData) {
 			this.bs.WriteItem(c_oSer_FldSimpleType.PrivateData, function () {
 				oThis.memory.WriteString3(fldChar.fldData);
@@ -11618,9 +11625,16 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			this.oCurComments[commentId] += text;
 	};
 	this.ReadFldChar = function (type, length, paraField) {
+		let _t = this;
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSer_FldSimpleType.CharType === type) {
 			paraField.Init(this.stream.GetUChar(), paraField.LogicDocument);
+		} else if (c_oSer_FldSimpleType.FFData === type) {
+			let ffData = {};
+			res = this.bcr.Read1(length, function (t, l) {
+				return _t.ReadFFData(t, l, ffData);
+			});
+			paraField.ffData = ffData;
 		} else if (c_oSer_FldSimpleType.PrivateData === type) {
 			paraField.fldData = this.stream.GetString2LE(length);
 		} else
