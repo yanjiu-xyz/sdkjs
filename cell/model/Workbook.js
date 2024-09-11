@@ -14678,6 +14678,9 @@
 
 		const nCellIndex = getCellIndex(this.nRow, this.nCol);
 		const oFormulaParsed = this.getFormulaParsed();
+		if (oFormulaParsed && !oFormulaParsed.ca) {
+			return null;
+		}
 		const aOutStack = oFormulaParsed && oFormulaParsed.outStack;
 		const oBaseFunction = aOutStack && aOutStack.find(function (oElem) {
 			return oElem.type === cElementType.func;
