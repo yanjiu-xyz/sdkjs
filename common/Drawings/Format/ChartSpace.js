@@ -1695,10 +1695,11 @@ function(window, undefined) {
 		if(!oPlotArea) return false;
 		return oPlotArea.isChartEx();
 	};
-	CChartSpace.prototype.isLayout = function () {
+	CChartSpace.prototype.isLayoutSizes = function () {
 		let oPlotArea = this.getPlotArea();
 		if(!oPlotArea) return false;
-		return !!oPlotArea.layout;
+		const oLayout = oPlotArea.layout;
+		return oLayout ? ((oLayout.h === null && oLayout.w === null && oLayout.x === null && oLayout.y === null) ? false : true): false;
 	};
 	CChartSpace.prototype.fromOther = function(oChartSpace) {
 		if(oChartSpace.nvGraphicFramePr) {
@@ -5077,10 +5078,11 @@ function(window, undefined) {
 	};
 	CChartSpace.prototype.recalculateAxesSet = function(aAxesSet, oRect, oBaseRect, nIndex, fForceContentWidth) {
 		let oCorrectedRect = null;
-		const isLayout = this.isLayout();
+		// check if diagram size affected by laout
+		const isLayoutSizes = this.isLayoutSizes();
 		const oPlotArea = this.getPlotArea();
-		const bWithoutLabels = isLayout && this.chart.plotArea.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER;
-		if (isLayout && oPlotArea) {
+		const bWithoutLabels = isLayoutSizes && this.chart.plotArea.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER;
+		if (isLayoutSizes && oPlotArea) {
 			oPlotArea.extX = oRect.w;
 			oPlotArea.extY = oRect.h;
 			oPlotArea.x = oRect.x;
@@ -11667,8 +11669,8 @@ function(window, undefined) {
 
 	CLabelsParameters.prototype.calculateParams = function (oLabelsBox, fAxisLength, fRectHeight) {
 		// find max possible space allowed to fill by labels
-		const isLayout = oLabelsBox.chartSpace ? oLabelsBox.chartSpace.isLayout() : false;
-		this.setMaxHeight(oLabelsBox, fRectHeight, isLayout ? oLabelsBox.chartSpace.chart.plotArea.layout : false);
+		const isLayoutSizes = oLabelsBox.chartSpace ? oLabelsBox.chartSpace.isLayoutSizes() : false;
+		this.setMaxHeight(oLabelsBox, fRectHeight, isLayoutSizes ? oLabelsBox.chartSpace.chart.plotArea.layout : false);
 
 		// retrieve startingDate if exist
 		let msg = this.sDataType.split('_');

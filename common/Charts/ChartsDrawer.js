@@ -1463,11 +1463,12 @@ CChartsDrawer.prototype =
 		//считаем маргины
 		this._calculateMarginsChart(chartSpace);
 
-		const isLayout = this.cChartSpace.isLayout();
-		// layour should not affect for circular charts
+		// check if diagmar size affected by layout
+		const isLayoutSizes = this.cChartSpace.isLayoutSizes();
 
+		// layour should not affect for circular charts
 		let isCircular = false;
-		if (isLayout && chartSpace && chartSpace.chart && chartSpace.chart.plotArea && Array.isArray(chartSpace.chart.plotArea.charts)) {
+		if (isLayoutSizes && chartSpace && chartSpace.chart && chartSpace.chart.plotArea && Array.isArray(chartSpace.chart.plotArea.charts)) {
 			const charts = chartSpace.chart.plotArea.charts;
 			for (let i = 0; i < charts.length; i++) {
 				const typeChart = charts[0].getObjectType();
@@ -1475,7 +1476,7 @@ CChartsDrawer.prototype =
 			}
 		}
 		
-		if (isLayout && !isCircular) {
+		if (isLayoutSizes && !isCircular) {
 			this.calcProp.trueWidth = this.cChartSpace.chart.plotArea.extX * this.calcProp.pxToMM;
 			this.calcProp.trueHeight = this.cChartSpace.chart.plotArea.extY * this.calcProp.pxToMM;
 			this.calcProp.chartGutter._top = this.cChartSpace.chart.plotArea.y * this.calcProp.pxToMM;
