@@ -572,7 +572,8 @@ var c_oSerImageType2 = {
 	DistBEmu: 32,
 	DistLEmu: 33,
 	DistREmu: 34,
-	DistTEmu: 35
+	DistTEmu: 35,
+	ChartEx: 36
 };
 var c_oSerEffectExtent = {
 	Left: 0,
@@ -6011,11 +6012,23 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			}
 			if(null != img.GraphicObj.chart)
 			{
-				this.memory.WriteByte(c_oSerImageType2.Chart2);
-				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				
-				var oBinaryChartWriter = new AscCommon.BinaryChartWriter(this.memory);
-				this.bs.WriteItemWithLength(function () { oBinaryChartWriter.WriteCT_ChartSpace(img.GraphicObj); });
+				if(img.GraphicObj.isChartEx())
+				{
+					this.memory.WriteByte(c_oSerImageType2.ChartEx);
+					this.memory.WriteByte(c_oSerPropLenType.Variable);
+
+					var oBinaryChartWriter = new AscCommon.BinaryChartWriter(this.memory);
+					this.bs.WriteItemWithLength(function () { oBinaryChartWriter.WriteCT_ChartExSpace(img.GraphicObj);});
+				}
+				else
+				{
+					this.memory.WriteByte(c_oSerImageType2.Chart2);
+					this.memory.WriteByte(c_oSerPropLenType.Variable);
+
+					var oBinaryChartWriter = new AscCommon.BinaryChartWriter(this.memory);
+					this.bs.WriteItemWithLength(function () { oBinaryChartWriter.WriteCT_ChartSpace(img.GraphicObj); });
+				}
+
 			} else {
 				this.WriteGraphicObj(img.GraphicObj);
 			}
@@ -12214,12 +12227,19 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			else
 				res = c_oSerConstants.ReadUnknown;
 		}
-		else if( c_oSerImageType2.Chart2 === type )
+		else if( c_oSerImageType2.Chart2 === type || c_oSerImageType2.ChartEx === type)
         {
 			res = c_oSerConstants.ReadUnknown;
-			var oNewChartSpace = new AscFormat.CChartSpace();
-            var oBinaryChartReader = new AscCommon.BinaryChartReader(this.stream);
-            res = oBinaryChartReader.ExternalReadCT_ChartSpace(length, oNewChartSpace, this.Document);
+			let oNewChartSpace = new AscFormat.CChartSpace();
+            let oBinaryChartReader = new AscCommon.BinaryChartReader(this.stream);
+			if(c_oSerImageType2.ChartEx === type)
+			{
+				res = oBinaryChartReader.ExternalReadCT_ChartExSpace(length, oNewChartSpace, this.Document);
+			}
+			else
+			{
+				res = oBinaryChartReader.ExternalReadCT_ChartSpace(length, oNewChartSpace, this.Document);
+			}
 			if(oNewChartSpace.hasCharts())
 			{
 				oNewChartSpace.setBDeleted(false);
