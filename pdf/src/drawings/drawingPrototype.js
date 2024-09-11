@@ -82,7 +82,12 @@
 		if (this.group && this.group.IsUseInDocument)
 			return this.group.IsUseInDocument();
 		
-		return (-1 !== this.GetDocument().drawings.indexOf(this));
+        let oDoc = this.GetDocument();
+        if (!oDoc) {
+            return false;
+        }
+
+		return (-1 !== oDoc.drawings.indexOf(this));
 	};
     CPdfDrawingPrototype.prototype.OnBlur = function() {
         
