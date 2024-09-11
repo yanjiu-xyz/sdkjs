@@ -67,16 +67,10 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        if (this.txBody && this.txBody.recalcInfo.recalculateBodyPr) {
-            this.recalcTransformText();
-        }
-        
-        this.recalcGeometry();
-        this.recalculateContent();
         this.recalculateTransform();
         this.updateTransformMatrix();
-        this.recalculate();
         this.checkExtentsByDocContent();
+        this.recalculate();
         this.recalculateShdw();
         this.SetNeedRecalc(false);
     };
