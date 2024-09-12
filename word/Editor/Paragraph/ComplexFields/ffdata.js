@@ -70,6 +70,31 @@
 		ffData.textInput  = this.textInput ? this.textInput.Copy() : undefined;
 		return ffData;
 	};
+	FFData.prototype.initCheckBox = function()
+	{
+		this.checkBox = new CheckBox();
+		return this.checkBox;
+	};
+	FFData.prototype.initDDList = function()
+	{
+		this.ddList = new DDList();
+		return this.ddList;
+	};
+	FFData.prototype.initHelpText = function()
+	{
+		this.helpText = new FFDataText();
+		return this.helpText;
+	};
+	FFData.prototype.initStatusText = function()
+	{
+		this.statusText = new FFDataText();
+		return this.statusText;
+	};
+	FFData.prototype.initTextInput = function()
+	{
+		this.textInput = new TextInput();
+		return this.textInput;
+	};
 	
 	/**
 	 * ffData.checkBox
