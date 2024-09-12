@@ -126,15 +126,19 @@ ParaFieldChar.prototype.Draw = function(x, y, context)
 		context.drawVerLine(c_oAscLineDrawingRule.Left, x0, y0, y1, penW);
 		context.drawVerLine(c_oAscLineDrawingRule.Right, x1, y0, y1, penW);
 		
-		context.p_width(0.5 * g_dKoef_pt_to_mm * 1000);
-		let penW_2 = penW / 2;
-		context._m(x0 + penW_2, y0 + penW_2);
-		context._l(x1 - penW_2, y1 - penW_2);
-		context.ds();
-		
-		context._m(x1 - penW_2, y0 + penW_2);
-		context._l(x0 + penW_2, y1 - penW_2);
-		context.ds();
+		let ffData  = this.ComplexField.GetBeginChar().GetFFData();
+		if (ffData && ffData.isCheckBoxChecked())
+		{
+			context.p_width(0.5 * g_dKoef_pt_to_mm * 1000);
+			let penW_2 = penW / 2;
+			context._m(x0 + penW_2, y0 + penW_2);
+			context._l(x1 - penW_2, y1 - penW_2);
+			context.ds();
+			
+			context._m(x1 - penW_2, y0 + penW_2);
+			context._l(x0 + penW_2, y1 - penW_2);
+			context.ds();
+		}
 	}
 };
 ParaFieldChar.prototype.IsBegin = function()
@@ -273,9 +277,13 @@ ParaFieldChar.prototype.SetFormulaValue = function(value)
 	this.numText = "" + value;
 	this.private_UpdateWidth();
 };
-ParaFieldChar.prototype.SetFormCheckBox = function(checked)
+ParaFieldChar.prototype.GetFFData = function()
 {
-	this.checkBox = checked;
+	return this.ffData;
+};
+ParaFieldChar.prototype.SetFormCheckBox = function()
+{
+	this.checkBox = true;
 	this.private_UpdateWidth();
 };
 ParaFieldChar.prototype.GetNumFormat = function()
@@ -332,8 +340,10 @@ ParaFieldChar.prototype.private_UpdateWidth = function()
 	}
 	else if (this.checkBox)
 	{
-		// TODO: Использовать ffData
 		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		let ffData = this.ComplexField.GetBeginChar().GetFFData();
+		if (ffData && !ffData.isCheckBoxAutoSize())
+			fontSize = ffData.getCheckBoxSize();
 		
 		totalWidth = (1.15 * fontSize * g_dKoef_pt_to_mm * AscWord.TEXTWIDTH_DIVIDER) | 0;
 	}

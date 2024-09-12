@@ -11681,12 +11681,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		if (c_oSerFFData.CalcOnExit === type) {
 			ffData.calcOnExit = this.stream.GetBool();
 		} else if (c_oSerFFData.CheckBox === type) {
+			let checkBox = ffData.initCheckBox();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadFFCheckBox(t, l, ffData.initCheckBox());
+				return oThis.ReadFFCheckBox(t, l, checkBox);
 			});
 		} else if (c_oSerFFData.DDList === type) {
+			let ddList = ffData.initDDList();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadDDList(t, l, ffData.initDDList());
+				return oThis.ReadDDList(t, l, ddList);
 			});
 		} else if (c_oSerFFData.Enabled === type) {
 			ffData.enabled = this.stream.GetBool();
@@ -11695,22 +11697,25 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerFFData.ExitMacro === type) {
 			ffData.exitMacro = this.stream.GetString2LE(length);
 		} else if (c_oSerFFData.HelpText === type) {
+			let helpText = ffData.initHelpText();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadFFHelpText(t, l, ffData.initHelpText());
+				return oThis.ReadFFHelpText(t, l, helpText);
 			});
 		} else if (c_oSerFFData.Label === type) {
 			ffData.label = this.stream.GetLong();
 		} else if (c_oSerFFData.Name === type) {
 			ffData.name = this.stream.GetString2LE(length);
 		} else if (c_oSerFFData.StatusText === type) {
+			let statusText = ffData.initStatusText();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadFFHelpText(t, l, ffData.initStatusText());
+				return oThis.ReadFFHelpText(t, l, statusText);
 			});
 		} else if (c_oSerFFData.TabIndex === type) {
 			ffData.tabIndex = this.stream.GetLong();
 		} else if (c_oSerFFData.TextInput === type) {
+			let textInput = ffData.initTextInput();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadTextInput(t, l, ffData.initTextInput());
+				return oThis.ReadTextInput(t, l, textInput);
 			});
 		} else {
 			res = c_oSerConstants.ReadUnknown;

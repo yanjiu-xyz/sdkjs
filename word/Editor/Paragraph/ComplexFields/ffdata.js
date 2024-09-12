@@ -95,6 +95,24 @@
 		this.textInput = new TextInput();
 		return this.textInput;
 	};
+	FFData.prototype.isCheckBoxAutoSize = function()
+	{
+		return !this.checkBox || undefined === this.checkBox.size || this.checkBox.sizeAuto;
+	};
+	FFData.prototype.getCheckBoxSize = function()
+	{
+		return this.checkBox && undefined !== this.checkBox.size ? this.checkBox.size / 2 : 10;
+	};
+	FFData.prototype.isCheckBoxChecked = function()
+	{
+		if (!this.checkBox)
+			return false;
+		
+		if (undefined !== this.checkBox.checked)
+			return this.checkBox.checked;
+		
+		return !!(this.checkBox.default);
+	};
 	
 	/**
 	 * ffData.checkBox
