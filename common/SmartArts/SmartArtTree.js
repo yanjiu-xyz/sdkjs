@@ -1721,22 +1721,46 @@
 		const shapeSmartArtInfo = editorShape.getSmartArtInfo();
 		const presPoint = shapeSmartArtInfo.shapePoint;
 		const contentPoint = shapeSmartArtInfo.contentPoint[0];
-		const shape = shapeSmartArtInfo.getShape();
-		const spPr = shape.spPr;
-
-		if (this.fill) {
-			spPr.setFill(this.fill);
-		}
-		if (this.ln) {
-			spPr.setLn(this.ln);
-		}
+		let skipSettingDefaultSpPr = false;
 		if (this.style) {
+			skipSettingDefaultSpPr = true;
 			editorShape.setStyle(this.style);
+			if (this.fill) {
+				const fillRef = editorShape.style.fillRef ? editorShape.style.fillRef.createDuplicate() : new AscFormat.StyleRef();
+				fillRef.setColor(this.fill.fill.color);
+				editorShape.style.setFillRef(fillRef);
+
+			}
+			if (this.ln) {
+				const lnRef = editorShape.style.lnRef ? editorShape.style.lnRef.createDuplicate() : new AscFormat.StyleRef();
+				lnRef.setColor(this.ln.Fill.fill.color);
+				editorShape.style.setLnRef(lnRef);
+			}
 		}
+
+		const style = editorShape.style;
+		if (contentPoint && contentPoint.point.prSet && contentPoint.point.prSet.style) {
+			style.merge(contentPoint.point.prSet.style);
+			skipSettingDefaultSpPr = true;
+		}
+		if (presPoint && presPoint.prSet && presPoint.prSet.style) {
+			style.merge(presPoint.prSet.style);
+			skipSettingDefaultSpPr = true;
+		}
+
+		const spPr = editorShape.spPr;
+		if (!skipSettingDefaultSpPr) {
+			if (this.fill) {
+				spPr.setFill(this.fill);
+			}
+			if (this.ln) {
+				spPr.setLn(this.ln);
+			}
+		}
+
 		if (contentPoint && contentPoint.point.spPr) {
 			spPr.fullMerge(contentPoint.point.spPr);
 		}
-
 		if (presPoint && presPoint.spPr) {
 			spPr.fullMerge(presPoint.spPr);
 		}
