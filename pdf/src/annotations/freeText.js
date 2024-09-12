@@ -445,36 +445,20 @@
             this.spTree[i].setFill(oFill);
         }
     };
-    CAnnotationFreeText.prototype.SetRect = function(aRect) {
+    CAnnotationFreeText.prototype.SetRect = function(aOrigRect) {
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
-        let nPage       = this.GetPage();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        this._rect = aRect;
-
-        this._pagePos = {
-            x: aRect[0],
-            y: aRect[1],
-            w: (aRect[2] - aRect[0]),
-            h: (aRect[3] - aRect[1])
-        };
-
-        this._origRect[0] = this._rect[0] / nScaleX;
-        this._origRect[1] = this._rect[1] / nScaleY;
-        this._origRect[2] = this._rect[2] / nScaleX;
-        this._origRect[3] = this._rect[3] / nScaleY;
+        this._origRect = aOrigRect;
 
         oDoc.StartNoHistoryMode();
 
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offX = aRect[0] * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offY = aRect[1] * g_dKoef_pix_to_mm;
+        this.spPr.xfrm.extX = (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm;
+        this.spPr.xfrm.extY = (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm;
+        this.spPr.xfrm.offX = aOrigRect[0] * g_dKoef_pt_to_mm;
+        this.spPr.xfrm.offY = aOrigRect[1] * g_dKoef_pt_to_mm;
         this.updateTransformMatrix();
 
         oDoc.EndNoHistoryMode();
@@ -507,14 +491,6 @@
 
         oFreeText.lazyCopy = true;
 
-        oFreeText._pagePos = {
-            x: this._pagePos.x,
-            y: this._pagePos.y,
-            w: this._pagePos.w,
-            h: this._pagePos.h
-        }
-        oFreeText._origRect = this._origRect.slice();
-
         let aStrokeColor = this.GetStrokeColor();
         let aFillColor = this.GetFillColor();
 
@@ -530,7 +506,6 @@
         oFreeText.SetWidth(this.GetWidth());
         oFreeText.SetLineEnd(this.GetLineEnd());
         oFreeText.SetOpacity(this.GetOpacity());
-        oFreeText.recalcInfo.recalculateGeometry = false;
         oFreeText.SetCallout(this.GetCallout().slice());
         oFreeText.SetRectangleDiff(this.GetRectangleDiff());
         oFreeText.SetWasChanged(oFreeText.IsChanged());
@@ -626,8 +601,8 @@
         if (aFreeTextLine90.length != 0)
             aFreeTextPoints.push(aFreeTextLine90);
 
-        let aShapeRectInMM = this.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
+        let aShapeRectInMM = this.GetOrigRect().map(function(measure) {
+            return measure * g_dKoef_pt_to_mm;
         });
 
         oDoc.StartNoHistoryMode();
@@ -1699,8 +1674,8 @@
     function initGroupShape(oParentFreeText) {
         AscCommon.History.StartNoHistoryMode();
 
-        let aShapeRectInMM = oParentFreeText.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
+        let aShapeRectInMM = oParentFreeText.GetOrigRect().map(function(measure) {
+            return measure * g_dKoef_pt_to_mm;
         });
         let xMax = aShapeRectInMM[2];
         let xMin = aShapeRectInMM[0];

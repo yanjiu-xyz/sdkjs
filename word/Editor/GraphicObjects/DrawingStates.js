@@ -192,19 +192,15 @@ StartAddNewShape.prototype =
             }
             else
             {
-                let oViewer = Asc.editor.getDocumentRenderer();
                 // рисование кистью
                 if (Asc.editor.isInkDrawerOn()) {
                     oLogicDocument.DoAction(function() {
-                        let nScaleY = oViewer.drawingPages[this.pageIndex].H / oViewer.file.pages[this.pageIndex].H / oViewer.zoom;
-                        let nScaleX = oViewer.drawingPages[this.pageIndex].W / oViewer.file.pages[this.pageIndex].W / oViewer.zoom;
-
                         // добавлем path если рисование не закончено
                         if (oLogicDocument.currInkInDrawingProcess && oLogicDocument.currInkInDrawingProcess.GetPage() == this.pageIndex) {
                             let aInkPath = [];
                             for (let i = 0; i < oTrack.arrPoint.length; i++) {
-                                aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pix / nScaleX);
-                                aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pix / nScaleY);
+                                aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pt);
+                                aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pt);
                             }
                             
                             oLogicDocument.currInkInDrawingProcess.AddInkPath(aInkPath);
@@ -212,8 +208,8 @@ StartAddNewShape.prototype =
                         else {
                             var bounds  = oTrack.getBounds();
                             
-                            let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pix;
-                            let aRect   = [(bounds.min_x * g_dKoef_mm_to_pix - nLineW) / nScaleX, (bounds.min_y * g_dKoef_mm_to_pix - nLineW) / nScaleY, (bounds.max_x * g_dKoef_mm_to_pix + nLineW) / nScaleX, (bounds.max_y * g_dKoef_mm_to_pix + nLineW) / nScaleY];
+                            let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pt;
+                            let aRect   = [(bounds.min_x * g_dKoef_mm_to_pt - nLineW), (bounds.min_y * g_dKoef_mm_to_pt - nLineW), (bounds.max_x * g_dKoef_mm_to_pt + nLineW), (bounds.max_y * g_dKoef_mm_to_pt + nLineW)];
         
                             let oInkAnnot = oLogicDocument.AddAnnot({
                                 rect:       aRect,
@@ -228,11 +224,11 @@ StartAddNewShape.prototype =
 
                             let aInkPath = [];
                             for (let i = 0; i < oTrack.arrPoint.length; i++) {
-                                aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pix / nScaleX);
-                                aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pix / nScaleY);
+                                aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pt);
+                                aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pt);
                             }
 
-                            oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
+                            oInkAnnot.SetWidth(nLineW);
                             oInkAnnot.AddInkPath(aInkPath);
                             oInkAnnot.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
                             oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
@@ -833,7 +829,7 @@ RotateState.prototype =
                             // для аннотаций свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
                             if (oTrack.originalObject.IsAnnot() && (oTrack instanceof AscFormat.ResizeTrackShapeImage || oTrack instanceof AscFormat.EditShapeGeometryTrack)) {
                                 let oAnnot  = oTrack.originalObject;
-                                let aRect   = [bounds.posX * g_dKoef_mm_to_pix, bounds.posY * g_dKoef_mm_to_pix, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pix, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pix];
+                                let aRect   = [bounds.posX * g_dKoef_mm_to_pt, bounds.posY * g_dKoef_mm_to_pt, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pt, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pt];
                                 
                                 if (oTrack.originalFlipV != oTrack.resizedflipV)
                                     oDoc.History.Add(new CChangesPDFInkFlipV(oAnnot, oTrack.originalFlipV, oTrack.resizedflipV));
@@ -844,17 +840,13 @@ RotateState.prototype =
                                     
                                     let aPaths = oTrack.geometry.pathLst[0].ArrPathCommand;
     
-                                    let nPage = oAnnot.GetPage();
-                                    let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-                                    let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-    
                                     let aLinePoints = [];
                                     let oTranform   = oAnnot.transform;
                                     // считаем новые точки linePoints (в оригинальных координатах - в пикселях, без скейлов)
-                                    aLinePoints.push(oTranform.TransformPointX(aPaths[0].X, 0) * g_dKoef_mm_to_pix / nScaleX)
-                                    aLinePoints.push(oTranform.TransformPointY(0, aPaths[0].Y) * g_dKoef_mm_to_pix / nScaleY)
-                                    aLinePoints.push(oTranform.TransformPointX(aPaths[1].X, 0) * g_dKoef_mm_to_pix / nScaleX)
-                                    aLinePoints.push(oTranform.TransformPointY(0, aPaths[1].Y) * g_dKoef_mm_to_pix / nScaleY)
+                                    aLinePoints.push(oTranform.TransformPointX(aPaths[0].X, 0) * g_dKoef_mm_to_pt)
+                                    aLinePoints.push(oTranform.TransformPointY(0, aPaths[0].Y) * g_dKoef_mm_to_pt)
+                                    aLinePoints.push(oTranform.TransformPointX(aPaths[1].X, 0) * g_dKoef_mm_to_pt)
+                                    aLinePoints.push(oTranform.TransformPointY(0, aPaths[1].Y) * g_dKoef_mm_to_pt)
     
                                     oAnnot.SetLinePoints(aLinePoints);
                                     oAnnot.SetRect(oAnnot.GetMinShapeRect());
@@ -876,26 +868,22 @@ RotateState.prototype =
                                         aVertices.splice(0, 2, pageObject.x, pageObject.y);
                                     }
     
-                                    let nPage = oAnnot.GetPage();
-                                    let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-                                    let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-    
                                     aVertices.splice(nStartPos, 2, pageObject.x, pageObject.y);
                                     oAnnot.SetVertices(aVertices);
     
                                     // расширяем рект на ширину линии (или на радиус cloud бордера)
-                                    let nLineWidth = oAnnot.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+                                    let nLineWidth = oAnnot.GetWidth();
                                     if (oAnnot.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
-                                        aRect[0] -= oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleX;
-                                        aRect[1] -= oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleY;
-                                        aRect[2] += oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleX;
-                                        aRect[3] += oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleY;
+                                        aRect[0] -= oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pt;
+                                        aRect[1] -= oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pt;
+                                        aRect[2] += oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pt;
+                                        aRect[3] += oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pt;
                                     }
                                     else {
-                                        aRect[0] -= nLineWidth * nScaleX;
-                                        aRect[1] -= nLineWidth * nScaleY;
-                                        aRect[2] += nLineWidth * nScaleX;
-                                        aRect[3] += nLineWidth * nScaleY;
+                                        aRect[0] -= nLineWidth;
+                                        aRect[1] -= nLineWidth;
+                                        aRect[2] += nLineWidth;
+                                        aRect[3] += nLineWidth;
                                     }
     
                                     oAnnot.SetRect(aRect);
@@ -906,19 +894,15 @@ RotateState.prototype =
                                     let aVertices   = oAnnot.GetVertices().slice();
                                     let nStartPos   = oTrack.gmEditPtIdx * 2;
                                     
-                                    let nPage   = oAnnot.GetPage();
-                                    let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-                                    let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-    
                                     aVertices.splice(nStartPos, 2, pageObject.x, pageObject.y);
                                     oAnnot.SetVertices(aVertices);
     
                                     // расширяем рект на ширину линии
-                                    let nLineWidth = oAnnot.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-                                    aRect[0] -= nLineWidth * nScaleX;
-                                    aRect[1] -= nLineWidth * nScaleY;
-                                    aRect[2] += nLineWidth * nScaleX;
-                                    aRect[3] += nLineWidth * nScaleY;
+                                    let nLineWidth = oAnnot.GetWidth();
+                                    aRect[0] -= nLineWidth;
+                                    aRect[1] -= nLineWidth;
+                                    aRect[2] += nLineWidth;
+                                    aRect[3] += nLineWidth;
     
                                     // у polyline могут быть окончания линии, их тоже учитываем
                                     let aResultRect = aRect;

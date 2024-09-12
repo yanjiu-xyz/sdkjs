@@ -3130,48 +3130,13 @@
 
 			let oDoc = this.getPDFDoc();
 
-			let pixToMM = (25.4 / this.file.pages[pageIndex].Dpi);
-
-			let _x = oDoc.pagesTransform[pageIndex].normal.TransformPointX(x, y) * pixToMM;
-			let _y = oDoc.pagesTransform[pageIndex].normal.TransformPointY(x, y) * pixToMM;
+			let _x = oDoc.pagesTransform[pageIndex].normal.TransformPointX(x, y) * g_dKoef_pt_to_mm;
+			let _y = oDoc.pagesTransform[pageIndex].normal.TransformPointY(x, y) * g_dKoef_pt_to_mm;
 
 			return {
 				index : pageIndex,
 				x : _x,
 				y : _y
-			};
-		};
-		this.getPageByCoords3 = function(xInp, yInp)
-		{
-			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
-				return null;
-			
-			var x = xInp * AscCommon.AscBrowser.retinaPixelRatio;
-			var y = yInp * AscCommon.AscBrowser.retinaPixelRatio;
-			
-			let pageIndex = this.endVisiblePage;
-			let page = this.pageDetector.pages[pageIndex - this.startVisiblePage];
-			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-			{
-				let _page = this.pageDetector.pages[i - this.startVisiblePage];
-				if (!_page)
-					continue;
-				
-				if (_page.y + _page.h + this.betweenPages * AscCommon.AscBrowser.retinaPixelRatio > y)
-				{
-					pageIndex = i;
-					page = _page;
-					break;
-				}
-			}
-			
-			if (!page)
-				return null;
-			
-			return {
-				index : pageIndex,
-				x : this.file.pages[pageIndex].W * (x - page.x) / page.w,
-				y : this.file.pages[pageIndex].H * (y - page.y) / page.h
 			};
 		};
 
