@@ -461,10 +461,10 @@
 
         let aRD = this.GetRectangleDiff() || [0, 0, 0, 0];
 
-        this._origRect[0] = x - aRD[0];
-        this._origRect[1] = y - aRD[1];
-        this._origRect[2] = x + nWidth + aRD[2];
-        this._origRect[3] = y + nHeight + aRD[3];
+        this._origRect[0] = x;
+        this._origRect[1] = y;
+        this._origRect[2] = x + nWidth;
+        this._origRect[3] = y + nHeight;
 
         if (this.IsShapeBased()) {
             let oXfrm = this.getXfrm();
@@ -700,23 +700,24 @@
         this.Recalculate();
         this.draw(oGraphicsWord);
 
-        oGraphicsPDF.SetLineWidth(1);
-        let aOringRect  = this.GetOrigRect();
-        let X       = aOringRect[0];
-        let Y       = aOringRect[1];
-        let nWidth  = aOringRect[2] - aOringRect[0];
-        let nHeight = aOringRect[3] - aOringRect[1];
+        // draw annot rect
+        // oGraphicsPDF.SetLineWidth(1);
+        // let aOringRect  = this.GetOrigRect();
+        // let X       = aOringRect[0];
+        // let Y       = aOringRect[1];
+        // let nWidth  = aOringRect[2] - aOringRect[0];
+        // let nHeight = aOringRect[3] - aOringRect[1];
 
-        Y += 1 / 2;
-        X += 1 / 2;
-        nWidth  -= 1;
-        nHeight -= 1;
+        // Y += 1 / 2;
+        // X += 1 / 2;
+        // nWidth  -= 1;
+        // nHeight -= 1;
 
-        oGraphicsPDF.SetStrokeStyle(0, 255, 255);
-        oGraphicsPDF.SetLineDash([]);
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
-        oGraphicsPDF.Stroke();
+        // oGraphicsPDF.SetStrokeStyle(0, 255, 255);
+        // oGraphicsPDF.SetLineDash([]);
+        // oGraphicsPDF.BeginPath();
+        // oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
+        // oGraphicsPDF.Stroke();
     };
     CAnnotationBase.prototype.SetReplies = function(aReplies) {
         let oDoc = this.GetDocument();
@@ -919,11 +920,12 @@
     CAnnotationBase.prototype.GetRGBColor = function(aInternalColor) {
         let oColor = {};
 
-        if (!aInternalColor)
+        if (aInternalColor.length == 0) {
             return {
                 r: 255,
                 g: 255,
                 b: 255
+            }
         }
         
         if (aInternalColor.length == 1) {

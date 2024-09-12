@@ -3613,7 +3613,10 @@
 			let value = this.file.pages[pageNum].Rotate;
 			return (undefined === value) ? 0 : value;
 		};
-
+		this.getDrawingPageScale = function(pageNum)
+		{
+			return 96 / this.file.pages[pageNum].Dpi;
+		};
 		this.setOffsetTop = function(offset)
 		{
 			this.offsetTop = offset;

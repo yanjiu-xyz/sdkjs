@@ -171,6 +171,7 @@
     };
     CAnnotationInk.prototype.SetFlipV = function(bFlip) {
         let oDoc = this.GetDocument();
+        return;
         
         if (this.flipV != bFlip) {
             oDoc.History.Add(new CChangesPDFInkFlipV(this, this.flipV, bFlip));
@@ -180,7 +181,8 @@
     };
     CAnnotationInk.prototype.SetFlipH = function(bFlip) {
         let oDoc = this.GetDocument();
-
+        return;
+        
         if (this.flipH != bFlip) {
             oDoc.History.Add(new CChangesPDFInkFlipH(this, this.flipV, bFlip));
             this.changeFlipH(!this.flipH);
