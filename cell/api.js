@@ -3382,10 +3382,6 @@ var editor;
 			if (undefined !== window["AscDesktopEditor"]) {
 				window["AscDesktopEditor"]["OnSave"]();
 			}
-			if (t.disconnectOnSave) {
-				t.CoAuthoringApi.disconnect(t.disconnectOnSave.code, t.disconnectOnSave.reason);
-				t.disconnectOnSave = null;
-			}
 
 			if (t.canUnlockDocument) {
 				t._unlockDocument();

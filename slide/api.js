@@ -2475,10 +2475,6 @@ background-repeat: no-repeat;\
 			{
 				window["AscDesktopEditor"]["OnSave"]();
 			}
-			if (t.disconnectOnSave) {
-				t.CoAuthoringApi.disconnect(t.disconnectOnSave.code, t.disconnectOnSave.reason);
-				t.disconnectOnSave = null;
-			}
 
 			if (t.canUnlockDocument) {
 				t._unlockDocument();

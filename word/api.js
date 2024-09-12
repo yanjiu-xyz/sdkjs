@@ -2692,10 +2692,6 @@ background-repeat: no-repeat;\
 			{
 				window["AscDesktopEditor"]["OnSave"]();
 			}
-			if (t.disconnectOnSave) {
-				t.CoAuthoringApi.disconnect(t.disconnectOnSave.code, t.disconnectOnSave.reason);
-				t.disconnectOnSave = null;
-			}
 			if(AscCommon.g_specialPasteHelper && !AscCommon.CollaborativeEditing.Is_SingleUser()){
 				AscCommon.g_specialPasteHelper.SpecialPasteButton_Hide();
 			}

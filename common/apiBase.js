@@ -167,7 +167,6 @@
         this.forceSaveButtonContinue = false;
         this.forceSaveTimeoutTimeout = null;
 		this.forceSaveForm = null;
-		this.disconnectOnSave = null;
 		this.disconnectRestrictions = null;//to restore restrictions after disconnect
 		this.forceSaveUndoRequest = false; // Флаг нужен, чтобы мы знали, что данное сохранение пришло по запросу Undo в совместке
 
@@ -1678,25 +1677,19 @@
 			var reason = data["reason"];
 			var interval = data["interval"];
 			var extendSession = true;
-			if (c_oCloseCode.sessionIdle == code) {
+			if (c_oCloseCode.sessionIdle === code) {
 				var idleTime = t.isIdle();
 				if (idleTime > interval) {
 					extendSession = false;
 				} else {
 					t.CoAuthoringApi.extendSession(idleTime);
 				}
-			} else if (c_oCloseCode.sessionAbsolute == code) {
+			} else if (c_oCloseCode.sessionAbsolute === code) {
 				extendSession = false;
 			}
 			if (!extendSession) {
-				if (t.asc_Save(false, true)) {
-					//enter view mode because save async
-					t.setViewModeDisconnect(AscCommon.getEnableDownloadByCloseCode(code));
-					t.disconnectOnSave = {code: code, reason: reason};
-				} else {
-					t.CoAuthoringApi.sendClientLog('debug', 'disconnect code:' + code + ';reason:' + reason);
-					t.CoAuthoringApi.disconnect(code, reason);
-				}
+				t.CoAuthoringApi.sendClientLog('debug', 'disconnect code:' + code + ';reason:' + reason);
+				t.CoAuthoringApi.disconnect(code, reason);
 			}
 		};
         this.CoAuthoringApi.onForceSave = function(data) {
@@ -1800,7 +1793,8 @@
 			{
 				t.asyncServerIdEndLoaded();
 			}
-			if (null != opt_closeCode) {
+			let isSessionIdleDisconnect = AscCommon.c_oCloseCode.sessionIdle === opt_closeCode;
+			if (null != opt_closeCode && !isSessionIdleDisconnect) {
 				if (null !== t.disconnectRestrictions) {
 					t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
 					t.asc_setRestriction(t.disconnectRestrictions);
@@ -1818,6 +1812,11 @@
 				t.disconnectRestrictions = t.restrictions;
 				t.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
 				t.asc_setRestriction(Asc.c_oAscRestrictionType.View);
+				if (isSessionIdleDisconnect) {
+					t.waitNotIdle(undefined, function () {
+						t.CoAuthoringApi.connect();
+					});
+				}
 			}
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {
@@ -3776,6 +3775,23 @@
 
 		return new Date().getTime() - this.lastWorkTime;
 	};
+	baseEditorsApi.prototype.waitNotIdle = function (lastWorkTime, callback)
+	{
+		let t = this;
+		//todo remove first timeout
+		//start with timeout to aviod lastWorkTime update on:
+		//onDisconnect -> asc_setRestriction -> checkLastWork and CheckTargetUpdate -> checkLastWork
+		setTimeout(function () {
+			if (undefined === lastWorkTime) {
+				lastWorkTime = t.getLastWork();
+			}
+			if (lastWorkTime < t.getLastWork()) {
+				callback();
+			} else {
+				t.waitNotIdle(lastWorkTime, callback);
+			}
+		}, 100);
+	}
 
 	baseEditorsApi.prototype.checkInterfaceElementBlur = function()
 	{
@@ -3791,6 +3807,11 @@
 		document.activeElement.dispatchEvent(e);
 	};
 
+
+	baseEditorsApi.prototype.getLastWork = function()
+	{
+		return this.lastWorkTime;
+	};
 	baseEditorsApi.prototype.checkLastWork = function()
 	{
 		this.lastWorkTime = new Date().getTime();
