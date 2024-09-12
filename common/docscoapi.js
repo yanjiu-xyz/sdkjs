@@ -1662,6 +1662,7 @@
     this.IsAnonymousUser = docInfo.get_IsAnonymousUser();
     this.coEditingMode = docInfo.asc_getCoEditingMode();
     this.shardKey = shardKey;
+    this.wopiSrc = wopiSrc;
     this.userSessionId = userSessionId;
 
     this.setDocId(docid);

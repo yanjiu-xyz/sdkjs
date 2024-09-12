@@ -545,7 +545,7 @@ function CPresentation(DrawingDocument) {
 			this.History.Set_LogicDocument(this);
 
 		if (this.CollaborativeEditing)
-			this.CollaborativeEditing.m_oLogicDocument = this;
+			this.CollaborativeEditing.SetLogicDocument(this);
 	}
 
 	//------------------------------------------------------------------------
@@ -3352,7 +3352,6 @@ CPresentation.prototype.GetTargetPosition = function () {
 	}
 	return oPosition;
 };
-
 
 // Отрисовка содержимого Документа
 CPresentation.prototype.Draw = function (nPageIndex, pGraphics) {
@@ -8353,6 +8352,7 @@ CPresentation.prototype.InsertContent = function (Content) {
 							let oSlidePh, oLayoutPlaceholder;
 
 							let nType, nIdx;
+							oSp.generateSmartArtDrawingPart();
 							if (oSp.isPlaceholder() && !this.IsMasterMode()) {
 								let oInfo = {};
 								nType = oSp.getPlaceholderType();

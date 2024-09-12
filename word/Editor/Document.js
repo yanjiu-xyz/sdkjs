@@ -1830,7 +1830,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
             this.History.Set_LogicDocument(this);
 
         if (this.CollaborativeEditing)
-            this.CollaborativeEditing.m_oLogicDocument = this;
+            this.CollaborativeEditing.SetLogicDocument(this);
 
         if (DrawingDocument)
         	DrawingDocument.m_oLogicDocument = this;
@@ -2581,7 +2581,9 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
 {
 	this.sendEvent("asc_onUserActionStart");
 	
-	var isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
+	let isNewPoint = false;
+	if (!this.Action.Start || this.Action.Description !== AscDFH.historydescription_BuilderScript)
+		isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
 
 	if (true === this.Action.Start)
 	{
@@ -2626,6 +2628,10 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
 CDocument.prototype.IsActionStarted = function()
 {
 	return this.Action.Start;
+};
+CDocument.prototype.IsPostActionLockCheck = function()
+{
+	return this.Action.CheckLock;
 };
 /**
  * Сообщаем документу, что потребуется пересчет
@@ -13211,6 +13217,9 @@ CDocument.prototype.CanPerformAction = function(isIgnoreCanEditFlag)
 };
 CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, AdditionalData, DontLockInFastMode, isIgnoreCanEditFlag, fCallback)
 {
+	if (this.IsActionStarted() && this.IsPostActionLockCheck())
+		return false;
+	
 	if (!this.CanPerformAction(isIgnoreCanEditFlag))
 	{
 		if (fCallback)
@@ -27285,8 +27294,9 @@ CDocument.prototype.ConvertMathView = function(isToLinear)
 	{
 		this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
 		let nInputType = this.Api.getMathInputType();
-		
-		if (!this.IsTextSelectionUse())
+
+		// if an empty placeholder is selected, convert the entire math equation
+		if (!this.IsTextSelectionUse() || oMath.IsMathContentPlaceholder())
 		{
 			this.RemoveTextSelection();
 			oMath.ConvertView(isToLinear, nInputType);
@@ -28805,3 +28815,4 @@ CDocumentSectionProps.prototype["get_GutterAtTop"]    = CDocumentSectionProps.pr
 CDocumentSectionProps.prototype["put_GutterAtTop"]    = CDocumentSectionProps.prototype.put_GutterAtTop;
 CDocumentSectionProps.prototype["get_MirrorMargins"]  = CDocumentSectionProps.prototype.get_MirrorMargins;
 CDocumentSectionProps.prototype["put_MirrorMargins"]  = CDocumentSectionProps.prototype.put_MirrorMargins;
+

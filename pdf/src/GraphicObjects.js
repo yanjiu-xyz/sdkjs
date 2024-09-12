@@ -95,6 +95,9 @@
         oAnnotTextPrTrackHandler.SetTrackObject(IsShowAnnotTrack && bShowTrack ? oAnnot : null, 0, false === bSelection || true === bEmptySelection);
     };
 
+    CGraphicObjects.prototype.paragraphIncDecIndent = function(bIncrease) {
+        this.applyDocContentFunction(AscWord.CDocumentContent.prototype.Increase_ParagraphLevel, [bIncrease], AscWord.CTable.prototype.Increase_ParagraphLevel);
+    };
     CGraphicObjects.prototype.canIncreaseParagraphLevel = function(bIncrease)
     {
         let oDocContent = this.getTargetDocContent();
@@ -150,6 +153,7 @@
                 oTable.graphicObject.Set_Props(props);
                 oTable.graphicObject.RemoveSelection();
             }
+            oTable.SetNeedRecalc(true);
             props.TableCaption = sCaption;
             props.TableDescription = sDescription;
             props.RowHeight = dRowHeight;
@@ -952,7 +956,7 @@
         if (this.selection.groupSelection) {
             let oGroup = this.selection.groupSelection;
             if (oGroup.IsAnnot && oGroup.IsAnnot() && oGroup.IsFreeText() && oGroup.selection.textSelection) {
-                return oGroup;
+                return [oGroup];
             }
 
             return this.selection.groupSelection.selectedObjects;

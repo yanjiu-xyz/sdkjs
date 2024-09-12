@@ -923,6 +923,8 @@
 		this.CurrentTranslate = null;
 
 		this.CollaborativeMarksShowType = c_oAscCollaborativeMarksShowType.All;
+		
+		this.stylePainter = null;
 
 		// объекты, нужные для отправки в тулбар (шрифты, стили)
 		this._gui_control_colors = null;
@@ -2796,7 +2798,7 @@ background-repeat: no-repeat;\
 			options.pdfChanges = changes;
 			this.asc_DownloadAs(options);
 			return;
-		} else if((this.documentIsWopi && options.isSaveAs) || !(this.isUseNativeViewer && this.isDocumentRenderer())) {
+		} else if((this.documentIsWopi && (options.isSaveAs && options.wopiSaveAsPath)) || !(this.isUseNativeViewer && this.isDocumentRenderer())) {
 			//todo add new server request wopi_putRelativeOrigin
 			options.asc_setFileType(AscCommon.getFormatByExtention(this.documentFormat));
 			this.asc_DownloadAs(options);
@@ -7749,31 +7751,11 @@ background-repeat: no-repeat;\
 			if (!this.asc_checkNeedCallback("asc_onInitEditorStyles"))
 				return;
 		}
-
-		var StylesPainter = new AscCommonWord.CStylesPainter();
-		var LogicDocument = this.WordControl.m_oLogicDocument;
-		if (LogicDocument)
-		{
-			var isShowParaMarks = LogicDocument.Is_ShowParagraphMarks();
-
-			var isLocalTrackRevisions = false;
-			if (LogicDocument.IsTrackRevisions())
-			{
-				isLocalTrackRevisions = LogicDocument.GetLocalTrackRevisions();
-				LogicDocument.SetLocalTrackRevisions(false);
-			}
-
-			if (true === isShowParaMarks)
-				LogicDocument.Set_ShowParagraphMarks(false, false);
-
-			StylesPainter.GenerateStyles(this, (null == this.LoadedObject) ? this.WordControl.m_oLogicDocument.Get_Styles().Style : this.LoadedObjectDS);
-
-			if (false !== isLocalTrackRevisions)
-				LogicDocument.SetLocalTrackRevisions(isLocalTrackRevisions);
-
-			if (true === isShowParaMarks)
-				LogicDocument.Set_ShowParagraphMarks(true, false);
-		}
+		
+		if (!this.stylePainter)
+			this.stylePainter = new AscCommonWord.CStylesPainter();
+		
+		this.stylePainter.GenerateStyles(this, (null == this.LoadedObject) ? this.WordControl.m_oLogicDocument.Get_Styles().Style : this.LoadedObjectDS);
 	};
 	asc_docs_api.prototype.asyncFontsDocumentEndLoaded   = function(blockType)
 	{
@@ -9846,6 +9828,10 @@ background-repeat: no-repeat;\
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
 	};
+	asc_docs_api.prototype.initCollaborativeEditing = function()
+	{
+		AscCommon.CollaborativeEditing = new AscCommon.CWordCollaborativeEditing();
+	};
 
 	asc_docs_api.prototype.asc_Recalculate = function(bIsUpdateInterface)
 	{
@@ -9874,13 +9860,13 @@ background-repeat: no-repeat;\
 		// Разрешаем всегда выполнять скрипт билдера, даже если это вьювер, а скрипт меняет содержимое
 		// В конце действия по выполненным изменениям проверяем можно ли оставлять данные изменения
 		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
+		logicDocument.CheckActionLock();
 		return true;
 	};
 	asc_docs_api.prototype.onEndBuilderScript = function()
 	{
 		let logicDocument = this.getLogicDocument();
 		logicDocument.Recalculate();
-		logicDocument.CheckActionLock();
 		logicDocument.UpdateSelection();
 		logicDocument.UpdateInterface();
 		return logicDocument.FinalizeAction();
@@ -12238,7 +12224,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_GetSelectedText = function(bClearText, select_Pr)
 	{
-		bClearText = typeof(bClearText) === "boolean" ? bClearText : false;
+		bClearText = (bClearText === true);
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return "";
@@ -12571,9 +12557,8 @@ background-repeat: no-repeat;\
 				const oSmartArt = new AscFormat.SmartArt();
 				oSmartArt.fillByPreset(nSmartArtType);
 				oSmartArt.fitToPageSize();
-				oSmartArt.fitFontSize();
-				oSmartArt.recalculateBounds();
 				oThis.WordControl.m_oLogicDocument.AddInlineImage(null, null, null, oSmartArt);
+				oSmartArt.generateDrawingPart();
 				AscFonts.IsCheckSymbols = false;
 
 				AscFonts.FontPickerByCharacter.checkText("", oThis, function() {

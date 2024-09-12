@@ -2971,8 +2971,10 @@ function CBinaryFileWriter()
         {
             oThis.WriteRecord2(1, txBody.lstStyle, oThis.WriteTextListStyle);
         }
-        var _content = txBody.content.Content;
-        oThis.WriteRecordArray(2, 0, _content, oThis.WriteParagraph);
+        var _content = txBody.content && txBody.content.Content;
+				if (_content) {
+					oThis.WriteRecordArray(2, 0, _content, oThis.WriteParagraph);
+				}
     };
 
     this.WriteParagraph = function(paragraph, startPos, endPos)

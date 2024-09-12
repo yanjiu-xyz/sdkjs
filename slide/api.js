@@ -1080,7 +1080,9 @@
 	asc_docs_api.prototype.isMasterMode = function() {
 		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide && !this.isSlideShow();
 	};
-
+	asc_docs_api.prototype.asc_IsMasterMode = function() {
+		return this.isMasterMode();
+	};
 	asc_docs_api.prototype.asc_AddMasterSlide = function() {
 		if(!this.isMasterMode()) return;
 
@@ -1882,6 +1884,7 @@ background-repeat: no-repeat;\
 		}
 		var context = reader.context;
 		this.WordControl.m_oLogicDocument.ImageMap = context.loadDataLinks();
+		context.GenerateSmartArts();
 		jsZlib.close();
 		return true;
 	};
@@ -4533,7 +4536,7 @@ background-repeat: no-repeat;\
 			oSlide.addToSpTreeToPos(oSlide.cSld.spTree.length, oSmartArt);
 		}
 		oSmartArt.checkDrawingBaseCoords();
-		oSmartArt.fitFontSize();
+		oSmartArt.generateDrawingPart();
 		oController.checkChartTextSelection();
 		oController.resetSelection();
 		oSmartArt.select(oController, 0);
@@ -6049,6 +6052,23 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.IsAsyncOpenDocumentImages     = function()
+	{
+		return true;
+	};
+	asc_docs_api.prototype.asyncImagesDocumentStartLoaded      = function(aImages)
+	{
+		let oDrawingDocument = this.WordControl.m_oDrawingDocument;
+		if(oDrawingDocument && oDrawingDocument.OnStartImagesLoading)
+		{
+			oDrawingDocument.OnStartImagesLoading(aImages);
+		}
+	};
+	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)
+	{
+		this.WordControl.m_oDrawingDocument.CheckRasterImageOnScreen(_image.src);
+	};
+
 	asc_docs_api.prototype._openDocumentEndCallback = function()
 	{
 		if (this.isDocumentLoadComplete || !this.ServerImagesWaitComplete || !this.ServerIdWaitComplete ||
@@ -6093,6 +6113,7 @@ background-repeat: no-repeat;\
 					}
 				}
 				this.WordControl.m_oLogicDocument.Recalculate({Drawings : {All : true, Map : {}}});
+				AscCommon.History.private_ClearRecalcData();
 				var presentation = this.WordControl.m_oLogicDocument;
 
 				presentation.DrawingDocument.OnEndRecalculate();
@@ -6188,6 +6209,9 @@ background-repeat: no-repeat;\
 		// Меняем тип состояния (на никакое)
 		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
 		this.goTo();
+		if (AscCommon.InitDebugSmartArt) {
+			AscCommon.InitDebugSmartArt();
+		}
 	};
 	asc_docs_api.prototype.asc_IsStartDemonstrationOnOpen = function()
 	{
@@ -8390,7 +8414,11 @@ background-repeat: no-repeat;\
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
 	};
-
+	asc_docs_api.prototype.initCollaborativeEditing = function()
+	{
+		AscCommon.CollaborativeEditing = new AscCommon.SlideCollaborativeEditing();
+	};
+	
 	asc_docs_api.prototype._downloadAs = function(actionType, options, oAdditionalData, dataContainer, downloadType)
 	{
 		var t = this;
@@ -9890,6 +9918,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_DuplicateLayout"] = asc_docs_api.prototype.asc_DuplicateLayout;
 	asc_docs_api.prototype["asc_CanDeleteMaster"] = asc_docs_api.prototype.asc_CanDeleteMaster;
 	asc_docs_api.prototype["asc_CanDeleteLayout"] = asc_docs_api.prototype.asc_CanDeleteLayout;
+	asc_docs_api.prototype["asc_IsMasterMode"] = asc_docs_api.prototype.asc_IsMasterMode;
+	
 
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;
 	asc_CCommentData.prototype['asc_getText']         = asc_CCommentData.prototype.asc_getText;
@@ -10032,4 +10062,6 @@ background-repeat: no-repeat;\
 	CSearchResult.prototype['get_Navigator']     = CSearchResult.prototype.get_Navigator;
 	CSearchResult.prototype['put_Navigator']     = CSearchResult.prototype.put_Navigator;
 	CSearchResult.prototype['put_Text']          = CSearchResult.prototype.put_Text;
+	
+	AscCommon['SlideEditorApi'] = AscCommon.SlideEditorApi = asc_docs_api;
 })(window, window.document);

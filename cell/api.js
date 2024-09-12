@@ -4516,7 +4516,7 @@ var editor;
 		oSmartArt.setWorksheet(oWSModel);
 		oSmartArt.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
 		oSmartArt.checkDrawingBaseCoords();
-		oSmartArt.fitFontSize();
+		oSmartArt.generateDrawingPart();
 		oController.checkChartTextSelection();
 		oController.resetSelection();
 		oSmartArt.select(oController, 0);
@@ -6503,7 +6503,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.getGraphicController = function () {
-      var ws = this.wb.getWorksheet();
+      var ws = this.wb && this.wb.getWorksheet();
       return ws && ws.objectRender && ws.objectRender.controller;
   };
 
@@ -9459,7 +9459,21 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype.asc_SetSmoothScrolling  = function(val) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.setSmoothScrolling(val);
+	};
 
+	spreadsheet_api.prototype.asc_GetSmoothScrolling  = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.getSmoothScrolling();
+	};
 
 	spreadsheet_api.prototype.getCustomProperties = function() {
 		let oWBModel = this.wbModel;
@@ -10100,7 +10114,9 @@ var editor;
   prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
   prot["asc_isSupportCopySheetsBetweenBooks"]= prot.asc_isSupportCopySheetsBetweenBooks;
 
-  
+  prot["asc_SetSmoothScrolling"]= prot.asc_SetSmoothScrolling;
+  prot["asc_GetSmoothScrolling"]= prot.asc_GetSmoothScrolling;
+
 
 
 })(window);

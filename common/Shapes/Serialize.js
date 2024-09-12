@@ -173,6 +173,7 @@ function BinaryPPTYLoader()
 	this.oConnectedObjects = {};
 	this.map_shapes_by_id = {};
 	this.fields = [];
+	this.smartarts = [];
 
 
 	this.ClearConnectedObjects = function(){
@@ -312,6 +313,15 @@ function BinaryPPTYLoader()
 
         this.ImageMapChecker = null;
     };
+		this.GenerateSmartArts = function () {
+			while (this.smartarts.length) {
+				const smartart = this.smartarts.pop();
+				smartart.generateDrawingPart();
+			}
+		};
+	this.ClearSmartArts = function () {
+		this.smartarts.length = 0;
+	};
 
     this.LoadDocument = function()
     {
@@ -690,6 +700,11 @@ function BinaryPPTYLoader()
 				}
 			}
         }
+				if (this.IsThemeLoader) {
+					this.ClearSmartArts();
+				} else {
+					this.GenerateSmartArts();
+				}
 
         if (this.Api != null && !this.IsThemeLoader)
         {
@@ -6857,7 +6872,7 @@ function BinaryPPTYLoader()
     {
         var s = this.stream;
 
-        var shape = new AscFormat.CConnectionShape();
+        var shape = false == Asc.editor.isPdfEditor() ? new AscFormat.CConnectionShape() : new AscPDF.CPdfConnectionShape();
         shape.setBDeleted(false);
 
         var _rec_start = s.cur;
@@ -7144,6 +7159,7 @@ function BinaryPPTYLoader()
                 case 8://smartArt
                 {
                     _smartArt = this.ReadSmartArt();
+										this.smartarts.push(_smartArt);
                     break;
                 }
                 case 9:
@@ -10811,7 +10827,19 @@ function BinaryPPTYLoader()
             var s = this.stream;
 
             var isOle = (type === 6);
-            var pic = isOle ? new AscFormat.COleObject() : new AscFormat.CImageShape();
+            var pic;
+            if (isOle)
+            {
+                pic = new AscFormat.COleObject(this.TempMainObject)
+            }
+            else
+            {
+                if (Asc.editor.isPdfEditor())
+                    pic = new AscPDF.CPdfImage();
+                else
+                    pic = new AscFormat.CImageShape(this.TempMainObject);
+            }
+
             pic.setBDeleted(false);
             pic.setParent(this.TempMainObject == null ? this.ParaDrawing : null);
 
@@ -11331,6 +11359,7 @@ function BinaryPPTYLoader()
             this.BaseReader = null;
             if(!bClearStreamOnly)
                 this.ImageMapChecker = {};
+	        this.Reader.ClearSmartArts();
         };
     }
 

@@ -488,7 +488,7 @@
 
 			if (this.DocInfo.get_Wopi())
 			{
-				this.documentShardKey = this.DocInfo.get_Wopi()["WOPISrc"];
+				this.documentWopiSrc = this.DocInfo.get_Wopi()["WOPISrc"];
 				this.documentUserSessionId = this.DocInfo.get_Wopi()["UserSessionId"];
 				this.documentIsWopi = true;
 			}
@@ -508,7 +508,7 @@
 			}
 			if (!this.documentWopiSrc) {
 				//todo add tenant in origin?
-				this.documentShardKey = this.documentId;
+				this.documentShardKey = this.DocInfo.get_Shardkey() || this.documentId;
 			}
 		}
 
@@ -1184,7 +1184,7 @@
 	{
 		// здесь прокинуть евент о заморозке меню
 	};
-	baseEditorsApi.prototype.asyncImagesDocumentStartLoaded      = function()
+	baseEditorsApi.prototype.asyncImagesDocumentStartLoaded      = function(aImages)
 	{
 		// евент о заморозке не нужен... оно и так заморожено
 		// просто нужно вывести информацию в статус бар (что началась загрузка картинок)
@@ -2159,6 +2159,7 @@
 		oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(options.fileType), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["nobase64"] = isNoBase64;
 		oAdditionalData["isSaveAs"] = options.isSaveAs;
+		oAdditionalData["saveAsPath"] = options.wopiSaveAsPath;
 		let locale = this.asc_getLocale() || undefined;
 		if (typeof locale === "string") {
 			locale = Asc.g_oLcidNameToIdMap[locale];
@@ -2821,7 +2822,8 @@
 	};
 	baseEditorsApi.prototype._onEndLoadSdk = function()
 	{
-		AscCommon.g_oTableId.init();
+		AscCommon.g_oTableId.init(this);
+		this.initCollaborativeEditing();
 
 		// init drag&drop
 		var t = this;
@@ -2855,6 +2857,9 @@
 		this._loadSdkImages();
 
 		this.checkDocumentTitleFonts();
+	};
+	baseEditorsApi.prototype.initCollaborativeEditing = function()
+	{
 	};
 	baseEditorsApi.prototype.checkDocumentTitleFonts = function() {
 		if (!AscFonts.FontPickerByCharacter || !this.documentTitle)
@@ -5201,6 +5206,21 @@
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
 	prot["asc_resetPassword"] = prot.asc_resetPassword;
+
+	// NATIVE INITIALIZER (need be in min version)
+	window["InitNativeEditors"] = function()
+	{
+		AscFonts.checkAllFonts();
+
+		let loader = AscCommon.g_font_loader;
+		loader.fontFiles = AscFonts.g_font_files;
+		loader.fontInfos = AscFonts.g_font_infos;
+		loader.map_font_index = AscFonts.g_map_font_index;
+
+		window["InitNativeObject"]();
+		window["InitNativeTextMeasurer"]();
+		window["InitNativeZLib"]();
+	};
 
 	//custom properties
 	prot["asc_getAllCustomProperties"] = prot.asc_getAllCustomProperties;

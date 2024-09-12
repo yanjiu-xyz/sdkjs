@@ -553,6 +553,13 @@ ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 		if (this.Content.length === 1 && oCurrentElement.value === 11034)
 			return oMathText;
 
+		// for LaTeX space processing
+		if (oMathText.IsDefaultText)
+		{
+			oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+			continue;
+		}
+
 		let arrFontContent = oMathText.IsLaTeX() ? AscMath.GetLaTeXFont[strCurrentElement] : undefined;
 		let strMathFontName = arrFontContent ? AscMath.oStandardFont[arrFontContent[0]] : undefined;
 
@@ -578,7 +585,26 @@ ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 		}
 		else
 		{
-			oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+			if (oMathText.IsLaTeX())
+			{
+				if (strCurrentElement === " ") //normal space
+					oMathText.AddText(new AscMath.MathText('\\ ', this))
+				// else if (strCurrentElement === " ")
+				// 	oMathText.AddText(new AscMath.MathText("\\quad", this));
+				// else if (strCurrentElement === " ")
+				// 	oMathText.AddText(new AscMath.MathText("\\:", this));
+				// else if (strCurrentElement === " ")
+				// 	oMathText.AddText(new AscMath.MathText("\\;", this));
+				else
+				{
+					oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+				}
+			}
+			else
+			{
+				oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+			}
+
 		}
 	}
 
@@ -6546,7 +6572,8 @@ ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 	let rangePos = this.getRangePos(searchState.line, searchState.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
-	if (startPos >= endPos)
+
+	if (startPos > endPos)
 		return;
 	
 	for (let pos = startPos; pos < endPos; ++pos)
@@ -6607,8 +6634,7 @@ ParaRun.prototype.ConvertParaContentPosToRangePos = function(oContentPos, nDepth
 	var nCurPos = oContentPos ? Math.max(0, Math.min(this.Content.length, oContentPos.Get(nDepth))) : this.Content.length;
 	for (var nPos = 0; nPos < nCurPos; ++nPos)
 	{
-		if (para_Text === this.Content[nPos].Type || para_Space === this.Content[nPos].Type || para_Tab === this.Content[nPos].Type)
-			nRangePos++;
+		nRangePos++;
     }
 
 	return nRangePos;
@@ -7520,6 +7546,7 @@ ParaRun.prototype.Recalc_CompiledPr = function(RecalcMeasure)
 
     // Если мы в формуле, тогда ее надо пересчитывать
     this.private_RecalcCtrPrp();
+	this.OnTextPrChange();
 };
 ParaRun.prototype.RecalcMeasure = function()
 {
@@ -7834,6 +7861,8 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 				this.Paragraph.TextPr.IncreaseDecreaseFontSize(IncFontSize);
 			}
 		}
+
+		this.OnTextPrChange();
     }
     else
     {
@@ -7997,6 +8026,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
         Result.push( CRun );
         Result.push( RRun );
 
+		this.OnTextPrChange();
         return Result;
     }
 };
@@ -8308,8 +8338,6 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 		if (para_End === this.Content[nPos].Type)
 			return this.Paragraph.TextPr.Apply_TextPr(TextPr);
 	}
-
-	this.OnTextPrChange();
 };
 ParaRun.prototype.ApplyPr = function(oTextPr)
 {
@@ -10279,6 +10307,27 @@ ParaRun.prototype.RemoveMathPlaceholder = function()
 	// TODO: Расчет стилей разный для плейсхолдера и для текса (разобраться почему)
 	this.Recalc_CompiledPr();
 };
+ParaRun.prototype.ProcessingOldEquationConvert = function()
+{
+	for (let nPos = 0; nPos < this.Content.length; nPos++)
+	{
+		let oCurrentCMathText = this.Content[nPos];
+
+		if (oCurrentCMathText.value === 8202 || oCurrentCMathText.value === 8201)
+		{
+			this.Remove_FromContent(nPos, 1);
+			nPos--;
+		}
+		else if (oCurrentCMathText.value === 8203)
+		{
+			oCurrentCMathText.add("⥂".charCodeAt(0));
+		}
+		else if (oCurrentCMathText.value === 8197)
+		{
+			oCurrentCMathText.add(" ".charCodeAt(0)); //3/MSP
+		}
+	}
+}
 ParaRun.prototype.Set_MathPr = function(MPrp)
 {
     var OldValue = this.MathPrp;
