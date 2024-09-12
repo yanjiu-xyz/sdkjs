@@ -195,10 +195,9 @@ ParaFieldChar.prototype.Read_FromBinary = function(reader)
 	let charType = reader.GetLong();
 	
 	this.Init(charType, editor.WordControl.m_oLogicDocument);
+	
 	if (reader.GetBool())
-	{
-		this.ffData = AscWord.FFData.fromBinary();
-	}
+		this.ffData = AscWord.FFData.fromBinary(reader);
 	
 	//todo fldData
 };
@@ -346,9 +345,12 @@ ParaFieldChar.prototype.private_UpdateWidth = function()
 			fontSize = ffData.getCheckBoxSize();
 		
 		totalWidth = (1.15 * fontSize * g_dKoef_pt_to_mm * AscWord.TEXTWIDTH_DIVIDER) | 0;
+		
+		// Для совместимости при работе с RecalcObject
+		this.graphemes = [];
+		this.widths    = [];
 	}
 	
-
 	this.Width        = totalWidth;
 	this.WidthVisible = totalWidth;
 };
