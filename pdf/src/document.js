@@ -5343,8 +5343,7 @@ var CPresentation = CPresentation || function(){};
                     continue;
                 }
 
-                let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H * AscCommon.AscBrowser.retinaPixelRatio;
-                let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W * AscCommon.AscBrowser.retinaPixelRatio;
+                let nScale = oViewer.getDrawingPageScale(nPage) * AscCommon.AscBrowser.retinaPixelRatio;
 
                 let xCenter = oViewer.width >> 1;
                 if (oViewer.documentWidth > oViewer.width)
@@ -5361,10 +5360,10 @@ var CPresentation = CPresentation || function(){};
                 if (true == oViewer.isLandscapePage(nPage))
                     indLeft = indLeft + (w - h) / 2;
 
-                let X = aRect[0] * nScaleX - 0.5 >> 0;
-                let Y = aRect[1] * nScaleY - 0.5 >> 0;
-                let W = (aRect[2] - aRect[0]) * nScaleX + 0.5 >> 0;
-                let H = (aRect[3] - aRect[1]) * nScaleY + 0.5 >> 0;
+                let X = aRect[0] * nScale - 0.5 >> 0;
+                let Y = aRect[1] * nScale - 0.5 >> 0;
+                let W = (aRect[2] - aRect[0]) * nScale + 0.5 >> 0;
+                let H = (aRect[3] - aRect[1]) * nScale + 0.5 >> 0;
 
                 oCtx.strokeStyle = "rgb(" + oColor.r + "," + oColor.g + "," + oColor.b + ")";
                 oOverlay.CheckPoint(indLeft + X, indTop + Y);
