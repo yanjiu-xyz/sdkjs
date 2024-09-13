@@ -1569,6 +1569,8 @@
 		shapeTrack.track({}, this.x + this.width, this.y + this.height);
 		const shape = shapeTrack.getShape(false, initObjects.drawingDocument, initObjects.drawingObjects);
 		const spPr = shape.spPr;
+		spPr.setFill(null);
+		spPr.setLn(null);
 		spPr.xfrm.setExtX(this.width);
 		spPr.xfrm.setExtY(this.height);
 		shape.setBDeleted(false);
@@ -1605,8 +1607,11 @@
 			const nvSpPr = new AscFormat.UniNvPr();
 			nvSpPr.cNvPr.setId(0);
 			shape.setNvSpPr(nvSpPr);
-			shape.spPr.xfrm.setExtX(this.width);
-			shape.spPr.xfrm.setExtY(this.height);
+			const spPr = shape.spPr;
+			spPr.setFill(null);
+			spPr.setLn(null);
+			spPr.xfrm.setExtX(this.width);
+			spPr.xfrm.setExtY(this.height);
 			shape.setBDeleted(false);
 			shape.setParent(initObjects.parent);
 			shape.setWorksheet(initObjects.worksheet);
@@ -1727,16 +1732,28 @@
 			editorShape.setStyle(this.style);
 			if (this.fill) {
 				const fillRef = editorShape.style.fillRef ? editorShape.style.fillRef.createDuplicate() : new AscFormat.StyleRef();
-				fillRef.setColor(this.fill.fill.color);
+				const color = this.fill.fill.color || null;
+				fillRef.setColor(color);
 				editorShape.style.setFillRef(fillRef);
 
 			}
 			if (this.ln) {
 				const lnRef = editorShape.style.lnRef ? editorShape.style.lnRef.createDuplicate() : new AscFormat.StyleRef();
-				lnRef.setColor(this.ln.Fill.fill.color);
+				const color = this.ln.Fill.fill.color || null;
+				lnRef.setColor(color);
 				editorShape.style.setLnRef(lnRef);
 			}
 		}
+		if (!editorShape.spPr.ln) {
+			editorShape.spPr.setLn(new AscFormat.CLn());
+		}
+		if (this.headLnArrow) {
+			editorShape.spPr.ln.setHeadEnd(this.headLnArrow);
+		}
+		if (this.tailLnArrow) {
+			editorShape.spPr.ln.setTailEnd(this.tailLnArrow);
+		}
+
 
 		const style = editorShape.style;
 		if (contentPoint && contentPoint.point.prSet && contentPoint.point.prSet.style) {
@@ -5832,21 +5849,26 @@ function HierarchyAlgorithm() {
 			return [];
 		}
 		const isReverse = this.params[AscFormat.Param_type_bendPt] === AscFormat.ParameterVal_bendPoint_end;
+		const edgePoints = this.getEdgePoints();
+		let startEdgePoint = edgePoints.start;
+		let endEdgePoint = edgePoints.end;
 		if (isReverse) {
 			const t = startPoint;
 			startPoint = endPoint;
 			endPoint = t;
+			startEdgePoint = edgePoints.end;
+			endEdgePoint = edgePoints.start;
 		}
 		let bendDist;
 		if (this.isDoubleBendHorizontalConnector()) {
 			bendDist = this.parentNode.adaptConstr[AscFormat.Constr_type_bendDist];
 			if (bendDist === undefined) {
-				bendDist = Math.abs(startPoint.x - endPoint.x) / 2;
+				bendDist = Math.abs(startEdgePoint.x - endEdgePoint.x) / 2;
 			}
 		} else if (this.isDoubleBendVerticalConnector()) {
 			bendDist = this.parentNode.adaptConstr[AscFormat.Constr_type_bendDist];
 			if (bendDist === undefined) {
-				bendDist = Math.abs(startPoint.y - endPoint.y) / 2;
+				bendDist = Math.abs(startEdgePoint.y - endEdgePoint.y) / 2;
 			}
 		}
 		const type = this.getPointPosition(!isReverse);
@@ -5858,8 +5880,8 @@ function HierarchyAlgorithm() {
 				if (bendDist === undefined) {
 					bendPoints = [new CCoordPoint(startPoint.x, endPoint.y)];
 				} else {
-					let y = Math.min(endPoint.y, startPoint.y + bendDist);
-					bendPoints = [new CCoordPoint(startPoint.x, y), new CCoordPoint(endPoint.x, y)];
+					let y = Math.min(endPoint.y, startEdgePoint.y + bendDist);
+					bendPoints = [new CCoordPoint(startEdgePoint.x, y), new CCoordPoint(endEdgePoint.x, y)];
 				}
 				break;
 			}
@@ -5870,8 +5892,8 @@ function HierarchyAlgorithm() {
 				if (bendDist === undefined) {
 					bendPoints = [new CCoordPoint(endPoint.x, startPoint.y)];
 				} else {
-					let x = Math.max(endPoint.x, startPoint.x - bendDist);
-					bendPoints = [new CCoordPoint(x, startPoint.y), new CCoordPoint(x, endPoint.y)];
+					let x = Math.max(endPoint.x, startEdgePoint.x - bendDist);
+					bendPoints = [new CCoordPoint(x, startEdgePoint.y), new CCoordPoint(x, endEdgePoint.y)];
 				}
 				break;
 			}
@@ -5880,8 +5902,8 @@ function HierarchyAlgorithm() {
 				if (bendDist === undefined) {
 					bendPoints = [new CCoordPoint(endPoint.x, startPoint.y)];
 				} else {
-					let x = Math.min(endPoint.x, startPoint.x + bendDist);
-					bendPoints = [new CCoordPoint(x, startPoint.y), new CCoordPoint(x, endPoint.y)];
+					let x = Math.min(endPoint.x, startEdgePoint.x + bendDist);
+					bendPoints = [new CCoordPoint(x, startEdgePoint.y), new CCoordPoint(x, endEdgePoint.y)];
 				}
 				break;
 			}
@@ -5891,8 +5913,8 @@ function HierarchyAlgorithm() {
 				if (bendDist === undefined) {
 					bendPoints = [new CCoordPoint(startPoint.x, endPoint.y)];
 				} else {
-					let y = Math.max(endPoint.y, startPoint.y - bendDist);
-					bendPoints = [new CCoordPoint(startPoint.x, y), new CCoordPoint(endPoint.x, y)];
+					let y = Math.max(endPoint.y, startEdgePoint.y - bendDist);
+					bendPoints = [new CCoordPoint(startEdgePoint.x, y), new CCoordPoint(endEdgePoint.x, y)];
 				}
 				break;
 			}

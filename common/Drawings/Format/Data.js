@@ -7803,8 +7803,6 @@ Because of this, the display is sometimes not correct.
 						  const ln = new AscFormat.CLn();
 						  ln.setW(this.getLineWidth(shadowShape));
 						  ln.setFill(fills[i]);
-						  ln.tailEnd = shadowShape.tailLnArrow;
-						  ln.headEnd = shadowShape.headLnArrow;
 						  shadowShape.setLn(ln);
 					  }
 				  }
