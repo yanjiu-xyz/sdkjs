@@ -536,6 +536,9 @@
 						flags |= FLAG_SEARCH;
 					else if (this.DrawColl && isCollaboration)
 						flags |= FLAG_COLLABORATION;
+					
+					if (element.IsFormField())
+						flags |= FLAG_COMPLEX_FIELD;
 				}
 				break;
 			}

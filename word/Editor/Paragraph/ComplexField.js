@@ -362,6 +362,10 @@ ParaFieldChar.prototype.IsVisual = function()
 {
 	return (this.IsEnd() && (null !== this.numText || null !== this.checkBox));
 };
+ParaFieldChar.prototype.IsFormField = function()
+{
+	return !!(this.checkBox);
+};
 ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 {
 	return this.IsVisual();
