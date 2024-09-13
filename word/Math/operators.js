@@ -4067,7 +4067,6 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 CDelimiter.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
-	oMathText.IsBracket = true;
 
 	let strSeparatorSymbol	= oMathText.IsLaTeX() ? "\\mid" : "∣";
 	let strStartSymbol;

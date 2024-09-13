@@ -4937,8 +4937,10 @@
 					this.WrapExactElement(oPos, Wrap[0], Wrap[1], oContent);
 				else if (Wrap === 0 || oContent instanceof ParaRun)
 					return oPos;
-				else if (Wrap === 1 && oContent.haveMixedContent() && !oMath.IsBracket)
+				else if (Wrap === 1 && oContent.haveMixedContent(false, true) && !oMath.IsBracket)
 					this.WrapExactElement(oPos, "〖", "〗", oContent);
+				else if (Wrap === 2 && !(oContent.Content.length === 1 && oContent.Content[0] instanceof ParaRun))
+					this.WrapExactElement(oPos, "(", ")", oContent);
 				else if (!(oContent.Parent instanceof CDelimiter) && oContent.haveMixedContent && oContent.haveMixedContent() && !oMath.IsBracket)
 					this.WrapExactElement(oPos, "(", ")", oContent);
 			}
@@ -5701,7 +5703,7 @@
 		this.Init();
 
 		if (this.CorrectWord())
-			this.Init();
+			return;
 
 		if (!isNotCorrect)
 			this.StartAutoCorrection();
@@ -5891,25 +5893,26 @@
 				continue;
 			}
 
-			if (nType === MathLiterals.subSup.id)
-			{
-				oSubSup = oToken;
-				return oSubSup;
-			}
-			else if (MathLiterals.lrBrackets.id		=== nType
+			if (MathLiterals.lrBrackets.id				=== nType
 				|| MathLiterals.lBrackets.id			=== nType
 				|| MathLiterals.rBrackets.id			=== nType
 				|| MathLiterals.space.id				=== nType
 				|| MathLiterals.operator.id				=== nType
+				|| MathLiterals.subSup.id				=== nType
 				|| this.IsInSomeBracket(oToken)
 			)
 			{
+				if (MathLiterals.subSup.id				=== nType && !oSubSup)
+					oSubSup = oToken;
 				continue;
 			}
 
 			if (oToken)
 				return oToken;
 		}
+
+		if (oSubSup)
+			return oSubSup;
 	};
 	/**
 	 * Get MathLiteral class of last token
@@ -6084,6 +6087,9 @@
 		let oAbsolutePLastId	= this.GetAbsolutePreLast();
 		let oFuncNamePos		= CheckFunctionOnCursor(this.oCMathContent);
 
+		if (this.oAbsoluteLastId === oAbsolutePLastId) // подряд два пробела, не начинам коррекцию
+			return false;
+
 		// если нажали пробел после названия функции (cos, sin, lim, log, ...), то
 		// нужно добавить символ \funcapply после и инициировать конвертацию
 		if (!oRuleLast && oFuncNamePos && this.oAbsoluteLastId === MathLiterals.space.id)
@@ -6124,6 +6130,50 @@
 		{
 			if (true === this.ConvertByOperator())
 				return true;
+		}
+		else if (this.IsTrigger(this.oAbsoluteLastId) && oRuleLast && oRuleLast.type === MathLiterals.of.id) // сначала пытаемся преобразовать все что находится после "▒"
+		{
+			let oMathContentTemp = AscFormat.ExecuteNoHistory(
+				function (oRuleLast)
+				{
+					let oMathCopy			= this.oCMathContent.Copy();
+					let oParamsCutContent	= {oDelMark : oRuleLast, isDelLastSpace: true};
+					let oMathContent		= CutContentFromEnd(oMathCopy, oParamsCutContent);
+
+					GetConvertContent(0, oMathContent, oMathCopy);
+					oMathCopy.Correct_Content(true);
+
+					return oMathCopy
+				},
+				this,
+				[oRuleLast],
+			);
+
+			if (!this.CompareMathContent(oMathContentTemp)) // если контент изменился то преобразуем все после ▒
+			{
+				let oParamsCutContent	= {oDelMark : oRuleLast, isDelLastSpace: true};
+				let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
+
+				GetConvertContent(0, oMathContent, this.oCMathContent);
+				this.SetCursorByConvertedData(this.oCMathContent);
+				return true;
+			}
+			// если остался прежним и есть большой оператор -> преобразуем весь контент до оператора включительно
+			else if (this.Tokens[MathLiterals.nary.id] && this.Tokens[MathLiterals.nary.id].length > 0)
+			{
+				let oStartPos	= this.Tokens[MathLiterals.nary.id][0].data;
+
+				if (oStartPos)
+				{
+					let oParamsCutContent	= {oDelMark : oStartPos, isDelLastSpace: true};
+					let oMathContent = CutContentFromEnd(this.oCMathContent, oParamsCutContent);
+
+					GetConvertContent(0, oMathContent, this.oCMathContent);
+
+					this.SetCursorByConvertedData(this.oCMathContent);
+					return true;
+				}
+			}
 		}
 		else if (this.IsBIFunctionProcessing(oRuleLast) && this.IsTrigger(this.oAbsoluteLastId))
 		{
@@ -6356,7 +6406,7 @@
 	 * @param {PositionIsCMathContent} oPos
 	 * @returns {{start : PositionIsCMathContent, end: PositionIsCMathContent} | undefined}
 	 */
-	ProceedTokens.prototype.GetContentBlockAfter = function (oPos)
+	ProceedTokens.prototype.GetContentBlockAfter = function (oPos, isSpace)
 	{
 		let oStartPos = oPos.GetCopy();
 		oStartPos.IncreasePosition();
@@ -6384,7 +6434,9 @@
 		{
 			let oCurrentElement = this.oCMathContent.Content[i];
 			nEndMathPos = i;
-			nEndParaPos = 0;
+			nEndParaPos = (i === nMathPos)
+				? nEndParaPos
+				: 0;
 
 			if (oCurrentElement.Type === 49)
 			{
@@ -6399,6 +6451,11 @@
 					}
 
 					oEndPos = new PositionIsCMathContent(nEndMathPos, nEndParaPos, undefined, oCurrentElement.Content);
+					if (isSpace && oEndPos.GetType() === MathLiterals.space.id)
+						return {
+							start: oStartPos,
+							end: oEndPos
+						}
 					let oPos = this.IsStepInBracket(oEndPos);
 					if (oPos)
 					{
@@ -6639,22 +6696,10 @@
 	 */
 	ProceedTokens.prototype.PCFunctionProcessing = function(oLast)
 	{
-		let oConvertPos = this.GetContentBlockAfter(oLast);
+		let oParamsCutContent	= {oDelMark : oLast, isDelLastSpace: true};
+		let oMathContent = CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
-		if (oConvertPos)
-		{
-			let oParamsCutContent	= {oDelMark : oLast, isDelLastSpace: true};
-			let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
-
-			GetConvertContent(0, oMathContent, this.oCMathContent);
-		}
-		else
-		{
-			let oParamsCutContent	= {oDelMark : oLast, isDelLastSpace: true};
-			let oMathContent = CutContentFromEnd(this.oCMathContent, oParamsCutContent);
-
-			GetConvertContent(0, oMathContent, this.oCMathContent);
-		}
+		GetConvertContent(0, oMathContent, this.oCMathContent);
 
 		this.SetCursorByConvertedData(this.oCMathContent);
 	};
@@ -6727,9 +6772,11 @@
 		if (!oMathContent)
 			return;
 
-		if (oMathContent.Content.length === 1)
+		if (oMathContent.Content.length >= 1)
 		{
-			let oConvertedElement = oMathContent.Content[0];
+			let oConvertedElement = (oMathContent.Content.length > 1)
+				? oMathContent.Content[oMathContent.Content.length - 1]
+				: oMathContent.Content[0];
 
 			if (oConvertedElement instanceof CNary)
 			{
@@ -6757,6 +6804,9 @@
 			oMathContent.Correct_Content(true);
 			oMathContent.Correct_ContentPos(1);
 		}
+
+		oMathContent.Correct_Content(true);
+		oMathContent.Correct_ContentPos(1);
 	};
 	/**
 	 * Processing BIFunction type of math content.
@@ -7099,6 +7149,8 @@
 
 				this.position[0]++;
 				this.position[1] = 0
+
+				this.ref = CMathContent.Content[this.position[0]].Content;
 			}
 			else
 			{
