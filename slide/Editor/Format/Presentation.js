@@ -639,7 +639,7 @@ function CPresentation(DrawingDocument) {
 	this.CompositeInput = null;
 
 
-	this.Spelling = new AscCommonWord.CDocumentSpellChecker();
+	this.Spelling = new AscWord.CDocumentSpellChecker();
 
 	this.Sections = [];//array of CPrSection
 

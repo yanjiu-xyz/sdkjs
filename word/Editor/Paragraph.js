@@ -150,7 +150,7 @@ function Paragraph(Parent, bFromPresentation)
 
     this.SearchResults = {};
 
-    this.SpellChecker  = new AscCommonWord.CParagraphSpellChecker(this);
+    this.SpellChecker  = new AscWord.CParagraphSpellChecker(this);
 
     this.NearPosArray  = [];
 
@@ -14509,7 +14509,7 @@ Paragraph.prototype.GetCurrentComments = function(oComments)
 // SpellCheck
 //----------------------------------------------------------------------------------------------------------------------
 /**
- * @returns {AscCommonWord.CParagraphSpellChecker}
+ * @returns {AscWord.CParagraphSpellChecker}
  */
 Paragraph.prototype.GetSpellChecker = function()
 {

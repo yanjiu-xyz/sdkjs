@@ -167,7 +167,7 @@ var CPresentation = CPresentation || function(){};
 		this.LocalHistory   = new AscPDF.History(this);
 		AscCommon.History = this.History;
 
-		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
+		this.Spelling   = new AscWord.CDocumentSpellChecker();
         this.Viewer     = viewer;
         this.Api        = Asc.editor;
 
