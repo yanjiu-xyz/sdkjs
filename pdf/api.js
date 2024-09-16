@@ -198,7 +198,7 @@
 			};
 		}
 	};
-	PDFEditorApi.prototype["asc_nativeCalculate"] = function()
+	PDFEditorApi.prototype["asc_nativeCalculateFile"] = function()
 	{
 	};
 	PDFEditorApi.prototype["asc_nativePrintPagesCount"] = function()
@@ -209,7 +209,11 @@
 	PDFEditorApi.prototype["asc_nativeGetPDF"] = function(options)
 	{
 		if (this.DocumentRenderer)
-			return this.DocumentRenderer.Save();
+		{
+			let result = this.DocumentRenderer.Save();
+			window["native"]["Save_End"]("", result.length);
+			return result;
+		}
 		return null;
 	};
 
