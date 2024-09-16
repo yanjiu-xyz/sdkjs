@@ -8670,6 +8670,21 @@ CDocument.prototype.IsInContentControl = function(X, Y, nPageAbs)
 
 	return false;
 };
+/**
+ * Получаем элемент рана по заданной позиции
+ * @param x
+ * @param y
+ * @param pageAbs
+ * @returns {?AscWord.CRunElementBase}
+ */
+CDocument.prototype.GetRunElementByXY = function(x, y, pageAbs)
+{
+	let anchor = this.Get_NearestPos(pageAbs, x, y);
+	if (!anchor || !anchor.Paragraph)
+		return null;
+	
+	return anchor.Paragraph.GetRunElementByXY(x, y, anchor.Internal.Page);
+};
 CDocument.prototype.IsUseInDocument = function(Id)
 {
 	if (!this.MainDocument)
@@ -10389,7 +10404,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 		var oSelectedContent = this.GetSelectedElementsInfo();
 		var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
 		var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
-		let cfCheckBox       = oSelectedContent.GetComplexFieldFormCheckBox();
+		let runElement       = this.GetRunElementByXY(X, Y, this.CurPage);
 
 		if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
 		{
@@ -10415,10 +10430,15 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			}
 			this.UpdateSelection();
 		}
-		else if (cfCheckBox && this.IsInText(X, Y, PageIndex))
+		else if (this.IsFillingFormMode()
+			&& runElement
+			&& runElement.Type === para_FieldChar
+			&& runElement.IsFormField())
 		{
-			console.log("123123123123123");
-			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, {
+			let cfCheckBox = runElement.GetComplexField();
+			if (cfCheckBox
+				&& cfCheckBox.IsFormFieldEnabled()
+				&& !this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, {
 				Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 				Elements  : cfCheckBox.GetRelatedParagraphs(),
 				CheckType : AscCommon.changestype_Paragraph_Content

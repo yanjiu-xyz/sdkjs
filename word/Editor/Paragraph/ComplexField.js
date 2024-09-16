@@ -592,6 +592,10 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 
 	if (!this.Instruction || !this.IsValid())
 		return false;
+	
+	// TODO: Нужно добавить разделитель, если его нет. Пока не обновляем такие поля
+	if (!this.HaveValuePart())
+		return false;
 
 	this.SelectFieldValue();
 
@@ -1773,8 +1777,11 @@ CComplexField.prototype.IsValid = function()
 {
 	return (this.IsUse()
 		&& this.BeginChar && this.BeginChar.IsValid()
-		&& this.SeparateChar && this.SeparateChar.IsValid()
 		&& this.EndChar && this.EndChar.IsValid());
+};
+CComplexField.prototype.HaveValuePart = function()
+{
+	return (this.SeparateChar && this.SeparateChar.IsValid());
 };
 CComplexField.prototype.GetInstruction = function()
 {
@@ -1829,6 +1836,9 @@ CComplexField.prototype.RemoveFieldWrap = function()
 {
 	if (!this.IsValid())
 		return;
+	
+	if (!this.HaveValuePart())
+		return this.RemoveField();
 
 	this.EndChar.RemoveThisFromDocument();
 
@@ -1961,11 +1971,34 @@ CComplexField.prototype.CheckType = function(type)
 	if (!instruction)
 		return false;
 	
+	// TODO: По-хорошему надо сделать мап типов, которые могут идти без разделителя, и какие не могут
 	return instruction.GetType() === type;
 };
 CComplexField.prototype.IsAddin = function()
 {
 	return this.CheckType(AscWord.fieldtype_ADDIN);
+};
+CComplexField.prototype.IsFormField = function()
+{
+	if (!this.IsValid())
+		return false;
+	
+	let instruction = this.GetInstruction();
+	if (!instruction)
+		return false;
+	
+	let type = instruction.GetType();
+	return (AscWord.fieldtype_FORMCHECKBOX === type
+		|| AscWord.fieldtype_FORMTEXT === type
+		|| AscWord.fieldtype_FORMDROPDOWN === type);
+};
+CComplexField.prototype.IsFormFieldEnabled = function()
+{
+	if (!this.IsFormField())
+		return false;
+	
+	let ffData = this.BeginChar.GetFFData();
+	return (!ffData || ffData.isEnabled());
 };
 CComplexField.prototype.IsFormCheckBox = function()
 {

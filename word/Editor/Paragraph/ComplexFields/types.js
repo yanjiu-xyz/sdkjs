@@ -56,5 +56,6 @@
 	window['AscWord'].fieldtype_NOTEREF      = 0x0013;
 	window['AscWord'].fieldtype_ADDIN        = 0x0014;
 	window['AscWord'].fieldtype_FORMCHECKBOX = 0x0015;
+	window['AscWord'].fieldtype_FORMDROPDOWN = 0x0016;
 	
 })(window);

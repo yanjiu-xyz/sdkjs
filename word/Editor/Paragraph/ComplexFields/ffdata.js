@@ -113,6 +113,10 @@
 		
 		return !!(this.checkBox.default);
 	};
+	FFData.prototype.isEnabled = function()
+	{
+		return (false !== this.enabled);
+	};
 	FFData.prototype.toBinary = function(writer)
 	{
 		let startPos = writer.GetCurPosition();
