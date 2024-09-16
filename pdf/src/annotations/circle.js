@@ -176,7 +176,7 @@
         this.recalcGeometry();
     };
     CAnnotationCircle.prototype.IsNeedRecalcSizes = function() {
-        return this
+        return this._needRecalcSizes;
     };
     CAnnotationCircle.prototype.Recalculate = function(bForce) {
         if (true !== bForce && false == this.IsNeedRecalc()) {

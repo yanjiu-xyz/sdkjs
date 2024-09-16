@@ -186,7 +186,7 @@
         this.recalcGeometry();
     };
     CAnnotationSquare.prototype.IsNeedRecalcSizes = function() {
-        return this
+        return this._needRecalcSizes;
     };
     CAnnotationSquare.prototype.IsSquare = function() {
         return true;
@@ -199,10 +199,9 @@
         if (this.IsNeedRecalcSizes()) {
             let aOrigRect = this.GetOrigRect();
             let aRD = this.GetRectangleDiff();
-            let nLineW = this.GetWidth();
             
-            let extX = ((aOrigRect[2] - aOrigRect[0]) - aRD[0] - aRD[2] - 2 * nLineW) * g_dKoef_pt_to_mm;
-            let extY = ((aOrigRect[3] - aOrigRect[1]) - aRD[1] - aRD[3] - 2 * nLineW) * g_dKoef_pt_to_mm;
+            let extX = ((aOrigRect[2] - aOrigRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
+            let extY = ((aOrigRect[3] - aOrigRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
 
             this.spPr.xfrm.offX = (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm;
             this.spPr.xfrm.offY = (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm;

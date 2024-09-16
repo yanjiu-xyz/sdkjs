@@ -1851,17 +1851,18 @@
 			
 			// если есть заселекченная shape base аннотация под мышкой, залезающая на другую страницу
 			if (oDoc.mouseDownAnnot) {
+				let oController = oDoc.GetController();
 				let oActiveAnnot = oDoc.mouseDownAnnot;
+
 				if (oActiveAnnot.IsShapeBased()) {
 					let nAnnotPage = oActiveAnnot.GetPage();
 
-					if (pageObjectMM.index != nAnnotPage) {
-						let oPt = AscPDF.ConvertCoordsToAnotherPage(pageObjectMM.x, pageObjectMM.y, pageObjectMM.index, nAnnotPage);
+					let oPt = pageObjectMM.index != nAnnotPage ? AscPDF.ConvertCoordsToAnotherPage(pageObjectMM.x, pageObjectMM.y, pageObjectMM.index, nAnnotPage) : pageObjectMM;
+					let oGeomEditSelection = oController.selection.geometrySelection ? oController.selection.geometrySelection : null;
 
-						if (oActiveAnnot == oDoc.GetShapeBasedAnnotById(this.DrawingObjects.getGraphicInfoUnderCursor(nAnnotPage, oPt.x, oPt.y).objectId)) {
-							if (oActiveAnnot.hitToHandles(oPt.x, oPt.y) != -1) {
-								return oActiveAnnot;
-							}
+					if (oActiveAnnot == oDoc.GetShapeBasedAnnotById(this.DrawingObjects.getGraphicInfoUnderCursor(nAnnotPage, oPt.x, oPt.y).objectId)) {
+						if (oActiveAnnot.hitToHandles(oPt.x, oPt.y) != -1 || (oGeomEditSelection && oGeomEditSelection.hitToGeometryEdit(oPt.x, oPt.y))) {
+							return oActiveAnnot;
 						}
 					}
 				}

@@ -1002,6 +1002,10 @@
     };
     CAnnotationFreeText.prototype.SetInTextBox = function(isIn) {
         let oDoc = this.GetDocument();
+        if (this.isInTextBox == isIn) {
+            return;
+        }
+        
         if (isIn) {
             this.selection.textSelection = this.GetTextBoxShape();
             this._prevRect = this.GetRect().slice();

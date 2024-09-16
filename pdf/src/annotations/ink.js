@@ -392,9 +392,10 @@
     }
 
     function initShape(oParentAnnot) {
-        let aShapeRectInMM = oParentAnnot.GetOrigRect().map(function(measure) {
+        let aOrigRect = oParentAnnot.GetOrigRect();
+        let aShapeRectInMM = aOrigRect.map(function(measure) {
             return measure * g_dKoef_pt_to_mm;
-        });
+        }) || [];
         let xMin = aShapeRectInMM[0];
         let xMax = aShapeRectInMM[2];
         let yMin = aShapeRectInMM[1];
