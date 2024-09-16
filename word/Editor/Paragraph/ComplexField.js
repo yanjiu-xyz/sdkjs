@@ -1967,6 +1967,42 @@ CComplexField.prototype.IsAddin = function()
 {
 	return this.CheckType(AscWord.fieldtype_ADDIN);
 };
+CComplexField.prototype.IsFormCheckBox = function()
+{
+	return this.CheckType(AscWord.fieldtype_FORMCHECKBOX);
+};
+CComplexField.prototype.ToggleFormCheckBox = function()
+{
+	if (!this.IsFormCheckBox())
+		return;
+	
+	let beginChar = this.GetBeginChar();
+	let run     = beginChar.GetRun();
+	if (!run)
+		return;
+	
+	let inRunPos= run.GetElementPosition(beginChar);
+	if (-1 === inRunPos)
+		return;
+	
+	let newChar = beginChar.Copy();
+	let ffData  = newChar.GetFFData();
+	if (!ffData)
+	{
+		ffData = new AscWord.FFData();
+		newChar.ffData = ffData;
+	}
+	
+	if (!ffData.checkBox)
+		ffData.initCheckBox();
+	
+	ffData.checkBox.checked = !ffData.isCheckBoxChecked();
+	
+	run.RemoveFromContent(inRunPos, 1);
+	run.AddToContent(inRunPos, newChar);
+	
+	this.ReplaceChar(newChar);
+};
 /**
  * Получаем список связанных параграфов с данным полем (параграфы содержащие метки поля, это не обязательно будут
  * все параграфы между метками начала и конца)

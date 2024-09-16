@@ -1646,6 +1646,16 @@ CSelectedElementsInfo.prototype.GetComplexFields = function()
 {
 	return this.m_arrComplexFields;
 };
+CSelectedElementsInfo.prototype.GetComplexFieldFormCheckBox = function()
+{
+	for (let i = 0; i < this.m_arrComplexFields.length; ++i)
+	{
+		let complexField = this.m_arrComplexFields[i];
+		if (complexField.IsFormCheckBox())
+			return complexField;
+	}
+	return null;
+};
 CSelectedElementsInfo.prototype.GetAllTablesOfFigures = function()
 {
     var aTOF = [];
@@ -10379,6 +10389,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 		var oSelectedContent = this.GetSelectedElementsInfo();
 		var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
 		var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
+		let cfCheckBox       = oSelectedContent.GetComplexFieldFormCheckBox();
 
 		if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
 		{
@@ -10403,6 +10414,23 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 				oCC.SkipSpecialContentControlLock(false);
 			}
 			this.UpdateSelection();
+		}
+		else if (cfCheckBox && this.IsInText(X, Y, PageIndex))
+		{
+			console.log("123123123123123");
+			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, {
+				Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+				Elements  : cfCheckBox.GetRelatedParagraphs(),
+				CheckType : AscCommon.changestype_Paragraph_Content
+			}, true, this.IsFillingFormMode()))
+			{
+				this.RemoveTextSelection();
+				this.StartAction();
+				cfCheckBox.ToggleFormCheckBox();
+				this.Recalculate();
+				this.UpdateTracks();
+				this.FinalizeAction();
+			}
 		}
 
 		if (this.IsFillingFormMode() && (oBlockSdt || oInlineSdt))
