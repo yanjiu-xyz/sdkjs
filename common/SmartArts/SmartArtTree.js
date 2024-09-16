@@ -8159,154 +8159,29 @@ function CConnectionDistanceResolver() {
 		}
 		return null;
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*	if (IS_DEBUG_DRAWING) {
-		AscCommon.InitDebugSmartArt = function () {
-
-			const SMARTART_PREVIEW_SIZE_MM = 8128000 * AscCommonWord.g_dKoef_emu_to_mm;
-			const smartArtType = Asc.c_oAscSmartArtTypes.BendingPictureAccentList;
-
-			let loadedSmartArt;
-
-			function getSmartArt() {
-				return new Promise(function (resolve) {
-					if (loadedSmartArt) {
-						resolve(loadedSmartArt);
-					}
-					AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function () {
-						return AscCommon.g_oBinarySmartArts.checkLoadData(smartArtType);
-					}).then(function () {
-						return AscFormat.ExecuteNoHistory(function () {
-							const oSmartArt = new AscFormat.SmartArt();
-							oSmartArt.bNeedUpdatePosition = false;
-							oSmartArt.bFirstRecalculate = false;
-							const oApi = Asc.editor || editor;
-							oSmartArt.bForceSlideTransform = true;
-							oSmartArt.fillByPreset(smartArtType);
-							oSmartArt.setBDeleted2(false);
-							const oXfrm = oSmartArt.spPr.xfrm;
-							const oDrawingObjects = oApi.getDrawingObjects();
-							oXfrm.setOffX(0);
-							oXfrm.setOffY((SMARTART_PREVIEW_SIZE_MM - oXfrm.extY) / 2);
-							if (oDrawingObjects) {
-								oSmartArt.setDrawingObjects(oDrawingObjects);
-								if (oDrawingObjects.cSld) {
-									oSmartArt.setParent2(oDrawingObjects);
-									oSmartArt.setRecalculateInfo();
-								}
-
-								if (oDrawingObjects.getWorksheetModel) {
-									oSmartArt.setWorksheet(oDrawingObjects.getWorksheetModel());
-								}
-							}
-							oSmartArt.recalcTransformText();
-							oSmartArt.recalculate();
-
-							loadedSmartArt = oSmartArt;
-							resolve(oSmartArt);
-						}, this, []);
-					});
-				});
-
-			}
-
-			let getGraphics;
-			if (IS_ADD_HTML) {
-				const oDivElement = document.createElement('div');
-				oDivElement.style.cssText = "padding:0;margin:0;user-select:none;width:300px;height:300px;position:absolute;left:0;top:0;background-color: white;z-index:1000000;";
-				document.body.appendChild(oDivElement);
-				const nWidth_px = oDivElement.clientWidth;
-				const nHeight_px = oDivElement.clientHeight;
-
-				const oCanvas = document.createElement('canvas');
-				oCanvas.style.cssText = "padding:0;margin:0;user-select:none;width:100%;height:100%;";
-				if (nWidth_px > 0 && nHeight_px > 0) {
-					oDivElement.appendChild(oCanvas);
-				}
-
-
-				oCanvas.width = AscCommon.AscBrowser.convertToRetinaValue(nWidth_px, true);
-				oCanvas.height = AscCommon.AscBrowser.convertToRetinaValue(nHeight_px, true);
-				const nRetinaWidth = oCanvas.width;
-				const nRetinaHeight = oCanvas.height;
-				const oContext = oCanvas.getContext("2d");
-				getGraphics = function(smartart) {
-					const size = Math.max(smartart.spPr.xfrm.extX, smartart.spPr.xfrm.extY);
-					const oGraphics = new AscCommon.CGraphics();
-					oGraphics.init(oContext,
-						nRetinaWidth,
-						nRetinaHeight,
-						size,
-						size);
-					oGraphics.m_oFontManager = AscCommon.g_fontManager;
-
-					oGraphics.SetIntegerGrid(true);
-					oGraphics.transform(1, 0, 0, 1, 0, 0);
-
-					oGraphics.b_color1(255, 255, 255, 255);
-					oGraphics.rect(0, 0, size, size);
-					oGraphics.df();
-					return oGraphics;
-				}
-
-				getSmartArt().then(function (smartart) {
-					const oGraphics = getGraphics(smartart);
-					smartart.draw(oGraphics);
-				});
-
-			}
-
-
-			document.body.addEventListener('keydown', function (e) {
-				if (e.ctrlKey && e.altKey && e.keyCode === 82) {
-					getSmartArt().then(function (smartart) {
-						const oSM = editor.getGraphicController().selectedObjects[0];
-						smartart = oSM || smartart;
-
-
-						const smartArtAlgorithm = new SmartArtAlgorithm(smartart);
-						smartArtAlgorithm.startFromBegin();
-						const drawing = smartart.spTree[0];
-						const shapeLength = drawing.spTree.length;
-						for (let i = 0; i < shapeLength; i++) {
-							drawing.removeFromSpTreeByPos(0);
-						}
-						const shapes = smartArtAlgorithm.getShapes();
-
-						for (let i = shapes.length - 1; i >= 0; i -= 1) {
-							drawing.addToSpTree(0, shapes[i]);
-						}
-
-
-						smartart.recalculate();
-
-						if (IS_ADD_HTML) {
-							const oGraphics = getGraphics(smartart);
-							smartart.draw(oGraphics);
-						}
-
-
-						editor.getLogicDocument().Recalculate();
-						smartart.fitFontSize();
-						editor.getLogicDocument().Recalculate();
-					});
-				}
-			});
-		}
-	}*/
+		// document.body.addEventListener('keydown', function (e) {
+		// 	if (e.ctrlKey && e.altKey && e.keyCode === 82) {
+		// 			const oSM = editor.getGraphicController().selectedObjects[0];
+		// 			const smartArtAlgorithm = new SmartArtAlgorithm(oSM);
+		// 			smartArtAlgorithm.startFromBegin();
+		// 			const drawing = oSM.spTree[0];
+		// 			const shapeLength = drawing.spTree.length;
+		// 			for (let i = 0; i < shapeLength; i++) {
+		// 				drawing.removeFromSpTreeByPos(0);
+		// 			}
+		// 			const shapes = smartArtAlgorithm.getShapes();
+		//
+		// 			for (let i = shapes.length - 1; i >= 0; i -= 1) {
+		// 				drawing.addToSpTree(0, shapes[i]);
+		// 			}
+		//
+		// 			oSM.recalculate();
+		//
+		// 			editor.getLogicDocument().Recalculate();
+		// 			oSM.fitFontSize();
+		// 			editor.getLogicDocument().Recalculate();
+		// 	}
+		// });
 
 	AscFormat.SmartArtAlgorithm = SmartArtAlgorithm;
 })(window);
