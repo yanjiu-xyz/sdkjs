@@ -774,7 +774,7 @@
 
 			if (this.IsPreScriptLiteral() && strOpen === "(")
 			{
-				return this.GetPreScriptLiteral(strOpen);
+				return this.GetPreScriptLiteral(strOpen, true);
 			}
 
 			let isTempSpaceExit = undefined;
@@ -888,7 +888,7 @@
 
 		return [arrContent, intCountOfBracketBlock, styles];
 	}
-	CUnicodeParser.prototype.GetPreScriptLiteral = function (strOpen)
+	CUnicodeParser.prototype.GetPreScriptLiteral = function (strOpen, isInsideBracket)
 	{
 		let oFirstSoOperand,
 			oSecondSoOperand,
@@ -925,6 +925,17 @@
 		else
 		{
 			oSecondSoOperand = this.GetSpaceExitFunction(this.GetSoOperandLiteral, "preScript");
+		}
+
+		if (!oFirstSoOperand && !oSecondSoOperand)
+		{
+			return {
+				type: Struc.spaces,
+				value: {},
+				down: strTypeOfPreScript === "_" ? {} : undefined,
+				up: strTypeOfPreScript === "^" ? {} : undefined,
+				style: {supStyle: oSupStyle, subStyle: oSubStyle},
+			}
 		}
 
 		if (this.oLookahead.data !== strTypeOfPreScript && this.IsPreScriptLiteral())
@@ -966,15 +977,22 @@
 				value: oBase,
 				down: oFirstSoOperand,
 				up: oSecondSoOperand,
+				style: {supStyle: oSupStyle, subStyle: oSubStyle},
 			}
 		}
 
-		return {
-			type: Struc.sub_sub,
-			value: {},
-			down: strTypeOfPreScript === "_" ? {} : undefined,
-			up: strTypeOfPreScript === "^" ? {} : undefined,
-			style: {supStyle: oSupStyle, subStyle: oSubStyle},
+		if (!isInsideBracket)
+		{
+			return {
+				type: Struc.pre_script,
+				value: {
+					type: Struc.char,
+					value: ''
+				},
+				down: oFirstSoOperand,
+				up: oSecondSoOperand,
+				style: {supStyle: oSupStyle, subStyle: oSubStyle},
+			}
 		}
 
 		return this.WriteSavedTokens();

@@ -6149,7 +6149,7 @@
 				[oRuleLast],
 			);
 
-			if (!this.CompareMathContent(oMathContentTemp)) // если контент изменился то преобразуем все после ▒
+			if (!this.CompareMathContent(oMathContentTemp)) // если контент изменился, то преобразуем все после ▒
 			{
 				let oParamsCutContent	= {oDelMark : oRuleLast, isDelLastSpace: true};
 				let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
@@ -6196,20 +6196,18 @@
 			return true;
 		}
 
-		//конвертация самих скобок
-	 	if (this.IsBracketConvert(oAbsolutePLastId))
+		// prescript inside brackets "(_2^y) "
+		if (!oRuleLast && this.IsPreScript(oAbsolutePLastId))
 		{
-			ConvertBracket(this.Tokens.brackets, this.oCMathContent);
-			this.oCMathContent.Correct_Content();
-			if (this.oCMathContent.Content.length > 0)
-				this.oCMathContent.MoveCursorToEndPos();
-
+			this.ConvertPreScript();
+			this.SetCursorByConvertedData(this.oCMathContent);
 			return true;
 		}
 
-		if (!oRuleLast && this.IsPreScript() && MathLiterals.char.id === oAbsolutePLastId)
+		//конвертация самих скобок
+	 	if (this.IsBracketConvert(oAbsolutePLastId) && !this.IsPreScript())
 		{
-			this.ConvertPreScript(oRuleLast);
+			ConvertBracket(this.Tokens.brackets, this.oCMathContent);
 			this.SetCursorByConvertedData(this.oCMathContent);
 			return true;
 		}
@@ -6319,7 +6317,7 @@
 	ProceedTokens.prototype.ConvertBracketContent = function ()
 	{
 		// проверяем что первый символ внутри скобки это не _ или ^ для обработки pre-script
-		let oLastBracketBlock = this.Tokens.brackets.Pairs[0];
+		let oLastBracketBlock = this.Tokens.brackets.Pairs[this.Tokens.brackets.Pairs.length - 1];
 
 		if (oLastBracketBlock)
 		{
@@ -6377,17 +6375,22 @@
 			GetConvertContent(0, oMathContent, this.oCMathContent);
 		}
 	};
-	ProceedTokens.prototype.IsPreScript = function ()
+	ProceedTokens.prototype.IsPreScript = function (oAbsolutePLastId)
 	{
-		if ( this.Tokens.brackets.Pairs.length > 0)
+		if (this.Tokens.brackets.Pairs.length > 0
+			&& (MathLiterals.space.id === this.oAbsoluteLastId && oAbsolutePLastId === MathLiterals.rBrackets.id
+				|| MathLiterals.char.id === oAbsolutePLastId && MathLiterals.space.id === this.oAbsoluteLastId))
 		{
 			return AscFormat.ExecuteNoHistory(
 				function () {
-					let oParamsCutContent	= {oDelMark : this.Tokens.brackets.Pairs[0][1], isCopy : true, isDelLastSpace: true};
+					if (this.Tokens.brackets.Pairs.length < 1)
+						return false;
+					let oFirstPair			= this.Tokens.brackets.Pairs[this.Tokens.brackets.Pairs.length - 1][1];
+					let oParamsCutContent	= {oDelMark : oFirstPair, isCopy : true, isDelLastSpace: true};
 					let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 					let strMathContent		= oMathContent.GetText();
 
-					if (strMathContent.split("_").length === 2 && strMathContent.split("^").length === 2)
+					if (strMathContent.split("_").length >= 2 && strMathContent.split("^").length >= 2)
 						return this.Tokens.brackets.Pairs.length > 0;
 				},
 				this,
@@ -6396,7 +6399,10 @@
 	};
 	ProceedTokens.prototype.ConvertPreScript = function ()
 	{
-		let oParamsCutContent	= {oDelMark : this.Tokens.brackets.Pairs[0][1], isWrapFirstContent : true, isDelLastSpace: true};
+		if (this.Tokens.brackets.Pairs.length < 1)
+			return false;
+		let oFirstPair			= this.Tokens.brackets.Pairs[this.Tokens.brackets.Pairs.length - 1][1];
+		let oParamsCutContent	= {oDelMark : oFirstPair, isWrapFirstContent : true, isDelLastSpace: true};
 		let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 		GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -6800,6 +6806,17 @@
 					return;
 				}
 			}
+			else if (oConvertedElement instanceof CDegreeSubSup && oConvertedElement.Pr.type === DEGREE_PreSubSup)
+			{
+				let oPreScriptBase = oConvertedElement.getBase();
+				if (oPreScriptBase.Is_Empty())
+				{
+					oMathContent.Correct_Content(true);
+					oPreScriptBase.SelectThisElement(1);
+					oPreScriptBase.SelectAll(1);
+					return;
+				}
+			}
 
 			oMathContent.Correct_Content(true);
 			oMathContent.Correct_ContentPos(1);
@@ -6822,13 +6839,9 @@
 		{
 			let oStartPos			= arrPreContent.start;
 
-			// if (oStartPos.GetText() === "_" || oStartPos.GetText() === "^")
-			// {
-			// 	create processing for pre-script "_2^j x ", "_(2+1)^(x) x ", "(_2^y) x "
-			// 	let oPos = this.GetContentBlockAfter(oLast);
-			// 	let oPosAfter = oPos.end;
-			// 	return false;
-			// }
+			// processing for pre-script "_2^j x ", "_(2+1)^(x) x ", "_2^j (1+y) "
+			if (oStartPos.GetText() === "_" && oLast.GetText() === "^" || oStartPos.GetText() === "^" && oLast.GetText() === "_")
+				return this.ProceedPreScript(oLast, oStartPos);
 
 			let oParamsCutContent	= {oDelMark : oStartPos, isWrapFirstContent: true, isDelLastSpace: true};
 			let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
@@ -6845,7 +6858,54 @@
 
 		this.SetCursorByConvertedData(this.oCMathContent);
 	};
+	ProceedTokens.prototype.ProceedPreScript = function (oLast, oStartPos)
+	{
+		let oLastTemp = oLast.GetCopy();
+		oLastTemp.IncreasePosition(); // get last content of pre script
 
+		let oBracketPos = this.IsStepInBracket(oLastTemp, false); // if bracket pos get opposite
+		if (oBracketPos)
+			oLastTemp = oBracketPos;
+
+		if (oLastTemp.GetText() === ' ')
+			return false;
+
+		oLastTemp.IncreasePosition(); // space before base content
+		if (oLastTemp.GetText() !== " ")
+			return false;
+
+		oLastTemp.IncreasePosition(); // get base content
+		if (oLastTemp.GetText() === " ") // not space
+			return false;
+
+		let oMathContentTemp = AscFormat.ExecuteNoHistory(
+			function (oRuleLast)
+			{
+				let oMathCopy			= this.oCMathContent.Copy();
+				let oParamsCutContent	= {oDelMark : oRuleLast, isDelLastSpace: true};
+				let oMathContent		= CutContentFromEnd(oMathCopy, oParamsCutContent);
+
+				GetConvertContent(0, oMathContent, oMathCopy);
+				oMathCopy.Correct_Content(true);
+
+				return oMathCopy
+			},
+			this,
+			[oStartPos],
+		);
+
+		if (!this.CompareMathContent(oMathContentTemp))
+		{
+			let oParamsCutContent	= {oDelMark : oStartPos, isDelLastSpace: true};
+			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
+
+			GetConvertContent(0, oMathContent, this.oCMathContent);
+			this.SetCursorByConvertedData(this.oCMathContent);
+			return true
+		}
+
+		return false
+	}
 	/**
 	 * Deletes letters at the given position
 	 * @param	{CMathContent} oContent - Content that will proceed.

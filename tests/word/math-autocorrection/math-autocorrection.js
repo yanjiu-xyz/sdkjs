@@ -789,8 +789,9 @@ $(function () {
 
 			QUnit.module( "pre-script");
 			Test("(_1^f)f ", [["ParaRun", ""], ["CDegreeSubSup", "(_1^f)f"], ["ParaRun", ""]], false, "Check prescript index degree");
-			// Test("(_(1/2)^y)f ", [["ParaRun", ""], ["CDegreeSubSup", "(_(1/2)^y)f"], ["ParaRun", ""]], false, "Check prescript index degree");
-			// Test("(_(1/2)^[x_i])x/y  ", [["ParaRun", ""], ["CDegreeSubSup", "(_(1/2)^[x_i])x/y"], ["ParaRun", ""]], false, "Check prescript index degree");
+			Test("_1^f x ", [["ParaRun", ""], ["CDegreeSubSup", "(_1^f)x"], ["ParaRun", ""]], false, "Check prescript index degree");
+			Test("(_(1/2)^y)f ", [["ParaRun", ""], ["CDegreeSubSup", "(_(1/2)^y)f"], ["ParaRun", ""]], false, "Check prescript index degree");
+			Test("(_(1/2)^[x_i])x ", [["ParaRun", ""], ["CDegreeSubSup", "(_(1/2)^[x_i])x"], ["ParaRun", ""]], false, "Check prescript index degree");
 		})
 
 		QUnit.module( "Radicals", function ()
