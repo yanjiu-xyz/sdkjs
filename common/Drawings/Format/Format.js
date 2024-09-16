@@ -12974,7 +12974,7 @@
 			for(let nIdx = 0; nIdx < this.properties.length; ++nIdx) {
 				let oPr = this.properties[nIdx];
 				if(oPr.name === name) {
-					this.asc_ModifyProperty(nIdx, name, type, value);
+					this.ModifyProperty(nIdx, name, type, value);
 					return;
 				}
 			}
@@ -12982,9 +12982,6 @@
 		};
 		CCustomProperties.prototype.ModifyProperty = function (idx, name, type, value) {
 			this.modifyProperty(idx, this.createProperty(name, type, value, null));
-		};
-		CCustomProperties.prototype.asc_getAllProperties = function () {
-			return this.getAllProperties();
 		};
 		CCustomProperties.prototype.RemoveProperty = function (idx) {
 			return this.removeProperty(idx);
@@ -12996,10 +12993,6 @@
 		window['AscCommon'].CCustomProperties = CCustomProperties;
 		prot = CCustomProperties.prototype;
 		prot["add"] = prot.add;
-		prot["asc_getAllProperties"] = prot.asc_getAllProperties;
-		prot["asc_AddProperty"] = prot.asc_AddProperty;
-		prot["asc_ModifyProperty"] = prot.asc_ModifyProperty;
-		prot["asc_RemoveProperty"] = prot.asc_RemoveProperty;
 
 
 		function CCustomProperty() {
