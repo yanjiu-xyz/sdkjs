@@ -76,6 +76,8 @@
     };
     CPdfShape.prototype.recalculateBounds = function() {
         let boundsChecker = new AscFormat.CSlideBoundsChecker();
+        
+        // boundsChecker.CheckLineWidth(this);
         boundsChecker.DO_NOT_DRAW_ANIM_LABEL = true;
         this.draw(boundsChecker);
         boundsChecker.CorrectBounds();

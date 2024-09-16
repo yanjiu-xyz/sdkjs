@@ -95,19 +95,17 @@
         let oDoc    = oViewer.getPDFDoc();
         
         let aPoints = this.GetVertices();
-        let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
 
         let aPolygonPoints = [];
         for (let i = 0; i < aPoints.length - 1; i += 2) {
             aPolygonPoints.push({
-                x: aPoints[i] * g_dKoef_pix_to_mm * nScaleX,
-                y: (aPoints[i + 1])* g_dKoef_pix_to_mm * nScaleY
+                x: aPoints[i] * g_dKoef_pt_to_mm,
+                y: (aPoints[i + 1])* g_dKoef_pt_to_mm
             });
         }
         
         let aShapeRectInMM = this.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
+            return measure * g_dKoef_pt_to_mm;
         });
 
         oDoc.StartNoHistoryMode();
@@ -125,37 +123,23 @@
 
         oDoc.EndNoHistoryMode();
     };
-    CAnnotationPolygon.prototype.SetRect = function(aRect) {
-        let oViewer     = editor.getDocumentRenderer();
+    CAnnotationPolygon.prototype.SetRect = function(aOrigRect) {
+        let oViewer     = Asc.editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
-        let nPage       = this.GetPage();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        this._origRect = aOrigRect;
 
-        this._rect = aRect;
-
-        this._pagePos = {
-            x: aRect[0],
-            y: aRect[1],
-            w: (aRect[2] - aRect[0]),
-            h: (aRect[3] - aRect[1])
-        };
-
-        this._origRect[0] = this._rect[0] / nScaleX;
-        this._origRect[1] = this._rect[1] / nScaleY;
-        this._origRect[2] = this._rect[2] / nScaleX;
-        this._origRect[3] = this._rect[3] / nScaleY;
-
-        oDoc.StartNoHistoryMode();
         let oXfrm = this.getXfrm();
-        oXfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
-        oXfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
-        oXfrm.setExtX((aRect[2] - aRect[0]) * g_dKoef_pix_to_mm);
-        oXfrm.setExtY((aRect[3] - aRect[1]) * g_dKoef_pix_to_mm);
-        oDoc.EndNoHistoryMode();
+        if (oXfrm) {
+            AscCommon.History.StartNoHistoryMode();
+            oXfrm.setOffX(aOrigRect[0] * g_dKoef_pt_to_mm);
+            oXfrm.setOffY(aOrigRect[1] * g_dKoef_pt_to_mm);
+            oXfrm.setExtX((aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm);
+            oXfrm.setExtY((aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm);
+            AscCommon.History.EndNoHistoryMode();
+        }
 
         this.AddToRedraw();
         this.SetWasChanged(true);
@@ -165,16 +149,7 @@
         oDoc.StartNoHistoryMode();
 
         let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
-
         oPolygon.lazyCopy = true;
-
-        oPolygon._pagePos = {
-            x: this._pagePos.x,
-            y: this._pagePos.y,
-            w: this._pagePos.w,
-            h: this._pagePos.h
-        }
-        oPolygon._origRect = this._origRect.slice();
 
         this.fillObject(oPolygon);
 
@@ -225,19 +200,16 @@
         let oDoc    = oViewer.getPDFDoc();
         
         let aPoints = this.GetVertices();
-        let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
-
         let aPolygonPoints = [];
         for (let i = 0; i < aPoints.length - 1; i += 2) {
             aPolygonPoints.push({
-                x: aPoints[i] * g_dKoef_pix_to_mm * nScaleX,
-                y: (aPoints[i + 1])* g_dKoef_pix_to_mm * nScaleY
+                x: aPoints[i] * g_dKoef_pt_to_mm,
+                y: (aPoints[i + 1])* g_dKoef_pt_to_mm
             });
         }
         
         let aShapeRectInMM = this.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
+            return measure * g_dKoef_pt_to_mm;
         });
 
         oDoc.StartNoHistoryMode();

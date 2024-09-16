@@ -886,6 +886,23 @@ CChangesPDFAnnotIntent.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFAnnotWasChanged(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotWasChanged.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFAnnotWasChanged.prototype.constructor = CChangesPDFAnnotWasChanged;
+CChangesPDFAnnotWasChanged.prototype.Type = AscDFH.historyitem_Pdf_Annot_WasChanged;
+CChangesPDFAnnotWasChanged.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetWasChanged(Value);
+};
+
+/**
+ * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
  */
 function CChangesPDFAnnotName(Class, Old, New, Color)

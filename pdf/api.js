@@ -2040,10 +2040,8 @@
 		let nNativeW		= oViewer.file.pages[nPage].W;
 		let nNativeH		= oViewer.file.pages[nPage].H;
 		let nPageRotate		= oViewer.getPageRotate(nPage);
-		let nScaleY			= oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H;
-        let nScaleX			= oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W;
-		let nCommentWidth	= 40 * nScaleX;
-		let nCommentHeight	= 40 * nScaleY;
+		let nCommentWidth	= 40;
+		let nCommentHeight	= 40;
 		let oDoc			= oViewer.getPDFDoc();
 
 		let oBasePos = {

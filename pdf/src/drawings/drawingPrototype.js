@@ -219,14 +219,10 @@
         return aInfo;
     };
     CPdfDrawingPrototype.prototype.GetOrigRect = function() {
-        let oFile = this.GetDocument().Viewer.file;
-        let nPage = this.GetPage();
-        let nKoeff = (96 / oFile.pages[nPage].Dpi) * g_dKoef_pix_to_mm;
-
         let oXfrm = this.getXfrm();
 
-        return [oXfrm.offX / nKoeff, oXfrm.offY / nKoeff, (oXfrm.offX + this.extX) / nKoeff, (oXfrm.offY + this.extY) / nKoeff];
-    }
+        return [oXfrm.offX * g_dKoef_mm_to_pt, oXfrm.offY * g_dKoef_mm_to_pt, (oXfrm.offX + this.extX) * g_dKoef_mm_to_pt, (oXfrm.offY + this.extY) * g_dKoef_mm_to_pt];
+    };
     CPdfDrawingPrototype.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;
     };

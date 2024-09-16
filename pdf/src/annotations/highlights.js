@@ -688,7 +688,7 @@
     {
         let oCtx    = overlay.m_oContext;
         let oViewer = Asc.editor.getDocumentRenderer();
-        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[pageIndex].Dpi);
+        let nScale  = oViewer.getDrawingPageScale(pageIndex) * AscCommon.AscBrowser.retinaPixelRatio;
 
         let xCenter = oViewer.width >> 1;
         if (oViewer.documentWidth > oViewer.width)

@@ -679,17 +679,17 @@ function MoveAnnotationTrack(originalObject)
 {
     this.bIsTracked     = false;
     this.originalObject = originalObject;
-    this.x              = originalObject._pagePos.x;
-    this.y              = originalObject._pagePos.y;
-    this.viewer         = editor.getDocumentRenderer();
+    this.x              = originalObject._origRect[0];
+    this.y              = originalObject._origRect[1];
+    this.viewer         = Asc.editor.getDocumentRenderer();
     this.objectToDraw   = originalObject.LazyCopy();
     this.pageIndex      = originalObject.GetPage();
 
     this.track = function(dx, dy, pageIndex)
     {
         this.bIsTracked = true;
-        this.x = this.originalObject._pagePos.x + dx * AscCommon.g_dKoef_mm_to_pix;
-        this.y = this.originalObject._pagePos.y + dy * AscCommon.g_dKoef_mm_to_pix;
+        this.x = originalObject._origRect[0] + dx * g_dKoef_mm_to_pt;
+        this.y = originalObject._origRect[1] + dy * g_dKoef_mm_to_pt;
         this.pageIndex = pageIndex;
 
         this.initCanvas();
