@@ -1728,16 +1728,16 @@
 		const contentPoint = shapeSmartArtInfo.contentPoint[0];
 		let skipSettingDefaultSpPr = false;
 		if (this.style) {
-			skipSettingDefaultSpPr = true;
 			editorShape.setStyle(this.style);
 			if (this.fill) {
+				skipSettingDefaultSpPr = true;
 				const fillRef = editorShape.style.fillRef ? editorShape.style.fillRef.createDuplicate() : new AscFormat.StyleRef();
 				const color = this.fill.fill.color || null;
 				fillRef.setColor(color);
 				editorShape.style.setFillRef(fillRef);
-
 			}
 			if (this.ln) {
+				skipSettingDefaultSpPr = true;
 				const lnRef = editorShape.style.lnRef ? editorShape.style.lnRef.createDuplicate() : new AscFormat.StyleRef();
 				const color = this.ln.Fill.fill.color || null;
 				lnRef.setColor(color);
@@ -1769,9 +1769,13 @@
 		if (!skipSettingDefaultSpPr) {
 			if (this.fill) {
 				spPr.setFill(this.fill);
+			} else {
+				spPr.setFill(AscFormat.CreateNoFillUniFill());
 			}
 			if (this.ln) {
 				spPr.setLn(this.ln);
+			} else {
+				spPr.setLn(AscFormat.CreateNoFillLine());
 			}
 		}
 
@@ -6343,6 +6347,9 @@ function HierarchyAlgorithm() {
 		}
 
 		editorShape.setPaddings(paddings, {bNotCopyToPoints: true});
+		if (!editorShape.isCanFitFontSize()) {
+			editorShape.applyCustTSettings();
+		}
 	};
 	function isParentWithChildren(nodes) {
 		if (nodes.length) {

@@ -76,6 +76,22 @@
 
 		var dTextFitDelta = 3;// mm
 
+		function getSmartArtParagraphIndent(fontSize) {
+			if (fontSize >= 30) {
+				return 7.9;
+			}
+			if (fontSize >= 20) {
+				return 6.4;
+			}
+			if (fontSize >= 16) {
+				return 4.8;
+			}
+			if (fontSize >= 12) {
+				return 3.2;
+			}
+			return 1.6;
+		}
+
 		function CheckObjectLine(obj) {
 			return (obj instanceof CShape && obj.spPr && obj.spPr.geometry && AscFormat.CheckLinePresetForParagraphAdd(obj.spPr.geometry.preset));
 		}
@@ -961,7 +977,8 @@
 					if (point.prSet && point.prSet.custT !== value) {
 						point.prSet.setCustT(value);
 					}
-				})
+				});
+				this.applyCustTSettings();
 			}
 		}
 
@@ -4019,9 +4036,8 @@
 		};
 
 		CShape.prototype.getSmartArtPointContent = function () {
-			if (this.isObjectInSmartArt()) {
-				return this.getSmartArtInfo() && this.getSmartArtInfo().contentPoint;
-			}
+			const smartartInfo = this.getSmartArtInfo();
+			return smartartInfo && smartartInfo.contentPoint;
 		}
 
 		CShape.prototype.getSmartArtShapePoint = function () {
@@ -4279,10 +4295,116 @@
 				}
 			}
 		};
-		CShape.prototype.applySmartArtFontSize = function (fontSize, isParentWithChildren) {
+		CShape.prototype.getFirstCustTFontSize = function () {
+			const shapeInfo = this.getSmartArtInfo();
+			const contentPoints = shapeInfo && shapeInfo.contentPoint;
+			if (contentPoints) {
+				let paragraphIndex = 0;
+				for (let i = 0; i < contentPoints.length; i++) {
+					const contentNode = contentPoints[i];
+					const point = contentNode.point;
+					const contentLength = point.t && point.t.content && point.t.content.Content.length;
+					if (contentLength) {
+						if (point && point.prSet && point.prSet.custT) {
+							break;
+						} else {
+							paragraphIndex += contentLength;
+						}
+					}
+				}
+				const content = this.getDocContent();
+				if (content) {
+					const item = content.Content[paragraphIndex];
+					if (item) {
+						return item.Get_FirstTextPr().FontSize;
+					}
+				}
+			}
+		};
+		CShape.prototype.applyCustTSettings = function () {
+			const fontSize = this.getFirstCustTFontSize();
+			const oContent = this.getDocContent();
+			if (AscFormat.isRealNumber(fontSize) && oContent) {
+				this.applySmartArtPaddings(fontSize);
+				this.applyCustTFontSizeSettings();
+			}
+		};
+
+		CShape.prototype.applyCustTFontSizeSettings = function () {
+			const contentPoints = this.getSmartArtPointContent();
+			if (!contentPoints) {
+				return;
+			}
 			const oContent = this.txBody && this.txBody.content;
 			const shapeInfo = this.getSmartArtInfo();
+			const nBulletParagraphIndex = this.getFirstBulletParagraphIndex();
+			const bulletSpacingScale = shapeInfo.getChildrenSpacingScale();
+			const paragraphSpacingScale = shapeInfo.getParentSpacingScale();
+
+			if (oContent && contentPoints && contentPoints.length) {
+				let startDepth;
+				let paragraphIndex = 0;
+				for (let i = 0; i < contentPoints.length; i++) {
+					const node = contentPoints[i];
+					const point = node.point;
+					const pointContent = point.t && point.t.content;
+					if (paragraphIndex === nBulletParagraphIndex) {
+						startDepth = node.depth;
+					}
+					const deltaDepth = startDepth !== undefined ? node.depth - startDepth + 1 : 0;
+					for (let j = 0; j < pointContent.Content.length; j += 1) {
+						const oItem = oContent.Content[paragraphIndex];
+						const fontSize = oItem.Get_FirstTextPr().FontSize;
+						if (startDepth !== undefined) {
+							const indent = getSmartArtParagraphIndent(fontSize);
+							oItem.Set_Spacing({After: fontSize * bulletSpacingScale}, false);
+							oItem.Set_Ind({Left: deltaDepth * indent, FirstLine: -indent}, false);
+						} else {
+							oItem.Set_Spacing({After: fontSize * paragraphSpacingScale}, false);
+							oItem.Set_Ind({Left: 0, FirstLine: 0}, false);
+						}
+						paragraphIndex += 1;
+					}
+				}
+			}
+		};
+		CShape.prototype.applySmartArtPaddings = function (fontSize) {
+			const oContent = this.txBody && this.txBody.content;
+			if (this.txBody && oContent) {
+				const oBodyPr = this.txBody.getBodyPr();
+				const pointContent = this.getSmartArtPointContent();
+				if (oBodyPr && pointContent) {
+					const paddings = {};
+					const point = pointContent && pointContent[0].point;
+					if (point) {
+						const isRecalculateInsets = point.isRecalculateInsets();
+						const shapeInfo = this.getSmartArtInfo();
+						const marginFactors = shapeInfo.getMarginFactors();
+						if (isRecalculateInsets.Top && marginFactors.tMarg !== undefined) {
+							paddings.Top = g_dKoef_pt_to_mm * marginFactors.tMarg * fontSize;
+						}
+						if (isRecalculateInsets.Bottom && marginFactors.bMarg !== undefined) {
+							paddings.Bottom = g_dKoef_pt_to_mm * marginFactors.bMarg * fontSize;
+						}
+						if (isRecalculateInsets.Left && marginFactors.lMarg !== undefined) {
+							paddings.Left = g_dKoef_pt_to_mm * marginFactors.lMarg * fontSize;
+						}
+						if (isRecalculateInsets.Right && marginFactors.rMarg !== undefined) {
+							paddings.Right = g_dKoef_pt_to_mm * marginFactors.rMarg * fontSize;
+						}
+					}
+
+					this.setPaddings(paddings, {bNotCopyToPoints: true});
+				}
+			}
+		}
+		CShape.prototype.applySmartArtFontSize = function (fontSize, isParentWithChildren) {
 			const contentPoints = this.getSmartArtPointContent();
+			if (!contentPoints) {
+				return;
+			}
+			const oContent = this.txBody && this.txBody.content;
+			const shapeInfo = this.getSmartArtInfo();
 			const nBulletParagraphIndex = this.getFirstBulletParagraphIndex();
 			const mainParaTextPr = new AscCommonWord.ParaTextPr({FontSize: fontSize});
 			let bulletTextPr = mainParaTextPr;
@@ -4291,18 +4413,7 @@
 				bulletTextPr = new AscCommonWord.ParaTextPr({FontSize: Math.round(fontSize * fontSizeScale)});
 			}
 			const bulletFontSize = bulletTextPr.Value.FontSize;
-			let indent;
-			if (bulletFontSize >= 30) {
-				indent = 7.9;
-			} else if (bulletFontSize >= 20) {
-				indent = 6.4;
-			} else if (bulletFontSize >= 16) {
-				indent = 4.8;
-			} else if (bulletFontSize >= 12) {
-				indent = 3.2;
-			} else {
-				indent = 1.6;
-			}
+			const indent = getSmartArtParagraphIndent(bulletFontSize);
 			const bulletSpacingScale = shapeInfo.getChildrenSpacingScale();
 			const paragraphSpacingScale = shapeInfo.getParentSpacingScale();
 
@@ -4510,7 +4621,7 @@
 			const oContent = this.getDocContent();
 			for (let i = 0; i < oContent.Content.length; i++) {
 				const shapeParagraph = oContent.Content[i];
-				if (shapeParagraph.PresentationPr && shapeParagraph.PresentationPr.Bullet && !shapeParagraph.PresentationPr.Bullet.IsNone()) {
+				if (shapeParagraph.Pr.Bullet && shapeParagraph.Pr.Bullet.bulletType.type === AscFormat.BULLET_TYPE_BULLET_CHAR) {
 					return i;
 				}
 			}
