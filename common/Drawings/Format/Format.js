@@ -2420,7 +2420,7 @@
 		}
 
 		InitClass(CUniColor, CBaseNoIdObject, 0);
-		CUniColor.prototype.checkPhColor = function (unicolor, bMergeMods) {
+		CUniColor.prototype.checkPhColor = function (unicolor) {
 			if (this.color && this.color.type === c_oAscColor.COLOR_TYPE_SCHEME && this.color.id === 14) {
 				if (unicolor) {
 					if (unicolor.color) {
@@ -2430,9 +2430,7 @@
 						if (!this.Mods || this.Mods.Mods.length === 0) {
 							this.Mods = unicolor.Mods.createDuplicate();
 						} else {
-							if (bMergeMods) {
-								this.Mods.Merge(unicolor.Mods);
-							}
+							this.Mods.Merge(unicolor.Mods);
 						}
 					}
 				}
@@ -5093,7 +5091,7 @@
 				}
 			}
 		};
-		CUniFill.prototype.checkPhColor = function (unicolor, bMergeMods) {
+		CUniFill.prototype.checkPhColor = function (unicolor) {
 			if (this.fill) {
 				switch (this.fill.type) {
 					case c_oAscFill.FILL_TYPE_BLIP:
@@ -5103,24 +5101,24 @@
 					}
 					case c_oAscFill.FILL_TYPE_SOLID: {
 						if (this.fill.color && this.fill.color) {
-							this.fill.color.checkPhColor(unicolor, bMergeMods);
+							this.fill.color.checkPhColor(unicolor);
 						}
 						break;
 					}
 					case c_oAscFill.FILL_TYPE_GRAD: {
 						for (var i = 0; i < this.fill.colors.length; ++i) {
 							if (this.fill.colors[i] && this.fill.colors[i].color) {
-								this.fill.colors[i].color.checkPhColor(unicolor, bMergeMods);
+								this.fill.colors[i].color.checkPhColor(unicolor);
 							}
 						}
 						break;
 					}
 					case c_oAscFill.FILL_TYPE_PATT: {
 						if (this.fill.bgClr) {
-							this.fill.bgClr.checkPhColor(unicolor, bMergeMods);
+							this.fill.bgClr.checkPhColor(unicolor);
 						}
 						if (this.fill.fgClr) {
-							this.fill.fgClr.checkPhColor(unicolor, bMergeMods);
+							this.fill.fgClr.checkPhColor(unicolor);
 						}
 						break;
 					}
@@ -8589,14 +8587,14 @@
 				if (!ret)
 					return null;
 				var ret2 = ret.createDuplicate();
-				ret2.checkPhColor(unicolor, false);
+				ret2.checkPhColor(unicolor);
 				return ret2;
 			} else if (number >= 1001) {
 				var ret = this.bgFillStyleLst[number - 1001];
 				if (!ret)
 					return null;
 				var ret2 = ret.createDuplicate();
-				ret2.checkPhColor(unicolor, false);
+				ret2.checkPhColor(unicolor);
 				return ret2;
 			}
 			return null;
@@ -8778,7 +8776,7 @@
 				if (this.themeElements.fmtScheme.fillStyleLst[idx - 1]) {
 					ret = this.themeElements.fmtScheme.fillStyleLst[idx - 1].createDuplicate();
 					if (ret) {
-						ret.checkPhColor(unicolor, false);
+						ret.checkPhColor(unicolor);
 						return ret;
 					}
 				}
@@ -8786,7 +8784,7 @@
 				if (this.themeElements.fmtScheme.bgFillStyleLst[idx - 1001]) {
 					ret = this.themeElements.fmtScheme.bgFillStyleLst[idx - 1001].createDuplicate();
 					if (ret) {
-						ret.checkPhColor(unicolor, false);
+						ret.checkPhColor(unicolor);
 						return ret;
 					}
 				}
@@ -8800,7 +8798,7 @@
 			if (this.themeElements.fmtScheme.lnStyleLst[idx - 1]) {
 				var ret = this.themeElements.fmtScheme.lnStyleLst[idx - 1].createDuplicate();
 				if (ret.Fill) {
-					ret.Fill.checkPhColor(unicolor, false);
+					ret.Fill.checkPhColor(unicolor);
 				}
 				return ret;
 			}

@@ -2213,7 +2213,7 @@
         if(oSpPr && oSpPr.Fill) {
             oFill = oSpPr.Fill.createDuplicate();
             var bIsSpecialStyle = oStyleEntry.isSpecialStyle();
-            oFill.checkPhColor(oFillRefUnicolor || aColors[nIdx], bIsSpecialStyle);
+            oFill.checkPhColor(oFillRefUnicolor || aColors[nIdx]);
             if(bIsSpecialStyle) {
                 if(AscFormat.isRealNumber(nIdx)) {
                     var nPatternType = oStyleEntry.getSpecialPatternType(nIdx);
@@ -2228,7 +2228,7 @@
         oLn = oTheme.getLnStyle(oLineRef.idx, oLineRefUnicolor);
         if(oSpPr && oSpPr.ln) {
             oLn = oSpPr.ln.createDuplicate();
-            oLn.Fill.checkPhColor(oLineRefUnicolor, false);
+            oLn.Fill.checkPhColor(oLineRefUnicolor);
         }
         if(AscFormat.isRealNumber(oLn.w) && AscFormat.isRealNumber(oStyleEntry.lineWidthScale)) {
             oLn.w *= oStyleEntry.lineWidthScale;
@@ -2253,7 +2253,7 @@
         if(oStyleEntry.defRPr) {
             oTextPr.Merge(oStyleEntry.defRPr);
             if(oTextPr.Unifill) {
-                oTextPr.Unifill.checkPhColor(oFontUnicolor, false);
+                oTextPr.Unifill.checkPhColor(oFontUnicolor);
             }
         }
         oParaPr.DefaultRunPr = oTextPr;
