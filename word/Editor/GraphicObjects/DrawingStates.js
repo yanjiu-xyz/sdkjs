@@ -1798,10 +1798,26 @@ MoveInGroupState.prototype =
                         aNewCallout[1 * 2 + 1] = oXY.y * g_dKoef_mm_to_pt;
                     }
 
+                    let aNewTextBoxRect = aTextBoxRect.slice();
+                    // расширяем рект на ширину линии (или на радиус cloud бордера)
+                    let nLineWidth = oFreeText.GetWidth();
+                    if (oFreeText.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+                        aNewTextBoxRect[0] -= oFreeText.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pt;
+                        aNewTextBoxRect[1] -= oFreeText.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pt;
+                        aNewTextBoxRect[2] += oFreeText.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pt;
+                        aNewTextBoxRect[3] += oFreeText.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pt;
+                    }
+                    else {
+                        aNewTextBoxRect[0] -= nLineWidth;
+                        aNewTextBoxRect[1] -= nLineWidth;
+                        aNewTextBoxRect[2] += nLineWidth;
+                        aNewTextBoxRect[3] += nLineWidth;
+                    }
+
                     // находим рект стрелки, учитывая окончание линии
                     let aArrowRect = oFreeText.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]])
 
-                    aNewRect = AscPDF.unionRectangles([aArrowRect, aTextBoxRect, findBoundingRectangle(aNewCallout)]);
+                    aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]);
 
                     // пересчитываем RD.
                     aNewRD = [

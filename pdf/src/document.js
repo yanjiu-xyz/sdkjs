@@ -2310,16 +2310,12 @@ var CPresentation = CPresentation || function(){};
             return null;
 
         let oViewer = editor.getDocumentRenderer();
-        let nScaleY = oViewer.drawingPages[nPageNum].H / oViewer.file.pages[nPageNum].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPageNum].W / oViewer.file.pages[nPageNum].W / oViewer.zoom;
-
-        let aScaledCoords = [aCoords[0] * nScaleX, aCoords[1] * nScaleY, aCoords[2] * nScaleX, aCoords[3] * nScaleY];
 
         let oPagesInfo = oViewer.pagesInfo;
         if (!oPagesInfo.pages[nPageNum])
             return null;
         
-        let oField = private_createField(cName, cFieldType, nPageNum, aScaledCoords, this);
+        let oField = private_createField(cName, cFieldType, nPageNum, aCoords, this);
         if (!oField)
             return null;
 

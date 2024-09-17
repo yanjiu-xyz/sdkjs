@@ -160,7 +160,7 @@
         if (!aCallout && !aArrowPts)
             return undefined;
 
-        let nLineWidth = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let nLineWidth = this.GetWidth();
 
         let oLine = {
             x1: aArrowPts ? aArrowPts[0] : aCallout[1 * 2],

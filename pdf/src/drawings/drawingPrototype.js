@@ -202,7 +202,7 @@
                             let oPt3 = oDrDoc.TextMatrix.TransformPoint(x + w, y + h);    // правый нижний
                             let oPt4 = oDrDoc.TextMatrix.TransformPoint(x, y + h);        // левый нижний
 
-                            let nKoeff = (96 / oFile.pages[nPage].Dpi) * g_dKoef_pix_to_mm;
+                            let nKoeff = oViewer.getDrawingPageScale(nPage) * g_dKoef_pix_to_mm;
 
                             oInfo.quads.push([oPt1.x / nKoeff, oPt1.y / nKoeff, oPt2.x / nKoeff, oPt2.y / nKoeff, oPt4.x / nKoeff, oPt4.y / nKoeff, oPt3.x / nKoeff, oPt3.y / nKoeff]);
                         }
