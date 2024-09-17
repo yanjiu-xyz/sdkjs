@@ -10348,7 +10348,7 @@
 
 	WorksheetView.prototype.getScrollCorrect = function (units) {
 		var u = units >= 0 && units <= 3 ? units : 0;
-		return (this.scrollCorrect != null ? this.scrollCorrect : 0) * asc_getcvt(0/*px*/, u, this._getPPIX());
+		return this.scrollCorrect ? (this.scrollCorrect * asc_getcvt(0/*px*/, u, this._getPPIX())) : 0;
 	};
 
 	WorksheetView.prototype.setHorizontalScrollCorrect = function (val, needDraw) {
@@ -10360,7 +10360,7 @@
 
 	WorksheetView.prototype.getHorizontalScrollCorrect = function (units) {
 		var u = units >= 0 && units <= 3 ? units : 0;
-		return (this.horizontalScrollCorrect != null ? this.horizontalScrollCorrect : 0) * asc_getcvt(0/*px*/, u, this._getPPIX());
+		return this.horizontalScrollCorrect ? (this.horizontalScrollCorrect * asc_getcvt(0/*px*/, u, this._getPPIX())) : 0;
 	};
 
 
