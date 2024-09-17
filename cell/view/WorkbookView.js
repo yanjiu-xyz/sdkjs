@@ -331,7 +331,7 @@
 
 	this.customFunctionEngine = null;
 
-	this.smoothScroll = false;
+	this.smoothScroll = true;
 
 	return this;
   }
