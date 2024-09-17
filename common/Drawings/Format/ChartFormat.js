@@ -1792,7 +1792,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_Cat_SetStrLit] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Cat_SetStrRef] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartFormatSetChart] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetTxData] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetTxData] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetRich] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetStrRef] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DLbls_SetLeaderLines] = window['AscDFH'].CChangesDrawingsObject;
@@ -7865,7 +7865,11 @@
     CAxisBase.prototype.getSourceFormatCode = function() {
         return "General";
     };
+    CAxisBase.prototype.isChartExCat = function() {
+        return false;
+    };
     CAxisBase.prototype.updateNumFormat = function() {
+        if(this.isChartExCat()) return;
         var oNumFmt = this.numFmt;
         if(!oNumFmt) {
             oNumFmt = new CNumFmt();
@@ -9377,8 +9381,9 @@
         }
     };
     CChartText.prototype.setTxData = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartText_SetTxData, this.txData, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartText_SetTxData, this.txData, pr));
         this.txData = pr;
+        this.setParentToChild(pr);
     };
     CChartText.prototype.setRich = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartText_SetRich, this.rich, pr));
@@ -14076,8 +14081,16 @@
     };
     CTitle.prototype.getDefaultTextForTxBody = function() {
         var sText;
-        if(this.tx && this.tx.strRef) {
-            sText = this.tx.strRef.getText(false);
+        if(this.tx) {
+            let oTx = this.tx;
+            if(oTx.strRef) {
+                sText = oTx.strRef.getText(false);
+            }
+            if(!sText) {
+                if(oTx.txData) {
+                    sText = oTx.txData.v;
+                }
+            }
             if(typeof sText === "string" && sText.length > 0) {
                 return sText;
             }

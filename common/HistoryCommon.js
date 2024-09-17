@@ -2918,6 +2918,7 @@
 
 	window['AscDFH'].historyitem_ChartText_SetRich   = window['AscDFH'].historyitem_type_ChartText | 1;
 	window['AscDFH'].historyitem_ChartText_SetStrRef = window['AscDFH'].historyitem_type_ChartText | 2;
+	window['AscDFH'].historyitem_ChartText_SetTxData = window['AscDFH'].historyitem_type_ChartText | 3;
 
 	window['AscDFH'].historyitem_ShapeStyle_SetLnRef     = window['AscDFH'].historyitem_type_ShapeStyle | 1;
 	window['AscDFH'].historyitem_ShapeStyle_SetFillRef   = window['AscDFH'].historyitem_type_ShapeStyle | 2;
