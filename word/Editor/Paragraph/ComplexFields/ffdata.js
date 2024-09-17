@@ -390,7 +390,7 @@
 	}
 	FFDataText.prototype.Copy = function()
 	{
-		let ht = new HelpText();
+		let ht = new FFDataText();
 		
 		ht.type = this.type;
 		ht.val  = this.val;
