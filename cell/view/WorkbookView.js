@@ -409,6 +409,11 @@
 
     this.stringRender = new AscCommonExcel.StringRender(this.buffers.main);
 
+	//need clean previous fonts settings, next in _calcMaxDigitWidth do setFont and reinstall setupFontSize/...
+    if (this.Api.VersionHistory) {
+        AscCommonExcel.resetDrawingContextFonts();
+    }
+
     // Мерить нужно только со 100% и один раз для всего документа
     this._calcMaxDigitWidth();
 
