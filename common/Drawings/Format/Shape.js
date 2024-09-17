@@ -4316,7 +4316,7 @@
 				if (content) {
 					const item = content.Content[paragraphIndex];
 					if (item) {
-						return item.Get_FirstTextPr().FontSize;
+						return item.Get_FirstTextPr2().FontSize;
 					}
 				}
 			}
@@ -4354,7 +4354,7 @@
 					const deltaDepth = startDepth !== undefined ? node.depth - startDepth + 1 : 0;
 					for (let j = 0; j < pointContent.Content.length; j += 1) {
 						const oItem = oContent.Content[paragraphIndex];
-						const fontSize = oItem.Get_FirstTextPr().FontSize;
+						const fontSize = oItem.Get_FirstTextPr2().FontSize;
 						if (startDepth !== undefined) {
 							const indent = getSmartArtParagraphIndent(fontSize);
 							oItem.Set_Spacing({After: fontSize * bulletSpacingScale}, false);

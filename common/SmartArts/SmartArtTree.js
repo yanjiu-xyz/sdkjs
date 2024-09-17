@@ -6211,6 +6211,9 @@ function HierarchyAlgorithm() {
 			this.applyTextMargins(editorShape);
 			this.applyHorizontalAlignment(editorShape);
 			this.applyVerticalAlignment(editorShape);
+			if (!editorShape.isCanFitFontSize()) {
+				editorShape.applyCustTSettings();
+			}
 		}
 	};
 	TextAlgorithm.prototype.getTextRotate = function () {
@@ -6347,9 +6350,6 @@ function HierarchyAlgorithm() {
 		}
 
 		editorShape.setPaddings(paddings, {bNotCopyToPoints: true});
-		if (!editorShape.isCanFitFontSize()) {
-			editorShape.applyCustTSettings();
-		}
 	};
 	function isParentWithChildren(nodes) {
 		if (nodes.length) {
