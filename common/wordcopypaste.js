@@ -5553,12 +5553,11 @@ PasteProcessor.prototype =
 			let arr_Images = pasteObj.images;
 			let fonts = pasteObj.fonts;
 			let presentationSelectedContent = pasteObj.content;
-			if (!presentationSelectedContent.Drawings) {
-				presentationSelectedContent.Drawings = [];
-			}
-
 			if (null === presentationSelectedContent) {
 				return null;
+			}
+			if (!presentationSelectedContent.Drawings) {
+				presentationSelectedContent.Drawings = [];
 			}
 
 			let paste_callback = function () {
