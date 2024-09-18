@@ -3007,11 +3007,18 @@
 		};
 
 		CShape.prototype.recalculateBrush = function () {
-			var compiled_style = this.getCompiledStyle();
-			var RGBA = {R: 0, G: 0, B: 0, A: 255};
-			var parents = this.getParentObjects();
-			var oStyleBrush = null;
-			var oLin;
+			let parents = this.getParentObjects();
+			let RGBA = {R: 0, G: 0, B: 0, A: 255};
+			if(this.attrUseBgFill) {
+				if(this.parent && this.parent.backgroundFill) {
+					this.brush = this.parent.backgroundFill.createDuplicate();
+					this.brush.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA);
+					return;
+				}
+			}
+			let compiled_style = this.getCompiledStyle();
+			let oStyleBrush = null;
+			let oLin;
 			if (isRealObject(parents.theme) && isRealObject(compiled_style) && isRealObject(compiled_style.fillRef)) {
 				this.brush = parents.theme.getFillStyle(compiled_style.fillRef.idx, compiled_style.fillRef.Color);
 				if (this.brush) {
