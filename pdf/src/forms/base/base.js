@@ -207,7 +207,10 @@
     };
     CBaseField.prototype.IsDrawing = function() {
         return false;
-     };
+    };
+    CBaseField.prototype.IsPdfObject = function() {
+        return true;
+    };
     CBaseField.prototype.SetApIdx = function(nIdx) {
         this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;

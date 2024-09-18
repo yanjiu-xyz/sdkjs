@@ -66,6 +66,9 @@
     CPdfDrawingPrototype.prototype.IsDrawing = function() {
         return true;
     };
+    CPdfDrawingPrototype.prototype.IsPdfObject = function() {
+        return true;
+    };
     CPdfDrawingPrototype.prototype.OnContentChange = function() {
         return this.SetNeedRecalc(true);
     };
@@ -332,7 +335,11 @@
             this._needRecalc = false;
         }
         else {
-            if (this.group && this.group.IsAnnot()) {
+            if (this.group) {
+                if (!this.group.IsPdfObject || !this.group.IsPdfObject()) {
+                    return;
+                }
+
                 this.group.SetNeedRecalc(bRecalc, bSkipAddToRedraw);
                 return;
             }
