@@ -11338,8 +11338,8 @@
 		var activeCellCol = half ? this._getSelection().activeCell.col : -1;
 		var w, dx = 0;
 		var c = this.visibleRange.c1;
-		var offset = this._getColLeft(c) - this.cellsLeft;
-		var c2, x1, x2, cFrozen, widthDiff = 0;
+		var offset = this._getOffsetX(c);
+		var c2, x1, x2, cFrozen, widthDiff = -this.getHorizontalScrollCorrect();
 		if (x >= this.cellsLeft) {
 			if (this.topLeftFrozenCell) {
 				cFrozen = this.topLeftFrozenCell.getCol0();
@@ -18568,6 +18568,9 @@
 				} else {
 					offsetY -= t.getScrollCorrect();
 				}
+			} else {
+				offsetX -= t.getHorizontalScrollCorrect();
+				offsetY -= t.getScrollCorrect();
 			}
 			return {vr: vr, offsetX: offsetX, offsetY: offsetY};
 		}
