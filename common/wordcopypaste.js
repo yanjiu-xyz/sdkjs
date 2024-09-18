@@ -4448,7 +4448,7 @@ PasteProcessor.prototype =
 						}
 					}
 
-					let bInsert = oDoc.InsertContent(oPDFSelContent);
+					let bInsert = oDoc.InsertContent2([oPDFSelContent], 0);
 					if (!bInsert) {
 						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo()
 					}
@@ -4550,7 +4550,7 @@ PasteProcessor.prototype =
 						}
 					}
 
-					let bInsert = oDoc.InsertContent(oPDFSelContent);
+					let bInsert = oDoc.InsertContent2([oPDFSelContent], 0);
 					if (bInsert) {
 						let props = [Asc.c_oSpecialPasteProps.destinationFormatting, Asc.c_oSpecialPasteProps.keepTextOnly];
 					} else {
@@ -5011,45 +5011,47 @@ PasteProcessor.prototype =
 		oPDFSelContent.DocContent = new AscCommonWord.CSelectedContent();
 
 		let parseContent = function (content) {
-			for (let i = 0; i < content.length; ++i) {
-				selectedElement = new AscCommonWord.CSelectedElement();
-				element = content[i];
-				//drawings
-				element.GetAllDrawingObjects(drawings);
-				if (type_Paragraph === element.GetType())//paragraph
-				{
-					selectedElement.Element = AscFormat.ConvertParagraphToPPTX(element, null, null, true, false);
-					elements.push(selectedElement);
-				} else if (type_Table === element.GetType())//table
-				{
-					element = oThis._convertTableToPPTX(element, true);
-
-					let W = nPageW *  2 / 3;
-					let Rows = element.GetRowsCount();
-					let H = Rows * 7.478268771701388;
-					let graphic_frame = new AscPDF.CPdfGraphicFrame();
-					graphic_frame.setSpPr(new AscFormat.CSpPr());
-					graphic_frame.spPr.setParent(graphic_frame);
-					graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
-					graphic_frame.spPr.xfrm.setParent(graphic_frame.spPr);
-					graphic_frame.spPr.xfrm.setOffX(nPageW / 2 - W / 2);
-					graphic_frame.spPr.xfrm.setOffY(nPageH / 2 - H / 2);
-					graphic_frame.spPr.xfrm.setExtX(W);
-					graphic_frame.spPr.xfrm.setExtY(H);
-					graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
-
-					graphic_frame.setGraphicObject(element.Copy(graphic_frame));
-					graphic_frame.graphicObject.Set_TableStyle(defaultTableStyleId);
-
-					drawingCopyObject = new AscPDF.DrawingCopyObject();
-					drawingCopyObject.Drawing = graphic_frame;
-					pDrawings.push(drawingCopyObject);
-
-				} else if (type_BlockLevelSdt === element.GetType())//TOC
-				{
-					parseContent(element.Content.Content);
+			AscFormat.ExecuteNoHistory(function() {
+				for (let i = 0; i < content.length; ++i) {
+					selectedElement = new AscCommonWord.CSelectedElement();
+					element = content[i];
+					//drawings
+					element.GetAllDrawingObjects(drawings);
+					if (type_Paragraph === element.GetType())//paragraph
+					{
+						selectedElement.Element = AscFormat.ConvertParagraphToPPTX(element, null, null, true, false);
+						elements.push(selectedElement);
+					} else if (type_Table === element.GetType())//table
+					{
+						element = oThis._convertTableToPPTX(element, true);
+	
+						let W = nPageW *  2 / 3;
+						let Rows = element.GetRowsCount();
+						let H = Rows * 7.478268771701388;
+						let graphic_frame = new AscPDF.CPdfGraphicFrame();
+						graphic_frame.setSpPr(new AscFormat.CSpPr());
+						graphic_frame.spPr.setParent(graphic_frame);
+						graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
+						graphic_frame.spPr.xfrm.setParent(graphic_frame.spPr);
+						graphic_frame.spPr.xfrm.setOffX(nPageW / 2 - W / 2);
+						graphic_frame.spPr.xfrm.setOffY(nPageH / 2 - H / 2);
+						graphic_frame.spPr.xfrm.setExtX(W);
+						graphic_frame.spPr.xfrm.setExtY(H);
+						graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
+	
+						graphic_frame.setGraphicObject(element.Copy(graphic_frame));
+						graphic_frame.graphicObject.Set_TableStyle(defaultTableStyleId);
+	
+						drawingCopyObject = new AscPDF.DrawingCopyObject();
+						drawingCopyObject.Drawing = graphic_frame;
+						pDrawings.push(drawingCopyObject);
+	
+					} else if (type_BlockLevelSdt === element.GetType())//TOC
+					{
+						parseContent(element.Content.Content);
+					}
 				}
-			}
+			});
 		};
 
 		var elements = [], selectedElement, element, drawings = [], pDrawings = [], drawingCopyObject;
@@ -5089,7 +5091,7 @@ PasteProcessor.prototype =
 					}
 				}
 
-				let bInsert = oDoc.InsertContent(oPDFSelContent);
+				let bInsert = oDoc.InsertContent2([oPDFSelContent], 0);
 				if (bInsert) {
 					if (!onlyImages) {
 						let props = [Asc.c_oSpecialPasteProps.destinationFormatting, Asc.c_oSpecialPasteProps.keepTextOnly];
@@ -5115,29 +5117,31 @@ PasteProcessor.prototype =
 			fonts.push(new CFont(i));
 
 		function correctDrawingsForPdf(drawings, document) {
-			for (var i = 0; i < drawings.length; i++) {
-				var drawing = drawings[i].Drawing;
-		
-				if (!(drawing instanceof AscFormat.CGraphicFrame)) {
-					AscFormat.ExecuteNoHistory(function () {
+			AscFormat.ExecuteNoHistory(function () {
+				for (var i = 0; i < drawings.length; i++) {
+					var drawing = drawings[i].Drawing;
+			
+					if (!(drawing instanceof AscFormat.CGraphicFrame)) {
+						
 						if (drawing.setBDeleted2) {
 							drawing.setBDeleted2(true);
 						} else {
 							drawing.setBDeleted(true);
 						}
-					}, this, []);
+						
+					}
+			
+					if (drawing.convertToPdf) {
+						drawings[i].Drawing = drawing.convertToPdf(document, undefined, true);
+						AscFormat.checkBlipFillRasterImages(drawings[i].Drawing);
+					}
+			
+					if (!drawings[i].Drawing.IsPdfDrawing) {
+						drawings.splice(i, 1);
+						i--;
+					}
 				}
-		
-				if (drawing.convertToPdf) {
-					drawings[i].Drawing = drawing.convertToPdf(document, undefined, true);
-					AscFormat.checkBlipFillRasterImages(drawings[i].Drawing);
-				}
-		
-				if (!drawings[i].Drawing.IsPdfDrawing) {
-					drawings.splice(i, 1);
-					i--;
-				}
-			}
+			}, this, []);
 		}
 		
 		var oObjectsForDownload = GetObjectsForImageDownload(aContent.aPastedImages);
@@ -6517,6 +6521,8 @@ PasteProcessor.prototype =
 				let oTargetContent = oController && oController.getTargetDocContent();
 				let oSelectedContent = new AscPDF.PDFSelectedContent();
 
+				let oPasteHelper = window['AscCommon'].g_specialPasteHelper;
+				
 				if (oTargetContent && aCopyObjects.length === 1 && aImages.length === 0 && aTables.length === 0) {
 					oSelectedContent.DocContent = new AscCommonWord.CSelectedContent();
 
@@ -6526,10 +6532,10 @@ PasteProcessor.prototype =
 						oSelectedContent.DocContent.Elements.push(oSelElement);
 					});
 
-					oDoc.InsertContent(oSelectedContent);
+					oDoc.InsertContent2([oSelectedContent], 0);
 				} else {
 					oSelectedContent.Drawings = aCopyObjects;
-					let bPaste = oDoc.InsertContent(oSelectedContent);
+					let bPaste = oDoc.InsertContent2([oSelectedContent], 0);
 
 					//check only images
 					let bOnlyImg = false;
@@ -6544,8 +6550,6 @@ PasteProcessor.prototype =
 							}
 						}
 					}
-					let oPasteHelper = window['AscCommon'].g_specialPasteHelper;
-					oPasteHelper.Paste_Process_End();
 				}
 
 				if (false === oThis.bNested) {
@@ -6553,6 +6557,8 @@ PasteProcessor.prototype =
 						oThis.pasteCallback();
 					}
 				}
+
+				oPasteHelper.Paste_Process_End();
 			};
 			
 			let oShape = new AscPDF.CPdfShape();

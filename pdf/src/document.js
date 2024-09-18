@@ -4274,6 +4274,10 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.InsertContent2 = function(aSelContent, nIndex) {
+        if (true == this.Api.isRestrictionView()) {
+            return false;
+        }
+
         let oThis = this;
         return oThis.InsertContent(aSelContent[nIndex].copy());
     };
@@ -4285,71 +4289,74 @@ var CPresentation = CPresentation || function(){};
         let bResult = false;
 
         // во view шейпы не вставляем
-        if (false == this.Api.isRestrictionView()) {
-            if (oSelContent.Drawings.length != 0) {
-                this.BlurActiveObject();
+        if (true == this.Api.isRestrictionView()) {
+            return bResult;
+        }
 
-                let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
-                    return pasteObj.Drawing;
-                });
+        if (oSelContent.Drawings.length != 0) {
+            this.BlurActiveObject();
 
-                aDrToPaste.forEach(function(drawing, index) {
-                    let oXfrm = drawing.getXfrm();
-                    let oPos = private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
-                    oXfrm.setOffX(oPos.x);
-                    oXfrm.setOffY(oPos.y);
+            let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
+                return pasteObj.Drawing;
+            });
 
-                    // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
-                    let nShift = oController.getDrawingsPasteShift([drawing]);
+            aDrToPaste.forEach(function(drawing, index) {
+                let oXfrm = drawing.getXfrm();
+                let oPos = private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
+                oXfrm.setOffX(oPos.x);
+                oXfrm.setOffY(oPos.y);
 
-                    if (nShift > 0) {
-                        oXfrm.shift(nShift, nShift);
+                // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
+                let nShift = oController.getDrawingsPasteShift([drawing]);
+
+                if (nShift > 0) {
+                    oXfrm.shift(nShift, nShift);
+                }
+
+                oThis.AddDrawing(drawing, oThis.GetCurPage());
+
+                if (drawing.IsGraphicFrame()) {
+                    oController.Check_GraphicFrameRowHeight(drawing);
+                }
+                
+                if (index == 0) {
+                    oThis.SetMouseDownObject(drawing);
+                }
+                drawing.select(oController, nCurPage);
+            });
+
+            bResult = true;
+        }
+        if (oSelContent.DocContent) {
+            oSelContent.DocContent.EndCollect(this);
+            if (oSelContent.DocContent.Elements.length > 0) {
+                let oTargetTextObject = AscFormat.getTargetTextObject(oController);
+                let oTargetDocContent = oController.getTargetDocContent(true), paragraph, NearPos;
+
+                if (oTargetDocContent) {
+                    if (oTargetDocContent.Selection.Use) {
+                        oController.removeCallback(1, undefined, undefined, undefined, undefined, undefined);
                     }
 
-                    oThis.AddDrawing(drawing, oThis.GetCurPage());
-
-                    if (drawing.IsGraphicFrame()) {
-                        oController.Check_GraphicFrameRowHeight(drawing);
+                    paragraph = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
+                    if (null != paragraph && paragraph.IsParagraph()) {
+                        NearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
+                        paragraph.Check_NearestPos(NearPos);
+                        oSelContent.DocContent.Insert(NearPos);
                     }
                     
-                    if (index == 0) {
-                        oThis.SetMouseDownObject(drawing);
-                    }
-                    drawing.select(oController, nCurPage);
-                });
-
-                bResult = true;
+                    oTargetTextObject && oTargetTextObject.checkExtentsByDocContent && oTargetTextObject.checkExtentsByDocContent();
+                    oTargetTextObject.SetNeedRecalc(true);
+                    AscCommon.History.SetSourceObjectsToPointPdf([oTargetTextObject]);
+                }
+                else {
+                    this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
+                }
             }
-            if (oSelContent.DocContent) {
-				oSelContent.DocContent.EndCollect(this);
-				if (oSelContent.DocContent.Elements.length > 0) {
-                    let oTargetTextObject = AscFormat.getTargetTextObject(oController);
-					let oTargetDocContent = oController.getTargetDocContent(true), paragraph, NearPos;
 
-					if (oTargetDocContent) {
-						if (oTargetDocContent.Selection.Use) {
-							oController.removeCallback(1, undefined, undefined, undefined, undefined, undefined);
-						}
-
-						paragraph = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
-						if (null != paragraph && paragraph.IsParagraph()) {
-							NearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
-							paragraph.Check_NearestPos(NearPos);
-							oSelContent.DocContent.Insert(NearPos);
-						}
-						
-						oTargetTextObject && oTargetTextObject.checkExtentsByDocContent && oTargetTextObject.checkExtentsByDocContent();
-                        oTargetTextObject.SetNeedRecalc(true);
-                        AscCommon.History.SetSourceObjectsToPointPdf([oTargetTextObject]);
-					}
-                    else {
-						this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
-					}
-				}
-
-                bResult = true;
-            }
+            bResult = true;
         }
+
         return bResult;
     };
     CPDFDoc.prototype.CreateAndAddShapeFromSelectedContent = function (oDocContent) {
