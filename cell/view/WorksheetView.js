@@ -9984,7 +9984,7 @@
     };
 
     WorksheetView.prototype._getMissingWidth = function () {
-		var visibleWidth = this.cellsLeft + this._getColLeft(this.nColsCount) - this._getColLeft(this.visibleRange.c1);
+		var visibleWidth = this._getColLeft(this.nColsCount) - this._getOffsetX();
 		var offsetFrozen = this.getFrozenPaneOffset(false, true);
 		visibleWidth += offsetFrozen.offsetX;
 		return this.drawingCtx.getWidth() - visibleWidth;
