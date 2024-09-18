@@ -12661,7 +12661,6 @@ background-repeat: no-repeat;\
 		fEndCallback = fEndCallback || function (api) {};
 		this.insertDocumentUrlsData = {
 			imageMap: null, documents: documents, convertCallback: function (_api, url) {
-				_api.insertDocumentUrlsData.imageMap = url;
 				if (!url['output.bin']) {
 					_api.endInsertDocumentUrls();
 					_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
@@ -12671,7 +12670,7 @@ background-repeat: no-repeat;\
 				AscCommon.loadFileContent(url['output.bin'], function (httpRequest) {
 					const stream = httpRequest && AscCommon.initStreamFromResponse(httpRequest);
 					if (stream) {
-						fForEachCallback(stream);
+						fForEachCallback(stream, url);
 					} else {
 						_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
 							Asc.c_oAscError.Level.NoCritical);
@@ -12703,14 +12702,16 @@ background-repeat: no-repeat;\
 	
 	asc_docs_api.prototype._CompareDocument = function (document, oOptions) {
 		const oThis = this;
-		this._ConvertDocuments([document], !!document.url, function (stream) {
+		this._ConvertDocuments([document], !!document.url, function (stream, imageMap) {
+			oThis.insertDocumentUrlsData.imageMap = imageMap;
 			AscCommonWord.CompareBinary(oThis, stream, oOptions);
 		});
 	};
 
 	asc_docs_api.prototype._MergeDocument = function (document, oOptions) {
 		const oThis = this;
-		this._ConvertDocuments([document], !!document.url, function (stream) {
+		this._ConvertDocuments([document], !!document.url, function (stream, imageMap) {
+			oThis.insertDocumentUrlsData.imageMap = imageMap;
 			AscCommonWord.mergeBinary(oThis, stream, oOptions);
 		});
 	};

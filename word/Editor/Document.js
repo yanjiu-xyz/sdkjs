@@ -2592,7 +2592,7 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
 	this.sendEvent("asc_onUserActionStart");
 	
 	let isNewPoint = false;
-	if (!this.Action.Start || this.Action.Description !== AscDFH.historydescription_BuilderScript)
+	if (!this.Action.Start || this.IsMultiplePointAction())
 		isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
 
 	if (true === this.Action.Start)
@@ -2642,6 +2642,17 @@ CDocument.prototype.IsActionStarted = function()
 CDocument.prototype.IsPostActionLockCheck = function()
 {
 	return this.Action.CheckLock;
+};
+CDocument.prototype.IsMultiplePointAction = function ()
+{
+	switch (this.Action.Description)
+	{
+		case AscDFH.historydescription_BuilderScript:
+		case AscDFH.historydescription_Document_InsertTextFromFile:
+			return false;
+		default:
+			return true;
+	}
 };
 /**
  * Сообщаем документу, что потребуется пересчет
