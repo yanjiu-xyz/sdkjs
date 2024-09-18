@@ -1249,6 +1249,10 @@
 			this.recalcInfo.recalculateTransformText = true;
 			this.addToRecalculate();
 		};
+		CShape.prototype.setUseBgFill = function (pr) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_ShapeSetUseBgFill, this.useBgFill, pr));
+			this.useBgFill = pr;
+		};
 
 		CShape.prototype.createTextBody = function () {
 			var tx_body = new AscFormat.CTextBody();
@@ -3009,7 +3013,7 @@
 		CShape.prototype.recalculateBrush = function () {
 			let parents = this.getParentObjects();
 			let RGBA = {R: 0, G: 0, B: 0, A: 255};
-			if(this.attrUseBgFill) {
+			if(this.useBgFill) {
 				if(this.parent && this.parent.backgroundFill) {
 					this.brush = this.parent.backgroundFill.createDuplicate();
 					this.brush.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA);
@@ -6041,6 +6045,9 @@
 			var unifill2 = AscFormat.CorrectUniFill(unifill, this.brush, this.getEditorType());
 			unifill2.convertToPPTXMods();
 			this.setFill(unifill2);
+			if(this.useBgFill) {
+				this.setUseBgFill(null);
+			}
 			var point = this.getSmartArtShapePoint();
 			if (point) {
 				point.setUniFill(unifill2);
