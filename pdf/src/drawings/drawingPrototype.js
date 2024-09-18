@@ -299,7 +299,7 @@
     };
     CPdfDrawingPrototype.prototype.GetPage = function() {
         if (this.group)
-            return this.group.Get_AbsolutePage();
+            return this.group.GetPage();
         
         return this._page;
     };
@@ -433,8 +433,8 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfDrawingPrototype.prototype.Get_AbsolutePage = function() {
-        return this.GetPage();
+    CPdfDrawingPrototype.prototype.Get_AbsolutePage = function(nCurPage) {
+        return this.GetPage() != undefined ? this.GetPage() : nCurPage;
     };
     CPdfDrawingPrototype.prototype.getLogicDocument = function() {
         return this.GetDocument();
