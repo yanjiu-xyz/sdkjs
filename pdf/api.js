@@ -987,7 +987,7 @@
 			}, AscDFH.historydescription_Pdf_AddAnnot, this);
 		}
 
-		if (oDoc.checkDefaultFonts(addFreeText)) {
+		if (oDoc.checkFonts(["Arial"], addFreeText)) {
 			addFreeText();
 		}
 	};
