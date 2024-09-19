@@ -9650,8 +9650,11 @@ function parserFormula( formula, parent, _ws ) {
 	 * @returns {boolean}
 	 */
 	CalcRecursion.prototype.needRecursiveCall = function () {
+		if (!this.getIsEnabledRecursion()) {
+			return false;
+		}
 		const oGroupChangedCells = this.getGroupChangedCells();
-		const bMaxStepNotExceeded = this.getIterStep() < this.getMaxIterations() && this.getIterStep() <= this.getMaxRecursion();
+		const bMaxStepNotExceeded = this.getIterStep() <= this.getMaxIterations();
 		let bHasRecursiveCell = false;
 
 		for (let sSheetName in oGroupChangedCells) {
@@ -9668,7 +9671,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 
-		return this.getIsEnabledRecursion() && bHasRecursiveCell && bMaxStepNotExceeded;
+		return bHasRecursiveCell && bMaxStepNotExceeded;
 	};
 	/**
 	 * Method initializes calculation properties.
