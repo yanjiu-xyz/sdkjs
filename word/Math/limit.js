@@ -513,9 +513,9 @@ CMathFunc.prototype.fillContent = function()
 };
 CMathFunc.prototype.GetTextOfElement = function(oMathText)
 {
-	oMathText = new AscMath.MathTextAndStyles(oMathText);
-	let oFuncName = this.getFName();
-	let oArgument = this.getArgument();
+	oMathText		= new AscMath.MathTextAndStyles(oMathText);
+	let oFuncName	= this.getFName();
+	let oArgument	= this.getArgument();
 	oMathText.SetGlobalStyle(this);
 
 	if (oMathText.IsLaTeX())
@@ -524,10 +524,10 @@ CMathFunc.prototype.GetTextOfElement = function(oMathText)
 
 		let oFuncNameContent		= oFuncName.GetTextOfElement(true);
 		let oSlashesTextForName		= new AscMath.MathText("\\", oMathText.GetStyleFromFirst());
-		let oFirstPosInNameContent	= oFuncNameContent.GetFirstPos()
-		oFuncNameContent.AddBefore(oFirstPosInNameContent, oSlashesTextForName);
+		let oFirstPosInNameContent	= oFuncNameContent.GetFirstPos();
 
-		let oNamePos = oMathText.AddBefore(oArgPos, oFuncNameContent);
+		oFuncNameContent.AddBefore(oFirstPosInNameContent, oSlashesTextForName);
+		oMathText.AddBefore(oArgPos, oFuncNameContent);
 	}
 	else
 	{

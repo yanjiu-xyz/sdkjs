@@ -6002,9 +6002,8 @@ CMathContent.prototype.haveMixedContent = function(isLaTeX)
 		{
 			nMathContent++;
 
-			if (isLaTeX &&
-				oCurrentContent instanceof CDelimiter)
-				return true;
+			if (isLaTeX && oCurrentContent instanceof CDelimiter)
+				return false;
 
 			if (isCustomContent
 				|| oCurrentContent instanceof CFraction

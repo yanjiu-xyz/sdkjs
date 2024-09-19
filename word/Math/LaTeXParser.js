@@ -364,7 +364,11 @@
 
 			this.EatToken(this.oLookahead.class);
 
-			if (this.oLookahead.class === Literals.lBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id || this.oLookahead.class === Literals.rBrackets.id)
+			if (this.oLookahead.data !== "\\left"
+				&& this.oLookahead.class === Literals.lBrackets.id
+					|| this.oLookahead.data === "."
+					|| this.oLookahead.class === Literals.lrBrackets.id
+					|| this.oLookahead.class === Literals.rBrackets.id)
 			{
 				startStyle = this.oLookahead.style;
 				strLeftSymbol = this.EatToken(this.oLookahead.class).data;
@@ -391,7 +395,11 @@
 					isRightAndLeft = false;
 
 				this.EatToken(this.oLookahead.class);
-				if (this.oLookahead.class === Literals.rBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id || this.oLookahead.class === Literals.lBrackets.id)
+				if (this.oLookahead.data !== "\\right"
+					&& this.oLookahead.class === Literals.rBrackets.id
+						|| this.oLookahead.data === "."
+						|| this.oLookahead.class === Literals.lrBrackets.id
+						|| this.oLookahead.class === Literals.lBrackets.id)
 				{
 					endStyle = this.oLookahead.style;
 					strRightSymbol = this.EatToken(this.oLookahead.class).data;

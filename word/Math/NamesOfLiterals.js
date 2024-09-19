@@ -275,12 +275,15 @@
 		}
 	}
 
+	const UnicodeWordList = {}
+
 	function LexerLiterals()
 	{
 		this.Unicode = {};
 		this.LaTeX = {};
 		this.LaTeXSpecial = undefined;
 		this.isUseLaTeXBrackets = false;
+		this.UnicodeWords = false;
 
 		this.Init();
 	}
@@ -299,6 +302,10 @@
 			if (typeof(data) === "string")
 			{
 				this.SetUnicodeFromLaTeX(data, name);
+
+				if (this.Unicode !== UnicodeWordList)
+					UnicodeWordList[name] = 1;
+
 				if (isUseUnicodeInLaTeX)
 					this.private_AddToLaTeX(data, data);
 			}
@@ -408,6 +415,22 @@
 
 		return strFunc;
 	};
+	LexerLiterals.prototype.private_GetUnicodeWord = function (arrStr)
+	{
+		if (!arrStr || !arrStr[0])
+			return;
+
+		let strFunc = "";
+		for (let index = 0; arrStr[index] && /[a-zA-Z\\ ]/.test(arrStr[index]); index++)
+		{
+			strFunc += arrStr[index]
+
+			if (this.UnicodeWords
+				&& (	this.UnicodeWords[strFunc]
+						|| (this.UnicodeWords === UnicodeWordList && strFunc[0] === '\\' && (MathAutoCorrectionFuncNames.includes(strFunc.slice(1)) || limitFunctions.includes(strFunc.slice(1))))))
+				return strFunc;
+		}
+	};
 	LexerLiterals.prototype.private_GetSpecialLaTeXWord = function (arrStr)
 	{
 		let isSlashes = false;
@@ -430,6 +453,14 @@
 	};
 	LexerLiterals.prototype.GetToken = function (type, str)
 	{
+		if (this.UnicodeWords && !type)
+		{
+			let outputData = this.private_GetUnicodeWord(str);
+
+			if (outputData)
+				return outputData;
+		}
+
 		if (this.GetByOneRule)
 			return this.GetByOneRule(str);
 
@@ -488,6 +519,7 @@
 	function TokenChars()
 	{
 		this.id = 0;
+		this.UnicodeWords = UnicodeWordList;
 	}
 	TokenChars.prototype = Object.create(LexerLiterals.prototype);
 	TokenChars.prototype.constructor = TokenChars;
@@ -782,7 +814,7 @@
 			"⌊" : "⌊",
 			"⟦" : "⟦",
 			"⎰" : "⎰",
-			"\\left" : "\\left",
+			"\\left" : 1,
 		};
 		this.Init();
 	}
@@ -800,9 +832,17 @@
 	{
 		this.id = 544;
 		this.Unicode = {};
+		this.UnicodeWords = {
+			"\\open" : "├",
+			"\\close" : "┤",
+			"\\left" : "├",
+			"\\right" : "┤",
+		}
 		this.LaTeX = {
 			"\\open" : "├",
 			"\\close" : "┤",
+			"\\left" : "├",
+			"\\right" : "┤",
 		};
 
 		this.Init();
@@ -830,7 +870,7 @@
 			"\\rceil" : "⌉",
 			"\\rfloor" : "⌋",
 			"\\Rbrack" : "⟧",
-			"\\right" : "\\right",
+			"\\right" : 1,
 			"}" : "}",
 			")" : ")",
 			"⟩" : "⟩",
@@ -912,6 +952,12 @@
 			//"\\to" : "→",
 			"\\vdash" : "⊢",
 		};
+		this.UnicodeWords = {
+			"\\leftarrow" : "←",
+			"\\leftharpoondown" : "↽",
+			"\\leftharpoonup" : "↼",
+			"\\leftrightarrow" : "↔",
+		}
 		this.Unicode = {
 			"←" : "\\gets",
 			};
@@ -985,6 +1031,10 @@
 			"_" : 1,
 			"^" : 1,
 		};
+		this.UnicodeWords = {
+			"\\above" : 1,
+			"\\below" : 1,
+		}
 		this.Init();
 	}
 	TokenSubSup.prototype = Object.create(LexerLiterals.prototype);
@@ -1521,6 +1571,7 @@
 	const arrTokensCheckerList = [
 		MathLiterals.char,
 		MathLiterals.func,
+		MathLiterals.specialBrac,
 		MathLiterals.LaTeX,
 		MathLiterals.font,
 		MathLiterals.delimiter,
@@ -1535,7 +1586,6 @@
 		MathLiterals.lBrackets,
 		MathLiterals.rBrackets,
 		MathLiterals.lrBrackets,
-		MathLiterals.specialBrac,
 		MathLiterals.hbrack,
 		MathLiterals.invisible,
 		MathLiterals.horizontal,
@@ -2230,8 +2280,15 @@
 					{
 						if (Array.isArray(oTokens.style))
 						{
-							for (let nTokenStyle = 0; nTokenStyle < oTokens.style.length; nTokenStyle++) {
-								oContext.Add_Text(oTokens.value[nTokenStyle], undefined, undefined, oTokens.style[nTokenStyle]);
+							if (oTokens.value.length > 1 && typeof oTokens.value === 'string')
+							{
+								oContext.Add_Text(oTokens.value, undefined, undefined, oTokens.style[0]);
+							}
+							else
+							{
+								for (let nTokenStyle = 0; nTokenStyle < oTokens.style.length; nTokenStyle++) {
+									oContext.Add_Text(oTokens.value[nTokenStyle], undefined, undefined, oTokens.style[nTokenStyle]);
+								}
 							}
 						}
 						else
