@@ -769,17 +769,13 @@
 
 		if (!this.AsYouType)
 			return false;
-
-		if (!oDocument.IsAutoCorrectFirstLetterOfSentences())
+		
+		let isCellFistLetter = (oRunElementsBefore.IsEnd() && oParagraph.IsTableCellContent());
+		
+		if ((isCellFistLetter && !oDocument.IsAutoCorrectFirstLetterOfCells())
+			|| (!isCellFistLetter && !oDocument.IsAutoCorrectFirstLetterOfSentences()))
 			return false;
-
-		if (oRunElementsBefore.IsEnd()
-			&& oParagraph.IsTableCellContent()
-			&& !oDocument.IsAutoCorrectFirstLetterOfCells())
-		{
-			return false;
-		}
-
+		
 		if ("www" === sText || "http" === sText || "https" === sText)
 			return false;
 

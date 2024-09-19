@@ -57,8 +57,6 @@ $(function ()
 		assert.strictEqual(AscTest.GetParagraphText(p), checkText + " ", text + " -> " + checkText);
 	}
 	
-	
-	
 	QUnit.test("Test: capitalize first letter of the sentence", function (assert)
 	{
 		logicDocument.SetAutoCorrectFirstLetterOfSentences(true);
