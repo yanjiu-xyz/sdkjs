@@ -58,6 +58,7 @@ $(function ()
 	}
 	
 	
+	
 	QUnit.test("Test: capitalize first letter of the sentence", function (assert)
 	{
 		logicDocument.SetAutoCorrectFirstLetterOfSentences(true);
@@ -66,5 +67,52 @@ $(function ()
 		enterAndCheckText(assert, "გამარჯობა", "გამარჯობა"); // bug 69089
 		enterAndCheckText(assert, "Hello world! hello", "Hello world! Hello");
 		enterAndCheckText(assert, "Hello world! hello world", "Hello world! hello world");
+	});
+	
+	QUnit.test("Test: capitalize first letter of the sentence in table and capitalize first letter of table cell", function (assert)
+	{
+		let table = AscTest.CreateTable(3, 3);
+		logicDocument.AddToContent(0, table);
+		let dc = table.GetRow(0).GetCell(0).GetContent();
+		let p;
+		
+		function enterAndCheckTextToCell(assert, text, checkText)
+		{
+			dc.ClearContent(false);
+			p = AscTest.CreateParagraph();
+			dc.AddToContent(0, p);
+			AscTest.MoveCursorToParagraph(p, true);
+			AscTest.EnterText(text);
+			AscTest.PressKey(AscTest.Key.space);
+			assert.strictEqual(AscTest.GetParagraphText(p), checkText + " ", text + " -> " + checkText);
+		}
+		
+		logicDocument.SetAutoCorrectFirstLetterOfCells(false);
+		logicDocument.SetAutoCorrectFirstLetterOfSentences(false);
+		enterAndCheckTextToCell(assert, "hello", "hello");
+		enterAndCheckTextToCell(assert, "привет", "привет");
+		enterAndCheckTextToCell(assert, "Hello world! hello", "Hello world! hello");
+		enterAndCheckTextToCell(assert, "Hello world! hello world", "Hello world! hello world");
+		
+		logicDocument.SetAutoCorrectFirstLetterOfCells(true);
+		logicDocument.SetAutoCorrectFirstLetterOfSentences(true);
+		enterAndCheckTextToCell(assert, "hello", "Hello");
+		enterAndCheckTextToCell(assert, "привет", "Привет");
+		enterAndCheckTextToCell(assert, "Hello world! hello", "Hello world! Hello");
+		enterAndCheckTextToCell(assert, "Hello world! hello world", "Hello world! hello world");
+		
+		logicDocument.SetAutoCorrectFirstLetterOfCells(false);
+		logicDocument.SetAutoCorrectFirstLetterOfSentences(true);
+		enterAndCheckTextToCell(assert, "hello", "hello");
+		enterAndCheckTextToCell(assert, "привет", "привет");
+		enterAndCheckTextToCell(assert, "Hello world! hello", "Hello world! Hello");
+		enterAndCheckTextToCell(assert, "Hello world! hello world", "Hello world! hello world");
+		
+		logicDocument.SetAutoCorrectFirstLetterOfCells(true);
+		logicDocument.SetAutoCorrectFirstLetterOfSentences(false);
+		enterAndCheckTextToCell(assert, "hello", "Hello");
+		enterAndCheckTextToCell(assert, "привет", "Привет");
+		enterAndCheckTextToCell(assert, "Hello world! hello", "Hello world! hello");
+		enterAndCheckTextToCell(assert, "Hello world! hello world", "Hello world! hello world");
 	});
 });
