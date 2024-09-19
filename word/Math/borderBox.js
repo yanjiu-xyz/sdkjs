@@ -599,7 +599,7 @@ CBorderBox.prototype.GetTextOfElement = function(oMathText)
 		let oBoxStr = new AscMath.MathText("▭", this)
 		oMathText.AddText(oBoxStr);
 		oMathText.SetGlobalStyle(this, true);
-		oMathText.Add(oBase, true)
+		oMathText.Add(oBase, true, 2)
 	}
 
 	return oMathText;
@@ -1030,7 +1030,7 @@ CBox.prototype.GetTextOfElement = function(oMathText)
 	{
 		oMathText.AddText(new AscMath.MathText("□", this));
 		oMathText.SetGlobalStyle(this);
-		oMathText.Add(oBase, true);
+		oMathText.Add(oBase, true, 2);
 	}
 	return oMathText;
 };

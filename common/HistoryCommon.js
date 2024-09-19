@@ -2921,6 +2921,7 @@
 
 	window['AscDFH'].historyitem_ChartText_SetRich   = window['AscDFH'].historyitem_type_ChartText | 1;
 	window['AscDFH'].historyitem_ChartText_SetStrRef = window['AscDFH'].historyitem_type_ChartText | 2;
+	window['AscDFH'].historyitem_ChartText_SetTxData = window['AscDFH'].historyitem_type_ChartText | 3;
 
 	window['AscDFH'].historyitem_ShapeStyle_SetLnRef     = window['AscDFH'].historyitem_type_ShapeStyle | 1;
 	window['AscDFH'].historyitem_ShapeStyle_SetFillRef   = window['AscDFH'].historyitem_type_ShapeStyle | 2;
@@ -3037,6 +3038,7 @@
 	window['AscDFH'].historyitem_ShapeSetTxXfrm                 = window['AscDFH'].historyitem_type_Shape | 15;
 	window['AscDFH'].historyitem_ShapeSetFLocksText             = window['AscDFH'].historyitem_type_Shape | 17;
 	window['AscDFH'].historyitem_ShapeSetClientData             = window['AscDFH'].historyitem_type_Shape | 18;
+	window['AscDFH'].historyitem_ShapeSetUseBgFill              = window['AscDFH'].historyitem_type_Shape | 19;
 
 	window['AscDFH'].historyitem_OleSizeSelectionSetRange = window['AscDFH'].historyitem_type_OleSizeSelection | 1;
 
@@ -4362,6 +4364,7 @@
 	AscDFH.historyitem_Pdf_Annot_Opacity			= AscDFH.historyitem_type_Pdf_Annot | 18;
 	AscDFH.historyitem_Pdf_Annot_Quads				= AscDFH.historyitem_type_Pdf_Annot | 19;
 	AscDFH.historyitem_Pdf_Annot_Intent				= AscDFH.historyitem_type_Pdf_Annot | 20;
+	AscDFH.historyitem_Pdf_Annot_WasChanged			= AscDFH.historyitem_type_Pdf_Annot | 21;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;

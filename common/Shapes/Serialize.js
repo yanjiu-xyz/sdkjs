@@ -6381,7 +6381,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    shape.attrUseBgFill = s.GetBool();
+                    shape.setUseBgFill(s.GetBool());
                     break;
                 }
                 default:
@@ -10584,7 +10584,7 @@ function BinaryPPTYLoader()
                 {
                     case 0:
                     {
-                        shape.attrUseBgFill = s.GetBool();
+                        shape.setUseBgFill(s.GetBool());
                         break;
                     }
                     default:

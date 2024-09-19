@@ -167,7 +167,7 @@ var CPresentation = CPresentation || function(){};
 		this.LocalHistory   = new AscPDF.History(this);
 		AscCommon.History = this.History;
 
-		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
+		this.Spelling   = new AscWord.CDocumentSpellChecker();
         this.Viewer     = viewer;
         this.Api        = Asc.editor;
 
@@ -2310,16 +2310,12 @@ var CPresentation = CPresentation || function(){};
             return null;
 
         let oViewer = editor.getDocumentRenderer();
-        let nScaleY = oViewer.drawingPages[nPageNum].H / oViewer.file.pages[nPageNum].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPageNum].W / oViewer.file.pages[nPageNum].W / oViewer.zoom;
-
-        let aScaledCoords = [aCoords[0] * nScaleX, aCoords[1] * nScaleY, aCoords[2] * nScaleX, aCoords[3] * nScaleY];
 
         let oPagesInfo = oViewer.pagesInfo;
         if (!oPagesInfo.pages[nPageNum])
             return null;
         
-        let oField = private_createField(cName, cFieldType, nPageNum, aScaledCoords, this);
+        let oField = private_createField(cName, cFieldType, nPageNum, aCoords, this);
         if (!oField)
             return null;
 
@@ -2617,7 +2613,7 @@ var CPresentation = CPresentation || function(){};
         let bUseContentsAsComment = oAnnot.IsUseContentAsComment();
         
         if (oAnnot.IsUseInDocument()) {
-            if ((bUseContentsAsComment && oAnnot.GetContents() != null) || (bUseContentsAsComment == false && oAnnot.GetReply(0) instanceof AscPDF.CAnnotationText)) {
+            if ((bUseContentsAsComment && oAnnot.GetContents()) || (bUseContentsAsComment == false && oAnnot.GetReply(0) instanceof AscPDF.CAnnotationText)) {
                 editor.sendEvent("asc_onAddComment", oAnnot.GetId(), oAnnot.GetAscCommentData());
             }
         }
@@ -3025,7 +3021,7 @@ var CPresentation = CPresentation || function(){};
                 return isFound;
             }
 
-            if (annot.isGroup()) {
+            if (annot.IsAnnot() && annot.IsFreeText()) {
                 isFound = annot.spTree.find(findInAnnot)
             }
 
@@ -4278,6 +4274,10 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.InsertContent2 = function(aSelContent, nIndex) {
+        if (true == this.Api.isRestrictionView()) {
+            return false;
+        }
+
         let oThis = this;
         return oThis.InsertContent(aSelContent[nIndex].copy());
     };
@@ -4289,71 +4289,74 @@ var CPresentation = CPresentation || function(){};
         let bResult = false;
 
         // во view шейпы не вставляем
-        if (false == this.Api.isRestrictionView()) {
-            if (oSelContent.Drawings.length != 0) {
-                this.BlurActiveObject();
+        if (true == this.Api.isRestrictionView()) {
+            return bResult;
+        }
 
-                let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
-                    return pasteObj.Drawing;
-                });
+        if (oSelContent.Drawings.length != 0) {
+            this.BlurActiveObject();
 
-                aDrToPaste.forEach(function(drawing, index) {
-                    let oXfrm = drawing.getXfrm();
-                    let oPos = private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
-                    oXfrm.setOffX(oPos.x);
-                    oXfrm.setOffY(oPos.y);
+            let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
+                return pasteObj.Drawing;
+            });
 
-                    // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
-                    let nShift = oController.getDrawingsPasteShift([drawing]);
+            aDrToPaste.forEach(function(drawing, index) {
+                let oXfrm = drawing.getXfrm();
+                let oPos = private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
+                oXfrm.setOffX(oPos.x);
+                oXfrm.setOffY(oPos.y);
 
-                    if (nShift > 0) {
-                        oXfrm.shift(nShift, nShift);
+                // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
+                let nShift = oController.getDrawingsPasteShift([drawing]);
+
+                if (nShift > 0) {
+                    oXfrm.shift(nShift, nShift);
+                }
+
+                oThis.AddDrawing(drawing, oThis.GetCurPage());
+
+                if (drawing.IsGraphicFrame()) {
+                    oController.Check_GraphicFrameRowHeight(drawing);
+                }
+                
+                if (index == 0) {
+                    oThis.SetMouseDownObject(drawing);
+                }
+                drawing.select(oController, nCurPage);
+            });
+
+            bResult = true;
+        }
+        if (oSelContent.DocContent) {
+            oSelContent.DocContent.EndCollect(this);
+            if (oSelContent.DocContent.Elements.length > 0) {
+                let oTargetTextObject = AscFormat.getTargetTextObject(oController);
+                let oTargetDocContent = oController.getTargetDocContent(true), paragraph, NearPos;
+
+                if (oTargetDocContent) {
+                    if (oTargetDocContent.Selection.Use) {
+                        oController.removeCallback(1, undefined, undefined, undefined, undefined, undefined);
                     }
 
-                    oThis.AddDrawing(drawing, oThis.GetCurPage());
-
-                    if (drawing.IsGraphicFrame()) {
-                        oController.Check_GraphicFrameRowHeight(drawing);
+                    paragraph = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
+                    if (null != paragraph && paragraph.IsParagraph()) {
+                        NearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
+                        paragraph.Check_NearestPos(NearPos);
+                        oSelContent.DocContent.Insert(NearPos);
                     }
                     
-                    if (index == 0) {
-                        oThis.SetMouseDownObject(drawing);
-                    }
-                    drawing.select(oController, nCurPage);
-                });
-
-                bResult = true;
+                    oTargetTextObject && oTargetTextObject.checkExtentsByDocContent && oTargetTextObject.checkExtentsByDocContent();
+                    oTargetTextObject.SetNeedRecalc(true);
+                    AscCommon.History.SetSourceObjectsToPointPdf([oTargetTextObject]);
+                }
+                else {
+                    this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
+                }
             }
-            if (oSelContent.DocContent) {
-				oSelContent.DocContent.EndCollect(this);
-				if (oSelContent.DocContent.Elements.length > 0) {
-                    let oTargetTextObject = AscFormat.getTargetTextObject(oController);
-					let oTargetDocContent = oController.getTargetDocContent(true), paragraph, NearPos;
 
-					if (oTargetDocContent) {
-						if (oTargetDocContent.Selection.Use) {
-							oController.removeCallback(1, undefined, undefined, undefined, undefined, undefined);
-						}
-
-						paragraph = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
-						if (null != paragraph && paragraph.IsParagraph()) {
-							NearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
-							paragraph.Check_NearestPos(NearPos);
-							oSelContent.DocContent.Insert(NearPos);
-						}
-						
-						oTargetTextObject && oTargetTextObject.checkExtentsByDocContent && oTargetTextObject.checkExtentsByDocContent();
-                        oTargetTextObject.SetNeedRecalc(true);
-                        AscCommon.History.SetSourceObjectsToPointPdf([oTargetTextObject]);
-					}
-                    else {
-						this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
-					}
-				}
-
-                bResult = true;
-            }
+            bResult = true;
         }
+
         return bResult;
     };
     CPDFDoc.prototype.CreateAndAddShapeFromSelectedContent = function (oDocContent) {
@@ -5343,8 +5346,7 @@ var CPresentation = CPresentation || function(){};
                     continue;
                 }
 
-                let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H * AscCommon.AscBrowser.retinaPixelRatio;
-                let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W * AscCommon.AscBrowser.retinaPixelRatio;
+                let nScale = oViewer.getDrawingPageScale(nPage) * AscCommon.AscBrowser.retinaPixelRatio;
 
                 let xCenter = oViewer.width >> 1;
                 if (oViewer.documentWidth > oViewer.width)
@@ -5361,10 +5363,10 @@ var CPresentation = CPresentation || function(){};
                 if (true == oViewer.isLandscapePage(nPage))
                     indLeft = indLeft + (w - h) / 2;
 
-                let X = aRect[0] * nScaleX - 0.5 >> 0;
-                let Y = aRect[1] * nScaleY - 0.5 >> 0;
-                let W = (aRect[2] - aRect[0]) * nScaleX + 0.5 >> 0;
-                let H = (aRect[3] - aRect[1]) * nScaleY + 0.5 >> 0;
+                let X = aRect[0] * nScale - 0.5 >> 0;
+                let Y = aRect[1] * nScale - 0.5 >> 0;
+                let W = (aRect[2] - aRect[0]) * nScale + 0.5 >> 0;
+                let H = (aRect[3] - aRect[1]) * nScale + 0.5 >> 0;
 
                 oCtx.strokeStyle = "rgb(" + oColor.r + "," + oColor.g + "," + oColor.b + ")";
                 oOverlay.CheckPoint(indLeft + X, indTop + Y);
@@ -5625,37 +5627,37 @@ var CPresentation = CPresentation || function(){};
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
         let oNativePage = this.Viewer.file.pages[nPage];
 
-        return oNativePage.W * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
+        return oNativePage.W * g_dKoef_pt_to_mm * g_dKoef_mm_to_emu;
     };
     CPDFDoc.prototype.GetPageHeightEMU = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
         let oNativePage = this.Viewer.file.pages[nPage];
 
-        return oNativePage.H * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
+        return oNativePage.H * g_dKoef_pt_to_mm * g_dKoef_mm_to_emu;
     };
     CPDFDoc.prototype.GetPageWidth = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
         let oNativePage = this.Viewer.file.pages[nPage];
 
-        return oNativePage.W * (96 / oNativePage.Dpi);
+        return oNativePage.W;
     };
     CPDFDoc.prototype.GetPageHeight = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
         let oNativePage = this.Viewer.file.pages[nPage];
         
-        return oNativePage.H * (96 / oNativePage.Dpi);
+        return oNativePage.H;
     };
     CPDFDoc.prototype.GetPageWidthMM = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
         let oNativePage = this.Viewer.file.pages[nPage];
 
-        return oNativePage.W * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm;
+        return oNativePage.W * g_dKoef_pt_to_mm;
     };
     CPDFDoc.prototype.GetPageHeightMM = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
         let oNativePage = this.Viewer.file.pages[nPage];
         
-        return oNativePage.H * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm;
+        return oNativePage.H * g_dKoef_pt_to_mm;
     };
 	CPDFDoc.prototype.GetApi = function() {
 		return editor;
@@ -5947,11 +5949,6 @@ var CPresentation = CPresentation || function(){};
         
         let oAnnot;
 
-        let oViewer = editor.getDocumentRenderer();
-        let nScaleY = oViewer.drawingPages[nPageNum].H / oViewer.file.pages[nPageNum].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPageNum].W / oViewer.file.pages[nPageNum].W / oViewer.zoom;
-
-        let aScaledCoords = [aRect[0] * nScaleX, aRect[1] * nScaleY, aRect[2] * nScaleX, aRect[3] * nScaleY];
         switch (nAnnotType) {
             case AscPDF.ANNOTATIONS_TYPES.Text:
                 oAnnot = new AscPDF.CAnnotationText(sName, nPageNum, aRect, oPdfDoc);
@@ -6002,13 +5999,6 @@ var CPresentation = CPresentation || function(){};
         oAnnot.SetAuthor(sAuthor);
         oAnnot.SetDisplay(isHidden ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
         oAnnot.SetContents(sText);
-
-        oAnnot._pagePos = {
-            x: aScaledCoords[0],
-            y: aScaledCoords[1],
-            w: (aScaledCoords[2] - aScaledCoords[0]),
-            h: (aScaledCoords[3] - aScaledCoords[1])
-        };
 
         return oAnnot;
     }

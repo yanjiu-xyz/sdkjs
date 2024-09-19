@@ -2376,7 +2376,7 @@ ParaRun.prototype.private_IsChangedLineMetrics = function(arrAddItems, arrRemIte
 			|| para_Math_Placeholder === nItemType
 			|| para_Math_BreakOperator === nItemType
 			|| (para_Drawing === nItemType && (true === oItem.Is_Inline() || true === this.GetParagraph().Parent.Is_DrawingShape()))
-			|| (para_FieldChar === nItemType  && oItem.IsNumValue()))
+			|| (para_FieldChar === nItemType  && oItem.IsVisual()))
 		{
 
 			var isAdd = false;
@@ -2421,7 +2421,7 @@ ParaRun.prototype.private_IsChangedLineMetrics = function(arrAddItems, arrRemIte
 				|| para_Math_Placeholder === nItemType
 				|| para_Math_BreakOperator === nItemType
 				|| (para_Drawing === nItemType && (true === oItem.Is_Inline() || true === this.GetParagraph().Parent.Is_DrawingShape()))
-				|| (para_FieldChar === nItemType  && oItem.IsNumValue()))
+				|| (para_FieldChar === nItemType  && oItem.IsVisual()))
 			{
 				isUseMetricsBefore = true;
 				break;
@@ -4676,6 +4676,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						var oComplexField = Item.GetComplexField();
 						var oHdrFtr       = Para.Parent.IsHdrFtr(true);
 
+						// TODO: Ранее обработка была на Separate и поле могло быть не собрано, теперь оно на End
+						//       и такого просиходить не должно
 						if (oHdrFtr && !oComplexField && this.Paragraph)
 						{
 							// Т.к. Recalculate_Width запускается после Recalculate_Range, то возможен случай, когда у нас
@@ -4683,12 +4685,64 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							this.Paragraph.ProcessComplexFields();
 							oComplexField = Item.GetComplexField();
 						}
-
-						if (oHdrFtr && oComplexField)
+						
+						let isVisualFieldChar = false;
+						var oInstruction = oComplexField ? oComplexField.GetInstruction() : null;
+						
+						if (oHdrFtr
+							&& oInstruction
+							&& (AscWord.fieldtype_NUMPAGES === oInstruction.GetType()
+								|| AscWord.fieldtype_PAGE === oInstruction.GetType()
+								|| AscWord.fieldtype_FORMULA === oInstruction.GetType()))
+						{
+							if (AscWord.fieldtype_NUMPAGES === oInstruction.GetType())
+							{
+								oHdrFtr.Add_PageCountElement(Item);
+								
+								let logicDocument = Para.LogicDocument;
+								if (!Item.IsNumValue() && logicDocument && logicDocument.IsDocumentEditor())
+								{
+									let numFormat = oInstruction.haveNumericFormat() ? oInstruction.getNumericFormat() : Asc.c_oAscNumberingFormat.Decimal;
+									Item.SetNumValue(logicDocument.Pages.length, numFormat);
+								}
+							}
+							else if (AscWord.fieldtype_PAGE === oInstruction.GetType())
+							{
+								let logicDocument = Para.LogicDocument;
+								let sectInfo      = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
+								let sectPr        = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+								let numFormat     = oInstruction.haveNumericFormat() ? oInstruction.getNumericFormat() : sectPr.GetPageNumFormat();
+								Item.SetNumValue(sectInfo.CurPage, numFormat);
+							}
+							else
+							{
+								if (oComplexField.IsHaveNestedNUMPAGES())
+									oHdrFtr.Add_PageCountElement(Item);
+								
+								var sValue = oComplexField.CalculateValue();
+								var nValue = parseInt(sValue);
+								if (isNaN(nValue))
+									nValue = 0;
+								
+								Item.SetFormulaValue(nValue);
+							}
+							isVisualFieldChar = true;
+						}
+						else if (oInstruction && AscWord.fieldtype_FORMCHECKBOX === oInstruction.GetType())
+						{
+							isVisualFieldChar = true;
+							Item.SetFormCheckBox(true);
+						}
+						else
+						{
+							Item.SetNumValue(null);
+						}
+						
+						if (isVisualFieldChar)
 						{
 							var oParent = this.GetParent();
 							var nRunPos = this.private_GetPosInParent(oParent);
-
+							
 							// Заглушка на случай, когда настройки текущего рана не совпадают с настройками рана, где расположен текст
 							if (Pos >= ContentLen - 1 && oParent && oParent.Content[nRunPos + 1] instanceof ParaRun)
 							{
@@ -4696,43 +4750,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								g_oTextMeasurer.SetTextPr(oNumValuePr, this.Paragraph.Get_Theme());
 								Item.Measure(g_oTextMeasurer, oNumValuePr);
 							}
-
-							var oInstruction = oComplexField.GetInstruction();
-							if (oInstruction && (AscWord.fieldtype_NUMPAGES === oInstruction.GetType() || AscWord.fieldtype_PAGE === oInstruction.GetType() || AscWord.fieldtype_FORMULA === oInstruction.GetType()))
-							{
-								if (AscWord.fieldtype_NUMPAGES === oInstruction.GetType())
-								{
-									oHdrFtr.Add_PageCountElement(Item);
-
-									let logicDocument = Para.LogicDocument;
-									if (!Item.IsNumValue() && logicDocument && logicDocument.IsDocumentEditor())
-									{
-										let numFormat = oInstruction.haveNumericFormat() ? oInstruction.getNumericFormat() : Asc.c_oAscNumberingFormat.Decimal;
-										Item.SetNumValue(logicDocument.Pages.length, numFormat);
-									}
-								}
-								else if (AscWord.fieldtype_PAGE === oInstruction.GetType())
-								{
-									let logicDocument = Para.LogicDocument;
-									let sectInfo  = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
-									let sectPr    = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
-									let numFormat = oInstruction.haveNumericFormat() ? oInstruction.getNumericFormat() : sectPr.GetPageNumFormat();
-									Item.SetNumValue(sectInfo.CurPage, numFormat);
-								}
-								else
-								{
-									if (oComplexField.IsHaveNestedNUMPAGES())
-										oHdrFtr.Add_PageCountElement(Item);
-									
-									var sValue = oComplexField.CalculateValue();
-									var nValue = parseInt(sValue);
-									if (isNaN(nValue))
-										nValue = 0;
-
-									Item.SetFormulaValue(nValue);
-								}
-							}
-
+							
 							// Если до этого было слово, тогда не надо проверять убирается ли оно, но если стояли пробелы,
 							// тогда мы их учитываем при проверке убирается ли данный элемент, и добавляем только если
 							// данный элемент убирается
@@ -4741,18 +4759,18 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								// Добавляем длину пробелов до слова + длина самого слова. Не надо проверять
 								// убирается ли слово, мы это проверяем при добавленнии букв.
 								X += SpaceLen + WordLen;
-
+								
 								Word = false;
 								EmptyLine = false;
 								TextOnLine = true;
 								SpaceLen = 0;
 								WordLen = 0;
 							}
-
+							
 							// Если на строке начиналось какое-то слово, тогда данная строка уже не пустая
 							if (true === StartWord)
 								FirstItemOnLine = false;
-
+							
 							var PageNumWidth = Item.GetWidth();
 							if (X + SpaceLen + PageNumWidth > XEnd && ( false === FirstItemOnLine || false === Para.IsSingleRangeOnLine(ParaLine, ParaRange) ))
 							{
@@ -4764,17 +4782,13 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							{
 								// Добавляем длину пробелов до слова и ширину данного элемента
 								X += SpaceLen + PageNumWidth;
-
+								
 								FirstItemOnLine = false;
 								EmptyLine = false;
 								TextOnLine = true;
 							}
-
+							
 							SpaceLen = 0;
-						}
-						else
-						{
-							Item.SetNumValue(null);
 						}
 					}
 
@@ -5006,7 +5020,7 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 			}
 			case para_FieldChar:
 			{
-				if (Item.IsNumValue())
+				if (Item.IsVisual())
 					UpdateLineMetricsText = true;
 
 				break;
@@ -5240,7 +5254,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 
 				isHiddenCFPart = PRSC.ComplexFields.isComplexFieldCode();
 
-				if (Item.IsNumValue())
+				if (Item.IsVisual())
 				{
 					PRSC.Words++;
 					PRSC.Range.W += PRSC.SpaceLen;
@@ -5663,7 +5677,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
 				PRSA.ComplexFields.processFieldChar(Item);
 				isHiddenCFPart = PRSA.ComplexFields.isComplexFieldCode();
 
-				if (Item.IsNumValue())
+				if (Item.IsVisual())
 				{
 					PRSA.X    += Item.GetWidthVisible();
 					PRSA.LastW = Item.GetWidthVisible();

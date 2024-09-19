@@ -1438,6 +1438,10 @@ CFieldInstructionParser.prototype.private_Parse = function()
 	{
 		this.private_ReadFORMTEXT();
 	}
+	else if ("FORMCHECKBOX" === sBuffer)
+	{
+		this.private_ReadFORMCHECKBOX();
+	}
 	else if(sBuffer.indexOf("=") === 0)
 	{
 		this.private_ReadFORMULA();
@@ -2063,4 +2067,8 @@ CFieldInstructionParser.prototype.private_ReadMERGEFIELD = function()
 CFieldInstructionParser.prototype.private_ReadFORMTEXT = function()
 {
 	this.Result = new AscWord.CFieldInstructionFORMTEXT();
+};
+CFieldInstructionParser.prototype.private_ReadFORMCHECKBOX = function()
+{
+	this.Result = new AscWord.CFieldInstructionFORMCHECKBOX();
 };

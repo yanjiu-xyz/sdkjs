@@ -139,8 +139,6 @@
         this._page          = nPage;        // integer | array
         this._print         = true;        // This property has been superseded by the display property and its use is discouraged.
         this._readonly      = false;
-        this._rect          = aRect;         // scaled rect
-        this._origRect      = [];           // orig rect as in file
         this._required      = false;       // for all except button
         this._rotation      = 0;
         this._strokeColor   = null;     // In older versions of this specification, this property was borderColor. The use of borderColor is now discouraged,
@@ -152,9 +150,9 @@
         this._textFont          = undefined; // исходный
         this._textFontActual    = undefined; // фактический используемый
         this._fgColor       = undefined;
-        this._textSize      = 10; // 0 == max text size // to do
-        this._fontStyle     = 0; // информация о стиле шрифта (bold, italic)
-        this._userName      = ""; // It is intended to be used as tooltip text whenever the cursor enters a field. 
+        this._textSize      = 10;
+        this._fontStyle     = 0;    // информация о стиле шрифта (bold, italic)
+        this._userName      = "";   // It is intended to be used as tooltip text whenever the cursor enters a field. 
         //It can also be used as a user-friendly name, instead of the field name, when generating error messages.
         this._parent        = null;
         
@@ -166,22 +164,6 @@
 
         this._isWidget = aRect && aRect.length == 4 ? true : false;
 
-        this.contentRect = {
-            X: 0,
-            Y: 0,
-            W: 0,
-            H: 0,
-            Page: nPage
-        }
-        this._formRect = {
-            X: 0,
-            Y: 0,
-            W: 0,
-            H: 0,
-            Page: nPage
-        }
-
-        this._oldContentPos = {X: 0, Y: 0, XLimit: 0, YLimit: 0};
         this._curShiftView = { // смещение, когда мы скролим, т.е. активное смещение
             x: 0,
             y: 0
@@ -213,6 +195,8 @@
 		
 		this.compositeInput = null;
 		this.compositeReplaceCount = 0;
+
+        this.SetRect(aRect);
     }
 
     CBaseField.prototype.IsAnnot = function() {
@@ -223,7 +207,10 @@
     };
     CBaseField.prototype.IsDrawing = function() {
         return false;
-     };
+    };
+    CBaseField.prototype.IsPdfObject = function() {
+        return true;
+    };
     CBaseField.prototype.SetApIdx = function(nIdx) {
         this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
@@ -377,10 +364,17 @@
     };
 
     CBaseField.prototype.getFormRelRect = function() {
-        return this.contentRect;
+        return this.contentClipRect;
     };
     CBaseField.prototype.getFormRect = function() {
-        return this._formRect;
+        let aOrigRect = this.GetOrigRect();
+
+        return {
+            X : aOrigRect[0] * g_dKoef_pt_to_mm,
+            Y : aOrigRect[1] * g_dKoef_pt_to_mm,
+            W : (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm,
+            H : (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm
+        }
     };
     
     CBaseField.prototype.GetFullName = function() {
@@ -727,42 +721,27 @@
         }
     };
 
-    CBaseField.prototype.CalculateContentRect = function() {
-        if (!this.content)
-            return;
-
-        let aRect       = this.GetRect();
-        let Y           = aRect[1];
-        let nHeight     = ((aRect[3]) - (aRect[1]));
-        let oMargins    = this.GetMarginsFromBorders(false, false);
-
-        this.contentRect.X = this.content.X;
-        this.contentRect.Y = (Y + oMargins.top) * g_dKoef_pix_to_mm;
-        this.contentRect.W = this.content.XLimit - this.content.X;
-        this.contentRect.H = (nHeight - oMargins.top - oMargins.bottom) * g_dKoef_pix_to_mm;
-    };
-
     CBaseField.prototype.DrawHighlight = function(oCtx) {
         if (this.IsHidden() == true)
             return;
 
-        let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * oViewer.getDrawingPageScale(nPage);
         let aBgColor    = this.GetBackgroundColor();
 
         let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-        {
+        if (oViewer.documentWidth > oViewer.width) {
             xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
         }
         let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[this.GetPage()];
+        let page    = oViewer.drawingPages[nPage];
         let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         
-        let isLandscape = oViewer.isLandscapePage(this.GetPage());
+        let isLandscape = oViewer.isLandscapePage(nPage);
         if (isLandscape) {
             indLeft = indLeft + (w - h) / 2;
         }
@@ -1221,25 +1200,6 @@
     
     CBaseField.prototype.DrawSelected = function() {
         return;
-        /*
-        let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-
-        let X       = this._pagePos.x * nScale;
-        let Y       = this._pagePos.y * nScale;
-        let nWidth  = this._pagePos.w * nScale;
-        let nHeight = this._pagePos.h * nScale;
-
-        oCtx.globalAlpha = 1;
-        oCtx.setLineDash([]);
-        oCtx.strokeStyle = "rgb(0, 0, 0)";
-        oCtx.lineWidth = Math.max(nScale, 1);
-        
-        oCtx.beginPath();
-        oCtx.rect(X, Y, nWidth, nHeight);
-        oCtx.stroke();
-        oCtx.closePath();
-        */
     };
     
     CBaseField.prototype.Get_Id = function() {
@@ -1558,9 +1518,8 @@
             this._curShiftView.x != this._originShiftView.x)
             return true;
     };
-    CBaseField.prototype.GetBordersWidth = function(bScaled) {
-        let oViewer = editor.getDocumentRenderer();
-        let nLineWidth = bScaled == true ? 1.25 * (this._lineWidth ? this._lineWidth : 1)  * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom : 1.25 * (this._lineWidth ? this._lineWidth : 1);
+    CBaseField.prototype.GetBordersWidth = function() {
+        let nLineWidth = this._lineWidth != undefined ? this._lineWidth : 1;
 
         if (nLineWidth == 0 || this._borderStyle == undefined) {
             return {
@@ -1597,34 +1556,33 @@
                 }
         }
     };
-    CBaseField.prototype.GetMarginsFromBorders = function(bScaled, bMM) {
-        let oBorders    = this.GetBordersWidth(bScaled);
-        let nKoeff      = bMM == true ? g_dKoef_pix_to_mm : 1;
+    CBaseField.prototype.GetMarginsFromBorders = function() {
+        let oBorders = this.GetBordersWidth();
 
         switch (this._borderStyle) {
             case BORDER_TYPES.solid:
             case BORDER_TYPES.dashed:
             case BORDER_TYPES.underline:
                 return {
-                    left:     oBorders.bottom * nKoeff,
-                    top:      oBorders.bottom * nKoeff,
-                    right:    oBorders.bottom * nKoeff,
-                    bottom:   oBorders.bottom * nKoeff
+                    left:     oBorders.bottom,
+                    top:      oBorders.bottom,
+                    right:    oBorders.bottom,
+                    bottom:   oBorders.bottom
                 }
             case BORDER_TYPES.inset:
             case BORDER_TYPES.beveled:
                 return {
-                    left:     oBorders.bottom * nKoeff,
-                    top:      oBorders.bottom * nKoeff,
-                    right:    oBorders.bottom * nKoeff,
-                    bottom:   oBorders.bottom * nKoeff
+                    left:     oBorders.bottom,
+                    top:      oBorders.bottom,
+                    right:    oBorders.bottom,
+                    bottom:   oBorders.bottom
                 }
             default:
                 return {
-                    left:     oBorders.bottom * nKoeff,
-                    top:      oBorders.bottom * nKoeff,
-                    right:    oBorders.bottom * nKoeff,
-                    bottom:   oBorders.bottom * nKoeff
+                    left:     oBorders.bottom,
+                    top:      oBorders.bottom,
+                    right:    oBorders.bottom,
+                    bottom:   oBorders.bottom
                 }
         };
     };
@@ -1983,11 +1941,15 @@
     CBaseField.prototype.GetTextSize = function() {
         return this._textSize;
     };
+    CBaseField.prototype.SetRect = function(aOrigRect) {
+        this._origRect = aOrigRect;
+        this.SetWasChanged(true);
+    };
     CBaseField.prototype.GetOrigRect = function() {
         return this._origRect;
     };
     CBaseField.prototype.GetRect = function() {
-        return this._rect;
+        return this.GetOrigRect();
     };
 
     // common triggers
@@ -2037,9 +1999,6 @@
         return this._page;
     };
     CBaseField.prototype["getPagePos"] = function() {
-        if (!this._pagePos)
-            return null;
-
         let aOrigRect = this.GetOrigRect();
         return {
             "x" : aOrigRect[0],

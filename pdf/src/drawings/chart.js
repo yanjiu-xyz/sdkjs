@@ -301,9 +301,6 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfChart.prototype.Get_AbsolutePage = function() {
-        return this.GetPage();
-    };
     CPdfChart.prototype.getLogicDocument = function() {
         return this.GetDocument();
     };

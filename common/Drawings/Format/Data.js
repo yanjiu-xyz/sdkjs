@@ -7745,25 +7745,17 @@ Because of this, the display is sometimes not correct.
 		  }
 	  };
 	  ColorDefStyleLbl.prototype.setShapeFill = function (shapes, parentObjects) {
-			if (shapes.length && this.fillClrLst) {
-				if (this.checkNoFill()) {
-					for (let i = 0; i < shapes.length; i++) {
-						shapes[i].setFill(AscFormat.CreateNoFillUniFill());
+			if (shapes.length && this.fillClrLst && !this.checkNoFill()) {
+				const fillShapes = [];
+				for (let i = 0; i < shapes.length; i++) {
+					if (!(shapes[i].shape.hideGeom || shapes[i].type === AscFormat.LayoutShapeType_outputShapeType_conn)) {
+						fillShapes.push(shapes[i]);
 					}
-				} else {
-					const fillShapes = [];
-					for (let i = 0; i < shapes.length; i++) {
-						if (shapes[i].shape.hideGeom || shapes[i].type === AscFormat.LayoutShapeType_outputShapeType_conn) {
-							shapes[i].setFill(AscFormat.CreateNoFillUniFill());
-						} else {
-							fillShapes.push(shapes[i]);
-						}
-					}
-					const fills = this.fillClrLst.getCurColor(fillShapes.length, parentObjects);
-					if (fills) {
-						for (let i = 0; i < fills.length; i++) {
-							fillShapes[i].setFill(fills[i]);
-						}
+				}
+				const fills = this.fillClrLst.getCurColor(fillShapes.length, parentObjects);
+				if (fills) {
+					for (let i = 0; i < fills.length; i++) {
+						fillShapes[i].setFill(fills[i]);
 					}
 				}
 			}
@@ -7779,34 +7771,23 @@ Because of this, the display is sometimes not correct.
 		  }
 	  }
 	  ColorDefStyleLbl.prototype.setShapeLn = function (shapes, parentObjects) {
-		  if (shapes.length && this.linClrLst) {
-
-			  if (this.checkNoLn()) {
-					for (let i = 0; i < shapes.length; i++) {
-						shapes[i].setLn(AscFormat.CreateNoFillLine());
-				  }
-			  } else {
-					const fillShapes = [];
-					for (let i = 0; i < shapes.length; i += 1) {
-						const shadowShape = shapes[i];
-						if (shadowShape.shape.hideGeom ||
-							shadowShape.node.isParNode() && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) {
-							shadowShape.setLn(AscFormat.CreateNoFillLine());
-						} else {
-							fillShapes.push(shadowShape);
-						}
+		  if (shapes.length && this.linClrLst && !this.checkNoLn()) {
+				const fillShapes = [];
+				for (let i = 0; i < shapes.length; i += 1) {
+					const shadowShape = shapes[i];
+					if (!(shadowShape.shape.hideGeom ||
+						shadowShape.node.isParNode() && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn)) {
+						fillShapes.push(shadowShape);
 					}
-				  const fills = this.linClrLst.getCurColor(fillShapes.length, parentObjects);
-				  if (fills) {
-					  for (let i = 0; i < fills.length; i++) {
-						  const shadowShape = fillShapes[i];
-						  const ln = new AscFormat.CLn();
-						  ln.setW(this.getLineWidth(shadowShape));
-						  ln.setFill(fills[i]);
-						  ln.tailEnd = shadowShape.tailLnArrow;
-						  ln.headEnd = shadowShape.headLnArrow;
-						  shadowShape.setLn(ln);
-					  }
+				}
+			  const fills = this.linClrLst.getCurColor(fillShapes.length, parentObjects);
+			  if (fills) {
+				  for (let i = 0; i < fills.length; i++) {
+					  const shadowShape = fillShapes[i];
+					  const ln = new AscFormat.CLn();
+					  ln.setW(this.getLineWidth(shadowShape));
+					  ln.setFill(fills[i]);
+					  shadowShape.setLn(ln);
 				  }
 			  }
 		  }

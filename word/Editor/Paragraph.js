@@ -150,7 +150,7 @@ function Paragraph(Parent, bFromPresentation)
 
     this.SearchResults = {};
 
-    this.SpellChecker  = new AscCommonWord.CParagraphSpellChecker(this);
+    this.SpellChecker  = new AscWord.CParagraphSpellChecker(this);
 
     this.NearPosArray  = [];
 
@@ -9490,6 +9490,15 @@ Paragraph.prototype.CheckHitInParaEnd = function(X, Y, CurPage)
 	var oContentPos = this.getSearchPosByXY(X, Y, CurPage, false, true).getInTextPos();
 	return (oContentPos.Get(0) === (this.Content.length - 1));
 };
+Paragraph.prototype.GetRunElementByXY = function(x, y, curPage)
+{
+	let searchPos = this.getSearchPosByXY(x, y, curPage, false, true);
+	if (!searchPos.isInText())
+		return null;
+	
+	let contentPos = searchPos.getInTextPos();
+	return this.Get_RunElementByPos(contentPos);
+};
 /**
  * Задаем сохраненное значение нумерации для данного параграфа (используется при печати выделенного фрагмента)
  * @param arrNumInfo
@@ -14509,7 +14518,7 @@ Paragraph.prototype.GetCurrentComments = function(oComments)
 // SpellCheck
 //----------------------------------------------------------------------------------------------------------------------
 /**
- * @returns {AscCommonWord.CParagraphSpellChecker}
+ * @returns {AscWord.CParagraphSpellChecker}
  */
 Paragraph.prototype.GetSpellChecker = function()
 {

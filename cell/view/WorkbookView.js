@@ -331,7 +331,7 @@
 
 	this.customFunctionEngine = null;
 
-	this.smoothScroll = false;
+	this.smoothScroll = true;
 
 	return this;
   }
@@ -408,6 +408,11 @@
     this._canResize();
 
     this.stringRender = new AscCommonExcel.StringRender(this.buffers.main);
+
+	//need clean previous fonts settings, next in _calcMaxDigitWidth do setFont and reinstall setupFontSize/...
+    if (this.Api.VersionHistory) {
+        AscCommonExcel.resetDrawingContextFonts();
+    }
 
     // Мерить нужно только со 100% и один раз для всего документа
     this._calcMaxDigitWidth();
@@ -1247,7 +1252,7 @@
 
 		var ws = this.getWorksheet();
 		if (AscCommonExcel.c_oAscScrollType.ScrollHorizontal & type) {
-			this.controller.reinitScrollX(this.controller.hsbApi.settings, ws.getFirstVisibleCol(true), ws.getHorizontalScrollRange(), ws.getHorizontalScrollMax());
+			this.controller.reinitScrollX(this.controller.hsbApi.settings, this.getSmoothScrolling() ? ws.getFirstVisibleColSmoothScroll(true) :  ws.getFirstVisibleCol(true), ws.getHorizontalScrollRange(), ws.getHorizontalScrollMax());
 		}
 		if (AscCommonExcel.c_oAscScrollType.ScrollVertical & type) {
 			this.controller.reinitScrollY(this.controller.vsbApi.settings, this.getSmoothScrolling() ? ws.getFirstVisibleRowSmoothScroll(true) :  ws.getFirstVisibleRow(true), ws.getVerticalScrollRange(), ws.getVerticalScrollMax());
@@ -1282,7 +1287,7 @@
 
   WorkbookView.prototype._onScrollX = function(pos, initColsCount) {
     var ws = this.getWorksheet();
-    var delta = asc_round(pos - ws.getFirstVisibleCol(true));
+    var delta = !this.getSmoothScrolling() ? (asc_round(pos - ws.getFirstVisibleCol(true))) : (pos - ws.getFirstVisibleColSmoothScroll(true));
     if (delta !== 0) {
       ws.scrollHorizontal(delta, this.cellEditor, initColsCount);
     }
@@ -4448,7 +4453,7 @@
 
 		var range = ws.model.getSelection().getLast();
 		var type = range.getType();
-		var l = ws.getCellLeft(range.c1, 3);
+		var l = ws.getCellLeft(range.c1, 3) - ws.getHorizontalScrollCorrect(3);
 		var t = ws.getCellTop(range.r1, 3) - ws.getScrollCorrect(3);
 
 		var offset = ws.getCellsOffset(3);
@@ -4457,7 +4462,7 @@
 			X: asc.c_oAscSelectionType.RangeRow === type ? -offset.left : l - offset.left,
 			Y: asc.c_oAscSelectionType.RangeCol === type ? -offset.top : t - offset.top,
 			W: asc.c_oAscSelectionType.RangeRow === type ? offset.left :
-				ws.getCellLeft(range.c2, 3) - l + ws.getColumnWidth(range.c2, 3),
+				ws.getCellLeft(range.c2, 3) - l + ws.getColumnWidth(range.c2, 3) - ws.getHorizontalScrollCorrect(3),
 			H: asc.c_oAscSelectionType.RangeCol === type ? offset.top :
 				ws.getCellTop(range.r2, 3) - t + ws.getRowHeight(range.r2, 3) - ws.getScrollCorrect(3),
 			T: type

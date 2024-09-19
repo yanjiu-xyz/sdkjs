@@ -214,16 +214,16 @@ CChartsDrawer.prototype =
 		this.charts = {};
 		switch (seria.layoutId) {
 			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN :
-				this.charts[null] = new drawHistogramChart(seria, this)
+				this.charts.chartEx= new drawHistogramChart(seria, this)
 				break
 			case AscFormat.SERIES_LAYOUT_WATERFALL :
-				this.charts[null] = new drawWaterfallChart(seria, this)
+				this.charts.chartEx = new drawWaterfallChart(seria, this)
 				break
 			case AscFormat.SERIES_LAYOUT_FUNNEL :
-				this.charts[null] = new drawFunnelChart(seria, this)
+				this.charts.chartEx = new drawFunnelChart(seria, this)
 				break
 			default :
-				this.charts[null] = null;
+				this.charts.chartEx = null;
 		}
 	},
 
@@ -683,8 +683,8 @@ CChartsDrawer.prototype =
 	{
 		let res = null;
 		if (obj.showChartExVal) {
-			if (this.charts && this.charts.null) {
-				res = this.charts.null._calculateDLbl(obj);
+			if (this.charts && this.charts.chartEx) {
+				res = this.charts.chartEx._calculateDLbl(obj);
 			}
 		} else {
 			var chartSpace = obj.chart;

@@ -323,7 +323,7 @@
         if (this._bAutoShiftContentView && oDoc.activeForm == this)
             this.CheckFormViewWindow();
 
-        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
+        oGraphicsWord.AddClipRect(this.contentClipRect.X, this.contentClipRect.Y, this.contentClipRect.W, this.contentClipRect.H);
         oContentToDraw.Draw(0, oGraphicsWord);
 
         oGraphicsWord.RemoveLastClip();
@@ -337,7 +337,8 @@
             return;
 
         let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
+        let nPage       = this.GetPage();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * oViewer.getDrawingPageScale(nPage);
         let aOrigRect   = this.GetOrigRect();
 
         let xCenter = oViewer.width >> 1;
@@ -346,13 +347,13 @@
 			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
 		}
 		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[this.GetPage()];
+        let page    = oViewer.drawingPages[nPage];
         let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-        let isLandscape = oViewer.isLandscapePage(this.GetPage());
+        let isLandscape = oViewer.isLandscapePage(nPage);
         if (isLandscape) {
             indLeft = indLeft + (w - h) / 2;
         }
@@ -362,12 +363,12 @@
         let nWidth  = (aOrigRect[2] - aOrigRect[0]) * nScale;
         let nHeight = (aOrigRect[3] - aOrigRect[1]) * nScale;
         
-        let oMargins = this.GetBordersWidth(true);
+        let oMargins = this.GetBordersWidth();
         
         let nMarkWidth  = 18;
-        let nMarkX      = (X + nWidth) - oMargins.left - nMarkWidth;
-        let nMarkHeight = nHeight - 2 * oMargins.top - 2;
-        let nMarkY      = Y + oMargins.top + 1;
+        let nMarkX      = (X + nWidth) - oMargins.left * nScale - nMarkWidth;
+        let nMarkHeight = nHeight - 2 * oMargins.top * nScale;
+        let nMarkY      = Y + oMargins.top * nScale;
 
         // marker rect
         oCtx.setLineDash([]);
@@ -530,69 +531,16 @@
             return;
 
         this.RecalcMeasureContent();
-        let aRect = this.GetRect();
-
-        let X       = aRect[0];
-        let Y       = aRect[1];
-        let nWidth  = ((aRect[2]) - (aRect[0]));
-        let nHeight = ((aRect[3]) - (aRect[1]));
-
-        let oMargins = this.GetMarginsFromBorders(false, false);
         
-        let contentX = this.IsComb() ? (X + oMargins.left) * g_dKoef_pix_to_mm : (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY = (Y + (this.IsMultiline() ? (2.5 * oMargins.top) : (2 * oMargins.top))) * g_dKoef_pix_to_mm;
-        let contentXLimit = this.IsComb() ? (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm : (X + nWidth - 2 * oMargins.left) * g_dKoef_pix_to_mm;
-        
-        if ((this.borderStyle == "solid" || this.borderStyle == "dashed") && 
-        this._comb == true && this._charLimit > 1) {
-            contentX = (X) * g_dKoef_pix_to_mm;
-            contentXLimit = (X + nWidth) * g_dKoef_pix_to_mm;
-        }
-        
-        let bNewRecalc = false; // будет использовано только один раз при первом пересчете и случае autofit
         if (this.GetTextSize() == 0) {
-            if (!this._pagePos) {
-                bNewRecalc = true;
+            if (null == this.getFormRelRect()) {
+                this.CalculateContentClipRect();
             }
             this.ProcessAutoFitContent(this.content);
             this.ProcessAutoFitContent(this.contentFormat);
         }
 
-        // save pos in page.
-        this._pagePos = {
-            x: X,
-            y: Y,
-            w: nWidth,
-            h: nHeight
-        };
-
-        let contentYFormat = contentY;
-        if (this.IsMultiline() == false) {
-            let nContentH       = this.GetTextHeight(this.content);
-            let nContentHFormat = this.GetTextHeight(this.contentFormat);
-            
-            contentY        = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentH) / 2;
-            contentYFormat  = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentHFormat) / 2;
-        }
-
-        this._formRect.X = X * g_dKoef_pix_to_mm;
-        this._formRect.Y = Y * g_dKoef_pix_to_mm;
-        this._formRect.W = nWidth * g_dKoef_pix_to_mm;
-        this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-        
-        if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-        contentXLimit != this._oldContentPos.XLimit || contentYFormat != this._oldContentPos.YFormat) {
-            this.content.X      = this.contentFormat.X          = this._oldContentPos.X = contentX;
-            this.content.Y      = this._oldContentPos.Y         = contentY;
-            this.contentFormat.Y= this._oldContentPos.YFormat   = contentYFormat;
-            this.content.XLimit = this.contentFormat.XLimit     = this._oldContentPos.XLimit = contentXLimit;
-            this.content.YLimit = this.contentFormat.YLimit     = this._oldContentPos.YLimit = 20000;
-            
-            this.CalculateContentRect();
-            this.content.Recalculate_Page(0, true);
-            this.contentFormat.Recalculate_Page(0, true);
-        }
-        else if (this.IsNeedRecalc()) {
+        if (false == this.RecalculateContentRect()) {
             this.contentFormat.Content.forEach(function(element) {
                 element.Recalculate_Page(0);
             });
@@ -601,22 +549,75 @@
             });
         }
 
-        bNewRecalc && this.Recalculate();
         this.SetNeedRecalc(false);
     };
-    CTextField.prototype.CalculateContentRect = function() {
+    CTextField.prototype.RecalculateContentRect = function() {
+        let aOrigRect = this.GetOrigRect();
+
+        let X       = aOrigRect[0];
+        let Y       = aOrigRect[1];
+        let nWidth  = ((aOrigRect[2]) - (aOrigRect[0]));
+        let nHeight = ((aOrigRect[3]) - (aOrigRect[1]));
+
+        let oMargins = this.GetMarginsFromBorders();
+        
+        let contentX = (this.IsComb() ? (X + oMargins.left) : (X + 2 * oMargins.left)) * g_dKoef_pt_to_mm;
+        let contentY = (Y + (this.IsMultiline() ? (2.5 * oMargins.top) : (2 * oMargins.top))) * g_dKoef_pt_to_mm;
+        let contentXLimit = (this.IsComb() ? (X + nWidth - oMargins.left) : (X + nWidth - 2 * oMargins.left)) * g_dKoef_pt_to_mm;
+        
+        if ((this.borderStyle == "solid" || this.borderStyle == "dashed") && 
+        this._comb == true && this._charLimit > 1) {
+            contentX = (X) * g_dKoef_pt_to_mm;
+            contentXLimit = (X + nWidth) * g_dKoef_pt_to_mm;
+        }
+        
+        let contentYFormat = contentY;
+        if (this.IsMultiline() == false) {
+            let nContentH       = this.GetTextHeight(this.content);
+            let nContentHFormat = this.GetTextHeight(this.contentFormat);
+            
+            contentY        = Y * g_dKoef_pt_to_mm + (nHeight * g_dKoef_pt_to_mm - nContentH) / 2;
+            contentYFormat  = Y * g_dKoef_pt_to_mm + (nHeight * g_dKoef_pt_to_mm - nContentHFormat) / 2;
+        }
+
+        if (contentX != this.content.X || contentY != this.content.Y ||
+        contentXLimit != this.content.XLimit || contentYFormat != this.contentFormat.YFormat) {
+            this.content.X      = this.contentFormat.X = contentX;
+            this.content.Y      = contentY;
+            this.contentFormat.Y= contentYFormat;
+            this.content.XLimit = this.contentFormat.XLimit = contentXLimit;
+            this.content.YLimit = this.contentFormat.YLimit = 20000;
+            
+            this.CalculateContentClipRect();
+            this.content.Recalculate_Page(0, true);
+            this.contentFormat.Recalculate_Page(0, true);
+
+            return true;
+        }
+
+        return false;
+    };
+    CTextField.prototype.CalculateContentClipRect = function() {
         if (!this.content)
             return;
 
-        let aRect       = this.GetRect();
+        let aRect       = this.GetOrigRect();
+        let X           = aRect[0];
         let Y           = aRect[1];
-        let nHeight     = ((aRect[3]) - (aRect[1]));
-        let oMargins    = this.GetMarginsFromBorders(false, false);
+        let nWidth      = aRect[2] - aRect[0];
+        let nHeight     = aRect[3] - aRect[1];
+        let oMargins    = this.GetMarginsFromBorders();
 
-        this.contentRect.X = this.content.X;
-        this.contentRect.Y = (Y + (this.IsMultiline() ? (2.5 * oMargins.top) : (2 * oMargins.top))) * g_dKoef_pix_to_mm;
-        this.contentRect.W = this.content.XLimit - this.content.X;
-        this.contentRect.H = (nHeight - (this.IsMultiline() ? 2.5 * oMargins.top : 2 * oMargins.top) - oMargins.bottom) * g_dKoef_pix_to_mm;
+        let contentX = (this.IsComb() ? (X + oMargins.left) : (X + 2 * oMargins.left)) * g_dKoef_pt_to_mm;
+        let contentXLimit = (this.IsComb() ? (X + nWidth - oMargins.left) : (X + nWidth - 2 * oMargins.left)) * g_dKoef_pt_to_mm;
+
+        this.contentClipRect = {
+            X: contentX,
+            Y: (Y + (this.IsMultiline() ? (2.5 * oMargins.top) : (oMargins.top))) * g_dKoef_pt_to_mm,
+            W: contentXLimit - contentX,
+            H: (nHeight - (this.IsMultiline() ? 2.5 * oMargins.top : oMargins.top) - oMargins.bottom) * g_dKoef_pt_to_mm,
+            Page: this.GetPage()
+        }
     };
     CTextField.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
@@ -1058,7 +1059,7 @@
      * @returns {object} - {hor: {boolean}, ver: {boolean}}
 	 */
     CTextField.prototype.IsTextOutOfForm = function(oContent) {
-        if (!this._pagePos)
+        if (null == this.getFormRelRect())
             this.Recalculate();
         else
             oContent.GetElement(0).Recalculate_Page(0);

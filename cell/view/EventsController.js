@@ -444,7 +444,7 @@
 				settings.isVerticalScroll = false;
 				settings.isHorizontalScroll = true;
 				this.hsbApi.canvasW = null;
-				this.reinitScrollX(settings, ws.getFirstVisibleCol(true), ws.getHorizontalScrollRange(), ws.getHorizontalScrollMax());
+				this.reinitScrollX(settings, ws.workbook.getSmoothScrolling() ? ws.getFirstVisibleColSmoothScroll(true) : ws.getFirstVisibleCol(true), ws.getHorizontalScrollRange(), ws.getHorizontalScrollMax());
 				this.hsbApi.settings = settings;
 			}
 		};

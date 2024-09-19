@@ -197,8 +197,8 @@
                         sImageId = AscCommon.getFullImageSrc2(sImageId);
                         let _image = oApi.ImageLoader.map_image_index[sImageId];
                         if (_image && _image.Image) {
-                            let __w     = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
-                            let __h     = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+                            let __w     = Math.max((_image.Image.width * g_dKoef_pix_to_mm), 1);
+                            let __h     = Math.max((_image.Image.height * g_dKoef_pix_to_mm), 1);
                             let fKoeff  = 1.0/Math.max(__w/dWidth, __h/dHeight);
                             let _w      = Math.max(5, __w*fKoeff);
                             let _h      = Math.max(5, __h*fKoeff);

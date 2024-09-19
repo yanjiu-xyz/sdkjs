@@ -14822,7 +14822,7 @@
 	window["AscCommon"].getArrayRandomElement = getArrayRandomElement;
 })(window);
 
-window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
+window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_data)
 {
     if (window.isNativeOpenPassword)
 	{
@@ -14852,7 +14852,14 @@ window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
     }
 
     window.checkPasswordFromPlugin = false;
-    _editor._onNeedParams(undefined, (_code == 90 || _code == 91) ? true : undefined);
+	let data = undefined;
+	if (csv_data && window["AscDesktopEditor"])
+	{
+		var bufferArray = window["AscDesktopEditor"]["GetOpenedFile"](csv_data);
+		if (bufferArray)
+			data = new Uint8Array(bufferArray);
+	}
+    _editor._onNeedParams(data, (_code == 90 || _code == 91) ? true : undefined);
 };
 
 window["asc_IsNeedBuildCryptedFile"] = function()

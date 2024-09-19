@@ -1646,6 +1646,16 @@ CSelectedElementsInfo.prototype.GetComplexFields = function()
 {
 	return this.m_arrComplexFields;
 };
+CSelectedElementsInfo.prototype.GetComplexFieldFormCheckBox = function()
+{
+	for (let i = 0; i < this.m_arrComplexFields.length; ++i)
+	{
+		let complexField = this.m_arrComplexFields[i];
+		if (complexField.IsFormCheckBox())
+			return complexField;
+	}
+	return null;
+};
 CSelectedElementsInfo.prototype.GetAllTablesOfFigures = function()
 {
     var aTOF = [];
@@ -2035,7 +2045,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
         this.SearchEngine = new AscCommonWord.CDocumentSearch(this);
 
     // Параграфы, в которых есть ошибки в орфографии (объект с ключом - Id параграфа)
-    this.Spelling = new AscCommonWord.CDocumentSpellChecker();
+    this.Spelling = new AscWord.CDocumentSpellChecker();
 
     // Дополнительные настройки
 	this.ForceHideCCTrack          = false; // Насильно запрещаем отрисовку рамок у ContentControl
@@ -2582,7 +2592,7 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
 	this.sendEvent("asc_onUserActionStart");
 	
 	let isNewPoint = false;
-	if (!this.Action.Start || this.Action.Description !== AscDFH.historydescription_BuilderScript)
+	if (!this.Action.Start || this.IsMultiplePointAction())
 		isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
 
 	if (true === this.Action.Start)
@@ -2632,6 +2642,17 @@ CDocument.prototype.IsActionStarted = function()
 CDocument.prototype.IsPostActionLockCheck = function()
 {
 	return this.Action.CheckLock;
+};
+CDocument.prototype.IsMultiplePointAction = function ()
+{
+	switch (this.Action.Description)
+	{
+		case AscDFH.historydescription_BuilderScript:
+		case AscDFH.historydescription_Document_InsertTextFromFile:
+			return false;
+		default:
+			return true;
+	}
 };
 /**
  * Сообщаем документу, что потребуется пересчет
@@ -8660,6 +8681,21 @@ CDocument.prototype.IsInContentControl = function(X, Y, nPageAbs)
 
 	return false;
 };
+/**
+ * Получаем элемент рана по заданной позиции
+ * @param x
+ * @param y
+ * @param pageAbs
+ * @returns {?AscWord.CRunElementBase}
+ */
+CDocument.prototype.GetRunElementByXY = function(x, y, pageAbs)
+{
+	let anchor = this.Get_NearestPos(pageAbs, x, y);
+	if (!anchor || !anchor.Paragraph)
+		return null;
+	
+	return anchor.Paragraph.GetRunElementByXY(x, y, anchor.Internal.Page);
+};
 CDocument.prototype.IsUseInDocument = function(Id)
 {
 	if (!this.MainDocument)
@@ -10379,6 +10415,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 		var oSelectedContent = this.GetSelectedElementsInfo();
 		var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
 		var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
+		let runElement       = this.GetRunElementByXY(X, Y, this.CurPage);
 
 		if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
 		{
@@ -10403,6 +10440,28 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 				oCC.SkipSpecialContentControlLock(false);
 			}
 			this.UpdateSelection();
+		}
+		else if (this.IsFillingFormMode()
+			&& runElement
+			&& runElement.Type === para_FieldChar
+			&& runElement.IsFormField())
+		{
+			let cfCheckBox = runElement.GetComplexField();
+			if (cfCheckBox
+				&& cfCheckBox.IsFormFieldEnabled()
+				&& !this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, {
+				Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+				Elements  : cfCheckBox.GetRelatedParagraphs(),
+				CheckType : AscCommon.changestype_Paragraph_Content
+			}, true, this.IsFillingFormMode()))
+			{
+				this.RemoveTextSelection();
+				this.StartAction();
+				cfCheckBox.ToggleFormCheckBox();
+				this.Recalculate();
+				this.UpdateTracks();
+				this.FinalizeAction();
+			}
 		}
 
 		if (this.IsFillingFormMode() && (oBlockSdt || oInlineSdt))

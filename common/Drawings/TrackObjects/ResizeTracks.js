@@ -522,42 +522,35 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             // этот метод обрабатывает данный случай и корректирует координаты
 
             let oFreeText               = this.originalObject.group;
-            let oFreeTextRect           = oFreeText.GetTextBoxRect(true).map(function(measure) {
-                return measure * AscCommon.g_dKoef_pix_to_mm;
+            let oFreeTextRect           = oFreeText.GetTextBoxRect().map(function(measure) {
+                return measure * g_dKoef_pt_to_mm;
             });
             let aCallout                = oFreeText.GetCallout();
             let oExitPoint              = undefined; // перпендикулярная линия выходящая из freetext аннотации
             let oCalloutArrowPt         = undefined; // x2, y2 точка линии (точка начала стрелки)
             let oCalloutArrowEndPt      = undefined; // x1, y1 точка линии (точка конца стрелки)
-            let oViewer = Asc.editor.getDocumentRenderer();
-            let nPage   = oFreeText.GetPage();
-            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * AscCommon.g_dKoef_pix_to_mm;
-            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * AscCommon.g_dKoef_pix_to_mm;
 
             if (aCallout && aCallout.length == 6) {
                 // точка выхода callout из аннотации
                 oExitPoint = {
-                    x: (aCallout[2 * 2]) * nScaleX,
-                    y: (aCallout[2 * 2 + 1]) * nScaleY
+                    x: (aCallout[2 * 2]) * g_dKoef_pt_to_mm,
+                    y: (aCallout[2 * 2 + 1]) * g_dKoef_pt_to_mm
                 };
 
                 // x2, y2 линии
                 oCalloutArrowPt = {
-                    x: aCallout[1 * 2] * nScaleX,
-                    y: (aCallout[1 * 2 + 1]) * nScaleY
+                    x: aCallout[1 * 2] * g_dKoef_pt_to_mm,
+                    y: (aCallout[1 * 2 + 1]) * g_dKoef_pt_to_mm
                 };
 
                 oCalloutArrowEndPt = {
-                    x: aCallout[0 * 2] * nScaleX,
-                    y: (aCallout[0 * 2 + 1]) * nScaleY
+                    x: aCallout[0 * 2] * g_dKoef_pt_to_mm,
+                    y: (aCallout[0 * 2 + 1]) * g_dKoef_pt_to_mm
                 }
             }
             else {
                 return;
             }
-
-            let nFreeTextW = oFreeTextRect[2] - oFreeTextRect[0];
-            let nFreeTextH = oFreeTextRect[3] - oFreeTextRect[1];
 
             if (this.numberHandle == 4) {
                 // если x начала стрелки находится в пределах ректа аннотации то фиксируем x
@@ -574,8 +567,8 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
         this.correctXYForPdfFreeText = function(x, y) {
             let oFreeText       = this.originalObject.group;
             let aCallout        = oFreeText.GetCallout(true);
-            let aCalloutMM      = aCallout ? aCallout.map(function(measure) {return measure * AscCommon.g_dKoef_pix_to_mm}) : undefined;
-            let aTextBoxRectMM  = oFreeText.GetTextBoxRect(true).map(function(measure) {return measure * AscCommon.g_dKoef_pix_to_mm});
+            let aCalloutMM      = aCallout ? aCallout.map(function(measure) {return measure * g_dKoef_pt_to_mm}) : undefined;
+            let aTextBoxRectMM  = oFreeText.GetTextBoxRect().map(function(measure) {return measure * g_dKoef_pt_to_mm});
             let nExitPos        = oFreeText.GetCalloutExitPos();
 
             if (!aCalloutMM)
@@ -968,7 +961,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 this.resizedflipV = false;
             }
             
-            if (Asc.editor.isPdfEditor() && this.originalObject.IsPdfObject) {
+            if (Asc.editor.isPdfEditor() && (Asc.editor.getPDFDoc().IsViewerObject(this.originalObject))) {
                 let xMin = this.resizedPosX;
                 let xMax = this.resizedPosX + this.resizedExtX;
                 let yMin = this.resizedPosY;

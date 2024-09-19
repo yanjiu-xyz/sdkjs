@@ -5762,6 +5762,7 @@ function(window, undefined) {
 			}
 
 			let oChartSize = this.getChartSizes(true);
+			oPlotArea.rectChanged = false;
 			this.chart.plotArea.x = oChartSize.startX;
 			this.chart.plotArea.y = oChartSize.startY;
 			this.chart.plotArea.extX = oChartSize.w;

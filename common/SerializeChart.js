@@ -6211,7 +6211,7 @@ BinaryChartWriter.prototype.WriteCT_DataLabels = function (oVal) {
             var oCurVal = oVal.dataLabel[i];
             if (null != oCurVal) {
                 this.bs.WriteItem(c_oserct_chartExDataLabelsDATALABEL, function () {
-                    oThis.WriteCT_Datalabel(oCurVal);
+                    oThis.WriteCT_DataLabel(oCurVal);
                 });
             }
         }

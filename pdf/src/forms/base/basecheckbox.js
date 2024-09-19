@@ -113,7 +113,7 @@
         let nWidth  = aOrigRect[2] - aOrigRect[0];
         let nHeight = aOrigRect[3] - aOrigRect[1];
 
-        let oMargins = this.GetMarginsFromBorders(false, false);
+        let oMargins = this.GetMarginsFromBorders();
         let oRGB    = this.GetRGBColor(this._textColor);
 
         oGraphicsPDF.SetGlobalAlpha(1);

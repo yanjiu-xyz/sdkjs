@@ -2428,7 +2428,7 @@
 		}
 
 		InitClass(CUniColor, CBaseNoIdObject, 0);
-		CUniColor.prototype.checkPhColor = function (unicolor, bMergeMods) {
+		CUniColor.prototype.checkPhColor = function (unicolor) {
 			if (this.color && this.color.type === c_oAscColor.COLOR_TYPE_SCHEME && this.color.id === 14) {
 				if (unicolor) {
 					if (unicolor.color) {
@@ -2438,9 +2438,7 @@
 						if (!this.Mods || this.Mods.Mods.length === 0) {
 							this.Mods = unicolor.Mods.createDuplicate();
 						} else {
-							if (bMergeMods) {
-								this.Mods.Merge(unicolor.Mods);
-							}
+							this.Mods.Merge(unicolor.Mods);
 						}
 					}
 				}
@@ -5101,7 +5099,7 @@
 				}
 			}
 		};
-		CUniFill.prototype.checkPhColor = function (unicolor, bMergeMods) {
+		CUniFill.prototype.checkPhColor = function (unicolor) {
 			if (this.fill) {
 				switch (this.fill.type) {
 					case c_oAscFill.FILL_TYPE_BLIP:
@@ -5111,24 +5109,24 @@
 					}
 					case c_oAscFill.FILL_TYPE_SOLID: {
 						if (this.fill.color && this.fill.color) {
-							this.fill.color.checkPhColor(unicolor, bMergeMods);
+							this.fill.color.checkPhColor(unicolor);
 						}
 						break;
 					}
 					case c_oAscFill.FILL_TYPE_GRAD: {
 						for (var i = 0; i < this.fill.colors.length; ++i) {
 							if (this.fill.colors[i] && this.fill.colors[i].color) {
-								this.fill.colors[i].color.checkPhColor(unicolor, bMergeMods);
+								this.fill.colors[i].color.checkPhColor(unicolor);
 							}
 						}
 						break;
 					}
 					case c_oAscFill.FILL_TYPE_PATT: {
 						if (this.fill.bgClr) {
-							this.fill.bgClr.checkPhColor(unicolor, bMergeMods);
+							this.fill.bgClr.checkPhColor(unicolor);
 						}
 						if (this.fill.fgClr) {
-							this.fill.fgClr.checkPhColor(unicolor, bMergeMods);
+							this.fill.fgClr.checkPhColor(unicolor);
 						}
 						break;
 					}
@@ -6248,39 +6246,39 @@
 				return;
 			}
 			if (ln.Fill != null && ln.Fill.fill != null) {
-				this.Fill = ln.Fill.createDuplicate();
+				this.setFill(ln.Fill.createDuplicate());
 			}
 
 			if (ln.prstDash != null) {
-				this.prstDash = ln.prstDash;
+				this.setPrstDash(ln.prstDash);
 			}
 
 			if (ln.Join != null) {
-				this.Join = ln.Join.createDuplicate();
+				this.setJoin(ln.Join.createDuplicate());
 			}
 
 			if (ln.headEnd != null) {
-				this.headEnd = ln.headEnd.createDuplicate();
+				this.setHeadEnd(ln.headEnd.createDuplicate());
 			}
 
 			if (ln.tailEnd != null) {
-				this.tailEnd = ln.tailEnd.createDuplicate();
+				this.setTailEnd(ln.tailEnd.createDuplicate());
 			}
 
 			if (ln.algn != null) {
-				this.algn = ln.algn;
+				this.setAlgn(ln.algn);
 			}
 
 			if (ln.cap != null) {
-				this.cap = ln.cap;
+				this.setCap(ln.cap);
 			}
 
 			if (ln.cmpd != null) {
-				this.cmpd = ln.cmpd;
+				this.setCmpd(ln.cmpd);
 			}
 
 			if (ln.w != null) {
-				this.w = ln.w;
+				this.setW(ln.w);
 			}
 		};
 		CLn.prototype.calculate = function (theme, slide, layout, master, RGBA, colorMap) {
@@ -7169,19 +7167,19 @@
 		CShapeStyle.prototype.merge = function (style) {
 			if (style != null) {
 				if (style.lnRef != null) {
-					this.lnRef = style.lnRef.createDuplicate();
+					this.setLnRef(style.lnRef.createDuplicate());
 				}
 
 				if (style.fillRef != null) {
-					this.fillRef = style.fillRef.createDuplicate();
+					this.setFillRef(style.fillRef.createDuplicate());
 				}
 
 				if (style.effectRef != null) {
-					this.effectRef = style.effectRef.createDuplicate();
+					this.setEffectRef(style.effectRef.createDuplicate());
 				}
 
 				if (style.fontRef != null) {
-					this.fontRef = style.fontRef.createDuplicate();
+					this.setFontRef(style.fontRef.createDuplicate());
 				}
 			}
 		};
@@ -7348,46 +7346,46 @@
 				return;
 			}
 			if (xfrm.offX != null) {
-				this.offX = xfrm.offX;
+				this.setOffX(xfrm.offX);
 			}
 			if (xfrm.offY != null) {
-				this.offY = xfrm.offY;
+				this.setOffY(xfrm.offY);
 			}
 
 
 			if (xfrm.extX != null) {
-				this.extX = xfrm.extX;
+				this.setExtX(xfrm.extX);
 			}
 			if (xfrm.extY != null) {
-				this.extY = xfrm.extY;
+				this.setExtY(xfrm.extY);
 			}
 
 
 			if (xfrm.chOffX != null) {
-				this.chOffX = xfrm.chOffX;
+				this.setChOffX(xfrm.chOffX);
 			}
 			if (xfrm.chOffY != null) {
-				this.chOffY = xfrm.chOffY;
+				this.setChOffY(xfrm.chOffY);
 			}
 
 
 			if (xfrm.chExtX != null) {
-				this.chExtX = xfrm.chExtX;
+				this.setChExtX(xfrm.chExtX);
 			}
 			if (xfrm.chExtY != null) {
-				this.chExtY = xfrm.chExtY;
+				this.setChExtY(xfrm.chExtY);
 			}
 
 
 			if (xfrm.flipH != null) {
-				this.flipH = xfrm.flipH;
+				this.setFlipH(xfrm.flipH);
 			}
 			if (xfrm.flipV != null) {
-				this.flipV = xfrm.flipV;
+				this.setFlipV(xfrm.flipV);
 			}
 
 			if (xfrm.rot != null) {
-				this.rot = xfrm.rot;
+				this.setRot(xfrm.rot);
 			}
 		};
 		CXfrm.prototype.createDuplicate = function () {
@@ -7895,16 +7893,16 @@
 				this.xfrm.merge(spPr.xfrm);
 			}
 			if (spPr.geometry !== null) {
-				this.geometry = spPr.geometry.createDuplicate();
+				this.setGeometry(spPr.geometry.createDuplicate());
 			}
 
 			if (spPr.Fill !== null && spPr.Fill.fill !== null) {
-				this.Fill = spPr.Fill.createDuplicate();
+				this.setFill(spPr.Fill.createDuplicate());
 			}
 
 			if (spPr.ln != null) {
 				if (this.ln == null)
-					this.ln = new CLn();
+					this.setLn(new CLn());
 
 				this.ln.merge(spPr.ln);
 			}
@@ -8597,14 +8595,14 @@
 				if (!ret)
 					return null;
 				var ret2 = ret.createDuplicate();
-				ret2.checkPhColor(unicolor, false);
+				ret2.checkPhColor(unicolor);
 				return ret2;
 			} else if (number >= 1001) {
 				var ret = this.bgFillStyleLst[number - 1001];
 				if (!ret)
 					return null;
 				var ret2 = ret.createDuplicate();
-				ret2.checkPhColor(unicolor, false);
+				ret2.checkPhColor(unicolor);
 				return ret2;
 			}
 			return null;
@@ -8786,7 +8784,7 @@
 				if (this.themeElements.fmtScheme.fillStyleLst[idx - 1]) {
 					ret = this.themeElements.fmtScheme.fillStyleLst[idx - 1].createDuplicate();
 					if (ret) {
-						ret.checkPhColor(unicolor, false);
+						ret.checkPhColor(unicolor);
 						return ret;
 					}
 				}
@@ -8794,7 +8792,7 @@
 				if (this.themeElements.fmtScheme.bgFillStyleLst[idx - 1001]) {
 					ret = this.themeElements.fmtScheme.bgFillStyleLst[idx - 1001].createDuplicate();
 					if (ret) {
-						ret.checkPhColor(unicolor, false);
+						ret.checkPhColor(unicolor);
 						return ret;
 					}
 				}
@@ -8808,7 +8806,7 @@
 			if (this.themeElements.fmtScheme.lnStyleLst[idx - 1]) {
 				var ret = this.themeElements.fmtScheme.lnStyleLst[idx - 1].createDuplicate();
 				if (ret.Fill) {
-					ret.Fill.checkPhColor(unicolor, false);
+					ret.Fill.checkPhColor(unicolor);
 				}
 				return ret;
 			}
