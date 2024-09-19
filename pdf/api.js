@@ -1736,6 +1736,18 @@
 			window["AscDesktopEditor"]["onDocumentModifiedChanged"](bValue);
 		}
 	};
+	PDFEditorApi.prototype.CheckChangedDocument = function() {
+		let oDoc = this.getPDFDoc();
+
+		if (true === oDoc.History.Have_Changes()) {
+			this.SetDocumentModified(true);
+		}
+		else {
+			this.SetDocumentModified(false);
+		}
+
+		this._onUpdateDocumentCanSave();
+	};
 	PDFEditorApi.prototype._autoSaveInner = function() {
 		let _curTime = new Date();
 		if (null === this.lastSaveTime) {
@@ -2546,6 +2558,7 @@
 	PDFEditorApi.prototype['asc_getHeaderFooterProperties']	= PDFEditorApi.prototype.asc_getHeaderFooterProperties;
 	PDFEditorApi.prototype['ChangeReaderMode']				= PDFEditorApi.prototype.ChangeReaderMode;
 
+	PDFEditorApi.prototype['CheckChangedDocument']		   = PDFEditorApi.prototype.CheckChangedDocument;
 	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;
 	PDFEditorApi.prototype['OnMouseUp']                    = PDFEditorApi.prototype.OnMouseUp;
 
