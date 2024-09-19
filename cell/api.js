@@ -1333,21 +1333,29 @@ var editor;
 				'encodings': AscCommon.getEncodingParams()
 			};
 			if (data && typeof Blob !== 'undefined' && typeof FileReader !== 'undefined') {
-				AscCommon.loadFileContent(data, function(httpRequest) {
-					if (httpRequest && httpRequest.response) {
-						let data = httpRequest.response;
-						var dataUint = new Uint8Array(data);
-						var bom = AscCommon.getEncodingByBOM(dataUint);
-						if (AscCommon.c_oAscCodePageNone !== bom.encoding) {
-							cp['codepage'] = bom.encoding;
-							data = dataUint.subarray(bom.size);
-						}
-						cp['data'] = data;
-						t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, new AscCommon.asc_CAdvancedOptions(cp));
+				function applyBuffer(dataUint) {
+					var bom = AscCommon.getEncodingByBOM(dataUint);
+					if (AscCommon.c_oAscCodePageNone !== bom.encoding) {
+						cp['codepage'] = bom.encoding;
+						cp['data'] = dataUint.subarray(bom.size);
 					} else {
-						t.handlers.trigger("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
+						cp['data'] = dataUint;
 					}
-				}, "arraybuffer");
+				}
+				if (data.buffer) {
+					applyBuffer(data);
+					t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, new AscCommon.asc_CAdvancedOptions(cp));
+				} else {
+					AscCommon.loadFileContent(data, function(httpRequest) {
+						if (httpRequest && httpRequest.response) {
+							let data = httpRequest.response;
+							applyBuffer(new Uint8Array(data));
+							t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, new AscCommon.asc_CAdvancedOptions(cp));
+						} else {
+							t.handlers.trigger("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
+						}
+					}, "arraybuffer");
+				}
 			} else {
 				t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, new AscCommon.asc_CAdvancedOptions(cp));
 			}
