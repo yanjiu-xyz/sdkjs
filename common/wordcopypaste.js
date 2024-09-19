@@ -2475,9 +2475,9 @@ function GetContentFromHtml(api, html, callback) {
 	});
 }
 
-function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPasteProps, callback)
+function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPasteProps, callback, rejectCallback)
 {
-    var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback);
+    var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback, rejectCallback);
 	window['AscCommon'].g_specialPasteHelper.endRecalcDocument = false;
 
 	if(undefined === specialPasteProps)
@@ -2521,6 +2521,11 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		case AscCommon.c_oAscClipboardDataFormat.Text:
 		{
 			oPasteProcessor.Start(null, null, null, null, data1);
+			break;
+		}
+		default:
+		{
+			rejectCallback && rejectCallback();
 			break;
 		}
 	}
@@ -2622,7 +2627,7 @@ function sendImgUrls(api, images, callback, bNotShowError, token) {
     }
   AscCommon.sendCommand(api, null, rData);
 }
-function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, pasteCallback)
+function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, pasteCallback, rejectCallback)
 {
     this.oRootNode = null;
     this.api = api;
@@ -2644,6 +2649,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	this.pasteInExcel = pasteInExcel;
 	this.pasteInPresentationShape = null;
 	this.pasteCallback = pasteCallback;
+	this.rejectCallback = rejectCallback;
 
 	this.maxTableCell = null;
 
@@ -4008,6 +4014,7 @@ PasteProcessor.prototype =
 			if (insertToPresentationWithoutSlides) {
 				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+				this.rejectCallback && this.rejectCallback();
 				return;
 			}
 
@@ -4124,6 +4131,7 @@ PasteProcessor.prototype =
 		} else {
 			window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+			this.rejectCallback && this.rejectCallback();
 		}
 	},
 

@@ -45,11 +45,16 @@
 		for (let i = 0; i < files.length; i += 1) {
 			const fPromise = function () {
 				return new Promise(function (resolve) {
-					window["AscDesktopEditor"]["convertFile"](files[i], Asc.c_oAscFileType.CANVAS_WORD, function (file, imageMap) {
+					window["AscDesktopEditor"]["convertFile"](files[i], Asc.c_oAscFileType.CANVAS_WORD, function (file) {
 						if (file) {
-							const stream = new Uint8Array(file["get"]());
+							const stream = file["get"]();
+							const imageMap = file["getImages"]();
 							file["close"]();
-							resolve({stream: stream, imageMap: imageMap});
+							if (stream) {
+								resolve({stream: new Uint8Array(stream), imageMap: imageMap});
+							} else {
+								resolve(null);
+							}
 						} else {
 							resolve(null);
 						}
@@ -242,7 +247,7 @@
 	};
 
 	CInsertDocumentManager.prototype.pasteData = function (stream, resolve) {
-		this.api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, stream, undefined, undefined, undefined, function () {resolve()}, false);
+		this.api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, stream, undefined, undefined, undefined, function () {resolve();}, false, function () {resolve();});
 	};
 
 	AscCommonWord.CInsertDocumentManager = CInsertDocumentManager;

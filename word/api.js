@@ -2445,7 +2445,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks)
+	asc_docs_api.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks, rejectCallback)
 	{
 		if (AscCommon.CollaborativeEditing.Get_GlobalLock())
 			return;
@@ -2471,14 +2471,18 @@ background-repeat: no-repeat;\
 				isLocked = _logicDoc.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, _logicDoc.IsFormFieldEditing());
 		}
 
-		if (!isLocked)
+		if (isLocked)
+		{
+			rejectCallback && rejectCallback();
+		}
+		else
 		{
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 
 			if (!useCurrentPoint)
 				_logicDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 
-			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
+			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback, rejectCallback);
 		}
 	};
 
