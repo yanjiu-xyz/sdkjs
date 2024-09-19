@@ -4724,7 +4724,7 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.FREE_TEXT_INTENT_TYPE.FreeText: {
                 oFreeText.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE.FreeText);
                 oFreeText.SetSubject('Text box');
-                return;
+                break;
             }
             // прописываем RD и Callout
             case AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout: {
@@ -4782,7 +4782,7 @@ var CPresentation = CPresentation || function(){};
                 }
 
                 oFreeText.SetCallout([x1, y1, x2, y2, x3, y3]);
-                return;
+                break;
             }
         }
 
