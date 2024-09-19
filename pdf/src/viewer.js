@@ -3513,7 +3513,7 @@
 			}
 			else if ( e.KeyCode == 83 && true === e.CtrlKey ) // Ctrl + S + ...
 			{
-				// nothing
+				this.Api.asc_Save(false);
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 89 && true === e.CtrlKey ) // Ctrl + Y
