@@ -123,9 +123,9 @@
     };
     CCollaborativeChanges.prototype.private_SaveData = function(Binary)
     {
-        var Writer = AscCommon.History.BinaryWriter;
-        var Pos    = Binary.Pos;
-        var Len    = Binary.Len;
+        let Writer = AscCommon.History.BinaryWriter;
+        let Pos    = Binary.Pos;
+        let Len    = Binary.Len;
         if ((Asc.editor || editor).binaryChanges) {
             return Writer.GetDataUint8(Pos, Len);
         } else {

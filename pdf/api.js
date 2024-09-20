@@ -987,7 +987,7 @@
 			}, AscDFH.historydescription_Pdf_AddAnnot, this);
 		}
 
-		if (oDoc.checkDefaultFonts(addFreeText)) {
+		if (oDoc.checkFonts(["Arial"], addFreeText)) {
 			addFreeText();
 		}
 	};
@@ -1736,6 +1736,18 @@
 			window["AscDesktopEditor"]["onDocumentModifiedChanged"](bValue);
 		}
 	};
+	PDFEditorApi.prototype.CheckChangedDocument = function() {
+		let oDoc = this.getPDFDoc();
+
+		if (true === oDoc.History.Have_Changes()) {
+			this.SetDocumentModified(true);
+		}
+		else {
+			this.SetDocumentModified(false);
+		}
+
+		this._onUpdateDocumentCanSave();
+	};
 	PDFEditorApi.prototype._autoSaveInner = function() {
 		let _curTime = new Date();
 		if (null === this.lastSaveTime) {
@@ -2462,6 +2474,13 @@
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));
 	};
+	PDFEditorApi.prototype._finalizeAction = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc){
+			return;
+		}
+		oDoc.FinalizeAction(true);
+	};
 
 	PDFEditorApi.prototype._waitPrint = function(actionType, options)
 	{
@@ -2546,6 +2565,7 @@
 	PDFEditorApi.prototype['asc_getHeaderFooterProperties']	= PDFEditorApi.prototype.asc_getHeaderFooterProperties;
 	PDFEditorApi.prototype['ChangeReaderMode']				= PDFEditorApi.prototype.ChangeReaderMode;
 
+	PDFEditorApi.prototype['CheckChangedDocument']		   = PDFEditorApi.prototype.CheckChangedDocument;
 	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;
 	PDFEditorApi.prototype['OnMouseUp']                    = PDFEditorApi.prototype.OnMouseUp;
 

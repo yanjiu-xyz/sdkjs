@@ -1019,6 +1019,16 @@ CMPrp.prototype =
 
         return textPrp;
     },
+	IsEqual: function (oMPrp)
+	{
+		return oMPrp.aln === this.aln
+			&& oMPrp.lit === this.lit
+			&& oMPrp.nor === this.nor
+			&& oMPrp.sty === this.sty
+			&& oMPrp.scr === this.scr
+			&& (	oMPrp.brk === undefined && this.brk === undefined
+					|| oMPrp.brk !== undefined && this.brk !== undefined && oMPrp.brk.IsEqual(this.brk)	)
+	},
     Copy: function()
     {
         var NewMPrp = new CMPrp();
@@ -3391,9 +3401,6 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 
 	if (this.Content[this.Content.length - 1] === oMathRun)
 		return true;
-	
-	if (mathStyle)
-		oMathRun.Math_Apply_Style(mathStyle);
 
 	if (oAdditionalData)
 	{
@@ -3407,7 +3414,15 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 				oAdditionalData.reviewData.reviewInfo,
 			);
 		}
+
+		if (oAdditionalData.mathPrp)
+		{
+			oMathRun.Set_MathPr(oAdditionalData.mathPrp);
+		}
 	}
+
+	if (mathStyle !== undefined)
+		oMathRun.Math_Apply_Style(mathStyle);
 
 	oMathRun.Set_RFont_ForMathRun();
 
@@ -6066,13 +6081,17 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 		isLaTeX = false;
 
 	let nStartPos	= 0;
-	let nEndPos		= this.Content.length;
+	let nEndPos		= this.Content.length - 1;
 	let oMathText	= new AscMath.MathTextAndStyles(isLaTeX);
 
 	if (bSelectedText)
 	{
-		nStartPos = (this.Selection.Use == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
-		nEndPos   = (this.Selection.Use == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
+		nStartPos	= this.Selection.Use == true
+			? Math.min(this.Selection.StartPos, this.Selection.EndPos)
+			: this.CurPos.ContentPos;
+		nEndPos	= this.Selection.Use == true
+			? Math.max(this.Selection.StartPos, this.Selection.EndPos)
+			: this.CurPos.ContentPos;
 	}
 
 	for (let i = nStartPos; i <= nEndPos; i++)
@@ -6081,7 +6100,8 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 		oMathText.Add(oElement, false, false, bSelectedText);
 	}
 
-	return {str: oMathText.GetText(), content: oMathText};
+	let strContent = oMathText.GetText();
+	return {str: strContent, content: oMathText};
 };
 
 var g_DefaultAutoCorrectMathFuncs =
