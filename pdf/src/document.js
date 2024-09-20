@@ -5935,9 +5935,7 @@ var CPresentation = CPresentation || function(){};
                 if (oFirstAction) {
                     this.SetInProgress(true);
                     this.SetCurActionIdx(0);
-                    setTimeout(function() {
-                        oFirstAction.Do();
-                    }, 100);
+                    oFirstAction.Do();
                 }
             }, AscDFH.historydescription_Pdf_ExecActions, this);
         }

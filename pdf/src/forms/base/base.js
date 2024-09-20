@@ -706,19 +706,23 @@
     /**
      * Does the actions setted for specifed trigger type.
 	 * @memberof CBaseField
-     * @param {number} nType - trigger type (FORMS_TRIGGERS_TYPES)
 	 * @typeofeditors ["PDF"]
      * @returns {canvas}
 	 */
-    CBaseField.prototype.AddActionsToQueue = function(nType) {
+    CBaseField.prototype.AddActionsToQueue = function() {
+        let oThis           = this;
         let oDoc            = this.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
-        let oTrigger        = this.GetTrigger(nType);
+
+        Object.values(arguments).forEach(function(type) {
+            let oTrigger = oThis.GetTrigger(type);
         
-        if (oTrigger && oTrigger.Actions.length > 0 && false == AscCommon.History.UndoRedoInProgress) {
-            oActionsQueue.AddActions(oTrigger.Actions);
-            oActionsQueue.Start();
-        }
+            if (oTrigger && oTrigger.Actions.length > 0 && false == AscCommon.History.UndoRedoInProgress) {
+                oActionsQueue.AddActions(oTrigger.Actions);
+            }
+        })
+        
+        oActionsQueue.Start();
     };
 
     CBaseField.prototype.DrawHighlight = function(oCtx) {
