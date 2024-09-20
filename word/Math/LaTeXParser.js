@@ -76,7 +76,9 @@
 		}
 		else
 		{
-			while (this.oLookahead.class === arrTypeOfLiteral.id && this.EscapeSymbol !== this.oLookahead.data)
+			while (this.oLookahead.class === arrTypeOfLiteral.id
+				&& this.EscapeSymbol !== this.oLookahead.data
+				&& (styles.length === 0 || styles[styles.length - 1].IsStyleEqual(this.oLookahead.style)))
 			{
 				let oCurrentItem	= this.oLookahead;
 				let strCurrent		= oCurrentItem.data;
@@ -789,6 +791,7 @@
 				type: Struc.nary,
 				value: Literals.nary.LaTeX[oFuncContent.data],
 				style: oPr,
+				thirdStyle: oPr,
 				third: oThirdContent,
 			}
 		}
@@ -992,7 +995,7 @@
 			isLimits = true;
 		}
 
-		if (oBaseContent.type === Struc.bracket_block && oBaseContent.left === "{" && oBaseContent.right === "}")
+		if (oBaseContent && oBaseContent.type === Struc.bracket_block && oBaseContent.left === "{" && oBaseContent.right === "}")
 		{
 			oBaseContent = oBaseContent.value;
 		}

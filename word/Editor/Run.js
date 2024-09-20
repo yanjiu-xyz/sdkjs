@@ -556,7 +556,10 @@ ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 		// for LaTeX space processing
 		if (oMathText.IsDefaultText)
 		{
-			oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+			if (strCurrentElement === " ") //normal space
+				oMathText.AddText(new AscMath.MathText('\\ ', this))
+			else
+				oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
 			continue;
 		}
 
