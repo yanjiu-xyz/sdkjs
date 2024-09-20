@@ -124,12 +124,6 @@
     CCollaborativeChanges.prototype.private_SaveData = function(Binary)
     {
         let Writer = AscCommon.History.BinaryWriter;
-        if (Asc.editor.isPdfEditor()) {
-            // need global history
-            let oDoc        = Asc.editor.getPDFDoc();
-            Writer          = oDoc.History.BinaryWriter;
-        }
-
         let Pos    = Binary.Pos;
         let Len    = Binary.Len;
         if ((Asc.editor || editor).binaryChanges) {

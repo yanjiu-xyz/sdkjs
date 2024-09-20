@@ -111,13 +111,18 @@ CPDFCollaborativeEditing.prototype.GetDocument = function() {
 CPDFCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalInfo, IsUpdateInterface, isAfterAskSave) {
 	if (!this.canSendChanges())
 		return;
-	
     // Пересчитываем позиции
     this.Refresh_DCChanges();
 
     let oDoc        = this.GetDocument();
     let oHistory    = oDoc.History;
-
+	
+	let localHistory = AscCommon.History;
+	AscCommon.History = oHistory;
+	
+	AscCommon.DocumentEditorApi.prototype.asc_Save.apply(this, arguments);
+	
+	
     // Генерируем свои изменения
     let StartPoint = ( null === oHistory.SavedIndex ? 0 : oHistory.SavedIndex + 1 );
     let LastPoint = -1;
@@ -222,6 +227,7 @@ CPDFCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Additiona
     }
 
     editor.WordControl.m_oLogicDocument.getCompositeInput().checkState();
+	AscCommon.History = localHistory;
 };
 CPDFCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 {
