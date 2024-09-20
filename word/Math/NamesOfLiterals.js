@@ -6158,12 +6158,45 @@
 			let oParamsCutContent = {oDelMark: oFuncNamePos, isDelLastSpace: true};
 			let oMathContent	= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
+			let oFuncName			= oMathContent.GetFirstContent();
+			let oAddDataFuncName	= oFuncName.GetAdditionalData();
+			let mPrp				= oAddDataFuncName.mathPrp;
+			mPrp.SetStyle(false, false);
+
 			//добавляем символ funcapply
 			let oFuncApply		= new MathText(String.fromCodePoint(8289), oLastMath.additionalMathData);
 			oMathContent.AddText(oFuncApply);
 
 			//конвертируем в профф. формат
 			GetConvertContent(0, oMathContent, this.oCMathContent);
+			this.SetCursorByConvertedData(this.oCMathContent);
+			return true
+		}
+		else if (oRuleLast && oFuncNamePos && this.oAbsoluteLastId === MathLiterals.subSup.id)
+		{
+			let oParamsCutContentSubSup		= {oDelMark: oRuleLast};
+			let oMathContentSubSup			= CutContentFromEnd(this.oCMathContent, oParamsCutContentSubSup);
+
+			// последний элемент для получения стиля
+			let oLastMath			= this.GetAbsolutLastObject();
+
+			let oParamsCutContent	= {oDelMark: oFuncNamePos};
+			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
+
+			let oFuncName			= oMathContent.GetFirstContent();
+			let oAddDataFuncName	= oFuncName.GetAdditionalData();
+			let mPrp				= oAddDataFuncName.mathPrp;
+			mPrp.SetStyle(false, false);
+
+			//добавляем символ funcapply
+			let oFuncApply		= new MathText(String.fromCodePoint(8289), oLastMath.additionalMathData);
+			oMathContent.AddText(oFuncApply);
+			let oSubSup			= new MathText(oMathContentSubSup.GetText(), oLastMath.additionalMathData);
+			oMathContent.AddText(oSubSup);
+
+			this.oCMathContent.AddDataFromFlatMathTextAndStyles(oMathContent.Flat());
+
+			//конвертируем в профф. формат
 			this.SetCursorByConvertedData(this.oCMathContent);
 			return true
 		}
@@ -7072,10 +7105,11 @@
 		while (oContentIterator.IsHasContent())
 		{
 			let strCurrentContent = oContentIterator.Next(true);
-			if (strCurrentContent === "_" || strCurrentContent === "^" || strCurrentContent === " ")
 
-				if (strCurrentContent === false)
-					break;
+			if (strCurrentContent === "_" || strCurrentContent === "^")
+				continue;
+			else if (strCurrentContent === false)
+				break;
 
 			strWord = strCurrentContent + strWord;
 
