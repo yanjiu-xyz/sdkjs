@@ -6066,13 +6066,17 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 		isLaTeX = false;
 
 	let nStartPos	= 0;
-	let nEndPos		= this.Content.length;
+	let nEndPos		= this.Content.length - 1;
 	let oMathText	= new AscMath.MathTextAndStyles(isLaTeX);
 
 	if (bSelectedText)
 	{
-		nStartPos = (this.Selection.Use == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
-		nEndPos   = (this.Selection.Use == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
+		nStartPos	= this.Selection.Use == true
+			? Math.min(this.Selection.StartPos, this.Selection.EndPos)
+			: this.CurPos.ContentPos;
+		nEndPos	= this.Selection.Use == true
+			? Math.max(this.Selection.StartPos, this.Selection.EndPos)
+			: this.CurPos.ContentPos;
 	}
 
 	for (let i = nStartPos; i <= nEndPos; i++)
@@ -6081,7 +6085,8 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 		oMathText.Add(oElement, false, false, bSelectedText);
 	}
 
-	return {str: oMathText.GetText(), content: oMathText};
+	let strContent = oMathText.GetText();
+	return {str: strContent, content: oMathText};
 };
 
 var g_DefaultAutoCorrectMathFuncs =
