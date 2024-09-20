@@ -341,12 +341,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_ColorsDef         ]     = AscFormat.ColorsDef;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ColorDefStyleLbl  ]     = AscFormat.ColorDefStyleLbl;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ClrLst            ]     = AscFormat.ClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_EffectClrLst      ]     = AscFormat.EffectClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_FillClrLst        ]     = AscFormat.FillClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_LinClrLst         ]     = AscFormat.LinClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_TxEffectClrLst    ]     = AscFormat.TxEffectClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_TxFillClrLst      ]     = AscFormat.TxFillClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_TxLinClrLst       ]     = AscFormat.TxLinClrLst;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ColorsDefHdr      ]     = AscFormat.ColorsDefHdr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ColorsDefHdrLst   ]     = AscFormat.ColorsDefHdrLst;
 		this.m_oFactoryClass[AscDFH.historyitem_type_StyleDef          ]     = AscFormat.StyleDef;

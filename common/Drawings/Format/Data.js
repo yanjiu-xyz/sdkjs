@@ -7684,32 +7684,32 @@ Because of this, the display is sometimes not correct.
       var s = pReader.stream;
       switch (nType) {
         case 0: {
-          this.setEffectClrLst(new EffectClrLst());
+          this.setEffectClrLst(new ClrLst());
           this.effectClrLst.fromPPTY(pReader);
           break;
         }
         case 1: {
-          this.setFillClrLst(new FillClrLst());
+          this.setFillClrLst(new ClrLst());
           this.fillClrLst.fromPPTY(pReader);
           break;
         }
         case 2: {
-          this.setLinClrLst(new LinClrLst());
+          this.setLinClrLst(new ClrLst());
           this.linClrLst.fromPPTY(pReader);
           break;
         }
         case 3: {
-          this.setTxEffectClrLst(new TxEffectClrLst());
+          this.setTxEffectClrLst(new ClrLst());
           this.txEffectClrLst.fromPPTY(pReader);
           break;
         }
         case 4: {
-          this.setTxFillClrLst(new TxFillClrLst());
+          this.setTxFillClrLst(new ClrLst());
           this.txFillClrLst.fromPPTY(pReader);
           break;
         }
         case 5: {
-          this.setTxLinClrLst(new TxLinClrLst());
+          this.setTxLinClrLst(new ClrLst());
           this.txLinClrLst.fromPPTY(pReader);
           break;
         }
@@ -8021,41 +8021,6 @@ Because of this, the display is sometimes not correct.
         oCopy.addToLst(nIdx, oColor);
       }
     }
-
-    function EffectClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(EffectClrLst, ClrLst, AscDFH.historyitem_type_EffectClrLst);
-
-    function FillClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(FillClrLst, ClrLst, AscDFH.historyitem_type_FillClrLst);
-
-    function LinClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(LinClrLst, ClrLst, AscDFH.historyitem_type_LinClrLst);
-    function TxEffectClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(TxEffectClrLst, ClrLst, AscDFH.historyitem_type_TxEffectClrLst);
-
-    function TxFillClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(TxFillClrLst, ClrLst, AscDFH.historyitem_type_TxFillClrLst);
-
-    function TxLinClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(TxLinClrLst, ClrLst, AscDFH.historyitem_type_TxLinClrLst);
 
     function ColorsDefHdrLst() {
       CCommonDataList.call(this);
@@ -12145,12 +12110,6 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ColorsDef              = ColorsDef;
     window['AscFormat'].ColorDefStyleLbl       = ColorDefStyleLbl;
     window['AscFormat'].ClrLst                 = ClrLst;
-    window['AscFormat'].EffectClrLst           = EffectClrLst;
-    window['AscFormat'].FillClrLst             = FillClrLst;
-    window['AscFormat'].LinClrLst              = LinClrLst;
-    window['AscFormat'].TxEffectClrLst         = TxEffectClrLst;
-    window['AscFormat'].TxFillClrLst           = TxFillClrLst;
-    window['AscFormat'].TxLinClrLst            = TxLinClrLst;
     window['AscFormat'].ColorsDefHdr           = ColorsDefHdr;
     window['AscFormat'].ColorsDefHdrLst        = ColorsDefHdrLst;
     window['AscFormat'].StyleDef               = StyleDef;

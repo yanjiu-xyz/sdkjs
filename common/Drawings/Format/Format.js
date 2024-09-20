@@ -14186,10 +14186,12 @@
 			let oColor = new CUniColor();
 			oColor.color = new CSchemeColor();
 			oColor.color.id = id;
-			for(let nMod = 0; nMod < aMods.length; ++nMod) {
-				let oModObject = aMods[nMod];
-				let oMod = new CColorMod(oModObject.name, oModObject.val);
-				oColor.addColorMod(oMod);
+			if (aMods) {
+				for(let nMod = 0; nMod < aMods.length; ++nMod) {
+					let oModObject = aMods[nMod];
+					let oMod = new CColorMod(oModObject.name, oModObject.val);
+					oColor.addColorMod(oMod);
+				}
 			}
 			return oColor;
 		}
@@ -18658,6 +18660,7 @@
 		window['AscFormat'].fRGBAToHexString = fRGBAToHexString;
 		window['AscFormat'].RefreshContentAllFields = RefreshContentAllFields;
 		window['AscFormat'].IsEqualObjects = IsEqualObjects;
+		window['AscFormat'].CreateSchemeUnicolorWithMods = CreateSchemeUnicolorWithMods;
 		window['AscFormat'].szPh_full = szPh_full;
 		window['AscFormat'].szPh_half = szPh_half;
 		window['AscFormat'].szPh_quarter = szPh_quarter;

@@ -1747,12 +1747,6 @@
 	window['AscDFH'].historyitem_type_ColorsDef              = 2047 << 16;
 	window['AscDFH'].historyitem_type_ColorDefStyleLbl       = 2048 << 16;
 	window['AscDFH'].historyitem_type_ClrLst                 = 2049 << 16;
-	window['AscDFH'].historyitem_type_EffectClrLst           = 2050 << 16;
-	window['AscDFH'].historyitem_type_FillClrLst             = 2051 << 16;
-	window['AscDFH'].historyitem_type_LinClrLst              = 2052 << 16;
-	window['AscDFH'].historyitem_type_TxEffectClrLst         = 2053 << 16;
-	window['AscDFH'].historyitem_type_TxFillClrLst           = 2054 << 16;
-	window['AscDFH'].historyitem_type_TxLinClrLst            = 2056 << 16;
 	window['AscDFH'].historyitem_type_ColorsDefHdr           = 2057 << 16;
 	window['AscDFH'].historyitem_type_ColorsDefHdrLst        = 2058 << 16;
 	window['AscDFH'].historyitem_type_StyleDef               = 2059 << 16;
