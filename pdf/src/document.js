@@ -1205,15 +1205,25 @@ var CPresentation = CPresentation || function(){};
     PDFSelectedContent.prototype.copy = function() {
         let oCopy = new PDFSelectedContent();
 
+        let oIdMap = {};
+        let oCopyPr = new AscFormat.CCopyObjectProperties();
+        oCopyPr.idMap = oIdMap;
+
         for (let i = 0; i < this.Drawings.length; i++) {
+            let oCopyDrawingObj = this.Drawings[i].Drawing.copy(oCopyPr);
+            oIdMap[this.Drawings[i].Drawing.GetId()] = oCopyDrawingObj.GetId();
             oCopy.Drawings.push({
-                Drawing: this.Drawings[i].Drawing.copy(),
+                Drawing: oCopyDrawingObj,
                 ExtX: this.Drawings[i].ExtX,
                 X: this.Drawings[i].X,
                 Y: this.Drawings[i].Y,
                 base64: this.Drawings[i].base64
             });
         }
+
+        AscFormat.fResetConnectorsIds(oCopy.Drawings.map(function(drawing) {
+            return drawing.Drawing;
+        }), oIdMap);
 
         if (this.DocContent) {
             //TODO: перенести копирование в CSelectedContent;

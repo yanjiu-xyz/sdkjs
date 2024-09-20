@@ -2474,6 +2474,13 @@
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));
 	};
+	PDFEditorApi.prototype._finalizeAction = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc){
+			return;
+		}
+		oDoc.FinalizeAction(true);
+	};
 
 	PDFEditorApi.prototype._waitPrint = function(actionType, options)
 	{

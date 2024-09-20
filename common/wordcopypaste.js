@@ -4425,21 +4425,9 @@ PasteProcessor.prototype =
 		if (drawings && drawings.length) {
 			let paste_callback = function () {
 				if (false === oThis.bNested) {
-					let oIdMap = {};
-					let aCopies = [];
-					let oCopyPr = new AscFormat.CCopyObjectProperties();
-					oCopyPr.idMap = oIdMap;
-  
-					for (let i = 0; i < arr_shapes.length; ++i) {
-						let shape = arr_shapes[i].graphicObject.copy(oCopyPr);
-						aCopies.push(shape);
-						oIdMap[arr_shapes[i].graphicObject.Id] = shape.Id;
-						shape.worksheet = null;
-						shape.drawingBase = null;
-
-						arr_shapes[i] = new AscPDF.DrawingCopyObject(shape, 0, 0, 0, 0);
-					}
-					AscFormat.fResetConnectorsIds(aCopies, oIdMap);
+					arr_shapes = arr_shapes.map(function(drawing) {
+						return new AscPDF.DrawingCopyObject(drawing.graphicObject, 0, 0, 0, 0);
+					});
 
 					let oPDFSelContent = new AscPDF.PDFSelectedContent();
 					oPDFSelContent.Drawings = arr_shapes;

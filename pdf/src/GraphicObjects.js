@@ -1302,6 +1302,7 @@
     CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
     CGraphicObjects.prototype.endTrackNewShape          = AscFormat.DrawingObjectsController.prototype.endTrackNewShape;
     CGraphicObjects.prototype.removeCallback            = AscFormat.DrawingObjectsController.prototype.removeCallback;
+    CGraphicObjects.prototype.getAllSingularDrawings    = AscFormat.DrawingObjectsController.prototype.getAllSingularDrawings;
 
     CGraphicObjects.prototype.startRecalculate = function() {};
 
