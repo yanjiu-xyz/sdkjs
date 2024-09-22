@@ -8676,6 +8676,11 @@ background-repeat: no-repeat;\
 			}
 			t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Submit);
 		});
+
+		this.sendEvent("onSubmitForm");
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onSubmitForm");
 	};
 
     asc_docs_api.prototype.SetTableDrawMode = function(value)
