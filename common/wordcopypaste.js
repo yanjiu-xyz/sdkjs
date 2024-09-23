@@ -6428,94 +6428,95 @@ PasteProcessor.prototype =
 			let aShapes = [], aImages = [], aTables = [];
 
 			let fExecutePastePDF = function () {
+
 				//prepare content
-
-				//remove single shape with empty content
-				if (aShapes.length === 1) {
-					let oFirstShape = aShapes[0];
-					let oTxBody = oFirstShape.txBody;
-					if(oTxBody) {
-						let oDocContent = oTxBody.content;
-						if(!oDocContent || oDocContent.IsEmpty()) {
-							aShapes.length = 0;
+				AscCommon.ExecuteNoHistory(function() {
+					//remove single shape with empty content
+					if (aShapes.length === 1) {
+						let oFirstShape = aShapes[0];
+						let oTxBody = oFirstShape.txBody;
+						if(oTxBody) {
+							let oDocContent = oTxBody.content;
+							if(!oDocContent || oDocContent.IsEmpty()) {
+								aShapes.length = 0;
+							}
 						}
 					}
-				}
 
-				for (let nSp = 0; nSp < aShapes.length; ++nSp) {
-					let oSp = aShapes[nSp];
-					oSp.bDeleted = false;
-					let oTxBody = oSp.txBody;
-					let oTxContent = oTxBody.content;
-					let aTxContent = oTxContent.Content;
-					if (aTxContent.length > 1) {
-						let oFirstElement = aTxContent[0];
-						if(oFirstElement.IsEmpty()) {
-							oTxContent.Internal_Content_Remove(0, 1);
+					for (let nSp = 0; nSp < aShapes.length; ++nSp) {
+						let oSp = aShapes[nSp];
+						oSp.bDeleted = false;
+						let oTxBody = oSp.txBody;
+						let oTxContent = oTxBody.content;
+						let aTxContent = oTxContent.Content;
+						if (aTxContent.length > 1) {
+							let oFirstElement = aTxContent[0];
+							if(oFirstElement.IsEmpty()) {
+								oTxContent.Internal_Content_Remove(0, 1);
+							}
 						}
+						let dWidth, dHeight;
+						dWidth = oTxBody.getRectWidth(nPageW * 2 / 3);
+						dHeight = oTxContent.GetSummaryHeight();
+						AscFormat.CheckSpPrXfrm(oSp);
+						let oXfrm = oSp.spPr.xfrm;
+						oXfrm.setExtX(dWidth);
+						oXfrm.setExtY(dHeight);
+						oXfrm.setOffX(0);
+						oXfrm.setOffY(0);
+						
+						let oBodyPr = oSp.getBodyPr().createDuplicate();
+						oBodyPr.rot = 0;
+						oBodyPr.spcFirstLastPara = false;
+						oBodyPr.vertOverflow = AscFormat.nVOTOverflow;
+						oBodyPr.horzOverflow = AscFormat.nHOTOverflow;
+						oBodyPr.vert = AscFormat.nVertTThorz;
+						oBodyPr.setDefaultInsets();
+						oBodyPr.numCol = 1;
+						oBodyPr.spcCol = 0;
+						oBodyPr.rtlCol = 0;
+						oBodyPr.fromWordArt = false;
+						oBodyPr.anchor = 4;
+						oBodyPr.anchorCtr = false;
+						oBodyPr.forceAA = false;
+						oBodyPr.compatLnSpc = true;
+						oBodyPr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry("textNoShape");
+						oBodyPr.textFit = new AscFormat.CTextFit();
+						oBodyPr.textFit.type = AscFormat.text_fit_Auto;
+						oSp.txBody.setBodyPr(oBodyPr);
+						oSp.txBody.content.MoveCursorToEndPos();
+						aCopyObjects.push(new AscPDF.DrawingCopyObject(oSp, 0, 0, dWidth, dHeight));
 					}
-					let dWidth, dHeight;
-					dWidth = oTxBody.getRectWidth(nPageW * 2 / 3);
-					dHeight = oTxContent.GetSummaryHeight();
-					AscFormat.CheckSpPrXfrm(oSp);
-					let oXfrm = oSp.spPr.xfrm;
-					oXfrm.setExtX(dWidth);
-					oXfrm.setExtY(dHeight);
-					oXfrm.setOffX(0);
-					oXfrm.setOffY(0);
-					
-					let oBodyPr = oSp.getBodyPr().createDuplicate();
-					oBodyPr.rot = 0;
-					oBodyPr.spcFirstLastPara = false;
-					oBodyPr.vertOverflow = AscFormat.nVOTOverflow;
-					oBodyPr.horzOverflow = AscFormat.nHOTOverflow;
-					oBodyPr.vert = AscFormat.nVertTThorz;
-					oBodyPr.setDefaultInsets();
-					oBodyPr.numCol = 1;
-					oBodyPr.spcCol = 0;
-					oBodyPr.rtlCol = 0;
-					oBodyPr.fromWordArt = false;
-					oBodyPr.anchor = 4;
-					oBodyPr.anchorCtr = false;
-					oBodyPr.forceAA = false;
-					oBodyPr.compatLnSpc = true;
-					oBodyPr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry("textNoShape");
-					oBodyPr.textFit = new AscFormat.CTextFit();
-					oBodyPr.textFit.type = AscFormat.text_fit_Auto;
-					oSp.txBody.setBodyPr(oBodyPr);
-					oSp.txBody.content.MoveCursorToEndPos();
-					aCopyObjects.push(new AscPDF.DrawingCopyObject(oSp, 0, 0, dWidth, dHeight));
-				}
 
-				for (let nTable = 0; nTable < aTables.length; ++nTable) {
-					let oTableFrame = aTables[nTable];
-					oTableFrame.bDeleted = false;
-					let dWidth = nPageW * 2 / 3;
-					let dHeight = 100;
-					//----------------
-					AscFormat.CheckSpPrXfrm(oTableFrame);
-					let oXfrm = oTableFrame.spPr.xfrm;
+					for (let nTable = 0; nTable < aTables.length; ++nTable) {
+						let oTableFrame = aTables[nTable];
+						oTableFrame.bDeleted = false;
+						let dWidth = nPageW * 2 / 3;
+						let dHeight = 100;
+						//----------------
+						AscFormat.CheckSpPrXfrm(oTableFrame);
+						let oXfrm = oTableFrame.spPr.xfrm;
 
-					oTableFrame.applyDrawingSize({Width: nPageW *  2 / 3, Height: dHeight});
-					oTableFrame.graphicObject.Set_TableW(tblwidth_Mm, nPageW * 2 / 3);
+						oTableFrame.applyDrawingSize({Width: nPageW *  2 / 3, Height: dHeight});
+						oTableFrame.graphicObject.Set_TableW(tblwidth_Mm, nPageW * 2 / 3);
 
-					oXfrm.setOffX(0);
-					oXfrm.setOffY(0);
-					aCopyObjects.push(new AscPDF.DrawingCopyObject(oTableFrame, 0, 0, dWidth, dHeight));
-				}
+						oXfrm.setOffX(0);
+						oXfrm.setOffY(0);
+						aCopyObjects.push(new AscPDF.DrawingCopyObject(oTableFrame, 0, 0, dWidth, dHeight));
+					}
 
-				for (let nImage = 0; nImage < aImages.length; ++nImage) {
-					let oImage = aImages[nImage];
-					oImage.bDeleted = false;
-					AscFormat.CheckSpPrXfrm(oImage);
-					let oXfrm = oImage.spPr.xfrm;
-					let dWidth = oXfrm.extX;
-					let dHeight = oXfrm.extY;
-					oXfrm.setOffX(0);
-					oXfrm.setOffY(0);
-					aCopyObjects.push(new AscPDF.DrawingCopyObject(oImage, 0, 0, dWidth, dHeight));
-				}
-
+					for (let nImage = 0; nImage < aImages.length; ++nImage) {
+						let oImage = aImages[nImage];
+						oImage.bDeleted = false;
+						AscFormat.CheckSpPrXfrm(oImage);
+						let oXfrm = oImage.spPr.xfrm;
+						let dWidth = oXfrm.extX;
+						let dHeight = oXfrm.extY;
+						oXfrm.setOffX(0);
+						oXfrm.setOffY(0);
+						aCopyObjects.push(new AscPDF.DrawingCopyObject(oImage, 0, 0, dWidth, dHeight));
+					}
+				});
 
 				//INSERT CONTENT
 				let oController = oDoc.GetController();
@@ -6562,12 +6563,14 @@ PasteProcessor.prototype =
 				oPasteHelper.Paste_Process_End();
 			};
 			
-			let oShape = new AscPDF.CPdfShape();
-			oShape.setParent(oDoc);
-			oShape.setTxBody(AscFormat.CreateTextBodyFromString("", oDoc.DrawingDocument, oShape));
-			aShapes.push(oShape);
+			AscCommon.ExecuteNoHistory(function() {
+				let oShape = new AscPDF.CPdfShape();
+				oShape.setParent(oDoc);
+				oShape.setTxBody(AscFormat.CreateTextBodyFromString("", oDoc.DrawingDocument, oShape));
+				aShapes.push(oShape);
 
-			oThis._Execute(node, {}, true, true, false, aShapes, aImages, aTables);
+				oThis._Execute(node, {}, true, true, false, aShapes, aImages, aTables);
+			});
 
 			if (!fonts) {
 				fonts = [];
@@ -6575,6 +6578,7 @@ PasteProcessor.prototype =
 			if (!images) {
 				images = [];
 			}
+
 			oAPI.pre_Paste(fonts, images, fExecutePastePDF);
 		};
 
