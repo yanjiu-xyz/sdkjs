@@ -834,6 +834,7 @@ CRadical.prototype.GetTextOfElement = function(oMathText)
 			}
 			else
 			{
+				oMathText.AddText(new AscMath.MathText("√", this));
 				oMathText.AddText(new AscMath.MathText("(", this));
 				oMathText.AddText(oDegreeText);
 				oMathText.AddText(new AscMath.MathText("&", this));
