@@ -308,8 +308,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_LayoutDef         ]     = AscFormat.LayoutDef;
 		this.m_oFactoryClass[AscDFH.historyitem_type_CatLst            ]     = AscFormat.CatLst;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SCat              ]     = AscFormat.SCat;
-		this.m_oFactoryClass[AscDFH.historyitem_type_ClrData           ]     = AscFormat.ClrData;
-		this.m_oFactoryClass[AscDFH.historyitem_type_Desc              ]     = AscFormat.Desc;
 		this.m_oFactoryClass[AscDFH.historyitem_type_LayoutNode        ]     = AscFormat.LayoutNode;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Alg               ]     = AscFormat.Alg;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Param             ]     = AscFormat.Param;
@@ -362,7 +360,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_StyleDefHdrLst    ]     = AscFormat.StyleDefHdrLst;
 		this.m_oFactoryClass[AscDFH.historyitem_type_StyleDefHdr       ]     = AscFormat.StyleDefHdr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BackdropAnchor    ]     = AscFormat.BackdropAnchor;
-		this.m_oFactoryClass[AscDFH.historyitem_type_StyleData         ]     = AscFormat.StyleData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SampData          ]     = AscFormat.SampData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ForEach           ]     = AscFormat.ForEach;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ResizeHandles     ]     = AscFormat.ResizeHandles;

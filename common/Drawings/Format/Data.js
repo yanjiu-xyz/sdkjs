@@ -2731,7 +2731,7 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 1: {
-          this.setDesc(new Desc());
+          this.setDesc(new DiagramTitle());
           this.desc.fromPPTY(pReader);
           break;
         }
@@ -2746,12 +2746,12 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 4: {
-          this.setStyleData(new StyleData());
+          this.setStyleData(new SampData());
           this.styleData.fromPPTY(pReader);
           break;
         }
         case 5: {
-          this.setClrData(new ClrData());
+          this.setClrData(new SampData());
           this.clrData.fromPPTY(pReader);
           break;
         }
@@ -2845,131 +2845,6 @@ Because of this, the display is sometimes not correct.
       else if (1 === nType) this.setPri(oStream.GetULong());
     };
     SCat.prototype.readChild = function(nType, pReader) {
-    };
-
-
-    changesFactory[AscDFH.historyitem_ClrDataUseDef] = CChangeBool;
-    changesFactory[AscDFH.historyitem_ClrDataDataModel] = CChangeObject;
-    drawingsChangesMap[AscDFH.historyitem_ClrDataUseDef] = function (oClass, value) {
-      oClass.useDef = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_ClrDataDataModel] = function (oClass, value) {
-      oClass.dataModel = value;
-    };
-
-    function ClrData() {
-      CBaseFormatObject.call(this);
-      this.useDef = null;
-      this.dataModel = null;
-    }
-
-    InitClass(ClrData, CBaseFormatObject, AscDFH.historyitem_type_ClrData);
-
-    ClrData.prototype.setUseDef = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ClrDataUseDef, this.getUseDef(), pr));
-      this.useDef = pr;
-    }
-
-    ClrData.prototype.setDataModel = function (oPr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ClrDataDataModel, this.getDataModel(), oPr));
-      this.dataModel = oPr;
-      this.setParentToChild(oPr);
-    }
-
-    ClrData.prototype.getUseDef = function () {
-      return this.useDef;
-    }
-
-    ClrData.prototype.getDataModel = function () {
-      return this.dataModel;
-    }
-
-    ClrData.prototype.fillObject = function (oCopy, oIdMap) {
-      oCopy.setUseDef(this.getUseDef());
-      if (this.getDataModel()) {
-        oCopy.setDataModel(this.getDataModel().createDuplicate(oIdMap));
-      }
-    }
-
-    ClrData.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteBool2(0, this.useDef);
-    };
-    ClrData.prototype.writeChildren = function(pWriter) {
-      this.writeRecord2(pWriter, 0, this.dataModel); // TODO: add record number
-    };
-    ClrData.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) this.setUseDef(oStream.GetBool());
-    };
-    ClrData.prototype.readChild = function(nType, pReader) {
-      var s = pReader.stream;
-      switch (nType) {
-        case 0: {
-          this.setDataModel(new DataModel());
-          this.dataModel.fromPPTY(pReader);
-          break;
-        }
-        default: {
-          s.SkipRecord();
-          break;
-        }
-      }
-    };
-    ClrData.prototype.getChildren = function() {
-      return [this.dataModel];
-    };
-
-
-    changesFactory[AscDFH.historyitem_DescLang] = CChangeString;
-    changesFactory[AscDFH.historyitem_DescVal] = CChangeString;
-    drawingsChangesMap[AscDFH.historyitem_DescLang] = function (oClass, value) {
-      oClass.lang = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_DescVal] = function (oClass, value) {
-      oClass.val = value;
-    };
-
-    function Desc() {
-      CBaseFormatObject.call(this);
-      this.lang = null;
-      this.val = null;
-    }
-    InitClass(Desc, CBaseFormatObject, AscDFH.historyitem_type_Desc);
-    Desc.prototype.setLang = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescLang, this.getLang(), pr));
-      this.lang = pr;
-    }
-
-    Desc.prototype.setVal = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescVal, this.getVal(), pr));
-      this.val = pr;
-    }
-
-    Desc.prototype.getLang = function () {
-      return this.lang;
-    }
-
-    Desc.prototype.getVal = function () {
-      return this.val;
-    }
-
-    Desc.prototype.fillObject = function (oCopy, oIdMap) {
-      oCopy.setLang(this.getLang());
-      oCopy.setVal(this.getVal());
-    }
-
-    Desc.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteString2(0, this.lang);
-      pWriter._WriteString2(1, this.val);
-    };
-    Desc.prototype.writeChildren = function(pWriter) {
-    };
-    Desc.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) this.setLang(oStream.GetString2());
-      else if (1 === nType) this.setVal(oStream.GetString2());
-    };
-    Desc.prototype.readChild = function(nType, pReader) {
     };
 
 
@@ -6923,80 +6798,6 @@ Because of this, the display is sometimes not correct.
       return [this.dataModel];
     };
 
-
-    changesFactory[AscDFH.historyitem_StyleDataUseDef] = CChangeBool;
-    changesFactory[AscDFH.historyitem_StyleDataDataModel] = CChangeObject;
-    drawingsChangesMap[AscDFH.historyitem_StyleDataUseDef] = function (oClass, value) {
-      oClass.useDef = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_StyleDataDataModel] = function (oClass, value) {
-      oClass.dataModel = value;
-    };
-
-    function StyleData() {
-      CBaseFormatObject.call(this);
-      this.useDef = null;
-      this.dataModel = null;
-    }
-
-    InitClass(StyleData, CBaseFormatObject, AscDFH.historyitem_type_StyleData);
-
-    StyleData.prototype.setUseDef = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_StyleDataUseDef, this.getUseDef(), pr));
-      this.useDef = pr;
-    }
-
-    StyleData.prototype.setDataModel = function (oPr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDataDataModel, this.getDataModel(), oPr));
-      this.dataModel = oPr;
-      this.setParentToChild(oPr);
-    }
-
-    StyleData.prototype.getUseDef = function () {
-      return this.useDef;
-    }
-
-    StyleData.prototype.getDataModel = function () {
-      return this.dataModel;
-    }
-
-    StyleData.prototype.fillObject = function (oCopy, oIdMap) {
-      oCopy.setUseDef(this.getUseDef());
-      if (this.getDataModel()) {
-        oCopy.setDataModel(this.getDataModel().createDuplicate(oIdMap));
-      }
-    }
-
-    StyleData.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteBool2(0, this.useDef);
-    };
-    StyleData.prototype.writeChildren = function(pWriter) {
-      this.writeRecord2(pWriter, 0, this.dataModel);
-    };
-    StyleData.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) this.setUseDef(oStream.GetBool());
-    };
-    StyleData.prototype.readChild = function(nType, pReader) {
-      var s = pReader.stream;
-      switch (nType) {
-        case 0: {
-          this.setDataModel(new DataModel());
-          this.dataModel.fromPPTY(pReader);
-          break;
-        }
-        default: {
-          s.SkipRecord();
-          break;
-        }
-      }
-    };
-    StyleData.prototype.getChildren = function() {
-      return [this.dataModel];
-    };
-
-
-
     changesFactory[AscDFH.historyitem_DiagramTitleLang] = CChangeString;
     changesFactory[AscDFH.historyitem_DiagramTitleVal] = CChangeString;
     drawingsChangesMap[AscDFH.historyitem_DiagramTitleLang] = function (oClass, value) {
@@ -7009,7 +6810,7 @@ Because of this, the display is sometimes not correct.
     function DiagramTitle() {
       CBaseFormatObject.call(this);
       this.lang = null;
-      this.val = null;
+      this.val = "";
     }
 
     InitClass(DiagramTitle, CBaseFormatObject, AscDFH.historyitem_type_DiagramTitle);
@@ -7489,7 +7290,7 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 1: {
-          this.setDesc(new Desc());
+          this.setDesc(new DiagramTitle());
           this.desc.fromPPTY(pReader);
           break;
         }
@@ -8362,7 +8163,7 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 1: {
-          this.setDesc(new Desc());
+          this.setDesc(new DiagramTitle());
           this.desc.fromPPTY(pReader);
           break;
         }
@@ -12077,8 +11878,6 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].LayoutDef              = LayoutDef;
     window['AscFormat'].CatLst                 = CatLst;
     window['AscFormat'].SCat                   = SCat;
-    window['AscFormat'].ClrData                = ClrData;
-    window['AscFormat'].Desc                   = Desc;
     window['AscFormat'].LayoutNode             = LayoutNode;
     window['AscFormat'].Alg                    = Alg;
     window['AscFormat'].Param                  = Param;
@@ -12130,7 +11929,6 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].StyleDefHdrLst         = StyleDefHdrLst;
     window['AscFormat'].StyleDefHdr            = StyleDefHdr;
     window['AscFormat'].BackdropAnchor         = BackdropAnchor;
-    window['AscFormat'].StyleData              = StyleData;
     window['AscFormat'].SampData               = SampData;
     window['AscFormat'].ForEach                = ForEach;
     window['AscFormat'].ResizeHandles          = ResizeHandles;

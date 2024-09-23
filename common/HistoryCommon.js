@@ -1714,8 +1714,6 @@
 	window['AscDFH'].historyitem_type_LayoutDef              = 2012 << 16;
 	window['AscDFH'].historyitem_type_CatLst                 = 2013 << 16;
 	window['AscDFH'].historyitem_type_SCat                   = 2014 << 16;
-	window['AscDFH'].historyitem_type_ClrData                = 2015 << 16;
-	window['AscDFH'].historyitem_type_Desc                   = 2016 << 16;
 	window['AscDFH'].historyitem_type_LayoutNode             = 2017 << 16;
 	window['AscDFH'].historyitem_type_Alg                    = 2018 << 16;
 	window['AscDFH'].historyitem_type_Param                  = 2019 << 16;
@@ -1768,7 +1766,6 @@
 	window['AscDFH'].historyitem_type_StyleDefHdrLst         = 2075 << 16;
 	window['AscDFH'].historyitem_type_StyleDefHdr            = 2076 << 16;
 	window['AscDFH'].historyitem_type_BackdropAnchor         = 2077 << 16;
-	window['AscDFH'].historyitem_type_StyleData              = 2078 << 16;
 	window['AscDFH'].historyitem_type_SampData               = 2079 << 16;
 	window['AscDFH'].historyitem_type_ForEach                = 2080 << 16;
 	window['AscDFH'].historyitem_type_ResizeHandles          = 2081 << 16;
@@ -3657,12 +3654,6 @@
 	AscDFH.historyitem_SCatPri = AscDFH.historyitem_type_SCat | 1;
 	AscDFH.historyitem_SCatType = AscDFH.historyitem_type_SCat | 2;
 
-	AscDFH.historyitem_ClrDataUseDef    = AscDFH.historyitem_type_ClrData | 1;
-	AscDFH.historyitem_ClrDataDataModel = AscDFH.historyitem_type_ClrData | 2;
-
-	AscDFH.historyitem_DescLang = AscDFH.historyitem_type_Desc | 1;
-	AscDFH.historyitem_DescVal = AscDFH.historyitem_type_Desc | 2;
-
 	AscDFH.historyitem_LayoutNodeChOrder  = AscDFH.historyitem_type_LayoutNode | 1;
 	AscDFH.historyitem_LayoutNodeMoveWith = AscDFH.historyitem_type_LayoutNode | 2;
 	AscDFH.historyitem_LayoutNodeName     = AscDFH.historyitem_type_LayoutNode | 3;
@@ -3917,9 +3908,6 @@
 	AscDFH.historyitem_BackdropAnchorX = AscDFH.historyitem_type_BackdropAnchor | 1;
 	AscDFH.historyitem_BackdropAnchorY = AscDFH.historyitem_type_BackdropAnchor | 2;
 	AscDFH.historyitem_BackdropAnchorZ = AscDFH.historyitem_type_BackdropAnchor | 3;
-
-	AscDFH.historyitem_StyleDataDataModel = AscDFH.historyitem_type_StyleData | 1;
-	AscDFH.historyitem_StyleDataUseDef = AscDFH.historyitem_type_StyleData | 2;
 
 	AscDFH.historyitem_SampDataDataModel = AscDFH.historyitem_type_SampData | 1;
 	AscDFH.historyitem_SampDataUseDef = AscDFH.historyitem_type_SampData | 2;
