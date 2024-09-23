@@ -5463,6 +5463,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetRecalcId = function () {
         return Infinity;
     };
+    CPDFDoc.prototype.RemoveBeforePaste = function() {};
     CPDFDoc.prototype.Document_UpdateInterfaceState = function() {};
     CPDFDoc.prototype.IsViewModeInReview = function() {
         return false;
