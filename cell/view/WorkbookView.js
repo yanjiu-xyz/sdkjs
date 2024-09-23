@@ -4445,13 +4445,16 @@
 	WorkbookView.prototype.IsSelectionUse = function () {
         return !this.getWorksheet().getSelectionShape();
     };
-	WorkbookView.prototype.GetSelectionRectsBounds = function () {
+	WorkbookView.prototype.GetSelectionRectsBounds = function (checkVisibleRange) {
 	    var ws = this.getWorksheet();
 		if (ws.getSelectionShape()) {
             return null;
         }
 
 		var range = ws.model.getSelection().getLast();
+		if (checkVisibleRange && !range.intersectionSimple(ws.visibleRange)) {
+			return null;
+		}
 		var type = range.getType();
 		var l = ws.getCellLeft(range.c1, 3) - ws.getHorizontalScrollCorrect(3);
 		var t = ws.getCellTop(range.r1, 3) - ws.getScrollCorrect(3);

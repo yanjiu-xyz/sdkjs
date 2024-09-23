@@ -10043,7 +10043,7 @@
 
 		let isReverse = delta < 0;
 		let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
-		let defaultScrollPxStep = Math.ceil(unitDeltaStep * Math.abs(delta));
+		let defaultScrollPxStep = Math.floor(unitDeltaStep * Math.abs(delta));
 
 		let deltaRows = 0, deltaCorrect = 0;
 		let currentScrollCorrect = this.getScrollCorrect();
@@ -10132,7 +10132,7 @@
         fixStartRow.assign(vr.c1, start, vr.c2, start);
         this._fixSelectionOfHiddenCells(0, delta >= 0 ? +1 : -1, fixStartRow);
         this._fixVisibleRange(fixStartRow);
-        var reinitScrollY = this.workbook.getSmoothScrolling() ? true : start !== fixStartRow.r1;
+        var reinitScrollY = start !== fixStartRow.r1;
         // Для скролла вверх обычный сдвиг + дорисовка
         if (reinitScrollY && 0 > delta) {
             delta += fixStartRow.r1 - start;
@@ -10326,13 +10326,16 @@
         this._drawSelection();
 		//this._cleanPagesModeData();
 
+		if (!reinitScrollY && this.workbook.getSmoothScrolling()) {
+			reinitScrollY = oldEnd !== vr.r2;
+		}
+
+
 		if ((reinitScrollY && !this.workbook.getSmoothScrolling()) || (reinitScrollY && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
 			(0 > delta && initRowsCount && this._initRowsCount())) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
 		}
-		if (delta !== 0) {
-			this._reinitializeScroll();
-		}
+		this._reinitializeScroll();
 
         this.handlers.trigger("onDocumentPlaceChanged");
 
@@ -11104,7 +11107,7 @@
         fixStartCol.assign(start, vr.r1, start, vr.r2);
         this._fixSelectionOfHiddenCells(delta >= 0 ? +1 : -1, 0, fixStartCol);
         this._fixVisibleRange(fixStartCol);
-        var reinitScrollX = this.workbook.getSmoothScrolling() ? true : start !== fixStartCol.c1;
+        var reinitScrollX = start !== fixStartCol.c1;
         // Для скролла влево обычный сдвиг + дорисовка
         if (reinitScrollX && 0 > delta) {
             delta += fixStartCol.c1 - start;
@@ -11250,6 +11253,10 @@
         this._drawSelection();
         //this._cleanPagesModeData();
 
+		if (!reinitScrollX && this.workbook.getSmoothScrolling()) {
+			reinitScrollX = oldEnd !== vr.c2;
+		}
+		
 		if ((reinitScrollX && !this.workbook.getSmoothScrolling()) || (reinitScrollX && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
 			(0 > delta && initColsCount && this._initColsCount())) {
 			if (reinitScrollX && (start - cFrozen) === 0 && 0 > delta && initColsCount) {
@@ -11258,9 +11265,8 @@
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
 		}
 
-		if (delta !== 0) {
-			this._reinitializeScroll();
-		}
+
+		this._reinitializeScroll();
 
         this.handlers.trigger("onDocumentPlaceChanged");
 
