@@ -798,12 +798,11 @@ CRadical.prototype.GetTextOfElement = function(oMathText)
 	else
 	{
 		let oDegreeText		= oDegree.GetTextOfElement();
-		let oPosSqrt		= oMathText.AddText(new AscMath.MathText("√", this), true);
-
 		let nLengthOfDegree	= oDegreeText.GetText();
 
 		if (nLengthOfDegree.length === 0 || !oDegreeText.IsHasText())
 		{
+			let oPosSqrt	= oMathText.AddText(new AscMath.MathText("√", this), true);
 			let oBaseText	= oBase.GetTextOfElement();
 			let nMathBase	= oBaseText.GetText();
 
@@ -825,16 +824,17 @@ CRadical.prototype.GetTextOfElement = function(oMathText)
 			{
 				if (strDegree === "3")
 				{
-					oMathText.ChangeContent(new AscMath.MathText("∛", this));
+					oMathText.AddText(new AscMath.MathText("∛", this));
 				}
 				else if (strDegree === "4")
 				{
-					oMathText.ChangeContent(new AscMath.MathText("∜", this));
+					oMathText.AddText(new AscMath.MathText("∜", this));
 				}
 				oMathText.Add(oBase, true);
 			}
 			else
 			{
+				oMathText.AddText(new AscMath.MathText("√", this));
 				oMathText.AddText(new AscMath.MathText("(", this));
 				oMathText.AddText(oDegreeText);
 				oMathText.AddText(new AscMath.MathText("&", this));

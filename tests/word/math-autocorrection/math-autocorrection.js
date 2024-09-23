@@ -1080,6 +1080,20 @@ $(function () {
 
 		QUnit.module( "Bugs", function ()
 		{
+			QUnit.test('Check correct word while input rBrackets', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(0);
+				AddText('(1->\\infty)');
+				assert.ok(true, "Add text '(1->\\infty)'");
+
+				MathContent.ConvertView(true, Asc.c_oAscMathInputType.Unicode);
+				assert.ok(true, "Convert to linear view");
+
+				let strBinomial = MathContent.GetTextOfElement(0).GetText();
+				assert.strictEqual(strBinomial, '(1→∞)', 'Check \\infty');
+			})
+
 			QUnit.test('Check review info convert math; bug #67505', function (assert)
 			{
 				Clear();

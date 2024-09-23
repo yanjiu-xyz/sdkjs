@@ -4463,9 +4463,7 @@
 		let strCorrection = ConvertWord(str, IsLaTeX);
 		if (strCorrection)
 		{
-			let oRun = RemoveCountFormMathContent(oCMathContent, str.length + 1, isLastOperator);
-			//let oRun = RemoveCountFormMathContent(oCMathContent, oContent.counter - 1, isLastOperator);
-			let nPos = isLastOperator ? oRun.Content.length - 1 : oRun.Content.length;
+			RemoveCountFormMathContent(oCMathContent, str.length + 1);
 
 			if (MathLiterals.accent.SearchU(strCorrection))
 				strCorrection = String.fromCharCode(160) + strCorrection; //add nbsp before accent, like word
@@ -4475,6 +4473,13 @@
 				let oAddMath = new MathTextAdditionalData(oCurrentEl.Parent);
 				oCMathContent.Add_Text(strCorrection[i], undefined, undefined, oAddMath);
 			}
+
+			if (oLastOperator)
+			{
+				let oAddMath = new MathTextAdditionalData(oCurrentEl.Parent);
+				oCMathContent.Add_Text(oLastOperator, undefined, undefined, oAddMath);
+			}
+
 			isConvert = true;
 		}
 
@@ -5604,6 +5609,7 @@
 		return nType === MathLiterals.space.id
 			|| nType === MathLiterals.operator.id
 			|| nType === MathLiterals.lBrackets.id
+			|| nType === MathLiterals.rBrackets.id
 	}
 
 	function ProcessingBrackets ()
