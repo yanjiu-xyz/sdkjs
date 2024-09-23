@@ -6773,6 +6773,75 @@ PasteProcessor.prototype =
 
 			oThis.api.pre_Paste([], [], executePasteWord);
 		};
+		
+		let textToPDFContent = function(text) {
+			text = text.replace(/^(\r|\t)+|(\r|\t)+$/g, '');
+			if (!text || !text.length)
+				return;
+			
+			let addParagraph = false;
+			let paragraph = new AscWord.Paragraph(null, true);
+			oThis.aContent.push(paragraph);
+			
+			let run = new AscWord.Run();
+			let inRunPos = 0;
+			paragraph.AddToContent(0, run);
+			
+			for (let oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+				if (addParagraph) {
+					paragraph = new AscWord.Paragraph(null, true);
+					oThis.aContent.push(paragraph);
+					run = new AscWord.Run();
+					paragraph.AddToContent(0, run);
+					addParagraph = false;
+					inRunPos = 0;
+				}
+				
+				let codePoint = oIterator.value();
+				if (null === codePoint || 0x0D === codePoint)
+					continue;
+				
+				if (0x0A === codePoint)
+					addParagraph = true;
+				else
+					run.AddToContent(inRunPos++, AscWord.codePointToRunElement(codePoint), true);
+			}
+		}
+		
+		let textToPresentationContent = function(text, docContent) {
+			text = text.replace(/^(\r|\t)+|(\r|\t)+$/g, '');
+			if (!text || !text.length)
+				return;
+			
+			oThis.oDocument = docContent;
+			
+			let addParagraph = false;
+			let paragraph = docContent.GetElement(0);
+			
+			let run = new AscWord.Run();
+			let inRunPos = 0;
+			paragraph.AddToContent(0, run);
+			
+			for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+				if (addParagraph) {
+					paragraph = new AscWord.Paragraph(null, docContent.bPresentation === true);
+					docContent.PushToContent(paragraph);
+					run = new AscWord.Run();
+					paragraph.AddToContent(0, run);
+					addParagraph = false;
+					inRunPos = 0;
+				}
+				
+				let codePoint = oIterator.value();
+				if (null === codePoint || 0x0D === codePoint)
+					continue;
+				
+				if (0x0A === codePoint)
+					addParagraph = true;
+				else
+					run.AddToContent(inRunPos++, AscWord.codePointToRunElement(codePoint), true);
+			}
+		}
 
 		var fPasteTextPresentationCallback = function () {
 			var executePastePresentation = function () {
@@ -6787,47 +6856,9 @@ PasteProcessor.prototype =
 			shape.setParent(presentation.Slides[presentation.CurPage]);
 			shape.setTxBody(AscFormat.CreateTextBodyFromString("", presentation.DrawingDocument, shape));
 			oThis.aContent = shape.txBody.content.Content;
-
-			text = text.replace(/^(\r|\t)+|(\r|\t)+$/g, '');
-			if (text.length > 0) {
-                //TODO: May be use CDocumentContent.AddText instead
-                var oContent = shape.txBody.content;
-				oThis.oDocument = oContent;
-				var bAddParagraph = false;
-                var oCurParagraph = oContent.Content[0];
-                var oCurRun = new ParaRun(oCurParagraph, false);
-                var nCharPos = 0;
-                oCurParagraph.Internal_Content_Add(0, oCurRun);
-				for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
-					if (bAddParagraph) {
-                        oCurParagraph = new AscWord.Paragraph(oContent, oContent.bPresentation === true);
-                        oContent.Internal_Content_Add(oContent.Content.length, oCurParagraph);
-                        oCurRun = new ParaRun(oCurParagraph, false);
-                        oCurParagraph.Internal_Content_Add(0, oCurRun);
-						bAddParagraph = false;
-                        nCharPos = 0;
-					}
-					var nUnicode = oIterator.value();
-                    if(null !== nUnicode) {
-                        if (null !== nUnicode && 13 !== nUnicode) {
-                            if (0x0A === nUnicode || 0x0D === nUnicode) {
-                                bAddParagraph = true;
-                            }
-                            else if (9 === nUnicode) // \t
-                                oCurRun.AddToContent(nCharPos++, new AscWord.CRunTab(), true);
-                            else if (10 === nUnicode) // \n
-                                oCurRun.AddToContent(nCharPos++, new AscWord.CRunBreak(AscWord.break_Line), true);
-                            else if (13 === nUnicode) // \r
-                                continue;
-                            else if (AscCommon.IsSpace(nUnicode)) // space
-                                oCurRun.AddToContent(nCharPos++, new AscWord.CRunSpace(nUnicode), true);
-                            else
-                                oCurRun.AddToContent(nCharPos++, new AscWord.CRunText(nUnicode), true);
-                        }
-                    }
-				}
-			}
-
+			
+			textToPresentationContent(text, shape.txBody.content);
+			
 			var oTextPr = presentation.GetCalculatedTextPr();
 			shape.txBody.content.SetApplyToAll(true);
 			var paraTextPr = new AscCommonWord.ParaTextPr(oTextPr);
@@ -6859,48 +6890,7 @@ PasteProcessor.prototype =
 			oThis.aContent = [];
 
 			AscCommon.ExecuteNoHistory(function() {
-				text = text.replace(/^(\r|\t)+|(\r|\t)+$/g, '');
-				if (text.length > 0) {
-					let bAddParagraph = false;
-					let oCurParagraph = new AscWord.Paragraph(null, true);
-					oThis.aContent.push(oCurParagraph);
-
-					let oCurRun = new ParaRun(oCurParagraph, false);
-					let nCharPos = 0;
-
-					oCurParagraph.Internal_Content_Add(0, oCurRun);
-
-					for (let oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
-						if (bAddParagraph) {
-							oCurParagraph = new AscWord.Paragraph(null, true);
-							oThis.aContent.push(oCurParagraph);
-							oCurRun = new ParaRun(oCurParagraph, false);
-							oCurParagraph.Internal_Content_Add(0, oCurRun);
-							bAddParagraph = false;
-							nCharPos = 0;
-						}
-
-						let nUnicode = oIterator.value();
-						if(null !== nUnicode) {
-							if (null !== nUnicode && 13 !== nUnicode) {
-								if (0x0A === nUnicode || 0x0D === nUnicode) {
-									bAddParagraph = true;
-								}
-								else if (9 === nUnicode) // \t
-									oCurRun.AddToContent(nCharPos++, new AscWord.CRunTab(), true);
-								else if (10 === nUnicode) // \n
-									oCurRun.AddToContent(nCharPos++, new AscWord.CRunBreak(AscWord.break_Line), true);
-								else if (13 === nUnicode) // \r
-									continue;
-								else if (AscCommon.IsSpace(nUnicode)) // space
-									oCurRun.AddToContent(nCharPos++, new AscWord.CRunSpace(nUnicode), true);
-								else
-									oCurRun.AddToContent(nCharPos++, new AscWord.CRunText(nUnicode), true);
-							}
-						}
-					}
-				}
-
+				textToPDFContent(text);
 				let oParaTextPr = new AscCommonWord.ParaTextPr(oDoc.GetCalculatedTextPr());
 				oThis.aContent.forEach(function(para) {
 					para.Add(oParaTextPr);
