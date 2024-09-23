@@ -844,7 +844,9 @@ CMathText.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 	if (this.value === 0x200C)
 		return;
 
-	y -= this.Parent.getYOffset()
+	// CMathText may not always have a parent (base of CNary etc.)
+	if (this.Parent && this.Parent.getYOffset)
+		y -= this.Parent.getYOffset();
 
 	var X = this.pos.x + x,
 		Y = this.pos.y + y;
