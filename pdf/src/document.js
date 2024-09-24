@@ -5836,21 +5836,6 @@ var CPresentation = CPresentation || function(){};
 
         return false;
     };
-    CPDFDoc.prototype.Get_PageLimits = function(nPage) {
-        let oDrDoc      = this.GetDrawingDocument();
-        let oPageInfo   = oDrDoc.m_arrPages[nPage];
-
-        return {
-            X: 0,
-            XLimit: Math.ceil(oPageInfo.width_mm),
-            Y: 0,
-            YLimit: Math.ceil(oPageInfo.height_mm),
-        }
-    };
-    CPDFDoc.prototype.Get_PageFields = function(nPage) {
-        return this.Get_PageLimits(nPage);
-    };
-
     CPDFDoc.prototype.GetAllSignatures = function() {
         return [];
     };
