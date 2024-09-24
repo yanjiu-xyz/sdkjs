@@ -7953,6 +7953,30 @@
 		
 		return this.Document.ReplaceCurrentSentence(dir, replace);
 	};
+	/**
+	 * Add a math equation
+	 * @param sText {string} An equation written as a linear text string
+	 * @param [sFormat="unicode"] {"unicode" | "latex"} The format of the specified linear representation
+	 */
+	ApiDocument.prototype.AddMathEquation = function(sText, sFormat)
+	{
+		let text   = GetStringParameter(sText, "");
+		let format = GetStringParameter(sFormat, "unicode");
+		
+		let logicDocument = this.Document;
+		logicDocument.RemoveBeforePaste();
+		logicDocument.RemoveSelection();
+		let mathPr = new AscCommonWord.MathMenu(c_oAscMathType.Default_Text, logicDocument.GetDirectTextPr());
+		mathPr.SetText(text);
+		logicDocument.AddToParagraph(mathPr);
+		
+		let info = logicDocument.GetSelectedElementsInfo();
+		let paraMath = info.GetMath();
+		if (!paraMath)
+			return;
+		
+		paraMath.ConvertView(false, "latex" === format ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -21770,6 +21794,7 @@
 	ApiDocument.prototype["AddComment"]                  = ApiDocument.prototype.AddComment;
 	ApiDocument.prototype["GetCurrentSentence"]          = ApiDocument.prototype.GetCurrentSentence;
 	ApiDocument.prototype["ReplaceCurrentSentence"]      = ApiDocument.prototype.ReplaceCurrentSentence;
+	ApiDocument.prototype["AddMathEquation"]             = ApiDocument.prototype.AddMathEquation;
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
