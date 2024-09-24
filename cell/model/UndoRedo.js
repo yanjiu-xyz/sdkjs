@@ -748,14 +748,15 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef) {
+	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef, bCa) {
 		this.formula = sFormula;
 		this.formulaRef = formulaRef;
 		this.value = oValue;
+		this.ca = bCa;
 	}
 
 	UndoRedoData_CellValueData.prototype.Properties = {
-		formula: 0, value: 1, formulaRef: 2
+		formula: 0, value: 1, formulaRef: 2, ca: 3
 	};
 	UndoRedoData_CellValueData.prototype.isEqual = function (val) {
 		if (null == val) {
@@ -784,13 +785,12 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.formula:
 				return this.formula;
-				break;
 			case this.Properties.value:
 				return this.value;
-				break;
 			case this.Properties.formulaRef:
 				return this.formulaRef ? new UndoRedoData_BBox(this.formulaRef) : null;
-				break;
+			case this.Properties.ca:
+				return this.ca;
 		}
 		return null;
 	};
@@ -804,6 +804,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.formulaRef:
 				this.formulaRef = value ? new Asc.Range(value.c1, value.r1, value.c2, value.r2) : null;
+				break;
+			case this.Properties.ca:
+				this.ca = value;
 				break;
 		}
 	};

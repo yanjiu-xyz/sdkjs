@@ -14581,20 +14581,22 @@
 		this._checkDirty();
 		var formula = this.isFormula() ? this.getFormula() : null;
 		var formulaRef;
+		let ca;
 		if(formula) {
 			var parser = this.getFormulaParsed();
 			if(parser) {
-				formulaRef = this.getFormulaParsed().getArrayFormulaRef();
+				formulaRef = parser.getArrayFormulaRef();
+				ca = parser.ca;
 			}
 		}
-		return new UndoRedoData_CellValueData(formula, new AscCommonExcel.CCellValue(this), formulaRef);
+		return new UndoRedoData_CellValueData(formula, new AscCommonExcel.CCellValue(this), formulaRef, ca);
 	};
 	Cell.prototype.setValueData = function(Val){
 		//значения устанавляваются через setValue, чтобы пересчитались формулы
-		if(null != Val.formula)
+		if (null != Val.formula) {
 			this.setFormula(Val.formula, null, Val.formulaRef);
-		else if(null != Val.value)
-		{
+			this.getFormulaParsed().ca = Val.ca;
+		} else if (null != Val.value) {
 			var DataOld = null;
 			var DataNew = null;
 			if (AscCommon.History.Is_On())
