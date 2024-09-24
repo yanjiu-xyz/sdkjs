@@ -7854,16 +7854,16 @@
 	/**
 	 * Replace the current word or part of the current word with the specified text
 	 * @param sReplace {string} String to replace
-	 * @param {undefined | "before" | "after"} sWordPart - Specifies the desired part of the current word
+	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current word
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ReplaceCurrentWord.js
 	 */
-	ApiDocument.prototype.ReplaceCurrentWord = function(sReplace, sWordPart)
+	ApiDocument.prototype.ReplaceCurrentWord = function(sReplace, sPart)
 	{
 		let replace = GetStringParameter(sReplace, "");
-		let part    = GetStringParameter(sWordPart, null);
+		let part    = GetStringParameter(sPart, null);
 		
 		let dir  = 0;
 		if ("after" === part)
@@ -7871,7 +7871,7 @@
 		else if ("before" === part)
 			dir = -1;
 		
-		return this.Document.ReplaceCurrentWord(replace, dir);
+		return this.Document.ReplaceCurrentWord(dir, replace);
 	};
 	/**
 	 * Selects the current word if it possible
@@ -7911,6 +7911,47 @@
 		
 		let comment = this.Document.AddComment(commentData);
 		return comment ? new ApiComment(comment) : null;
+	};
+	/**
+	 * Returns the current sentence or part of the current sentence
+	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current sentence
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentSentence.js
+	 */
+	ApiDocument.prototype.GetCurrentSentence = function(sPart)
+	{
+		let part = GetStringParameter(sPart, null);
+		let dir  = 0;
+		if ("after" === part)
+			dir = 1;
+		else if ("before" === part)
+			dir = -1;
+		
+		return this.Document.GetCurrentSentence(dir);
+	};
+	/**
+	 * Replace the current sentence or part of the current sentence with the specified text
+	 * @param sReplace {string} String to replace
+	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current sentence
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ReplaceCurrentSentence.js
+	 */
+	ApiDocument.prototype.ReplaceCurrentSentence = function(sReplace, sPart)
+	{
+		let replace = GetStringParameter(sReplace, "");
+		let part    = GetStringParameter(sPart, null);
+		
+		let dir  = 0;
+		if ("after" === part)
+			dir = 1;
+		else if ("before" === part)
+			dir = -1;
+		
+		return this.Document.ReplaceCurrentSentence(dir, replace);
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -21727,6 +21768,8 @@
 	ApiDocument.prototype["ReplaceCurrentWord"]          = ApiDocument.prototype.ReplaceCurrentWord;
 	ApiDocument.prototype["SelectCurrentWord"]           = ApiDocument.prototype.SelectCurrentWord;
 	ApiDocument.prototype["AddComment"]                  = ApiDocument.prototype.AddComment;
+	ApiDocument.prototype["GetCurrentSentence"]          = ApiDocument.prototype.GetCurrentSentence;
+	ApiDocument.prototype["ReplaceCurrentSentence"]      = ApiDocument.prototype.ReplaceCurrentSentence;
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
