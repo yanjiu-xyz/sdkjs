@@ -47,6 +47,10 @@ CMathBreak.prototype.Set_FromObject = function(Obj)
             this.alnAt = Obj.alnAt;
     }
 };
+CMathBreak.prototype.IsEqual = function (oMathBrk)
+{
+	return oMathBrk && oMathBrk.alnAt === this.alnAt;
+}
 CMathBreak.prototype.Copy = function()
 {
     var NewMBreak = new CMathBreak();
@@ -599,7 +603,7 @@ CBorderBox.prototype.GetTextOfElement = function(oMathText)
 		let oBoxStr = new AscMath.MathText("▭", this)
 		oMathText.AddText(oBoxStr);
 		oMathText.SetGlobalStyle(this, true);
-		oMathText.Add(oBase, true)
+		oMathText.Add(oBase, true, 2)
 	}
 
 	return oMathText;
@@ -1030,7 +1034,7 @@ CBox.prototype.GetTextOfElement = function(oMathText)
 	{
 		oMathText.AddText(new AscMath.MathText("□", this));
 		oMathText.SetGlobalStyle(this);
-		oMathText.Add(oBase, true);
+		oMathText.Add(oBase, true, 2);
 	}
 	return oMathText;
 };

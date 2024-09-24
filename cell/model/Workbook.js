@@ -1583,8 +1583,19 @@
 				this._broadcastRanges(notifyData);
 			}
 			this._broadcastCellsEnd();
-
-			this._calculateDirty();
+			do {
+				this._calculateDirty();
+				if (g_cCalcRecursion.getIsEnabledRecursion()) {
+					g_cCalcRecursion.incIterStep();
+				}
+			} while (g_cCalcRecursion.needRecursiveCall());
+			g_cCalcRecursion.resetIterStep();
+			g_cCalcRecursion.setStartCellIndex(null);
+			g_cCalcRecursion.setGroupChangedCells(null);
+			g_cCalcRecursion.clearPrevIterResult();
+			g_cCalcRecursion.clearDiffBetweenIter();
+			this.changedCell = null;
+			this.changedRange = null;
 			this.updateSharedFormulas();
 			//copy cleanCellCache to prevent recursion in trigger("cleanCellCache")
 			var tmpCellCache = this.cleanCellCache;
@@ -1883,6 +1894,7 @@
 			let needUpdateCells = [];
 			this._foreachChanged(function (oCell) {
 				if (oCell && oCell.isFormula()) {
+					const oFormulaParsed = oCell.getFormulaParsed();
 					// Logic for iterative calculation
 					if (g_cCalcRecursion.getIsEnabledRecursion()) {
 						const nThisCellIndex = getCellIndex(oCell.nRow, oCell.nCol);
@@ -1957,8 +1969,11 @@
 								oCell.setIsDirty(false);
 								return;
 							}
+						} else if (g_cCalcRecursion.getIterStep() > 1 && oCell.getValueWithoutFormat() && !oFormulaParsed.ca) {
+							oCell.setIsDirty(false);
+							return;
 						}
-					} else if (oCell.getFormulaParsed().ca === true) {
+					} else if (oFormulaParsed.ca === true) {
 						oCell.initStartCellForIterCalc();
 						if (g_cCalcRecursion.getStartCellIndex()) {
 							aCycleCells.push(oCell);
@@ -2012,20 +2027,6 @@
 					}
 				}
 			});
-			if (g_cCalcRecursion.needRecursiveCall()) {
-				g_cCalcRecursion.incIterStep();
-				this._calculateDirty();
-			} else {
-				g_cCalcRecursion.resetIterStep();
-				g_cCalcRecursion.setStartCellIndex(null);
-				g_cCalcRecursion.setGroupChangedCells(null);
-				g_cCalcRecursion.clearPrevIterResult();
-				g_cCalcRecursion.clearDiffBetweenIter();
-			}
-			if (this.changedCell || this.changedRange) {
-				this.changedCell = null;
-				this.changedRange = null;
-			}
 
 			if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
 				//need update
@@ -2511,7 +2512,7 @@
 		this.nActive = 0;
 		this.App = null;
 		this.Core = null;
-		this.CustomProperties = null;
+		this.CustomProperties = new AscCommon.CCustomProperties();
 		this.theme = null;
 		this.clrSchemeMap = null;
 
@@ -3195,9 +3196,11 @@
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				for (let i = 0; i < formulas.length; ++i) {
 					let formula = formulas[i];
+					let caTemp = formula.ca;
 					formula.removeDependencies();
 					formula.setFormula(formula.getFormula());
 					formula.parse();
+					formula.ca = caTemp;
 					formula.buildDependencies();
 				}
 			});
@@ -7682,6 +7685,9 @@
 					var oUndoRedoData_CellData = new AscCommonExcel.UndoRedoData_CellData(cell.getValueData(), null);
 					if (null != cell.xfs)
 						oUndoRedoData_CellData.style = cell.xfs.clone();
+					if (cell.formulaParsed) {
+						cell.checkRemoveExternalReferences(null, cell.formulaParsed);
+					}
 					cell.setFormulaInternal(null);
 					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RemoveCell, sheetId, new Asc.Range(nCol, nRow, nCol, nRow), new UndoRedoData_CellSimpleData(nRow, nCol, oUndoRedoData_CellData, null));
 				}

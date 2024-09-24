@@ -357,6 +357,12 @@
     }
   };
 
+  CDocsCoApi.prototype.connect = function() {
+    if (this._CoAuthoringApi && this._onlineWork) {
+      this._CoAuthoringApi.connect();
+    }
+  };
+
   CDocsCoApi.prototype.extendSession = function(idleTime) {
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.extendSession(idleTime);
@@ -901,6 +907,10 @@
     if (this.onAuthParticipantsChanged) {
       this.onAuthParticipantsChanged(this._participants, this._userId);
     }
+  };
+
+  DocsCoApi.prototype.connect = function() {
+    this.socketio.connect();
   };
 
   DocsCoApi.prototype.disconnect = function(opt_code, opt_reason) {

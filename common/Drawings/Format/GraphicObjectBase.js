@@ -55,6 +55,7 @@
 	AscDFH.changesFactory[AscDFH.historyitem_AutoShapes_SetDrawingBaseExt] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_AutoShapes_SetDrawingBaseCoors] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_ShapeSetClientData] = AscDFH.CChangesDrawingsObjectNoId;
+	AscDFH.changesFactory[AscDFH.historyitem_ShapeSetUseBgFill] = AscDFH.CChangesDrawingsBool;
 
 
 	var drawingsChangesMap = window['AscDFH'].drawingsChangesMap;
@@ -132,6 +133,9 @@
 	};
 	drawingsChangesMap[AscDFH.historyitem_ShapeSetClientData] = function (oClass, value) {
 		oClass.clientData = value;
+	};
+	drawingsChangesMap[AscDFH.historyitem_ShapeSetUseBgFill] = function (oClass, value) {
+		oClass.useBgFill = value;
 	};
 
 

@@ -458,6 +458,10 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_Theme]                  = AscFormat.CTheme;
 		this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]           = AscFormat.CGraphicFrame;
 
+
+		this.m_oFactoryClass[AscDFH.historyitem_type_CustomProperties]              = AscCommon.CCustomProperties;
+
+
 		if (window['AscCommonExcel'])
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Sparkline]            = AscCommonExcel.sparklineGroup;

@@ -113,7 +113,7 @@
         let nWidth  = aOrigRect[2] - aOrigRect[0];
         let nHeight = aOrigRect[3] - aOrigRect[1];
 
-        let oMargins = this.GetMarginsFromBorders(false, false);
+        let oMargins = this.GetMarginsFromBorders();
         let oRGB    = this.GetRGBColor(this._textColor);
 
         oGraphicsPDF.SetGlobalAlpha(1);
@@ -365,9 +365,11 @@
         else
             callbackAfterFocus.bind(this)();
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (false == isInFocus) {
-            this.onFocus();
+        if (isInFocus) {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        }
+        else {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         }
     };
     CBaseCheckBoxField.prototype.GetFontSizeAP = function() {

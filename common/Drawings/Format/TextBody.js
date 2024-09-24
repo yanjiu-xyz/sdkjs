@@ -252,7 +252,7 @@
     };
     CTextBody.prototype.Get_AbsolutePage = function(CurPage) {
         if(this.parent && this.parent.Get_AbsolutePage) {
-            return this.parent.Get_AbsolutePage();
+            return this.parent.Get_AbsolutePage(CurPage);
         }
         return 0;//TODO;
     };

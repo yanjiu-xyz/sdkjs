@@ -198,8 +198,14 @@
 			};
 		}
 	};
-	PDFEditorApi.prototype["asc_nativeCalculate"] = function()
-	{
+	PDFEditorApi.prototype["asc_nativeCalculateFile"] = function() {
+		// It was added for testing native font loading
+		
+		// let pdfDoc = this.getPDFDoc();
+		// if (!pdfDoc)
+		// 	return;
+		//
+		// pdfDoc.RecalculateAll();
 	};
 	PDFEditorApi.prototype["asc_nativePrintPagesCount"] = function()
 	{
@@ -209,7 +215,11 @@
 	PDFEditorApi.prototype["asc_nativeGetPDF"] = function(options)
 	{
 		if (this.DocumentRenderer)
-			return this.DocumentRenderer.Save();
+		{
+			let result = this.DocumentRenderer.Save();
+			window["native"]["Save_End"]("", result.length);
+			return result;
+		}
 		return null;
 	};
 
@@ -359,7 +369,7 @@
 		
 		this.needPasteText = false; // если не вставили бинарник, то вставляем текст
 		// пока что копирование бинарником только внутри drawings или самих drawings
-		if ([AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.HtmlElement].includes(_format) && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
+		if ([AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.HtmlElement, AscCommon.c_oAscClipboardDataFormat.Text].includes(_format) && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
 		}
@@ -983,7 +993,7 @@
 			}, AscDFH.historydescription_Pdf_AddAnnot, this);
 		}
 
-		if (oDoc.checkDefaultFonts(addFreeText)) {
+		if (oDoc.checkFonts(["Arial"], addFreeText)) {
 			addFreeText();
 		}
 	};
@@ -1732,6 +1742,18 @@
 			window["AscDesktopEditor"]["onDocumentModifiedChanged"](bValue);
 		}
 	};
+	PDFEditorApi.prototype.CheckChangedDocument = function() {
+		let oDoc = this.getPDFDoc();
+
+		if (true === oDoc.History.Have_Changes()) {
+			this.SetDocumentModified(true);
+		}
+		else {
+			this.SetDocumentModified(false);
+		}
+
+		this._onUpdateDocumentCanSave();
+	};
 	PDFEditorApi.prototype._autoSaveInner = function() {
 		let _curTime = new Date();
 		if (null === this.lastSaveTime) {
@@ -2040,10 +2062,8 @@
 		let nNativeW		= oViewer.file.pages[nPage].W;
 		let nNativeH		= oViewer.file.pages[nPage].H;
 		let nPageRotate		= oViewer.getPageRotate(nPage);
-		let nScaleY			= oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H;
-        let nScaleX			= oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W;
-		let nCommentWidth	= 40 * nScaleX;
-		let nCommentHeight	= 40 * nScaleY;
+		let nCommentWidth	= 40;
+		let nCommentHeight	= 40;
 		let oDoc			= oViewer.getPDFDoc();
 
 		let oBasePos = {
@@ -2460,6 +2480,13 @@
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));
 	};
+	PDFEditorApi.prototype._finalizeAction = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc){
+			return;
+		}
+		oDoc.FinalizeAction(true);
+	};
 
 	PDFEditorApi.prototype._waitPrint = function(actionType, options)
 	{
@@ -2544,6 +2571,7 @@
 	PDFEditorApi.prototype['asc_getHeaderFooterProperties']	= PDFEditorApi.prototype.asc_getHeaderFooterProperties;
 	PDFEditorApi.prototype['ChangeReaderMode']				= PDFEditorApi.prototype.ChangeReaderMode;
 
+	PDFEditorApi.prototype['CheckChangedDocument']		   = PDFEditorApi.prototype.CheckChangedDocument;
 	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;
 	PDFEditorApi.prototype['OnMouseUp']                    = PDFEditorApi.prototype.OnMouseUp;
 

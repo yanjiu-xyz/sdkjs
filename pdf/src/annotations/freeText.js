@@ -160,7 +160,7 @@
         if (!aCallout && !aArrowPts)
             return undefined;
 
-        let nLineWidth = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let nLineWidth = this.GetWidth();
 
         let oLine = {
             x1: aArrowPts ? aArrowPts[0] : aCallout[1 * 2],
@@ -360,17 +360,7 @@
         this.SetNeedRecalc(true);
     };
     CAnnotationFreeText.prototype.GetCallout = function(bScaled) {
-        if (bScaled != true || !this._callout)
-            return this._callout;
-
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let nPage   = this.GetPage();
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        return this._callout.slice().map(function(measure, idx) {
-            return idx % 2 == 0 ? measure * nScaleX : measure * nScaleY;
-        });
+        return this._callout;
     };
     CAnnotationFreeText.prototype.SetWidth = function(nWidthPt) {
         AscCommon.History.Add(new CChangesPDFAnnotStrokeWidth(this, this.GetWidth(), nWidthPt));
@@ -445,59 +435,38 @@
             this.spTree[i].setFill(oFill);
         }
     };
-    CAnnotationFreeText.prototype.SetRect = function(aRect) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-        let nPage       = this.GetPage();
+    CAnnotationFreeText.prototype.SetRect = function(aOrigRect) {
+        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
+        this._origRect = aOrigRect;
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        let oXfrm = this.getXfrm();
+        if (oXfrm) {
+            AscCommon.History.StartNoHistoryMode();
 
-        this._rect = aRect;
+            this.spPr.xfrm.extX = (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm;
+            this.spPr.xfrm.extY = (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm;
+            this.spPr.xfrm.offX = aOrigRect[0] * g_dKoef_pt_to_mm;
+            this.spPr.xfrm.offY = aOrigRect[1] * g_dKoef_pt_to_mm;
+            this.updateTransformMatrix();
+            this.recalcGeometry();
 
-        this._pagePos = {
-            x: aRect[0],
-            y: aRect[1],
-            w: (aRect[2] - aRect[0]),
-            h: (aRect[3] - aRect[1])
-        };
+            AscCommon.History.EndNoHistoryMode();
+        }
 
-        this._origRect[0] = this._rect[0] / nScaleX;
-        this._origRect[1] = this._rect[1] / nScaleY;
-        this._origRect[2] = this._rect[2] / nScaleX;
-        this._origRect[3] = this._rect[3] / nScaleY;
-
-        oDoc.StartNoHistoryMode();
-
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offX = aRect[0] * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offY = aRect[1] * g_dKoef_pix_to_mm;
-        this.updateTransformMatrix();
-
-        oDoc.EndNoHistoryMode();
-
-        this.recalcGeometry();
         this.SetNeedRecalc(true);
         this.SetWasChanged(true);
     };
-    CAnnotationFreeText.prototype.GetTextBoxRect = function(bScale) {
-        let oViewer     = Asc.editor.getDocumentRenderer();
+    CAnnotationFreeText.prototype.GetTextBoxRect = function() {
         let aOrigRect   = this.GetOrigRect();
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
-        let nPage       = this.GetPage();
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        let xMin = (aOrigRect[0] + aRD[0]);
+        let yMin = (aOrigRect[1] + aRD[1]);
+        let xMax = (aOrigRect[2] - aRD[2]);
+        let yMax = (aOrigRect[3] - aRD[3]);
 
-        let xMin = bScale ? nScaleX * (aOrigRect[0] + aRD[0]) : (aOrigRect[0] + aRD[0]);
-        let yMin = bScale ? nScaleY * (aOrigRect[1] + aRD[1]) : (aOrigRect[1] + aRD[1]);
-        let xMax = bScale ? nScaleX * (aOrigRect[2] - aRD[2]) : (aOrigRect[2] - aRD[2]);
-        let yMax = bScale ? nScaleY * (aOrigRect[3] - aRD[3]) : (aOrigRect[3] - aRD[3]);
-
-        return [xMin, yMin, xMax, yMax]
+        return [xMin, yMin, xMax, yMax];
     };
     CAnnotationFreeText.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
@@ -506,14 +475,6 @@
         let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oFreeText.lazyCopy = true;
-
-        oFreeText._pagePos = {
-            x: this._pagePos.x,
-            y: this._pagePos.y,
-            w: this._pagePos.w,
-            h: this._pagePos.h
-        }
-        oFreeText._origRect = this._origRect.slice();
 
         let aStrokeColor = this.GetStrokeColor();
         let aFillColor = this.GetFillColor();
@@ -530,7 +491,6 @@
         oFreeText.SetWidth(this.GetWidth());
         oFreeText.SetLineEnd(this.GetLineEnd());
         oFreeText.SetOpacity(this.GetOpacity());
-        oFreeText.recalcInfo.recalculateGeometry = false;
         oFreeText.SetCallout(this.GetCallout().slice());
         oFreeText.SetRectangleDiff(this.GetRectangleDiff());
         oFreeText.SetWasChanged(oFreeText.IsChanged());
@@ -564,10 +524,6 @@
         let aOrigRect   = this.GetOrigRect();
         let aCallout    = this.GetCallout(); // координаты выходящей стрелки
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
-        let nPage       = this.GetPage();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
 
         let aFreeTextPoints = [];
         let aFreeTextRect   = []; // прямоугольник
@@ -575,34 +531,34 @@
 
         // левый верхний
         aFreeTextRect.push({
-            x: (aOrigRect[0] + aRD[0]) * nScaleX,
-            y: (aOrigRect[1] + aRD[1]) * nScaleY
+            x: (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm,
+            y: (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm
         });
         // правый верхний
         aFreeTextRect.push({
-            x: (aOrigRect[2] - aRD[2]) * nScaleX,
-            y: (aOrigRect[1] + aRD[1]) * nScaleY
+            x: (aOrigRect[2] - aRD[2]) * g_dKoef_pt_to_mm,
+            y: (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm
         });
         // правый нижний
         aFreeTextRect.push({
-            x: (aOrigRect[2] - aRD[2]) * nScaleX,
-            y: (aOrigRect[3] - aRD[3]) * nScaleY
+            x: (aOrigRect[2] - aRD[2]) * g_dKoef_pt_to_mm,
+            y: (aOrigRect[3] - aRD[3]) * g_dKoef_pt_to_mm
         });
         // левый нижний
         aFreeTextRect.push({
-            x: (aOrigRect[0] + aRD[0]) * nScaleX,
-            y: (aOrigRect[3] - aRD[3]) * nScaleY
+            x: (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm,
+            y: (aOrigRect[3] - aRD[3]) * g_dKoef_pt_to_mm
         });
 
         if (aCallout && aCallout.length == 6) {
             // точка выхода callout
             aFreeTextLine90.push({
-                x: (aCallout[2 * 2]) * nScaleX,
-                y: (aCallout[2 * 2 + 1]) * nScaleY
+                x: (aCallout[2 * 2]) * g_dKoef_pt_to_mm,
+                y: (aCallout[2 * 2 + 1]) * g_dKoef_pt_to_mm
             });
             aFreeTextLine90.push({
-                x: (aCallout[2 * 1]) * nScaleX,
-                y: (aCallout[2 * 1 + 1]) * nScaleY
+                x: (aCallout[2 * 1]) * g_dKoef_pt_to_mm,
+                y: (aCallout[2 * 1 + 1]) * g_dKoef_pt_to_mm
             });
         }
         
@@ -610,13 +566,13 @@
         if (aCallout.length != 0) {
             // x2, y2 линии
             aCalloutLine.push({
-                x: aCallout[1 * 2] * nScaleX,
-                y: (aCallout[1 * 2 + 1]) * nScaleY
+                x: aCallout[1 * 2] * g_dKoef_pt_to_mm,
+                y: (aCallout[1 * 2 + 1]) * g_dKoef_pt_to_mm
             });
             // x1, y1 линии
             aCalloutLine.push({
-                x: aCallout[0 * 2] * nScaleX,
-                y: (aCallout[0 * 2 + 1]) * nScaleY
+                x: aCallout[0 * 2] * g_dKoef_pt_to_mm,
+                y: (aCallout[0 * 2 + 1]) * g_dKoef_pt_to_mm
             });
         }
 
@@ -626,8 +582,8 @@
         if (aFreeTextLine90.length != 0)
             aFreeTextPoints.push(aFreeTextLine90);
 
-        let aShapeRectInMM = this.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
+        let aShapeRectInMM = this.GetOrigRect().map(function(measure) {
+            return measure * g_dKoef_pt_to_mm;
         });
 
         oDoc.StartNoHistoryMode();
@@ -1046,6 +1002,10 @@
     };
     CAnnotationFreeText.prototype.SetInTextBox = function(isIn) {
         let oDoc = this.GetDocument();
+        if (this.isInTextBox == isIn) {
+            return;
+        }
+        
         if (isIn) {
             this.selection.textSelection = this.GetTextBoxShape();
             this._prevRect = this.GetRect().slice();
@@ -1184,10 +1144,6 @@
         let nLengthToCheck = oDoc.Viewer.isLandscapePage(nPage) ? oTextBoxShape.extX : oTextBoxShape.extY;
     
         if (nContentH > nLengthToCheck) {
-            let oViewer = Asc.editor.getDocumentRenderer();
-            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-    
             let aCurTextBoxRect = this.GetTextBoxRect();
             
             let xMin = aCurTextBoxRect[0];
@@ -1198,33 +1154,33 @@
             // Adjusting the text box rect based on rotation angle
             switch (nRotAngle) {
                 case 0:
-                    yMax += (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleY;
+                    yMax += (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pt;
                     break;
                 case 90:
-                    xMax += (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleX;
+                    xMax += (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pt;
                     break;
                 case 180:
-                    yMin -= (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleY;
+                    yMin -= (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pt;
                     break;
                 case 270:
-                    xMin -= (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleX;
+                    xMin -= (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pt;
                     break;
             }
     
             let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
     
             // расширяем рект на ширину линии (или на радиус cloud бордера)
-            let nLineWidth = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+            let nLineWidth = this.GetWidth();
             if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
-                aNewTextBoxRect[0] -= this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleX;
-                aNewTextBoxRect[1] -= this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleY;
-                aNewTextBoxRect[2] += this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleX;
-                aNewTextBoxRect[3] += this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleY;
+                aNewTextBoxRect[0] -= this.GetBorderEffectIntensity() * 1.5;
+                aNewTextBoxRect[1] -= this.GetBorderEffectIntensity() * 1.5;
+                aNewTextBoxRect[2] += this.GetBorderEffectIntensity() * 1.5;
+                aNewTextBoxRect[3] += this.GetBorderEffectIntensity() * 1.5;
             } else {
-                aNewTextBoxRect[0] -= nLineWidth * nScaleX;
-                aNewTextBoxRect[1] -= nLineWidth * nScaleY;
-                aNewTextBoxRect[2] += nLineWidth * nScaleX;
-                aNewTextBoxRect[3] += nLineWidth * nScaleY;
+                aNewTextBoxRect[0] -= nLineWidth;
+                aNewTextBoxRect[1] -= nLineWidth;
+                aNewTextBoxRect[2] += nLineWidth;
+                aNewTextBoxRect[3] += nLineWidth;
             }
     
             // находит точку выхода callout для нового ректа textbox
@@ -1291,16 +1247,14 @@
             let aArrowRect = aNewCallout.length != 0 ? this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
     
             // находим результирующий rect аннотации
-            let aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
-                return idx % 2 ? measure * nScaleY : measure * nScaleX;
-            });
+            let aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]);
             
             // пересчитываем RD.
             let aNewRD = [
-                xMin - aNewRect[0] / nScaleX,
-                yMin - aNewRect[1] / nScaleY,
-                aNewRect[2] / nScaleX - xMax,
-                aNewRect[3] / nScaleY - yMax
+                xMin - aNewRect[0],
+                yMin - aNewRect[1],
+                aNewRect[2] - xMax,
+                aNewRect[3] - yMax
             ];
     
             aNewCallout && this.SetCallout(aNewCallout);
@@ -1511,6 +1465,47 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
+    CAnnotationFreeText.prototype.SetPosition = function(x, y) {
+        let oDoc        = this.GetDocument();
+        let aCurRect    = this.GetOrigRect();
+
+        let nOldX = aCurRect[0];
+        let nOldY = aCurRect[1];
+
+        let nDeltaX = x - nOldX;
+        let nDeltaY = y - nOldY;
+
+        if (0 == nDeltaX && 0 == nDeltaY) {
+            return;
+        }
+
+        let aCallout = this.GetCallout();
+        if (aCallout) {
+            for (let i = 0; i < aCallout.length; i+=2) {
+                aCallout[i] += nDeltaX;
+                aCallout[i+1] += nDeltaY;
+            }
+        }
+
+        oDoc.History.Add(new CChangesPDFAnnotPos(this, [aCurRect[0], aCurRect[1]], [x, y]));
+
+        let nWidth  = aCurRect[2] - aCurRect[0];
+        let nHeight = aCurRect[3] - aCurRect[1];
+
+        this._origRect[0] = x;
+        this._origRect[1] = y;
+        this._origRect[2] = x + nWidth;
+        this._origRect[3] = y + nHeight;
+
+        let oXfrm = this.getXfrm();
+        AscCommon.History.StartNoHistoryMode();
+        oXfrm.setOffX((this._origRect[0]) * g_dKoef_pt_to_mm);
+        oXfrm.setOffY((this._origRect[1]) * g_dKoef_pt_to_mm);
+        AscCommon.History.EndNoHistoryMode();
+
+        this.SetNeedRecalc(true);
+        this.SetWasChanged(true);
+    };
 
     // shape methods
     CAnnotationFreeText.canRotate = function() {
@@ -1699,8 +1694,9 @@
     function initGroupShape(oParentFreeText) {
         AscCommon.History.StartNoHistoryMode();
 
-        let aShapeRectInMM = oParentFreeText.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
+        let aRect = oParentFreeText.GetOrigRect() || [];
+        let aShapeRectInMM = aRect.map(function(measure) {
+            return measure * g_dKoef_pt_to_mm;
         });
         let xMax = aShapeRectInMM[2];
         let xMin = aShapeRectInMM[0];
@@ -1766,8 +1762,9 @@
             oShape.spPr.xfrm.setParent(oShape.spPr);
         }
         
-        let aAnnotRect = oParentAnnot.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
+        let aRect = oParentAnnot.GetOrigRect() || [];
+        let aAnnotRect = aRect.map(function(measure) {
+            return measure * g_dKoef_pt_to_mm;
         });
         oShape.setGroup(oParentAnnot);
         oShape.spPr.xfrm.offX = Math.abs(xMin - aAnnotRect[0]);
@@ -1820,7 +1817,7 @@
         }
         
         let aAnnotRect = oParentAnnot.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
+            return measure * g_dKoef_pt_to_mm;
         });
         
         oShape.setGroup(oParentAnnot);

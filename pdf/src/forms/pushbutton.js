@@ -220,8 +220,8 @@
         oDoc.StartNoHistoryMode();
         this.RemoveImage();
         
-        const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
-        const dImgH = Math.max((oHTMLImg.height * AscCommon.g_dKoef_pix_to_mm), 1);
+        const dImgW = Math.max((oHTMLImg.width * g_dKoef_pix_to_mm), 1);
+        const dImgH = Math.max((oHTMLImg.height * g_dKoef_pix_to_mm), 1);
         const oRect = this.IsButtonFitBounds() ? this.getFormRect() : this.getFormRelRect();
         let nContentW = 0;
         let nContentH = 0;
@@ -915,7 +915,7 @@
     CPushButtonField.prototype.CheckImageOnce = function() {
         // на открытии не заполняли контент формы, но если внешнего вида нет, тогда рисуем сами, нужно заполнить форму контентом
         let oDrawing = this.GetDrawing();
-        if (!oDrawing && !this.IsNeedDrawFromStream() && !this._pagePos) {
+        if (!oDrawing && !this.IsNeedDrawFromStream()) {
             this.DoInitialRecalc();
             let oImgData = this._imgData.normal;
             if (oImgData)
@@ -924,22 +924,39 @@
             this.imageChecked = true;
         }
     };
-    CPushButtonField.prototype.CalculateContentRect = function() {
+    CPushButtonField.prototype.CalculateContentClipRect = function() {
         if (!this.content)
             return;
 
-        let aRect       = this.GetRect();
+        let aRect       = this.GetOrigRect();
+        let X           = aRect[0];
         let Y           = aRect[1];
-        let nHeight     = ((aRect[3]) - (aRect[1]));
-        let oMargins    = this.GetMarginsFromBorders(false, false);
+        let nWidth      = aRect[2] - aRect[0];
+        let nHeight     = aRect[3] - aRect[1];
+        let oMargins    = this.GetMarginsFromBorders();
 
-        this.contentRect.X = this.content.X;
-        this.contentRect.Y = (Y + 2 * oMargins.top) * g_dKoef_pix_to_mm;
-        this.contentRect.W = this.content.XLimit - this.content.X;
-        this.contentRect.H = (nHeight - 2 * oMargins.top -  2 * oMargins.bottom) * g_dKoef_pix_to_mm;
+        let contentX;
+        let contentXLimit;
+        
+        if (this.IsButtonFitBounds() == false) {
+            contentX = (X + 2 * oMargins.left) * g_dKoef_pt_to_mm;
+            contentXLimit = (X + nWidth - 2 * oMargins.left) * g_dKoef_pt_to_mm;
+        }
+        else {
+            contentX = (X) * g_dKoef_pt_to_mm;
+            contentXLimit = (X + nWidth) * g_dKoef_pt_to_mm;
+        }
+
+        this.contentClipRect = {
+            X: contentX,
+            Y: (Y + 2 * oMargins.top) * g_dKoef_pt_to_mm,
+            W: contentXLimit - contentX,
+            H: (nHeight - 2 * oMargins.top -  2 * oMargins.bottom) * g_dKoef_pt_to_mm,
+            Page: this.GetPage()
+        };
     };
     CPushButtonField.prototype.DoInitialRecalc = function() {
-        if (!this._pagePos) {
+        if (!this.contentClipRect) {
             this.Recalculate();
         }
     };
@@ -947,22 +964,25 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        let aRect = this.GetRect();
+        this.CheckTextFont();
+        this.CheckTextColor();
         
-        let X       = aRect[0];
-        let Y       = aRect[1];
-        let nWidth  = (aRect[2] - aRect[0]);
-        let nHeight = (aRect[3] - aRect[1]);
+        if (false == this.RecalculateContentRect()) {
+            this.Internal_CorrectContentPos();
+            this.content.Recalculate_Page(0, false);
+        }
 
-        // save pos in page.
-        this._pagePos = {
-            x: X,
-            y: Y,
-            w: nWidth,
-            h: nHeight
-        };
+        this.SetNeedRecalc(false);
+    };
+    CPushButtonField.prototype.RecalculateContentRect = function() {
+        let aOrigRect = this.GetOrigRect();
+        
+        let X       = aOrigRect[0];
+        let Y       = aOrigRect[1];
+        let nWidth  = (aOrigRect[2] - aOrigRect[0]);
+        let nHeight = (aOrigRect[3] - aOrigRect[1]);
 
-        let oMargins = this.GetMarginsFromBorders(false, false);
+        let oMargins = this.GetMarginsFromBorders();
         
         let contentX;
         let contentY;
@@ -970,69 +990,59 @@
         let contentYLimit;
         
         if (this.IsButtonFitBounds() == false) {
-            contentX = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
-            contentY = (Y + 2 * oMargins.top) * g_dKoef_pix_to_mm;
-            contentXLimit = (X + nWidth - 2 * oMargins.left) * g_dKoef_pix_to_mm;
-            contentYLimit = (Y + nHeight - 2 * oMargins.bottom) * g_dKoef_pix_to_mm;
+            contentX = (X + 2 * oMargins.left) * g_dKoef_pt_to_mm;
+            contentY = (Y + 2 * oMargins.top) * g_dKoef_pt_to_mm;
+            contentXLimit = (X + nWidth - 2 * oMargins.left) * g_dKoef_pt_to_mm;
+            contentYLimit = (Y + nHeight - 2 * oMargins.bottom) * g_dKoef_pt_to_mm;
         }
         else {
-            contentX = (X) * g_dKoef_pix_to_mm;
-            contentY = (Y) * g_dKoef_pix_to_mm;
-            contentXLimit = (X + nWidth) * g_dKoef_pix_to_mm;
-            contentYLimit = (Y + nHeight) * g_dKoef_pix_to_mm;
+            contentX = (X) * g_dKoef_pt_to_mm;
+            contentY = (Y) * g_dKoef_pt_to_mm;
+            contentXLimit = (X + nWidth) * g_dKoef_pt_to_mm;
+            contentYLimit = (Y + nHeight) * g_dKoef_pt_to_mm;
         }
 
         if (this.IsPressed() && this.IsHovered() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
             if (this._buttonFitBounds == true) {
-                contentX += oMargins.left * g_dKoef_pix_to_mm;
-                contentY += oMargins.top * g_dKoef_pix_to_mm;
+                contentX += oMargins.left * g_dKoef_pt_to_mm;
+                contentY += oMargins.top * g_dKoef_pt_to_mm;
             }
             else {
                 switch (this.GetBorderStyle()) {
                     case AscPDF.BORDER_TYPES.solid:
                     case AscPDF.BORDER_TYPES.dashed:
                     case AscPDF.BORDER_TYPES.underline:
-                        contentX += oMargins.left * g_dKoef_pix_to_mm;
-                        contentY += oMargins.top * g_dKoef_pix_to_mm;
-                        contentXLimit += oMargins.left * g_dKoef_pix_to_mm;
-                        contentYLimit += oMargins.top * g_dKoef_pix_to_mm;
+                        contentX += oMargins.left * g_dKoef_pt_to_mm;
+                        contentY += oMargins.top * g_dKoef_pt_to_mm;
+                        contentXLimit += oMargins.left * g_dKoef_pt_to_mm;
+                        contentYLimit += oMargins.top * g_dKoef_pt_to_mm;
                         break;
                     case AscPDF.BORDER_TYPES.beveled:
                     case AscPDF.BORDER_TYPES.inset:
-                        contentX += oMargins.left * g_dKoef_pix_to_mm / 2;
-                        contentY += oMargins.top * g_dKoef_pix_to_mm / 2;
-                        contentXLimit += oMargins.left * g_dKoef_pix_to_mm / 2;
-                        contentYLimit += oMargins.top * g_dKoef_pix_to_mm / 2;
+                        contentX += oMargins.left * g_dKoef_pt_to_mm / 2;
+                        contentY += oMargins.top * g_dKoef_pt_to_mm / 2;
+                        contentXLimit += oMargins.left * g_dKoef_pt_to_mm / 2;
+                        contentYLimit += oMargins.top * g_dKoef_pt_to_mm / 2;
                         break;
                 }
             }
         }
 
-        this._formRect.X = X * g_dKoef_pix_to_mm;
-        this._formRect.Y = Y * g_dKoef_pix_to_mm;
-        this._formRect.W = nWidth * g_dKoef_pix_to_mm;
-        this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-        
-        this.CheckTextFont();
-        this.CheckTextColor();
-        
-        if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-            contentXLimit != this._oldContentPos.XLimit) {
-            this.content.X      = this._oldContentPos.X        = contentX;
-            this.content.Y      = this._oldContentPos.Y        = contentY;
-            this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
-            this.content.YLimit = this._oldContentPos.YLimit   = 20000;
+        if (contentX != this.content.X || contentY != this.content.Y ||
+            contentXLimit != this.content.XLimit) {
+            this.content.X      = contentX;
+            this.content.Y      = contentY;
+            this.content.XLimit = contentXLimit;
+            this.content.YLimit = 20000;
             
-            this.CalculateContentRect();
+            this.CalculateContentClipRect();
             this.Internal_CorrectContentPos();
             this.content.Recalculate_Page(0, true);
-        }
-        else if (this.IsNeedRecalc()) {
-            this.Internal_CorrectContentPos();
-            this.content.Recalculate_Page(0, false);
+
+            return true;
         }
 
-        this.SetNeedRecalc(false);
+        return false;
     };
     CPushButtonField.prototype.CheckTextColor = function() {
         let oCaptionRun = this.GetCaptionRun();
@@ -1228,9 +1238,11 @@
         else
             callbackAfterFocus.bind(this)();
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (false == isInFocus) {
-            this.onFocus();
+        if (isInFocus) {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        }
+        else {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         }
     };
     CPushButtonField.prototype.onMouseUp = function() {
@@ -1252,22 +1264,24 @@
         this.OnEndRollover();
     };
     CPushButtonField.prototype.buttonImportIcon = function() {
-        let Api = editor;
-        let oThis = this;
+        let Api             = editor;
+        let oThis           = this;
+        let oDoc            = this.GetDocument();
+        let oActionsQueue   = oDoc.GetActionsQueue();
 
-        let oActionsQueue = this.GetDocument().GetActionsQueue();
-        if (oActionsQueue instanceof AscPDF.CActionRunScript)
-            oActionsQueue.bContinueAfterEval = false;
+        if (oActionsQueue.curAction) {
+            oActionsQueue.curAction.bContinueAfterEval = false;
+        }
         
         Api.oSaveObjectForAddImage = this;
+
+        AscCommon.global_mouseEvent.LockMouse();
         if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
             window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
                 var file = _file;
                 if (Array.isArray(file))
                     file = file[0];
                 if (!file) {
-                    let oDoc            = oThis.GetDocument();
-                    let oActionsQueue   = oDoc.GetActionsQueue();
                     oActionsQueue.Continue();
                     return;
                 }
@@ -1277,23 +1291,23 @@
             });
         }
         else {
-            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function(error, files)
-            {
+            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function(error, files) {
                 if (error.canceled == true) {
-                    let oDoc            = oThis.GetDocument();
-                    let oActionsQueue   = oDoc.GetActionsQueue();
                     oActionsQueue.Continue();
                 }
-                else
+                else {
                     Api._uploadCallback(error, files, oThis);
+                }
 
-            }, function(error)
-            {
-                if (c_oAscError.ID.No !== error)
-                {
+                AscCommon.global_mouseEvent.UnLockMouse();
+
+            }, function(error) {
+                if (c_oAscError.ID.No !== error) {
                     Api.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
                 }
+
                 Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+                AscCommon.global_mouseEvent.UnLockMouse();
             });
         }
     };

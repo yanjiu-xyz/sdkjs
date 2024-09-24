@@ -66,6 +66,9 @@
     CPdfDrawingPrototype.prototype.IsDrawing = function() {
         return true;
     };
+    CPdfDrawingPrototype.prototype.IsPdfObject = function() {
+        return true;
+    };
     CPdfDrawingPrototype.prototype.OnContentChange = function() {
         return this.SetNeedRecalc(true);
     };
@@ -202,7 +205,7 @@
                             let oPt3 = oDrDoc.TextMatrix.TransformPoint(x + w, y + h);    // правый нижний
                             let oPt4 = oDrDoc.TextMatrix.TransformPoint(x, y + h);        // левый нижний
 
-                            let nKoeff = (96 / oFile.pages[nPage].Dpi) * g_dKoef_pix_to_mm;
+                            let nKoeff = oViewer.getDrawingPageScale(nPage) * g_dKoef_pix_to_mm;
 
                             oInfo.quads.push([oPt1.x / nKoeff, oPt1.y / nKoeff, oPt2.x / nKoeff, oPt2.y / nKoeff, oPt4.x / nKoeff, oPt4.y / nKoeff, oPt3.x / nKoeff, oPt3.y / nKoeff]);
                         }
@@ -219,14 +222,10 @@
         return aInfo;
     };
     CPdfDrawingPrototype.prototype.GetOrigRect = function() {
-        let oFile = this.GetDocument().Viewer.file;
-        let nPage = this.GetPage();
-        let nKoeff = (96 / oFile.pages[nPage].Dpi) * g_dKoef_pix_to_mm;
-
         let oXfrm = this.getXfrm();
 
-        return [oXfrm.offX / nKoeff, oXfrm.offY / nKoeff, (oXfrm.offX + this.extX) / nKoeff, (oXfrm.offY + this.extY) / nKoeff];
-    }
+        return [oXfrm.offX * g_dKoef_mm_to_pt, oXfrm.offY * g_dKoef_mm_to_pt, (oXfrm.offX + this.extX) * g_dKoef_mm_to_pt, (oXfrm.offY + this.extY) * g_dKoef_mm_to_pt];
+    };
     CPdfDrawingPrototype.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;
     };
@@ -300,7 +299,7 @@
     };
     CPdfDrawingPrototype.prototype.GetPage = function() {
         if (this.group)
-            return this.group.Get_AbsolutePage();
+            return this.group.GetPage();
         
         return this._page;
     };
@@ -336,7 +335,11 @@
             this._needRecalc = false;
         }
         else {
-            if (this.group && this.group.IsAnnot()) {
+            if (this.group) {
+                if (!this.group.IsPdfObject || !this.group.IsPdfObject()) {
+                    return;
+                }
+
                 this.group.SetNeedRecalc(bRecalc, bSkipAddToRedraw);
                 return;
             }
@@ -430,8 +433,8 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfDrawingPrototype.prototype.Get_AbsolutePage = function() {
-        return this.GetPage();
+    CPdfDrawingPrototype.prototype.Get_AbsolutePage = function(nCurPage) {
+        return this.GetPage() != undefined ? this.GetPage() : nCurPage;
     };
     CPdfDrawingPrototype.prototype.getLogicDocument = function() {
         return this.GetDocument();

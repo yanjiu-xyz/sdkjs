@@ -34,19 +34,18 @@
 (function (window) {
 	const Literals			= AscMath.MathLiterals;
 	const Struc				= AscMath.MathStructures;
-
 	const ConvertTokens		= AscMath.ConvertTokens;
 	const Tokenizer			= AscMath.Tokenizer;
-	const LimitFunctions	= AscMath.LimitFunctions;
 	const GetTypeFont		= AscMath.GetTypeFont;
 	const GetMathFontChar	= AscMath.GetMathFontChar;
 
-	function CLaTeXParser() {
-		this.oTokenizer = new Tokenizer(true);
-		this.intMathFontType = -1;
-		this.isReceiveOneTokenAtTime = false;
-		this.isNowMatrix = false;
-		this.EscapeSymbol = "";
+	function CLaTeXParser()
+	{
+		this.oTokenizer					= new Tokenizer(true);
+		this.intMathFontType			= -1;
+		this.isReceiveOneTokenAtTime	= false;
+		this.isNowMatrix				= false;
+		this.EscapeSymbol				= "";
 	}
 	CLaTeXParser.prototype.IsNotEscapeSymbol = function ()
 	{
@@ -76,7 +75,9 @@
 		}
 		else
 		{
-			while (this.oLookahead.class === arrTypeOfLiteral.id && this.EscapeSymbol !== this.oLookahead.data)
+			while (this.oLookahead.class === arrTypeOfLiteral.id
+				&& this.EscapeSymbol !== this.oLookahead.data
+				&& (styles.length === 0 || styles[styles.length - 1].IsStyleEqual(this.oLookahead.style)))
 			{
 				let oCurrentItem	= this.oLookahead;
 				let strCurrent		= oCurrentItem.data;
@@ -364,7 +365,11 @@
 
 			this.EatToken(this.oLookahead.class);
 
-			if (this.oLookahead.class === Literals.lBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id || this.oLookahead.class === Literals.rBrackets.id)
+			if (this.oLookahead.data !== "\\left"
+				&& this.oLookahead.class === Literals.lBrackets.id
+					|| this.oLookahead.data === "."
+					|| this.oLookahead.class === Literals.lrBrackets.id
+					|| this.oLookahead.class === Literals.rBrackets.id)
 			{
 				startStyle = this.oLookahead.style;
 				strLeftSymbol = this.EatToken(this.oLookahead.class).data;
@@ -391,7 +396,11 @@
 					isRightAndLeft = false;
 
 				this.EatToken(this.oLookahead.class);
-				if (this.oLookahead.class === Literals.rBrackets.id || this.oLookahead.data === "." || this.oLookahead.class === Literals.lrBrackets.id || this.oLookahead.class === Literals.lBrackets.id)
+				if (this.oLookahead.data !== "\\right"
+					&& this.oLookahead.class === Literals.rBrackets.id
+						|| this.oLookahead.data === "."
+						|| this.oLookahead.class === Literals.lrBrackets.id
+						|| this.oLookahead.class === Literals.lBrackets.id)
 				{
 					endStyle = this.oLookahead.style;
 					strRightSymbol = this.EatToken(this.oLookahead.class).data;
@@ -450,31 +459,38 @@
 		let arrContent = [];
 		let intCountOfBracketBlock = 1;
 
-		while (this.IsElementLiteral() || this.oLookahead.data === "∣" || this.oLookahead.data === "\\mid"|| this.oLookahead.data === "ⓜ")
+		while (this.IsElementLiteral()
+			|| this.oLookahead.data === "∣"
+			|| this.oLookahead.data === "\\mid"
+			|| this.oLookahead.data === "ⓜ")
 		{
 			if (strLeftSymbol && this.oLookahead.data === strLeftSymbol)
 				break;
+
 			if (this.oLookahead.data === "\\right")
 				break;
 
 			if (this.IsElementLiteral())
 			{
-				if (arrContent.length === 0)
-				{
-					this.SkipFreeSpace();
-				}
+				// normal space always skip in LaTeX brackets
+				this.SkipFreeSpace();
 
 				let oToken = [this.GetExpressionLiteral([strLeftSymbol])];
 				if ((oToken && !Array.isArray(oToken)) || Array.isArray(oToken) && oToken.length > 0)
 				{
 					arrContent.push(oToken)
 				}
+
+				// normal space always skip in LaTeX brackets
+				this.SkipFreeSpace();
 			}
 			else
 			{
 				arrMiddleStyles.push(this.oLookahead.style)
 				this.EatToken(this.oLookahead.class);
 				intCountOfBracketBlock++;
+				// normal space always skip in LaTeX brackets
+				this.SkipFreeSpace();
 			}
 		}
 
@@ -781,6 +797,7 @@
 				type: Struc.nary,
 				value: Literals.nary.LaTeX[oFuncContent.data],
 				style: oPr,
+				thirdStyle: oPr,
 				third: oThirdContent,
 			}
 		}
@@ -984,7 +1001,7 @@
 			isLimits = true;
 		}
 
-		if (oBaseContent.type === Struc.bracket_block && oBaseContent.left === "{" && oBaseContent.right === "}")
+		if (oBaseContent && oBaseContent.type === Struc.bracket_block && oBaseContent.left === "{" && oBaseContent.right === "}")
 		{
 			oBaseContent = oBaseContent.value;
 		}

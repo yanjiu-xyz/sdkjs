@@ -2219,8 +2219,14 @@
 				let oViewer = Asc.editor.getDocumentRenderer();
 				let oDoc = oViewer.doc;
 				let oActionsQueue = oDoc.GetActionsQueue();
+
+				function cancelFileDialog() {
+					AscCommon.global_mouseEvent.UnLockMouse();
+					oActionsQueue.Continue();
+				}
+
 				if (oActionsQueue.IsInProgress()) {
-					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
+					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), cancelFileDialog);
 				}
 				else 
 					fileName.click();
@@ -4357,6 +4363,11 @@
 				oLogicDocument.TrackRevisionsManager.ClearSelectedChanges();
 				oLogicDocument.Document_UpdateInterfaceState(false);
 			}
+		}
+		let oCustomProperties = oApi.getCustomProperties();
+		if(oCustomProperties && oCustomProperties.Lock === this)
+		{
+			oApi.sendEvent("asc_onCustomPropertiesLocked", this.Is_Locked());
 		}
 	};
 	CLock.prototype.Check = function (Id)
@@ -14817,7 +14828,7 @@
 	window["AscCommon"].getArrayRandomElement = getArrayRandomElement;
 })(window);
 
-window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
+window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_data)
 {
     if (window.isNativeOpenPassword)
 	{
@@ -14847,7 +14858,14 @@ window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
     }
 
     window.checkPasswordFromPlugin = false;
-    _editor._onNeedParams(undefined, (_code == 90 || _code == 91) ? true : undefined);
+	let data = undefined;
+	if (csv_data && window["AscDesktopEditor"])
+	{
+		var bufferArray = window["AscDesktopEditor"]["GetOpenedFile"](csv_data);
+		if (bufferArray)
+			data = new Uint8Array(bufferArray);
+	}
+    _editor._onNeedParams(data, (_code == 90 || _code == 91) ? true : undefined);
 };
 
 window["asc_IsNeedBuildCryptedFile"] = function()
