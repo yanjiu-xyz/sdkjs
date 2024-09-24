@@ -34,9 +34,9 @@
 
 (function (window) {
 	const g_clr_accent1 = 0;
-	const g_clr_lt1 = 0;
-	const g_clr_tx1 = 0;
-	const g_clr_dk1 = 0;
+	const g_clr_lt1 = 12;
+	const g_clr_tx1 = 15;
+	const g_clr_dk1 = 8;
 
 
 
@@ -153,6 +153,12 @@
 			if (sampConstr.fact !== undefined) {
 				constr.setFact(sampConstr.fact);
 			}
+			if (sampConstr.val !== undefined) {
+				constr.setVal(sampConstr.val);
+			}
+			if (sampConstr.op !== undefined) {
+				constr.setOp(sampConstr.op);
+			}
 			elem.addToLst(0, constr);
 		}
 		return elem;
@@ -177,6 +183,9 @@
 			if (sampRule.max !== undefined) {
 				rule.setMax(sampRule.max);
 			}
+			if (sampRule.val !== undefined) {
+				rule.setVal(sampRule.val);
+			}
 			elem.addToLst(0, rule);
 		}
 		return elem;
@@ -196,7 +205,9 @@
 		elem.setName(info.name);
 		elem.addToLstAxis(0, axis(info.axis));
 		elem.addToLstPtType(0, ptType(info.ptType));
-		elem.addToLstCnt(0, info.cnt);
+		if (info.cnt !== undefined) {
+			elem.addToLstCnt(0, info.cnt);
+		}
 		generateChildren(elem, info.children);
 		return elem;
 	}
@@ -237,6 +248,9 @@
 					const sampPt = data.dataModel.ptLst[i];
 					const pt = new AscFormat.Point();
 					pt.setModelId(sampPt.id);
+					if (sampPt.type !== undefined) {
+						pt.setType(sampPt.type);
+					}
 					if (sampPt.prSet) {
 						pt.setPrSet(new AscFormat.PrSet());
 						if (sampPt.prSet.phldr) {
@@ -628,7 +642,7 @@
 		const category = new AscFormat.SCat();
 		category.setType("list");
 		category.setPri(400);
-		layoutDef.catLst.addToLst(category);
+		layoutDef.catLst.addToLst(0, category);
 		layoutDef.setSampData(generateSampData(defaultLayoutPreset.sampData));
 		layoutDef.setStyleData(generateSampData(defaultLayoutPreset.styleData));
 		layoutDef.setClrData(generateSampData(defaultLayoutPreset.clrData));
@@ -702,6 +716,15 @@
 				styleDef.addToLstStyleLbl(styleDef.styleLbl.length, generateStyleStyleLbl(info.names[j], color, idx));
 			}
 		}
+		//fixme
+		const templateOrd = ["node0", "lnNode1", "vennNode1", "alignNode1", "node1", "node2", "node3", "node4", "fgImgPlace1", "alignImgPlace1", "bgImgPlace1", "sibTrans2D1", "fgSibTrans2D1", "bgSibTrans2D1", "sibTrans1D1", "callout", "asst0", "asst1", "asst2", "asst3", "asst4", "parChTrans2D1", "parChTrans2D2", "parChTrans2D3", "parChTrans2D4", "parChTrans1D1", "parChTrans1D2", "parChTrans1D3", "parChTrans1D4", "fgAcc1", "conFgAcc1", "alignAcc1", "trAlignAcc1", "bgAcc1", "solidFgAcc1", "solidAlignAcc1", "solidBgAcc1", "fgAccFollowNode1", "alignAccFollowNode1", "bgAccFollowNode1", "fgAcc0", "fgAcc2", "fgAcc3", "fgAcc4", "bgShp", "dkBgShp", "trBgShp", "fgShp", "revTx"];
+		const map = {};
+		for (let j = 0; j < templateOrd.length; j += 1) {
+			map[templateOrd[j]] = j;
+		}
+		styleDef.styleLbl.sort(function (a, b) {
+			return map[a.name] - map[b.name];
+		})
 		return styleDef;
 	}
 	function generateScene3d() {
@@ -951,9 +974,11 @@
 
 		const colors = new AscFormat.ColorsDef();
 		colors.setUniqueId("urn:microsoft.com/office/officeart/2005/8/colors/accent1_2");
+		colors.setTitle(new AscFormat.DiagramTitle());
+		colors.setDesc(new AscFormat.DiagramTitle());
 		colors.setCatLst(new AscFormat.CatLst());
 		const cat = new AscFormat.SCat();
-		colors.catLst.addToLst(cat);
+		colors.catLst.addToLst(0, cat);
 		cat.setType("accent1");
 		cat.setPri(11200);
 		for (let i = 0; i < presetStyleLbl.length; i++) {
