@@ -40,360 +40,192 @@
 
 
 
-	const defaultLayout = {
-		sampData: {
-			dataModel: {
-				ptLst: [
-					{
-						id: "0",
-						type: AscFormat.Point_type_doc
-					},
-					{
-						id: "1",
-						prSet: {
-							phldr: true
-						}
-					},
-					{
-						id: "2",
-						prSet: {
-							phldr: true
-						}
-					},
-					{
-						id: "3",
-						prSet: {
-							phldr: true
-						}
-					},
-					{
-						id: "4",
-						prSet: {
-							phldr: true
-						}
-					},
-					{
-						id: "5",
-						prSet: {
-							phldr: true
-						}
-					}
-				],
-				cxnLst: [
-					{
-						modelId: "6",
-						srcId: "0",
-						destId: "1",
-						srcOrd: "0",
-						destOrd: "0"
-					},
-					{
-						modelId: "7",
-						srcId: "0",
-						destId: "2",
-						srcOrd: "1",
-						destOrd: "0"
-					},
-					{
-						modelId: "8",
-						srcId: "0",
-						destId: "3",
-						srcOrd: "2",
-						destOrd: "0"
-					},
-					{
-						modelId: "9",
-						srcId: "0",
-						destId: "4",
-						srcOrd: "3",
-						destOrd: "0"
-					},
-					{
-						modelId: "10",
-						srcId: "0",
-						destId: "5",
-						srcOrd: "4",
-						destOrd: "0"
-					}
-				],
-				bg: {},
-				whole: {}
-			}
-		},
-		styleData: {
-			dataModel: {
-				ptLst: [
-					{
-						id: "0",
-						type: AscFormat.Point_type_doc
-					},
-					{id: "1"},
-					{id: "2"}
-				],
-				cxnLst: [
-					{
-						modelId: "3",
-						srcId: "0",
-						destId: "1",
-						srcOrd: "0",
-						destOrd: "0"
-					},
-					{
-						modelId: "4",
-						srcId: "0",
-						destId: "2",
-						srcOrd: "1",
-						destOrd: "0"
-					}
-				],
-				bg: {},
-				whole: {}
-			}
-		},
-		clrData: {
-			dataModel: {
-				ptLst: [
-					{
-						id: "0",
-						type: AscFormat.Point_type_doc
-					},
-					{id: "1"},
-					{id: "2"},
-					{id: "3"},
-					{id: "4"},
-					{id: "5"},
-					{id: "6"}
-				],
-				cxnLst: [
-					{
-						modelId: "7",
-						srcId: "0",
-						destId: "1",
-						srcOrd: "0",
-						destOrd: "0"
-					},
-					{
-						modelId: "8",
-						srcId: "0",
-						destId: "2",
-						srcOrd: "1",
-						destOrd: "0"
-					},
-					{
-						modelId: "9",
-						srcId: "0",
-						destId: "3",
-						srcOrd: "2",
-						destOrd: "0"
-					},
-					{
-						modelId: "10",
-						srcId: "0",
-						destId: "4",
-						srcOrd: "3",
-						destOrd: "0"
-					},
-					{
-						modelId: "11",
-						srcId: "0",
-						destId: "5",
-						srcOrd: "4",
-						destOrd: "0"
-					},
-					{
-						modelId: "12",
-						srcId: "0",
-						destId: "6",
-						srcOrd: "5",
-						destOrd: "0"
-					}
-				],
-				bg: {},
-				whole: {}
-			}
-		},
-		layoutNode: {
-			name: "diagram",
-			children: [
-				{
-					varLst: {
-						dir: {},
-						resizeHandles: {
-							val: AscFormat.ResizeHandles_val_exact
-						}
-					}
-				},
-				{
-					choose: {
-						name: "Name0",
-						layoutElse: {
-							name: "Name2",
-							children: [
-								{
-									alg: {
-										type: AscFormat.Alg_type_snake,
-										params: [
-											{type: AscFormat.Param_type_grDir, val: "tR"},
-											{type: AscFormat.Param_type_flowDir, val: "row"},
-											{type: AscFormat.Param_type_contDir, val: "sameDir"},
-											{type: AscFormat.Param_type_off, val: "ctr"}
-										]
-									}
-								}
-							]
-						},
-						ifArray: [{
-							name: "Name1",
-							func: AscFormat.If_func_var,
-							arg: AscFormat.If_arg_dir,
-							op: AscFormat.If_op_equ,
-							val: "norm",
-							children: [
-								{
-									alg: {
-										type: AscFormat.Alg_type_snake,
-										params: [
-											{type: AscFormat.Param_type_grDir, val: "tL"},
-											{type: AscFormat.Param_type_flowDir, val: "row"},
-											{type: AscFormat.Param_type_contDir, val: "sameDir"},
-											{type: AscFormat.Param_type_off, val: "ctr"}
-										]
-									}
-								}
-							]
-						}]
-					}
-				},
-				{
-					shape: {
-						blip: "",
-						adjLst: []
-					}
-				},
-				{
-					presOf: {}
-				},
-				{
-					constrLst:
-						[
-							{type:AscFormat.Constr_type_w, for: AscFormat.Constr_for_ch, forName: "node", refType: AscFormat.Constr_type_w},
-							{type:AscFormat.Constr_type_h, for: AscFormat.Constr_for_ch, forName: "node", refType: AscFormat.Constr_type_w, refFor: AscFormat.Constr_for_ch, refForName: "node", fact: 0.6},
-							{type:AscFormat.Constr_type_w, for: AscFormat.Constr_for_ch, forName: "sibTrans", refType: AscFormat.Constr_type_w, refFor: AscFormat.Constr_for_ch, refForName: "node", fact: 0.1},
-							{type:AscFormat.Constr_type_sp, refType: AscFormat.Constr_type_w, refFor: AscFormat.Constr_for_ch, refForName: "sibTrans"},
-							{type:AscFormat.Constr_type_primFontSz, for: AscFormat.Constr_for_ch, forName: "node", op: AscFormat.Constr_op_equ, val: 65}
-					]
-				},
-				{ruleLst: {}},
-				{
-					forEach: {
-						name: "Name3",
-						axis: AscFormat.AxisType_value_ch,
-						ptType: AscFormat.ElementType_value_node,
-						children: [
-							{
-								layoutNode: {
-									name: "node",
-									children: [
-										{
-										varLst: {
-											bulletEnabled: {
-												val: true
-											}
-										}
-										},
-										{
-											alg: {
-												type: AscFormat.Alg_type_tx
-											}
-										},
-										{
-											shape: {
-												type: AscFormat.LayoutShapeType_shapeType_rect,
-												blip: "",
-												adjLst: []
 
-											}
-										},
-										{
-											presOf: {
-												axis: AscFormat.AxisType_value_desOrSelf,
-												ptType: AscFormat.ElementType_value_node
-											}
-										},
-										{
-											constrLst: [
-												{type: AscFormat.Constr_type_lMarg, refType: AscFormat.Constr_type_primFontSz, fact: 0.3},
-												{type: AscFormat.Constr_type_rMarg, refType: AscFormat.Constr_type_primFontSz, fact: 0.3},
-												{type: AscFormat.Constr_type_tMarg, refType: AscFormat.Constr_type_primFontSz, fact: 0.3},
-												{type: AscFormat.Constr_type_bMarg, refType: AscFormat.Constr_type_primFontSz, fact: 0.3}
-											]
-										},
-										{
-											ruleLst: [
-												{
-													type: AscFormat.Constr_type_primFontSz,
-													val: 5,
-													fact: NaN,
-													max: NaN
-												}
-											]
-										}
-									]
-								}
-							},
-							{
-								forEach: {
-									name: "Name4",
-									axis: AscFormat.AxisType_value_followSib,
-									ptType: AscFormat.ElementType_value_sibTrans,
-									cnt: 1,
-									children: [
-										{
-											layoutNode: {
-												name: "sibTrans",
-												children: [
-													{
-														alg: {
-															type: AscFormat.Alg_type_sp
-														}
-													},
-													{
-														shape: {
-															adjLst: [],
-															blip: ""
-														}
-													},
-													{
-														presOf: {}
-													},
-													{
-														constrLst: []
-													},
-													{
-														ruleLst: []
-													}
-												]
-											}
-										}
-									]
-								}
-							}
-						]
-					}
-				}
-			]
+	function generateChildren(parent, children) {
+		if (!children) {
+			return;
 		}
-	};
-	function layoutNode(name) {
+		for (let i = children.length - 1; i >= 0; i -= 1) {
+			const templateChild = children[i];
+			let child;
+			if (templateChild.layoutNode) {
+				child = layoutNode(templateChild.layoutNode);
+			} else if (templateChild.varLst) {
+				child = varLst(templateChild.varLst);
+			} else if (templateChild.alg) {
+				child = alg(templateChild.alg);
+			} else if (templateChild.shape) {
+				child = shape(templateChild.shape);
+			} else if (templateChild.presOf) {
+				child = presOf(templateChild.presOf);
+			} else if (templateChild.constrLst) {
+				child = constrLst(templateChild.constrLst);
+			} else if (templateChild.ruleLst) {
+				child = ruleLst(templateChild.ruleLst);
+			} else if (templateChild.forEach) {
+				child = forEach(templateChild.forEach);
+			} else if (templateChild.choose) {
+				child = choose(templateChild.choose);
+			}
+			if (child) {
+				if (parent.addToLst) {
+					parent.addToLst(0, child);
+				} else if (parent.addToLstList) {
+					parent.addToLstList(0, child);
+				}
+
+			}
+		}
+	}
+	function varLst(info) {
+		const lst = new AscFormat.VarLst();
+		if (info.bulletEnabled) {
+			lst.setBulletEnabled(new AscFormat.BulletEnabled());
+			lst.bulletEnabled.setVal(info.bulletEnabled.val);
+		}
+		if (info.dir) {
+			lst.setDir(new AscFormat.DiagramDirection());
+		}
+		if (info.resizeHandles) {
+			lst.setResizeHandles(new AscFormat.ResizeHandles());
+			lst.resizeHandles.setVal(info.resizeHandles.val);
+		}
+		return lst;
+	}
+	function alg(info) {
+		const elem = new AscFormat.Alg();
+		elem.setType(info.type);
+		if (info.params) {
+			for (let i = info.params.length - 1; i >= 0; i -= 1) {
+				const sampParam = info.params[i];
+				const param = new AscFormat.Param();
+				param.setType(sampParam.type);
+				param.setVal(sampParam.val);
+				elem.addToLstParam(0, param);
+			}
+		}
+		return elem;
+	}
+	function shape(info) {
+		const elem = new AscFormat.SShape();
+		elem.setBlip(info.blip);
+		if (info.type !== undefined) {
+			elem.setType(info.type);
+		}
+		if (info.adjLst) {
+			elem.setAdjLst(new AscFormat.AdjLst());
+		}
+		return elem;
+	}
+	function presOf(info) {
+		const elem = new AscFormat.PresOf();
+		if (info.axis !== undefined) {
+			elem.addToLstAxis(0, axis(info.axis));
+		}
+		if (info.ptType !== undefined) {
+			elem.addToLstPtType(0, ptType(info.ptType));
+		}
+		return elem;
+	}
+	function constrLst(info) {
+		const elem = new AscFormat.ConstrLst();
+		for (let i = info.length - 1; i >= 0; i -= 1) {
+			const sampConstr = info[i];
+			const constr = new AscFormat.Constr();
+			if (sampConstr.type !== undefined) {
+				constr.setType(sampConstr.type);
+			}
+			if (sampConstr.refType !== undefined) {
+				constr.setRefType(sampConstr.refType);
+			}
+			if (sampConstr.for !== undefined) {
+				constr.setFor(sampConstr.for);
+			}
+			if (sampConstr.refFor !== undefined) {
+				constr.setRefFor(sampConstr.refFor);
+			}
+			if (sampConstr.forName !== undefined) {
+				constr.setForName(sampConstr.forName);
+			}
+			if (sampConstr.refForName !== undefined) {
+				constr.setRefForName(sampConstr.refForName);
+			}
+			if (sampConstr.fact !== undefined) {
+				constr.setFact(sampConstr.fact);
+			}
+			elem.addToLst(0, constr);
+		}
+		return elem;
+	}
+	function ruleLst(info) {
+		const elem = new AscFormat.RuleLst();
+		for (let i = info.length - 1; i >= 0; i -= 1) {
+			const sampRule = info[i];
+			const rule = new AscFormat.Rule();
+			if (sampRule.type !== undefined) {
+				rule.setType(sampRule.type);
+			}
+			if (sampRule.for !== undefined) {
+				rule.setFor(sampRule.for);
+			}
+			if (sampRule.forName !== undefined) {
+				rule.setForName(sampRule.forName);
+			}
+			if (sampRule.fact !== undefined) {
+				rule.setFact(sampRule.fact);
+			}
+			if (sampRule.max !== undefined) {
+				rule.setMax(sampRule.max);
+			}
+			elem.addToLst(0, rule);
+		}
+		return elem;
+	}
+	function axis(type) {
+		const elem = new AscFormat.AxisType();
+		elem.setVal(type);
+		return elem;
+	}
+	function ptType(type) {
+		const elem = new AscFormat.ElementType();
+		elem.setVal(type);
+		return elem;
+	}
+	function forEach(info) {
+		const elem = new AscFormat.ForEach();
+		elem.setName(info.name);
+		elem.addToLstAxis(0, axis(info.axis));
+		elem.addToLstPtType(0, ptType(info.ptType));
+		elem.addToLstCnt(0, info.cnt);
+		generateChildren(elem, info.children);
+		return elem;
+	}
+	function choose(info) {
+		const elem = new AscFormat.Choose();
+		elem.setName(info.name);
+		const chooseElse = new AscFormat.Else();
+		chooseElse.setName(info.layoutElse.name);
+		generateChildren(chooseElse, info.layoutElse.children);
+		elem.setElse(chooseElse);
+		for (let i = info.ifArray.length - 1; i >= 0; i -= 1) {
+			const ifInfo = info.ifArray[i];
+			const chooseIf = new AscFormat.If();
+			chooseIf.setName(ifInfo.name);
+			chooseIf.setFunc(ifInfo.func);
+			chooseIf.setArg(ifInfo.arg);
+			chooseIf.setVal(ifInfo.val);
+			chooseIf.setOp(ifInfo.op);
+			generateChildren(chooseIf, ifInfo.children);
+			elem.addToLstIf(0, chooseIf);
+		}
+		return elem;
+	}
+	function layoutNode(info) {
 		const node = new AscFormat.LayoutNode();
+		const name = info.name;
 		node.setName(name);
+		generateChildren(node, info.children);
 		return node;
-	}
-	function choose(ifArray, elseChoose) {
-		
-	}
-	function createIf() {
-		
 	}
 	function generateSampData(data) {
 		const sampData = new AscFormat.SampData();
@@ -432,67 +264,426 @@
 				}
 				dataModel.setCxnLst(cxnLst);
 			}
+			if (data.dataModel.bg) {
+				dataModel.setBg(new AscFormat.BgFormat());
+			}
+			if (data.dataModel.whole) {
+				dataModel.setWhole(new AscFormat.Whole());
+			}
 			sampData.setDataModel(dataModel);
 		}
-	}
-	function generateDefaultLayout() {
-
-	}
-	
-	function param() {
-		
-	}
-	
-	function constr() {
-		
+		return sampData;
 	}
 
-	const defaultStylesInfo = [
-		{
-			names: ["fgImgPlace1", "alignImgPlace1", "bgImgPlace1", "callout",
-				"fgAcc1", "conFgAcc1", "alignAcc1", "bgAcc1", "solidFgAcc1",
-				"solidAlignAcc1", "solidBgAcc1", "fgAccFollowNode1", "alignAccFollowNode1", "bgAccFollowNode1", "fgAcc0", "fgAcc2",
-				"fgAcc3", "fgAcc4", "fgShp"],
-			idx: [2, 1, 0]
-		},
-		{
-			names: ["revTx"],
-			idx: [0, 0, 0]
-		},
-		{
-			names: ["bgShp", "dkBgShp", "trBgShp"],
-			idx: [0, 1, 0]
-		},
-		{
-			names: ["trAlignAcc1"],
-			idx: [1, 1, 0]
-		},
-		{
-			names: ["parChTrans1D1", "parChTrans1D2", "parChTrans1D3", "parChTrans1D4"],
-			idx: [2, 0, 0]
-		},
-		{
-			names: ["sibTrans1D1"],
-			idx: [1, 0, 0]
-		},
-		{
-			names: ["node0", "lnNode1", "alignNode1", "node1", "node2", "node3", "node4", "sibTrans2D1",
-				"asst0", "asst1", "asst2", "asst3", "asst4", "parChTrans2D1", "parChTrans2D2", "parChTrans2D3", "parChTrans2D4"],
-			clr: {type: g_clr_lt1},
-			idx: [2, 1, 0]
-		},
-		{
-			names: ["sibTrans2D1", "fgSibTrans2D1", "bgSibTrans2D1"],
-			clr: {type: g_clr_lt1},
-			idx: [0, 1, 0]
-		},
-		{
-			names: ["vennNode1"],
-			clr: {type: g_clr_tx1},
-			idx: [2, 1, 0]
-		}
-	];
-	function generateDefaultStyles() {
+	function generateDefaultSmartArtLayout() {
+		const defaultLayoutPreset = {
+			sampData: {
+				dataModel: {
+					ptLst: [
+						{
+							id: "0",
+							type: AscFormat.Point_type_doc
+						},
+						{
+							id: "1",
+							prSet: {
+								phldr: true
+							}
+						},
+						{
+							id: "2",
+							prSet: {
+								phldr: true
+							}
+						},
+						{
+							id: "3",
+							prSet: {
+								phldr: true
+							}
+						},
+						{
+							id: "4",
+							prSet: {
+								phldr: true
+							}
+						},
+						{
+							id: "5",
+							prSet: {
+								phldr: true
+							}
+						}
+					],
+					cxnLst: [
+						{
+							modelId: "6",
+							srcId: "0",
+							destId: "1",
+							srcOrd: "0",
+							destOrd: "0"
+						},
+						{
+							modelId: "7",
+							srcId: "0",
+							destId: "2",
+							srcOrd: "1",
+							destOrd: "0"
+						},
+						{
+							modelId: "8",
+							srcId: "0",
+							destId: "3",
+							srcOrd: "2",
+							destOrd: "0"
+						},
+						{
+							modelId: "9",
+							srcId: "0",
+							destId: "4",
+							srcOrd: "3",
+							destOrd: "0"
+						},
+						{
+							modelId: "10",
+							srcId: "0",
+							destId: "5",
+							srcOrd: "4",
+							destOrd: "0"
+						}
+					],
+					bg: {},
+					whole: {}
+				}
+			},
+			styleData: {
+				dataModel: {
+					ptLst: [
+						{
+							id: "0",
+							type: AscFormat.Point_type_doc
+						},
+						{id: "1"},
+						{id: "2"}
+					],
+					cxnLst: [
+						{
+							modelId: "3",
+							srcId: "0",
+							destId: "1",
+							srcOrd: "0",
+							destOrd: "0"
+						},
+						{
+							modelId: "4",
+							srcId: "0",
+							destId: "2",
+							srcOrd: "1",
+							destOrd: "0"
+						}
+					],
+					bg: {},
+					whole: {}
+				}
+			},
+			clrData: {
+				dataModel: {
+					ptLst: [
+						{
+							id: "0",
+							type: AscFormat.Point_type_doc
+						},
+						{id: "1"},
+						{id: "2"},
+						{id: "3"},
+						{id: "4"},
+						{id: "5"},
+						{id: "6"}
+					],
+					cxnLst: [
+						{
+							modelId: "7",
+							srcId: "0",
+							destId: "1",
+							srcOrd: "0",
+							destOrd: "0"
+						},
+						{
+							modelId: "8",
+							srcId: "0",
+							destId: "2",
+							srcOrd: "1",
+							destOrd: "0"
+						},
+						{
+							modelId: "9",
+							srcId: "0",
+							destId: "3",
+							srcOrd: "2",
+							destOrd: "0"
+						},
+						{
+							modelId: "10",
+							srcId: "0",
+							destId: "4",
+							srcOrd: "3",
+							destOrd: "0"
+						},
+						{
+							modelId: "11",
+							srcId: "0",
+							destId: "5",
+							srcOrd: "4",
+							destOrd: "0"
+						},
+						{
+							modelId: "12",
+							srcId: "0",
+							destId: "6",
+							srcOrd: "5",
+							destOrd: "0"
+						}
+					],
+					bg: {},
+					whole: {}
+				}
+			},
+			layoutNode: {
+				name: "diagram",
+				children: [
+					{
+						varLst: {
+							dir: {},
+							resizeHandles: {
+								val: AscFormat.ResizeHandles_val_exact
+							}
+						}
+					},
+					{
+						choose: {
+							name: "Name0",
+							layoutElse: {
+								name: "Name2",
+								children: [
+									{
+										alg: {
+											type: AscFormat.Alg_type_snake,
+											params: [
+												{type: AscFormat.Param_type_grDir, val: "tR"},
+												{type: AscFormat.Param_type_flowDir, val: "row"},
+												{type: AscFormat.Param_type_contDir, val: "sameDir"},
+												{type: AscFormat.Param_type_off, val: "ctr"}
+											]
+										}
+									}
+								]
+							},
+							ifArray: [{
+								name: "Name1",
+								func: AscFormat.If_func_var,
+								arg: AscFormat.If_arg_dir,
+								op: AscFormat.If_op_equ,
+								val: "norm",
+								children: [
+									{
+										alg: {
+											type: AscFormat.Alg_type_snake,
+											params: [
+												{type: AscFormat.Param_type_grDir, val: "tL"},
+												{type: AscFormat.Param_type_flowDir, val: "row"},
+												{type: AscFormat.Param_type_contDir, val: "sameDir"},
+												{type: AscFormat.Param_type_off, val: "ctr"}
+											]
+										}
+									}
+								]
+							}]
+						}
+					},
+					{
+						shape: {
+							blip: "",
+							adjLst: []
+						}
+					},
+					{
+						presOf: {}
+					},
+					{
+						constrLst:
+							[
+								{type:AscFormat.Constr_type_w, for: AscFormat.Constr_for_ch, forName: "node", refType: AscFormat.Constr_type_w},
+								{type:AscFormat.Constr_type_h, for: AscFormat.Constr_for_ch, forName: "node", refType: AscFormat.Constr_type_w, refFor: AscFormat.Constr_for_ch, refForName: "node", fact: 0.6},
+								{type:AscFormat.Constr_type_w, for: AscFormat.Constr_for_ch, forName: "sibTrans", refType: AscFormat.Constr_type_w, refFor: AscFormat.Constr_for_ch, refForName: "node", fact: 0.1},
+								{type:AscFormat.Constr_type_sp, refType: AscFormat.Constr_type_w, refFor: AscFormat.Constr_for_ch, refForName: "sibTrans"},
+								{type:AscFormat.Constr_type_primFontSz, for: AscFormat.Constr_for_ch, forName: "node", op: AscFormat.Constr_op_equ, val: 65}
+							]
+					},
+					{ruleLst: {}},
+					{
+						forEach: {
+							name: "Name3",
+							axis: AscFormat.AxisType_value_ch,
+							ptType: AscFormat.ElementType_value_node,
+							children: [
+								{
+									layoutNode: {
+										name: "node",
+										children: [
+											{
+												varLst: {
+													bulletEnabled: {
+														val: true
+													}
+												}
+											},
+											{
+												alg: {
+													type: AscFormat.Alg_type_tx
+												}
+											},
+											{
+												shape: {
+													type: AscFormat.LayoutShapeType_shapeType_rect,
+													blip: "",
+													adjLst: []
+
+												}
+											},
+											{
+												presOf: {
+													axis: AscFormat.AxisType_value_desOrSelf,
+													ptType: AscFormat.ElementType_value_node
+												}
+											},
+											{
+												constrLst: [
+													{type: AscFormat.Constr_type_lMarg, refType: AscFormat.Constr_type_primFontSz, fact: 0.3},
+													{type: AscFormat.Constr_type_rMarg, refType: AscFormat.Constr_type_primFontSz, fact: 0.3},
+													{type: AscFormat.Constr_type_tMarg, refType: AscFormat.Constr_type_primFontSz, fact: 0.3},
+													{type: AscFormat.Constr_type_bMarg, refType: AscFormat.Constr_type_primFontSz, fact: 0.3}
+												]
+											},
+											{
+												ruleLst: [
+													{
+														type: AscFormat.Constr_type_primFontSz,
+														val: 5,
+														fact: NaN,
+														max: NaN
+													}
+												]
+											}
+										]
+									}
+								},
+								{
+									forEach: {
+										name: "Name4",
+										axis: AscFormat.AxisType_value_followSib,
+										ptType: AscFormat.ElementType_value_sibTrans,
+										cnt: 1,
+										children: [
+											{
+												layoutNode: {
+													name: "sibTrans",
+													children: [
+														{
+															alg: {
+																type: AscFormat.Alg_type_sp
+															}
+														},
+														{
+															shape: {
+																adjLst: [],
+																blip: ""
+															}
+														},
+														{
+															presOf: {}
+														},
+														{
+															constrLst: []
+														},
+														{
+															ruleLst: []
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		};
+		const layoutDef = new AscFormat.LayoutDef();
+		layoutDef.setUniqueId("urn:microsoft.com/office/officeart/2005/8/layout/default");
+		layoutDef.setTitle(new AscFormat.DiagramTitle());
+		layoutDef.setDesc(new AscFormat.DiagramTitle());
+		layoutDef.setCatLst(new AscFormat.CatLst());
+		const category = new AscFormat.SCat();
+		category.setType("list");
+		category.setPri(400);
+		layoutDef.catLst.addToLst(category);
+		layoutDef.setSampData(generateSampData(defaultLayoutPreset.sampData));
+		layoutDef.setStyleData(generateSampData(defaultLayoutPreset.styleData));
+		layoutDef.setClrData(generateSampData(defaultLayoutPreset.clrData));
+		layoutDef.setLayoutNode(layoutNode(defaultLayoutPreset.layoutNode));
+
+		return layoutDef;
+	}
+
+	function generateDefaultSmartArtQuickStyle() {
+		const defaultStylesInfo = [
+			{
+				names: ["fgImgPlace1", "alignImgPlace1", "bgImgPlace1", "callout",
+					"fgAcc1", "conFgAcc1", "alignAcc1", "bgAcc1", "solidFgAcc1",
+					"solidAlignAcc1", "solidBgAcc1", "fgAccFollowNode1", "alignAccFollowNode1", "bgAccFollowNode1", "fgAcc0", "fgAcc2",
+					"fgAcc3", "fgAcc4", "fgShp"],
+				idx: [2, 1, 0]
+			},
+			{
+				names: ["revTx"],
+				idx: [0, 0, 0]
+			},
+			{
+				names: ["bgShp", "dkBgShp", "trBgShp"],
+				idx: [0, 1, 0]
+			},
+			{
+				names: ["trAlignAcc1"],
+				idx: [1, 1, 0]
+			},
+			{
+				names: ["parChTrans1D1", "parChTrans1D2", "parChTrans1D3", "parChTrans1D4"],
+				idx: [2, 0, 0]
+			},
+			{
+				names: ["sibTrans1D1"],
+				idx: [1, 0, 0]
+			},
+			{
+				names: ["node0", "lnNode1", "alignNode1", "node1", "node2", "node3", "node4", "sibTrans2D1",
+					"asst0", "asst1", "asst2", "asst3", "asst4", "parChTrans2D1", "parChTrans2D2", "parChTrans2D3", "parChTrans2D4"],
+				clr: {type: g_clr_lt1},
+				idx: [2, 1, 0]
+			},
+			{
+				names: ["sibTrans2D1", "fgSibTrans2D1", "bgSibTrans2D1"],
+				clr: {type: g_clr_lt1},
+				idx: [0, 1, 0]
+			},
+			{
+				names: ["vennNode1"],
+				clr: {type: g_clr_tx1},
+				idx: [2, 1, 0]
+			}
+		];
+
 		const styleDef = new AscFormat.StyleDef();
 		styleDef.setUniqueId("urn:microsoft.com/office/officeart/2005/8/quickstyle/simple1");
 		styleDef.setTitle(new AscFormat.DiagramTitle());
@@ -511,6 +702,7 @@
 				styleDef.addToLstStyleLbl(styleDef.styleLbl.length, generateStyleStyleLbl(info.names[j], color, idx));
 			}
 		}
+		return styleDef;
 	}
 	function generateScene3d() {
 		const scene3d = new AscFormat.Scene3d();
@@ -597,14 +789,7 @@
 	function repeatLtShade(val) {
 		return repeatLt([shade(val)]);
 	}
-	function generateDefaultColors() {
-		const colors = new AscFormat.ColorsDef();
-		colors.setUniqueId("urn:microsoft.com/office/officeart/2005/8/colors/accent1_2");
-		colors.setCatLst(new AscFormat.CatLst());
-		const cat = new AscFormat.SCat();
-		colors.catLst.addToLst(cat);
-		cat.setType("accent1");
-		cat.setPri(11200);
+	function generateDefaultSmartArtColors() {
 		const presetStyleLbl = [
 			{
 				names:["node0", "node1", "lnNode1", "node2", "node3", "node4", "asst0", "asst1", "asst2", "asst3", "asst4"],
@@ -763,6 +948,14 @@
 				}
 			}
 		];
+
+		const colors = new AscFormat.ColorsDef();
+		colors.setUniqueId("urn:microsoft.com/office/officeart/2005/8/colors/accent1_2");
+		colors.setCatLst(new AscFormat.CatLst());
+		const cat = new AscFormat.SCat();
+		colors.catLst.addToLst(cat);
+		cat.setType("accent1");
+		cat.setPri(11200);
 		for (let i = 0; i < presetStyleLbl.length; i++) {
 			const infos = presetStyleLbl[i];
 			const names = infos.names;
@@ -771,6 +964,7 @@
 				colors.addToLstStyleLbl(colors.styleLbl.length, styleLbl);
 			}
 		}
+		return colors;
 	}
 	function createColorsStyleLbl(clrsLst, name) {
 		const styleLbl = new AscFormat.ColorDefStyleLbl();
@@ -800,4 +994,8 @@
 			styleLblClrLst.addToLst(i, AscFormat.CreateSchemeUnicolorWithMods(colors[i].type, colors[i].mods));
 		}
 	}
+
+	window["AscFormat"].generateDefaultSmartArtLayout = generateDefaultSmartArtLayout;
+	window["AscFormat"].generateDefaultSmartArtColors = generateDefaultSmartArtColors;
+	window["AscFormat"].generateDefaultSmartArtQuickStyle = generateDefaultSmartArtQuickStyle;
 })(window);

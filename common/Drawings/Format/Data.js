@@ -253,7 +253,7 @@ Because of this, the display is sometimes not correct.
     const Constr_type_endPad = 15;
     const Constr_type_h = 16;
     const Constr_type_hArH = 17;
-    const Constr_type_hOff = 63; // TODO: add to constr type in x2t
+    const Constr_type_hOff = 63;
     const Constr_type_l = 18;
     const Constr_type_lMarg = 19;
     const Constr_type_lOff = 20;
@@ -9995,6 +9995,17 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
+		SmartArt.prototype.generateDefaultStructures = function () {
+			if (!this.colorsDef) {
+				this.setColorsDef(AscFormat.generateDefaultSmartArtColors());
+			}
+			if (!this.layoutDef) {
+				this.setLayoutDef(AscFormat.generateDefaultSmartArtLayout());
+			}
+			if (!this.styleDef){
+				this.setStyleDef(AscFormat.generateDefaultSmartArtQuickStyle());
+			}
+		};
 	  SmartArt.prototype.recalcFitFontSize = function () {
 		  this.recalcInfo.fitFontSize = true;
 	  };

@@ -7280,6 +7280,7 @@ function BinaryPPTYLoader()
             _smartArt = new AscFormat.SmartArt();
             _smartArt.fromPPTY(this);
             _smartArt.setBDeleted(false);
+						_smartArt.generateDefaultStructures();
             _smartArt.checkNodePointsAfterRead();
         }
         else
