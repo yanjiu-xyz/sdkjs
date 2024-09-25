@@ -41,7 +41,7 @@
 
 
 
-	function generateChildren(parent, children) {
+	function generateLayoutChildren(parent, children) {
 		if (!children) {
 			return;
 		}
@@ -49,23 +49,23 @@
 			const templateChild = children[i];
 			let child;
 			if (templateChild.layoutNode) {
-				child = layoutNode(templateChild.layoutNode);
+				child = getLayoutNode(templateChild.layoutNode);
 			} else if (templateChild.varLst) {
-				child = varLst(templateChild.varLst);
+				child = getVarLst(templateChild.varLst);
 			} else if (templateChild.alg) {
-				child = alg(templateChild.alg);
+				child = getAlgorithm(templateChild.alg);
 			} else if (templateChild.shape) {
-				child = shape(templateChild.shape);
+				child = getSmartArtShape(templateChild.shape);
 			} else if (templateChild.presOf) {
-				child = presOf(templateChild.presOf);
+				child = getPresOf(templateChild.presOf);
 			} else if (templateChild.constrLst) {
-				child = constrLst(templateChild.constrLst);
+				child = getConstrLst(templateChild.constrLst);
 			} else if (templateChild.ruleLst) {
-				child = ruleLst(templateChild.ruleLst);
+				child = getRuleLst(templateChild.ruleLst);
 			} else if (templateChild.forEach) {
-				child = forEach(templateChild.forEach);
+				child = getForEach(templateChild.forEach);
 			} else if (templateChild.choose) {
-				child = choose(templateChild.choose);
+				child = getChoose(templateChild.choose);
 			}
 			if (child) {
 				if (parent.addToLst) {
@@ -77,58 +77,58 @@
 			}
 		}
 	}
-	function varLst(info) {
-		const lst = new AscFormat.VarLst();
+	function getVarLst(info) {
+		const varLst = new AscFormat.VarLst();
 		if (info.bulletEnabled) {
-			lst.setBulletEnabled(new AscFormat.BulletEnabled());
-			lst.bulletEnabled.setVal(info.bulletEnabled.val);
+			varLst.setBulletEnabled(new AscFormat.BulletEnabled());
+			varLst.bulletEnabled.setVal(info.bulletEnabled.val);
 		}
 		if (info.dir) {
-			lst.setDir(new AscFormat.DiagramDirection());
+			varLst.setDir(new AscFormat.DiagramDirection());
 		}
 		if (info.resizeHandles) {
-			lst.setResizeHandles(new AscFormat.ResizeHandles());
-			lst.resizeHandles.setVal(info.resizeHandles.val);
+			varLst.setResizeHandles(new AscFormat.ResizeHandles());
+			varLst.resizeHandles.setVal(info.resizeHandles.val);
 		}
-		return lst;
+		return varLst;
 	}
-	function alg(info) {
-		const elem = new AscFormat.Alg();
-		elem.setType(info.type);
+	function getAlgorithm(info) {
+		const alg = new AscFormat.Alg();
+		alg.setType(info.type);
 		if (info.params) {
 			for (let i = info.params.length - 1; i >= 0; i -= 1) {
 				const sampParam = info.params[i];
 				const param = new AscFormat.Param();
 				param.setType(sampParam.type);
 				param.setVal(sampParam.val);
-				elem.addToLstParam(0, param);
+				alg.addToLstParam(0, param);
 			}
 		}
-		return elem;
+		return alg;
 	}
-	function shape(info) {
-		const elem = new AscFormat.SShape();
-		elem.setBlip(info.blip);
+	function getSmartArtShape(info) {
+		const smartArtShape = new AscFormat.SShape();
+		smartArtShape.setBlip(info.blip);
 		if (info.type !== undefined) {
-			elem.setType(info.type);
+			smartArtShape.setType(info.type);
 		}
 		if (info.adjLst) {
-			elem.setAdjLst(new AscFormat.AdjLst());
+			smartArtShape.setAdjLst(new AscFormat.AdjLst());
 		}
-		return elem;
+		return smartArtShape;
 	}
-	function presOf(info) {
-		const elem = new AscFormat.PresOf();
+	function getPresOf(info) {
+		const presOf = new AscFormat.PresOf();
 		if (info.axis !== undefined) {
-			elem.addToLstAxis(0, axis(info.axis));
+			presOf.addToLstAxis(0, getAxis(info.axis));
 		}
 		if (info.ptType !== undefined) {
-			elem.addToLstPtType(0, ptType(info.ptType));
+			presOf.addToLstPtType(0, getPtType(info.ptType));
 		}
-		return elem;
+		return presOf;
 	}
-	function constrLst(info) {
-		const elem = new AscFormat.ConstrLst();
+	function getConstrLst(info) {
+		const constrLst = new AscFormat.ConstrLst();
 		for (let i = info.length - 1; i >= 0; i -= 1) {
 			const sampConstr = info[i];
 			const constr = new AscFormat.Constr();
@@ -159,12 +159,12 @@
 			if (sampConstr.op !== undefined) {
 				constr.setOp(sampConstr.op);
 			}
-			elem.addToLst(0, constr);
+			constrLst.addToLst(0, constr);
 		}
-		return elem;
+		return constrLst;
 	}
-	function ruleLst(info) {
-		const elem = new AscFormat.RuleLst();
+	function getRuleLst(info) {
+		const ruleLst = new AscFormat.RuleLst();
 		for (let i = info.length - 1; i >= 0; i -= 1) {
 			const sampRule = info[i];
 			const rule = new AscFormat.Rule();
@@ -186,38 +186,38 @@
 			if (sampRule.val !== undefined) {
 				rule.setVal(sampRule.val);
 			}
-			elem.addToLst(0, rule);
+			ruleLst.addToLst(0, rule);
 		}
-		return elem;
+		return ruleLst;
 	}
-	function axis(type) {
-		const elem = new AscFormat.AxisType();
-		elem.setVal(type);
-		return elem;
+	function getAxis(type) {
+		const axisType = new AscFormat.AxisType();
+		axisType.setVal(type);
+		return axisType;
 	}
-	function ptType(type) {
-		const elem = new AscFormat.ElementType();
-		elem.setVal(type);
-		return elem;
+	function getPtType(type) {
+		const ptType = new AscFormat.ElementType();
+		ptType.setVal(type);
+		return ptType;
 	}
-	function forEach(info) {
-		const elem = new AscFormat.ForEach();
-		elem.setName(info.name);
-		elem.addToLstAxis(0, axis(info.axis));
-		elem.addToLstPtType(0, ptType(info.ptType));
+	function getForEach(info) {
+		const forEach = new AscFormat.ForEach();
+		forEach.setName(info.name);
+		forEach.addToLstAxis(0, getAxis(info.axis));
+		forEach.addToLstPtType(0, getPtType(info.ptType));
 		if (info.cnt !== undefined) {
-			elem.addToLstCnt(0, info.cnt);
+			forEach.addToLstCnt(0, info.cnt);
 		}
-		generateChildren(elem, info.children);
-		return elem;
+		generateLayoutChildren(forEach, info.children);
+		return forEach;
 	}
-	function choose(info) {
-		const elem = new AscFormat.Choose();
-		elem.setName(info.name);
+	function getChoose(info) {
+		const choose = new AscFormat.Choose();
+		choose.setName(info.name);
 		const chooseElse = new AscFormat.Else();
 		chooseElse.setName(info.layoutElse.name);
-		generateChildren(chooseElse, info.layoutElse.children);
-		elem.setElse(chooseElse);
+		generateLayoutChildren(chooseElse, info.layoutElse.children);
+		choose.setElse(chooseElse);
 		for (let i = info.ifArray.length - 1; i >= 0; i -= 1) {
 			const ifInfo = info.ifArray[i];
 			const chooseIf = new AscFormat.If();
@@ -226,19 +226,19 @@
 			chooseIf.setArg(ifInfo.arg);
 			chooseIf.setVal(ifInfo.val);
 			chooseIf.setOp(ifInfo.op);
-			generateChildren(chooseIf, ifInfo.children);
-			elem.addToLstIf(0, chooseIf);
+			generateLayoutChildren(chooseIf, ifInfo.children);
+			choose.addToLstIf(0, chooseIf);
 		}
-		return elem;
+		return choose;
 	}
-	function layoutNode(info) {
-		const node = new AscFormat.LayoutNode();
+	function getLayoutNode(info) {
+		const layoutNode = new AscFormat.LayoutNode();
 		const name = info.name;
-		node.setName(name);
-		generateChildren(node, info.children);
-		return node;
+		layoutNode.setName(name);
+		generateLayoutChildren(layoutNode, info.children);
+		return layoutNode;
 	}
-	function generateSampData(data) {
+	function getSampData(data) {
 		const sampData = new AscFormat.SampData();
 		if (data.dataModel) {
 			const dataModel = new AscFormat.DataModel();
@@ -287,6 +287,39 @@
 			sampData.setDataModel(dataModel);
 		}
 		return sampData;
+	}
+
+	function getScene3D() {
+		const scene3d = new AscFormat.Scene3d();
+		scene3d.setCamera(new AscFormat.Camera());
+		scene3d.camera.setPrst(AscFormat.Camera_prst_orthographicFront);
+		scene3d.setLightRig(new AscFormat.LightRig());
+		scene3d.lightRig.setRig(AscFormat.LightRig_rig_threePt);
+		scene3d.lightRig.setDir(AscFormat.LightRig_dir_t);
+		return scene3d;
+	}
+	function generateStyleStyleLbl(name, color, idx) {
+		const styleLbl = new AscFormat.StyleDefStyleLbl();
+		styleLbl.setName(name);
+		styleLbl.setScene3d(getScene3D());
+		styleLbl.setSp3d(new AscFormat.Sp3d());
+		styleLbl.setTxPr(new AscFormat.CTextBody());
+		styleLbl.setStyle(new AscFormat.CShapeStyle());
+		styleLbl.style.setLnRef(new AscFormat.StyleRef());
+		styleLbl.style.lnRef.setIdx(idx[0]);
+		styleLbl.style.lnRef.setColor(AscFormat.CreateUniColorRGB(0, 0, 0));
+		styleLbl.style.setFillRef(new AscFormat.StyleRef());
+		styleLbl.style.fillRef.setIdx(idx[1]);
+		styleLbl.style.fillRef.setColor(AscFormat.CreateUniColorRGB(0, 0, 0));
+		styleLbl.style.setEffectRef(new AscFormat.StyleRef());
+		styleLbl.style.effectRef.setIdx(idx[2]);
+		styleLbl.style.effectRef.setColor(AscFormat.CreateUniColorRGB(0, 0, 0));
+		styleLbl.style.setFontRef(new AscFormat.FontRef());
+		styleLbl.style.fontRef.setIdx(AscFormat.fntStyleInd_minor);
+		if (color) {
+			styleLbl.style.fontRef.setColor(AscFormat.CreateSchemeUnicolorWithMods(color.type, color.mods));
+		}
+		return styleLbl;
 	}
 
 	function generateDefaultSmartArtLayout() {
@@ -643,10 +676,10 @@
 		category.setType("list");
 		category.setPri(400);
 		layoutDef.catLst.addToLst(0, category);
-		layoutDef.setSampData(generateSampData(defaultLayoutPreset.sampData));
-		layoutDef.setStyleData(generateSampData(defaultLayoutPreset.styleData));
-		layoutDef.setClrData(generateSampData(defaultLayoutPreset.clrData));
-		layoutDef.setLayoutNode(layoutNode(defaultLayoutPreset.layoutNode));
+		layoutDef.setSampData(getSampData(defaultLayoutPreset.sampData));
+		layoutDef.setStyleData(getSampData(defaultLayoutPreset.styleData));
+		layoutDef.setClrData(getSampData(defaultLayoutPreset.clrData));
+		layoutDef.setLayoutNode(getLayoutNode(defaultLayoutPreset.layoutNode));
 
 		return layoutDef;
 	}
@@ -707,7 +740,7 @@
 		cat.setType("simple");
 		cat.setPri(10100);
 		styleDef.catLst.addToLst(0, cat);
-		styleDef.setScene3d(generateScene3d());
+		styleDef.setScene3d(getScene3D());
 		for (let i = 0; i < defaultStylesInfo.length; i++) {
 			const info = defaultStylesInfo[i];
 			const color = info.clr;
@@ -718,47 +751,16 @@
 		}
 		return styleDef;
 	}
-	function generateScene3d() {
-		const scene3d = new AscFormat.Scene3d();
-		scene3d.setCamera(new AscFormat.Camera());
-		scene3d.camera.setPrst(AscFormat.Camera_prst_orthographicFront);
-		scene3d.setLightRig(new AscFormat.LightRig());
-		scene3d.lightRig.setRig(AscFormat.LightRig_rig_threePt);
-		scene3d.lightRig.setDir(AscFormat.LightRig_dir_t);
-		return scene3d;
-	}
-	function generateStyleStyleLbl(name, color, idx) {
-		const styleLbl = new AscFormat.StyleDefStyleLbl();
-		styleLbl.setName(name);
-		styleLbl.setScene3d(generateScene3d());
-		styleLbl.setSp3d(new AscFormat.Sp3d());
-		styleLbl.setTxPr(new AscFormat.CTextBody());
-		styleLbl.setStyle(new AscFormat.CShapeStyle());
-		styleLbl.style.setLnRef(new AscFormat.StyleRef());
-		styleLbl.style.lnRef.setIdx(idx[0]);
-		styleLbl.style.lnRef.setColor(AscFormat.CreateUniColorRGB(0, 0, 0));
-		styleLbl.style.setFillRef(new AscFormat.StyleRef());
-		styleLbl.style.fillRef.setIdx(idx[1]);
-		styleLbl.style.fillRef.setColor(AscFormat.CreateUniColorRGB(0, 0, 0));
-		styleLbl.style.setEffectRef(new AscFormat.StyleRef());
-		styleLbl.style.effectRef.setIdx(idx[2]);
-		styleLbl.style.effectRef.setColor(AscFormat.CreateUniColorRGB(0, 0, 0));
-		styleLbl.style.setFontRef(new AscFormat.FontRef());
-		styleLbl.style.fontRef.setIdx(AscFormat.fntStyleInd_minor);
-		if (color) {
-			styleLbl.style.fontRef.setColor(AscFormat.CreateSchemeUnicolorWithMods(color.type, color.mods));
-		}
-		return styleLbl;
-	}
 
 
-	function tint(val) {
+
+	function getTintMod(val) {
 		return {name: "tint", val: val};
 	}
-	function alpha(val) {
+	function getAlphaMod(val) {
 		return {name: "alpha", val: val};
 	}
-	function shade(val) {
+	function getShadeMod(val) {
 		return {name: "shade", val: val};
 	}
 	function repeatAccent(mods) {
@@ -786,22 +788,16 @@
 		};
 	}
 	function repeatAccentTint(val) {
-		return repeatAccent([tint(val)]);
+		return repeatAccent([getTintMod(val)]);
 	}
 	function repeatAccentAlpha(val) {
-		return repeatAccent([alpha(val)]);
+		return repeatAccent([getAlphaMod(val)]);
 	}
 	function repeatAccentShade(val) {
-		return repeatAccent([shade(val)]);
-	}
-	function repeatLtTint(val) {
-		return repeatLt([tint(val)]);
+		return repeatAccent([getShadeMod(val)]);
 	}
 	function repeatLtAlpha(val) {
-		return repeatLt([alpha(val)]);
-	}
-	function repeatLtShade(val) {
-		return repeatLt([shade(val)]);
+		return repeatLt([getAlphaMod(val)]);
 	}
 	function generateDefaultSmartArtColors() {
 		const presetStyleLbl = [
@@ -916,8 +912,8 @@
 			{
 				names:["fgAccFollowNode1", "alignAccFollowNode1", "bgAccFollowNode1"],
 				clrsLst: {
-					fillClrLst: repeatAccent([alpha(90000), tint(40000)]),
-					linClrLst: repeatAccent([alpha(90000), tint(40000)]),
+					fillClrLst: repeatAccent([getAlphaMod(90000), getTintMod(40000)]),
+					linClrLst: repeatAccent([getAlphaMod(90000), getTintMod(40000)]),
 					txFillClrLst: repeatDk()
 				}
 			},
@@ -940,7 +936,7 @@
 			{
 				names: ["trBgShp"],
 				clrsLst: {
-					fillClrLst: repeatAccent([tint(50000), alpha(40000)]),
+					fillClrLst: repeatAccent([getTintMod(50000), getAlphaMod(40000)]),
 					linClrLst: repeatAccent(),
 					txFillClrLst: repeatLt()
 				}
@@ -957,19 +953,19 @@
 				names: ["revTx"],
 				clrsLst: {
 					fillClrLst: repeatLtAlpha(0),
-					linClrLst: repeatDk([alpha(0)]),
+					linClrLst: repeatDk([getAlphaMod(0)]),
 					txFillClrLst: repeatTx()
 				}
 			}
 		];
 
-		const colors = new AscFormat.ColorsDef();
-		colors.setUniqueId("urn:microsoft.com/office/officeart/2005/8/colors/accent1_2");
-		colors.setTitle(new AscFormat.DiagramTitle());
-		colors.setDesc(new AscFormat.DiagramTitle());
-		colors.setCatLst(new AscFormat.CatLst());
+		const colorsDef = new AscFormat.ColorsDef();
+		colorsDef.setUniqueId("urn:microsoft.com/office/officeart/2005/8/colors/accent1_2");
+		colorsDef.setTitle(new AscFormat.DiagramTitle());
+		colorsDef.setDesc(new AscFormat.DiagramTitle());
+		colorsDef.setCatLst(new AscFormat.CatLst());
 		const cat = new AscFormat.SCat();
-		colors.catLst.addToLst(0, cat);
+		colorsDef.catLst.addToLst(0, cat);
 		cat.setType("accent1");
 		cat.setPri(11200);
 		for (let i = 0; i < presetStyleLbl.length; i++) {
@@ -977,10 +973,10 @@
 			const names = infos.names;
 			for (let j = 0; j < names.length; j++) {
 				const styleLbl = createColorsStyleLbl(presetStyleLbl[i].clrsLst, names[j]);
-				colors.addToLstStyleLbl(colors.styleLbl.length, styleLbl);
+				colorsDef.addToLstStyleLbl(colorsDef.styleLbl.length, styleLbl);
 			}
 		}
-		return colors;
+		return colorsDef;
 	}
 	function createColorsStyleLbl(clrsLst, name) {
 		const styleLbl = new AscFormat.ColorDefStyleLbl();
