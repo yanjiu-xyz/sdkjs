@@ -1776,7 +1776,6 @@
 	window['AscDFH'].historyitem_type_ExtrusionClr           = 2086 << 16;
 	window['AscDFH'].historyitem_type_ContourClr             = 2087 << 16;
 	window['AscDFH'].historyitem_type_SmartArt               = 2088 << 16;
-	window['AscDFH'].historyitem_type_CCommonDataClrList     = 2089 << 16;
 	window['AscDFH'].historyitem_type_BuNone                 = 2090 << 16;
 	window['AscDFH'].historyitem_type_SmartArtDrawing        = 2091 << 16;
 	window['AscDFH'].historyitem_type_DiagramData            = 2092 << 16;
@@ -3812,6 +3811,8 @@
 
 	AscDFH.historyitem_ClrLstHueDir = AscDFH.historyitem_type_ClrLst | 1;
 	AscDFH.historyitem_ClrLstMeth = AscDFH.historyitem_type_ClrLst | 2;
+	AscDFH.historyitem_ClrLstAdd = AscDFH.historyitem_type_ClrLst | 3;
+	AscDFH.historyitem_ClrLstRemove = AscDFH.historyitem_type_ClrLst | 4;
 
 	AscDFH.historyitem_ColorsDefHdrMinVer = AscDFH.historyitem_type_ColorsDefHdr | 1;
 	AscDFH.historyitem_ColorsDefHdrResId = AscDFH.historyitem_type_ColorsDefHdr | 2;
@@ -4035,12 +4036,6 @@
 	AscDFH.historyitem_SmartArtStyleDef  = AscDFH.historyitem_type_SmartArt | 5;
 	AscDFH.historyitem_SmartArtParent    = AscDFH.historyitem_type_SmartArt | 6;
 	AscDFH.historyitem_SmartArtType      = AscDFH.historyitem_type_SmartArt | 7;
-
-	AscDFH.historyitem_CCommonDataClrListAdd    = AscDFH.historyitem_type_CCommonDataClrList | 1;
-	AscDFH.historyitem_CCommonDataClrListRemove = AscDFH.historyitem_type_CCommonDataClrList | 2;
-	AscDFH.historyitem_CCommonDataClrListHueDir = AscDFH.historyitem_type_CCommonDataClrList | 3;
-	AscDFH.historyitem_CCommonDataClrListMeth   = AscDFH.historyitem_type_CCommonDataClrList | 4;
-
 
 	AscDFH.historyitem_ViewPrGridSpacing        = AscDFH.historyitem_type_ViewPr | 1;
 	AscDFH.historyitem_ViewPrSlideViewerPr      = AscDFH.historyitem_type_ViewPr | 2;

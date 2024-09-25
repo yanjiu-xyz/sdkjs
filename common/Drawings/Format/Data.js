@@ -7594,97 +7594,10 @@ Because of this, the display is sometimes not correct.
 		  }
 	  };
 
-    changesFactory[AscDFH.historyitem_CCommonDataClrListAdd] = CChangesContentNoId;
-    changesFactory[AscDFH.historyitem_CCommonDataClrListRemove] = CChangesContentNoId;
-    drawingConstructorsMap[AscDFH.historyitem_CCommonDataClrListAdd] = AscFormat.CUniColor;
-    drawingConstructorsMap[AscDFH.historyitem_CCommonDataClrListRemove] = AscFormat.CUniColor;
-    drawingContentChanges[AscDFH.historyitem_CCommonDataClrListAdd] = function (oClass) {
-      return oClass.list;
-    };
-    drawingContentChanges[AscDFH.historyitem_CCommonDataClrListRemove] = function (oClass) {
-      return oClass.list;
-    };
-
-
-    function CCommonDataClrList(type, ind, item, isAdd) {
-      CBaseFormatObject.call(this, type, ind, item, isAdd);
-      this.list = [];
-      this.hueDir = null;
-      this.meth = null;
-    }
-
-    InitClass(CCommonDataClrList, CBaseFormatObject, AscDFH.historyitem_type_CCommonDataClrList);
-
-    CCommonDataClrList.prototype.setHueDir = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListHueDir, this.getHueDir(), pr));
-      this.hueDir = pr;
-    }
-
-    CCommonDataClrList.prototype.setMeth = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListMeth, this.getMeth(), pr));
-      this.meth = pr;
-    }
-
-    CCommonDataClrList.prototype.getHueDir = function () {
-      return this.hueDir;
-    }
-
-    CCommonDataClrList.prototype.getMeth = function () {
-      return this.meth;
-    }
-
-    CCommonDataClrList.prototype.addToLst = function (nIdx, oPr) {
-      var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListAdd, nInsertIdx, [oPr], true));
-      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
-    };
-
-    CCommonDataClrList.prototype.removeFromLst = function (nIdx) {
-      if (nIdx > -1 && nIdx < this.list.length) {
-        this.list[nIdx].setParent(null);
-        oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListRemove, nIdx, [this.list[nIdx]], false));
-        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
-      }
-    };
-
-    CCommonDataClrList.prototype.fillObject = function (oCopy, oIdMap) {
-      for (var nIdx = 0; nIdx < this.list.length; ++nIdx) {
-        oCopy.addToLst(nIdx, this.list[nIdx].createDuplicate(oIdMap));
-      }
-    };
-
-    CCommonDataClrList.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar2(0, this.hueDir);
-      pWriter._WriteUChar2(1, this.meth);
-    };
-    CCommonDataClrList.prototype.writeChildren = function(pWriter) {
-      for (var i = 0; i < this.list.length; i += 1) {
-        pWriter.WriteRecord2(0, this.list[i], pWriter.WriteUniColor);
-      }
-    };
-    CCommonDataClrList.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) this.setHueDir(oStream.GetUChar());
-      else if (1 === nType) this.setMeth(oStream.GetUChar());
-    };
-    CCommonDataClrList.prototype.readChild = function(nType, pReader) {
-      var s = pReader.stream;
-      switch (nType) {
-        case 0:
-          this.addToLst(this.list.length, pReader.ReadUniColor());
-          break;
-        default:
-          s.SkipRecord();
-          break;
-      }
-
-    };
-    CCommonDataClrList.prototype.getChildren = function() {
-      return [].concat(this.list);
-    };
-
-
-
+	  changesFactory[AscDFH.historyitem_ClrLstAdd] = CChangesContentNoId;
+	  changesFactory[AscDFH.historyitem_ClrLstRemove] = CChangesContentNoId;
+	  drawingConstructorsMap[AscDFH.historyitem_ClrLstAdd] = AscFormat.CUniColor;
+	  drawingConstructorsMap[AscDFH.historyitem_ClrLstRemove] = AscFormat.CUniColor;
     changesFactory[AscDFH.historyitem_ClrLstHueDir] = CChangeLong;
     changesFactory[AscDFH.historyitem_ClrLstMeth] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ClrLstHueDir] = function (oClass, value) {
@@ -7693,14 +7606,20 @@ Because of this, the display is sometimes not correct.
     drawingsChangesMap[AscDFH.historyitem_ClrLstMeth] = function (oClass, value) {
       oClass.meth = value;
     };
+	  drawingContentChanges[AscDFH.historyitem_ClrLstAdd] = function (oClass) {
+		  return oClass.list;
+	  };
+	  drawingContentChanges[AscDFH.historyitem_ClrLstRemove] = function (oClass) {
+		  return oClass.list;
+	  };
 
     function ClrLst() {
-      CCommonDataClrList.call(this);
+	    CBaseFormatObject.call(this);
+	    this.list = [];
       this.hueDir = ClrLst_hueDir_cw;
       this.meth = ClrLst_meth_span;
     }
-
-    InitClass(ClrLst, CCommonDataClrList, AscDFH.historyitem_type_ClrLst);
+    InitClass(ClrLst, CBaseFormatObject, AscDFH.historyitem_type_ClrLst);
 
 	  ClrLst.prototype.getCurColor = function (length, parentObjects) {
 			if (!length) {
@@ -7806,6 +7725,20 @@ Because of this, the display is sometimes not correct.
       this.meth = pr;
     }
 
+	  ClrLst.prototype.addToLst = function (nIdx, oPr) {
+		  var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
+		  oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_ClrLstAdd, nInsertIdx, [oPr], true));
+		  nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
+	  };
+
+	  ClrLst.prototype.removeFromLst = function (nIdx) {
+		  if (nIdx > -1 && nIdx < this.list.length) {
+			  this.list[nIdx].setParent(null);
+			  oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_ClrLstRemove, nIdx, [this.list[nIdx]], false));
+			  nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
+		  }
+	  };
+
     ClrLst.prototype.getHueDir = function () {
       return this.hueDir;
     }
@@ -7813,6 +7746,32 @@ Because of this, the display is sometimes not correct.
     ClrLst.prototype.getMeth = function () {
       return this.meth;
     }
+
+	  ClrLst.prototype.privateWriteAttributes = function(pWriter) {
+		  pWriter._WriteUChar2(0, this.hueDir);
+		  pWriter._WriteUChar2(1, this.meth);
+	  };
+	  ClrLst.prototype.writeChildren = function(pWriter) {
+		  for (var i = 0; i < this.list.length; i += 1) {
+			  pWriter.WriteRecord2(0, this.list[i], pWriter.WriteUniColor);
+		  }
+	  };
+	  ClrLst.prototype.readAttribute = function(nType, pReader) {
+		  var oStream = pReader.stream;
+		  if (0 === nType) this.setHueDir(oStream.GetUChar());
+		  else if (1 === nType) this.setMeth(oStream.GetUChar());
+	  };
+	  ClrLst.prototype.readChild = function(nType, pReader) {
+		  var s = pReader.stream;
+		  switch (nType) {
+			  case 0:
+				  this.addToLst(this.list.length, pReader.ReadUniColor());
+				  break;
+			  default:
+				  s.SkipRecord();
+				  break;
+		  }
+	  };
 
     ClrLst.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setHueDir(this.getHueDir());
@@ -7822,6 +7781,9 @@ Because of this, the display is sometimes not correct.
         oCopy.addToLst(nIdx, oColor);
       }
     }
+	  ClrLst.prototype.getChildren = function() {
+		  return [].concat(this.list);
+	  };
 
     function ColorsDefHdrLst() {
       CCommonDataList.call(this);
@@ -11950,7 +11912,6 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ExtrusionClr           = ExtrusionClr;
     window['AscFormat'].ContourClr             = ContourClr;
     window['AscFormat'].SmartArt               = SmartArt;
-    window['AscFormat'].CCommonDataClrList     = CCommonDataClrList;
     window['AscFormat'].BuNone                 = BuNone;
     window['AscFormat'].Drawing                = Drawing;
     window['AscFormat'].DiagramData            = DiagramData;

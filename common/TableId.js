@@ -370,7 +370,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_ExtrusionClr      ]     = AscFormat.ExtrusionClr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ContourClr        ]     = AscFormat.ContourClr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArt          ]     = AscFormat.SmartArt;
-		this.m_oFactoryClass[AscDFH.historyitem_type_CCommonDataClrList]     = AscFormat.CCommonDataClrList;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuNone            ]     = AscFormat.BuNone;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtDrawing   ]     = AscFormat.Drawing;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DiagramData       ]     = AscFormat.DiagramData;
