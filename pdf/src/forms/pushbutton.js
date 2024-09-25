@@ -1238,9 +1238,11 @@
         else
             callbackAfterFocus.bind(this)();
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (false == isInFocus) {
-            this.onFocus();
+        if (isInFocus) {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        }
+        else {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         }
     };
     CPushButtonField.prototype.onMouseUp = function() {
@@ -1262,22 +1264,24 @@
         this.OnEndRollover();
     };
     CPushButtonField.prototype.buttonImportIcon = function() {
-        let Api = editor;
-        let oThis = this;
+        let Api             = editor;
+        let oThis           = this;
+        let oDoc            = this.GetDocument();
+        let oActionsQueue   = oDoc.GetActionsQueue();
 
-        let oActionsQueue = this.GetDocument().GetActionsQueue();
-        if (oActionsQueue instanceof AscPDF.CActionRunScript)
-            oActionsQueue.bContinueAfterEval = false;
+        if (oActionsQueue.curAction) {
+            oActionsQueue.curAction.bContinueAfterEval = false;
+        }
         
         Api.oSaveObjectForAddImage = this;
+
+        AscCommon.global_mouseEvent.LockMouse();
         if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
             window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
                 var file = _file;
                 if (Array.isArray(file))
                     file = file[0];
                 if (!file) {
-                    let oDoc            = oThis.GetDocument();
-                    let oActionsQueue   = oDoc.GetActionsQueue();
                     oActionsQueue.Continue();
                     return;
                 }
@@ -1287,23 +1291,23 @@
             });
         }
         else {
-            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function(error, files)
-            {
+            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function(error, files) {
                 if (error.canceled == true) {
-                    let oDoc            = oThis.GetDocument();
-                    let oActionsQueue   = oDoc.GetActionsQueue();
                     oActionsQueue.Continue();
                 }
-                else
+                else {
                     Api._uploadCallback(error, files, oThis);
+                }
 
-            }, function(error)
-            {
-                if (c_oAscError.ID.No !== error)
-                {
+                AscCommon.global_mouseEvent.UnLockMouse();
+
+            }, function(error) {
+                if (c_oAscError.ID.No !== error) {
                     Api.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
                 }
+
                 Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+                AscCommon.global_mouseEvent.UnLockMouse();
             });
         }
     };

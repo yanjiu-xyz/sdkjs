@@ -1337,15 +1337,17 @@
 		return this._getRowTop(row) * asc_getcvt(0/*px*/, u, this._getPPIY());
     };
 
-    WorksheetView.prototype.getCellLeftRelative = function (col, units) {
+    WorksheetView.prototype.getCellLeftRelative = function (col, units, checkFrozenOffset) {
         if (col < 0 || col >= this.nColsCount) {
             return null;
         }
         // С учетом видимой области
         var offsetX = 0;
+		let frozenOffset = null;
         if (this.topLeftFrozenCell) {
             var cFrozen = this.topLeftFrozenCell.getCol0();
-            offsetX = (col < cFrozen) ? 0 : this._getColLeft(this.visibleRange.c1) - this._getColLeft(cFrozen);
+			frozenOffset = this._getColLeft(cFrozen);
+            offsetX = (col < cFrozen) ? 0 : this._getColLeft(this.visibleRange.c1) - frozenOffset + this.getHorizontalScrollCorrect();
         } else {
             offsetX = this._getOffsetX();
         }
@@ -1355,18 +1357,23 @@
 		if (_left < this.cellsLeft) {
 			_left = this.cellsLeft;
 		}
+		if (checkFrozenOffset && _left < frozenOffset) {
+			_left = frozenOffset;
+		}
         return _left * asc_getcvt(0/*px*/, u, this._getPPIX());
     };
 
-    WorksheetView.prototype.getCellTopRelative = function (row, units) {
+    WorksheetView.prototype.getCellTopRelative = function (row, units, checkFrozenOffset) {
         if (row < 0 || row >= this.nRowsCount) {
             return null;
         }
         // С учетом видимой области
         var offsetY = 0;
+		let frozenOffset = null;
         if (this.topLeftFrozenCell) {
             var rFrozen = this.topLeftFrozenCell.getRow0();
-            offsetY = (row < rFrozen) ? 0 : this._getRowTop(this.visibleRange.r1) - this._getRowTop(rFrozen);
+			frozenOffset = this._getRowTop(rFrozen);
+            offsetY = (row < rFrozen) ? 0 : this._getRowTop(this.visibleRange.r1) - frozenOffset + this.getScrollCorrect();
         } else {
             offsetY = this._getOffsetY();
         }
@@ -1375,6 +1382,9 @@
 		let _top = this._getRowTop(row) - offsetY;
 		if (_top < this.cellsTop) {
 			_top = this.cellsTop;
+		}
+		if (checkFrozenOffset && _top < frozenOffset) {
+			_top = frozenOffset;
 		}
         return _top * asc_getcvt(0/*px*/, u, this._getPPIY());
     };
@@ -10043,7 +10053,7 @@
 
 		let isReverse = delta < 0;
 		let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
-		let defaultScrollPxStep = Math.ceil(unitDeltaStep * Math.abs(delta));
+		let defaultScrollPxStep = Math.floor(unitDeltaStep * Math.abs(delta));
 
 		let deltaRows = 0, deltaCorrect = 0;
 		let currentScrollCorrect = this.getScrollCorrect();
@@ -10132,7 +10142,7 @@
         fixStartRow.assign(vr.c1, start, vr.c2, start);
         this._fixSelectionOfHiddenCells(0, delta >= 0 ? +1 : -1, fixStartRow);
         this._fixVisibleRange(fixStartRow);
-        var reinitScrollY = this.workbook.getSmoothScrolling() ? true : start !== fixStartRow.r1;
+        var reinitScrollY = start !== fixStartRow.r1;
         // Для скролла вверх обычный сдвиг + дорисовка
         if (reinitScrollY && 0 > delta) {
             delta += fixStartRow.r1 - start;
@@ -10326,13 +10336,16 @@
         this._drawSelection();
 		//this._cleanPagesModeData();
 
+		if (!reinitScrollY && this.workbook.getSmoothScrolling()) {
+			reinitScrollY = oldEnd !== vr.r2;
+		}
+
+
 		if ((reinitScrollY && !this.workbook.getSmoothScrolling()) || (reinitScrollY && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
 			(0 > delta && initRowsCount && this._initRowsCount())) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
 		}
-		if (delta !== 0) {
-			this._reinitializeScroll();
-		}
+		this._reinitializeScroll();
 
         this.handlers.trigger("onDocumentPlaceChanged");
 
@@ -11104,7 +11117,7 @@
         fixStartCol.assign(start, vr.r1, start, vr.r2);
         this._fixSelectionOfHiddenCells(delta >= 0 ? +1 : -1, 0, fixStartCol);
         this._fixVisibleRange(fixStartCol);
-        var reinitScrollX = this.workbook.getSmoothScrolling() ? true : start !== fixStartCol.c1;
+        var reinitScrollX = start !== fixStartCol.c1;
         // Для скролла влево обычный сдвиг + дорисовка
         if (reinitScrollX && 0 > delta) {
             delta += fixStartCol.c1 - start;
@@ -11250,6 +11263,10 @@
         this._drawSelection();
         //this._cleanPagesModeData();
 
+		if (!reinitScrollX && this.workbook.getSmoothScrolling()) {
+			reinitScrollX = oldEnd !== vr.c2;
+		}
+		
 		if ((reinitScrollX && !this.workbook.getSmoothScrolling()) || (reinitScrollX && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
 			(0 > delta && initColsCount && this._initColsCount())) {
 			if (reinitScrollX && (start - cFrozen) === 0 && 0 > delta && initColsCount) {
@@ -11258,9 +11275,8 @@
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
 		}
 
-		if (delta !== 0) {
-			this._reinitializeScroll();
-		}
+
+		this._reinitializeScroll();
 
         this.handlers.trigger("onDocumentPlaceChanged");
 
@@ -11359,7 +11375,7 @@
 		if (x >= this.cellsLeft) {
 			if (this.topLeftFrozenCell) {
 				cFrozen = this.topLeftFrozenCell.getCol0();
-				widthDiff = this._getColLeft(cFrozen) - this._getColLeft(0);
+				widthDiff += this._getColLeft(cFrozen) - this._getColLeft(0);
 				if (x < this.cellsLeft + widthDiff && 0 !== widthDiff) {
 					c = 0;
 					widthDiff = 0;
@@ -20088,8 +20104,16 @@
 		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
 		var isDataValidation = props.isOverlay;
 
+		let isClip = null;
+		if (this._clipDrawingRect(ctx, new Asc.Range(props.col, props.row, props.col, props.row), clipType.range)) {
+			isClip = true;
+		}
+
 		if (props.idPivotCollapse) {
 			this._drawPivotCollapseButton(offsetX, offsetY, props);
+			if (isClip) {
+				ctx.RemoveClipRect();
+			}
 			return;
 		}
 
@@ -20310,6 +20334,10 @@
         scaleIndex *= this.getRetinaPixelRatio();
 
 		_drawButton(x1 + diffX, y1 + diffY);
+
+		if (isClip) {
+			ctx.RemoveClipRect();
+		}
 	};
 
 
@@ -25220,8 +25248,8 @@
     };
 
     WorksheetView.prototype.rangeToRectRel = function(oRange, units) {
-        var l = this.getCellLeftRelative(oRange.c1, units);
-        var t = this.getCellTopRelative(oRange.r1, units);
+        var l = this.getCellLeftRelative(oRange.c1, units, true);
+        var t = this.getCellTopRelative(oRange.r1, units, true);
         var r = this.getCellLeftRelative(oRange.c2, units) + this.getColumnWidth(oRange.c2, units);
         var b = this.getCellTopRelative(oRange.r2, units) + this.getRowHeight(oRange.r2, units);
         return new AscFormat.CGraphicBounds(l, t, r, b);

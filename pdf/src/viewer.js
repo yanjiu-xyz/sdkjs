@@ -1626,11 +1626,11 @@
 
 			let oDoc		= this.getPDFDoc();
 			let oActiveObj	= oDoc.GetActiveObject();
+			let nPage		= oActiveObj ? oActiveObj.GetPage() : undefined;
 
+			this.checkVisiblePages();
 			// выход из активного объекта если сместились на другую страницу
-			if (this.disabledPaintOnScroll == false && oActiveObj && this.pageDetector.pages.map(function(item) {
-				return item.num;
-			}).includes(oActiveObj.GetPage()) == false) {
+			if (oActiveObj && !(nPage >= this.startVisiblePage && nPage <= this.endVisiblePage)) {
 				oDoc.BlurActiveObject();
 			}
 
@@ -1640,16 +1640,16 @@
 		this.scrollToXY = function(posY, posX) {
 			let oDoc		= this.getPDFDoc();
 			let oActiveObj	= oDoc.GetActiveObject();
-
-			// выход из активного объекта если сместились на другую страницу
-			if (this.disabledPaintOnScroll == false && oActiveObj && this.pageDetector.pages.map(function(item) {
-				return item.num;
-			}).includes(oActiveObj.GetPage()) == false) {
-				oDoc.BlurActiveObject();
-			}
+			let nPage		= oActiveObj ? oActiveObj.GetPage() : undefined;
 
 			this.m_oScrollVerApi.scrollToY(posY);
 			this.m_oScrollVerApi.scrollToX(posX);
+
+			this.checkVisiblePages();
+			// выход из активного объекта если сместились на другую страницу
+			if (oActiveObj && !(nPage >= this.startVisiblePage && nPage <= this.endVisiblePage)) {
+				oDoc.BlurActiveObject();
+			}
 		};
 
 		this.navigateToLink = function(link)
@@ -2979,16 +2979,14 @@
 			const landscapeAngles = [90, -90, 270, -270];
 			return landscapeAngles.includes(angle);
 		};
-		this.Get_PageLimits = function() {
-			let W = this.width;
-			let H = this.height;
-			let scaleCoef = this.zoom * AscCommon.AscBrowser.retinaPixelRatio;
+		this.Get_PageLimits = function(nPage) {
+			let oPage = this.file.pages[nPage];
 
 			return {
 				X: 0,
 				Y: 0,
-				XLimit: W * g_dKoef_pix_to_mm / scaleCoef,
-				YLimit: H * g_dKoef_pix_to_mm / scaleCoef
+				XLimit: oPage.W * g_dKoef_pt_to_mm,
+				YLimit: oPage.H * g_dKoef_pt_to_mm
 			}
 		};
 		this.SelectNextForm = function()

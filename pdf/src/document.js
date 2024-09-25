@@ -5399,7 +5399,7 @@ var CPresentation = CPresentation || function(){};
                     continue;
                 }
 
-                let nScale = oViewer.getDrawingPageScale(nPage) * AscCommon.AscBrowser.retinaPixelRatio;
+                let nScale = oViewer.getDrawingPageScale(nPage) * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
                 let xCenter = oViewer.width >> 1;
                 if (oViewer.documentWidth > oViewer.width)
@@ -5463,6 +5463,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetRecalcId = function () {
         return Infinity;
     };
+    CPDFDoc.prototype.RemoveBeforePaste = function() {};
     CPDFDoc.prototype.Document_UpdateInterfaceState = function() {};
     CPDFDoc.prototype.IsViewModeInReview = function() {
         return false;
@@ -5835,21 +5836,6 @@ var CPresentation = CPresentation || function(){};
 
         return false;
     };
-    CPDFDoc.prototype.Get_PageLimits = function(nPage) {
-        let oDrDoc      = this.GetDrawingDocument();
-        let oPageInfo   = oDrDoc.m_arrPages[nPage];
-
-        return {
-            X: 0,
-            XLimit: Math.ceil(oPageInfo.width_mm),
-            Y: 0,
-            YLimit: Math.ceil(oPageInfo.height_mm),
-        }
-    };
-    CPDFDoc.prototype.Get_PageFields = function(nPage) {
-        return this.Get_PageLimits(nPage);
-    };
-
     CPDFDoc.prototype.GetAllSignatures = function() {
         return [];
     };
@@ -5934,9 +5920,7 @@ var CPresentation = CPresentation || function(){};
                 if (oFirstAction) {
                     this.SetInProgress(true);
                     this.SetCurActionIdx(0);
-                    setTimeout(function() {
-                        oFirstAction.Do();
-                    }, 100);
+                    oFirstAction.Do();
                 }
             }, AscDFH.historydescription_Pdf_ExecActions, this);
         }

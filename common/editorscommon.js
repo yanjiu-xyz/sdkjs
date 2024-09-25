@@ -2219,8 +2219,14 @@
 				let oViewer = Asc.editor.getDocumentRenderer();
 				let oDoc = oViewer.doc;
 				let oActionsQueue = oDoc.GetActionsQueue();
+
+				function cancelFileDialog() {
+					AscCommon.global_mouseEvent.UnLockMouse();
+					oActionsQueue.Continue();
+				}
+
 				if (oActionsQueue.IsInProgress()) {
-					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
+					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), cancelFileDialog);
 				}
 				else 
 					fileName.click();
