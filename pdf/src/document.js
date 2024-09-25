@@ -200,7 +200,9 @@ var CPresentation = CPresentation || function(){};
 			annot.GetAllFonts(fontMap);
 		});
 		
-		this.checkFonts(Object.keys(fontMap), this._RecalculateAll.bind(this));
+        if (this.checkFonts(Object.keys(fontMap), this._RecalculateAll.bind(this))) {
+            this._RecalculateAll();
+        }
 	};
 	CPDFDoc.prototype._RecalculateAll = function() {
 		this.widgets.forEach(function(field) {
