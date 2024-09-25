@@ -207,6 +207,15 @@
 
         return true;
 	};
+    History.prototype.ForbitUnionPoint = function(nIndex) {
+        if (!nIndex) {
+            nIndex = this.Points.length - 1;
+        }
+
+        if (this.Points[nIndex]) {
+            this.Points[nIndex].forbitUnion = true;
+        }
+    };
 	
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
