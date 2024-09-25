@@ -244,6 +244,7 @@
     CAnnotationBase.prototype.IsPdfObject = function() {
         return true;
     };
+    CAnnotationBase.prototype.GetAllFonts = function(fontMap) {return fontMap};
     /**
 	 * Invokes only on open forms.
 	 * @memberof CAnnotationBase

@@ -5914,10 +5914,9 @@ var CPresentation = CPresentation || function(){};
     CActionQueue.prototype.Start = function() {
         if (this.IsInProgress() == false) {
             this.doc.DoAction(function() {
-                Asc.editor.canSave = false;
-
                 let oFirstAction = this.actions[0];
                 if (oFirstAction) {
+                    Asc.editor.canSave = false;
                     this.SetInProgress(true);
                     this.SetCurActionIdx(0);
                     oFirstAction.Do();
