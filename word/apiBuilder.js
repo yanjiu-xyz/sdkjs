@@ -7832,6 +7832,151 @@
 
 		return oDocInfo;
 	};
+	/**
+	 * Returns the current word or part of the current word
+	 * @param {undefined | "before" | "after"} sWordPart - Specifies the desired part of the current word
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentWord.js
+	 */
+	ApiDocument.prototype.GetCurrentWord = function(sWordPart)
+	{
+		let part = GetStringParameter(sWordPart, null);
+		let dir  = 0;
+		if ("after" === part)
+			dir = 1;
+		else if ("before" === part)
+			dir = -1;
+		
+		return this.Document.GetCurrentWord(dir);
+	};
+	/**
+	 * Replace the current word or part of the current word with the specified text
+	 * @param sReplace {string} String to replace
+	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current word
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ReplaceCurrentWord.js
+	 */
+	ApiDocument.prototype.ReplaceCurrentWord = function(sReplace, sPart)
+	{
+		let replace = GetStringParameter(sReplace, "");
+		let part    = GetStringParameter(sPart, null);
+		
+		let dir  = 0;
+		if ("after" === part)
+			dir = 1;
+		else if ("before" === part)
+			dir = -1;
+		
+		return this.Document.ReplaceCurrentWord(dir, replace);
+	};
+	/**
+	 * Selects the current word if it possible
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {object}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SelectCurrentWord.js
+	 */
+	ApiDocument.prototype.SelectCurrentWord = function()
+	{
+		return this.Document.SelectCurrentWord();
+	};
+	/**
+	 * Adds a comment to the current selection of the document, or to the current word if there is no text selection
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sText - The comment text (required).
+	 * @param {string} sAuthor - The author's name (optional).
+	 * @param {string} sUserId - The user ID of the comment author (optional).
+	 * @returns {?ApiComment} - Returns null if the comment was not added.
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddComment.js
+	 */
+	ApiDocument.prototype.AddComment = function(sText, sAuthor, sUserId)
+	{
+		if (!sText || typeof(sText) !== "string")
+			return null;
+		
+		sText   = GetStringParameter(sText, "");
+		sAuthor = GetStringParameter(sAuthor, "");
+		
+		let commentData = private_CreateCommentData({
+			text: sText,
+			author: sAuthor,
+			userId: sUserId,
+			quoteText: sQuotedText
+		});
+		
+		let comment = this.Document.AddComment(commentData);
+		return comment ? new ApiComment(comment) : null;
+	};
+	/**
+	 * Returns the current sentence or part of the current sentence
+	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current sentence
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentSentence.js
+	 */
+	ApiDocument.prototype.GetCurrentSentence = function(sPart)
+	{
+		let part = GetStringParameter(sPart, null);
+		let dir  = 0;
+		if ("after" === part)
+			dir = 1;
+		else if ("before" === part)
+			dir = -1;
+		
+		return this.Document.GetCurrentSentence(dir);
+	};
+	/**
+	 * Replace the current sentence or part of the current sentence with the specified text
+	 * @param sReplace {string} String to replace
+	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current sentence
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ReplaceCurrentSentence.js
+	 */
+	ApiDocument.prototype.ReplaceCurrentSentence = function(sReplace, sPart)
+	{
+		let replace = GetStringParameter(sReplace, "");
+		let part    = GetStringParameter(sPart, null);
+		
+		let dir  = 0;
+		if ("after" === part)
+			dir = 1;
+		else if ("before" === part)
+			dir = -1;
+		
+		return this.Document.ReplaceCurrentSentence(dir, replace);
+	};
+	/**
+	 * Add a math equation
+	 * @param sText {string} An equation written as a linear text string
+	 * @param [sFormat="unicode"] {"unicode" | "latex"} The format of the specified linear representation
+	 */
+	ApiDocument.prototype.AddMathEquation = function(sText, sFormat)
+	{
+		let text   = GetStringParameter(sText, "");
+		let format = GetStringParameter(sFormat, "unicode");
+		
+		let logicDocument = this.Document;
+		logicDocument.RemoveBeforePaste();
+		logicDocument.RemoveSelection();
+		let mathPr = new AscCommonWord.MathMenu(c_oAscMathType.Default_Text, logicDocument.GetDirectTextPr());
+		mathPr.SetText(text);
+		logicDocument.AddToParagraph(mathPr);
+		
+		let info = logicDocument.GetSelectedElementsInfo();
+		let paraMath = info.GetMath();
+		if (!paraMath)
+			return;
+		
+		paraMath.ConvertView(false, "latex" === format ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -8266,7 +8411,7 @@
 		else
 			return null;
 
-		return new ApiComment(oComment)
+		return new ApiComment(oComment);
 	};
 	/**
 	 * Adds a hyperlink to a paragraph. 
@@ -21571,7 +21716,7 @@
 	ApiRange.prototype["SetEndPos"]                  = ApiRange.prototype.SetEndPos;
 	ApiRange.prototype["GetStartPos"]                = ApiRange.prototype.GetStartPos;
 	ApiRange.prototype["GetEndPos"]                  = ApiRange.prototype.GetEndPos;
-
+	
 	ApiDocument.prototype["GetClassType"]                = ApiDocument.prototype.GetClassType;
 	ApiDocument.prototype["CreateNewHistoryPoint"]       = ApiDocument.prototype.CreateNewHistoryPoint;
 	ApiDocument.prototype["GetDefaultTextPr"]            = ApiDocument.prototype.GetDefaultTextPr;
@@ -21629,23 +21774,27 @@
 	ApiDocument.prototype["GetPageCount"]                = ApiDocument.prototype.GetPageCount;
 	ApiDocument.prototype["GetAllStyles"]                = ApiDocument.prototype.GetAllStyles;
 	ApiDocument.prototype["GetDocumentInfo"]             = ApiDocument.prototype.GetDocumentInfo;
-	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceCurrentImage"]         = ApiDocument.prototype.ReplaceCurrentImage;
 	ApiDocument.prototype["ReplaceDrawing"]              = ApiDocument.prototype.ReplaceDrawing;
 	ApiDocument.prototype["AcceptAllRevisionChanges"]    = ApiDocument.prototype.AcceptAllRevisionChanges;
 	ApiDocument.prototype["RejectAllRevisionChanges"]    = ApiDocument.prototype.RejectAllRevisionChanges;
-	
-	ApiDocument.prototype["ToJSON"]                  = ApiDocument.prototype.ToJSON;
-	ApiDocument.prototype["UpdateAllTOC"]            = ApiDocument.prototype.UpdateAllTOC;
-	ApiDocument.prototype["UpdateAllTOF"]            = ApiDocument.prototype.UpdateAllTOF;
-	ApiDocument.prototype["UpdateAllFields"]         = ApiDocument.prototype.UpdateAllFields;
-	ApiDocument.prototype["AddTableOfContents"]      = ApiDocument.prototype.AddTableOfContents;
-	ApiDocument.prototype["AddTableOfFigures"]       = ApiDocument.prototype.AddTableOfFigures;
-
-	ApiDocument.prototype["GetAllForms"]             = ApiDocument.prototype.GetAllForms;
-	ApiDocument.prototype["ClearAllFields"]          = ApiDocument.prototype.ClearAllFields;
-	ApiDocument.prototype["SetFormsHighlight"]       = ApiDocument.prototype.SetFormsHighlight;
+	ApiDocument.prototype["ToJSON"]                      = ApiDocument.prototype.ToJSON;
+	ApiDocument.prototype["UpdateAllTOC"]                = ApiDocument.prototype.UpdateAllTOC;
+	ApiDocument.prototype["UpdateAllTOF"]                = ApiDocument.prototype.UpdateAllTOF;
+	ApiDocument.prototype["UpdateAllFields"]             = ApiDocument.prototype.UpdateAllFields;
+	ApiDocument.prototype["AddTableOfContents"]          = ApiDocument.prototype.AddTableOfContents;
+	ApiDocument.prototype["AddTableOfFigures"]           = ApiDocument.prototype.AddTableOfFigures;
+	ApiDocument.prototype["GetAllForms"]                 = ApiDocument.prototype.GetAllForms;
+	ApiDocument.prototype["ClearAllFields"]              = ApiDocument.prototype.ClearAllFields;
+	ApiDocument.prototype["SetFormsHighlight"]           = ApiDocument.prototype.SetFormsHighlight;
+	ApiDocument.prototype["GetCurrentWord"]              = ApiDocument.prototype.GetCurrentWord;
+	ApiDocument.prototype["ReplaceCurrentWord"]          = ApiDocument.prototype.ReplaceCurrentWord;
+	ApiDocument.prototype["SelectCurrentWord"]           = ApiDocument.prototype.SelectCurrentWord;
+	ApiDocument.prototype["AddComment"]                  = ApiDocument.prototype.AddComment;
+	ApiDocument.prototype["GetCurrentSentence"]          = ApiDocument.prototype.GetCurrentSentence;
+	ApiDocument.prototype["ReplaceCurrentSentence"]      = ApiDocument.prototype.ReplaceCurrentSentence;
+	ApiDocument.prototype["AddMathEquation"]             = ApiDocument.prototype.AddMathEquation;
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
