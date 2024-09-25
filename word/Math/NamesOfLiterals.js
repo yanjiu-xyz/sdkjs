@@ -1685,7 +1685,7 @@
 			'Pr'		: null,
 			'deg'		: null,
 			'erf'		: null,
- 			'lg'		: null,
+			'lg'		: null,
 			'ln'		: null,
 			'max'		: null,
 			'sup'		: null,
@@ -6401,7 +6401,7 @@
 		}
 
 		//конвертация самих скобок
-	 	if (this.IsBracketConvert(oAbsolutePLastId) && !this.IsPreScript())
+		if (this.IsBracketConvert(oAbsolutePLastId) && !this.IsPreScript())
 		{
 			ConvertBracket(this.Tokens.brackets, this.oCMathContent);
 			this.SetCursorByConvertedData(this.oCMathContent);
