@@ -2074,6 +2074,17 @@
 			autoCorrectRule = arrTokensCheckerList[i];
 			tokenValue = this.MatchToken(autoCorrectRule, string);
 
+			if (string[0] === "\\" && string[1] === "/")
+			{
+				autoCorrectRule = MathLiterals.divide;
+				tokenValue = "/"
+				this._cursor += this.GetStringLength("\\/");
+
+				let oStyle = this.GetStyle(this._cursor);
+				let oMetaData = oStyle.GetMathMetaData();
+				oMetaData.setIsEscapedSlash();
+			}
+
 			if (tokenValue === null)
 				continue;
 
@@ -4953,6 +4964,13 @@
 		if (!(oContent instanceof MathTextAndStyles) && oContent.Content.length === 0)
 			return this.GetLastPos();
 
+		// check what's wrong
+		// for mathBase set rFont
+		if (!(oContent instanceof ParaRun)
+			&& !(oContent instanceof MathTextAndStyles)
+			&& !(oContent instanceof CMathContent))
+			oContent.Set_RFont_ForMath();
+
 		let nPosCopy = this.nPos;
 
 		if (oContent instanceof MathTextAndStyles)
@@ -5040,6 +5058,7 @@
 			let oLast = this.GetLastContentInLayer();
 
 			if (oLast && oLast instanceof MathText
+				&& oLast.additionalMathData.GetMathMetaData().getIsEscapedSlash() !== true
 				&& oContent instanceof MathText
 				&& oLast.IsAdditionalDataEqual(oContent.additionalMathData))
 			{
@@ -5362,17 +5381,68 @@
 		return this
 	};
 
+	// for store data without symbols and transfer data between autocorrection/correction sessions
+	function MathMetaData()
+	{
+		this.isLinearFraction	= false;
+		this.isEscapedSlash		= false;
+
+		this.setIsLinearFraction = function ()
+		{
+			this.isLinearFraction = true;
+		}
+		this.getIsLinearFraction = function ()
+		{
+			return this.isLinearFraction;
+		}
+
+		this.setIsEscapedSlash = function ()
+		{
+			this.isEscapedSlash = true;
+		}
+		this.getIsEscapedSlash = function ()
+		{
+			return this.isEscapedSlash;
+		}
+
+		this.Copy = function ()
+		{
+			let oCopy = new MathMetaData();
+
+			oCopy.setIsLinearFraction(this.isLinearFraction);
+			oCopy.setIsEscapedSlash(this.isEscapedSlash);
+
+			return oCopy;
+		}
+	}
+
 	function MathTextAdditionalData (oContent, isCtrPr)
 	{
 		this.style		= undefined;
 		this.reviewData	= {
-			reviewType : undefined,
-			reviewInfo : undefined
+			reviewType : reviewtype_Common,
+			reviewInfo : new CReviewInfo()
 		}
-		this.mathPrp	= undefined;
+		this.mathPrp	= new CMPrp();
+		this.metaData	= new MathMetaData();
 
 		if (oContent)
 			this.SetAdditionalDataFromContent(oContent, isCtrPr);
+	}
+
+	/**
+	 *
+	 * @return {MathMetaData}
+	 * @constructor
+	 */
+	MathTextAdditionalData.prototype.GetMathMetaData = function ()
+	{
+		return this.metaData;
+	}
+	MathTextAdditionalData.prototype.SetMathMetaData = function (oMathMetaData)
+	{
+		if (oMathMetaData)
+			this.metaData = oMathMetaData.Copy();
 	}
 	MathTextAdditionalData.prototype.Copy = function()
 	{
@@ -5380,6 +5450,8 @@
 
 		oNewMath.SetAdditionalStyleData(this.style);
 		oNewMath.SetAdditionalReviewData(this.reviewData);
+		oNewMath.SetMathPrp(this.mathPrp);
+		oNewMath.SetMathMetaData(this.metaData);
 
 		return oNewMath;
 	};
@@ -5430,19 +5502,21 @@
 	};
 	MathTextAdditionalData.prototype.IsMPrpEqual = function (oMPrp)
 	{
-		return oMPrp !== undefined
-			&& this.mathPrp !== undefined
-			&& this.mathPrp.IsEqual(oMPrp);
+		return oMPrp === undefined
+			|| this.mathPrp === undefined
+			|| (oMPrp !== undefined && this.mathPrp !== undefined && this.mathPrp.IsEqual(oMPrp))
 	};
 	MathTextAdditionalData.prototype.IsStyleEqual = function (oStyleParent)
 	{
-		if (this.style === undefined)
-			return false;
-
 		if (oStyleParent instanceof MathTextAdditionalData)
+		{
+			if (this.style === undefined || oStyleParent.style === undefined)
+				return true;
+
 			return this.style.IsEqual(oStyleParent.GetAdditionalStyleData())
 				&& this.IsReviewDataEqual(oStyleParent)
 				&& this.IsMPrpEqual(oStyleParent.mathPrp);
+		}
 
 		if (oStyleParent)
 		{
@@ -5464,7 +5538,7 @@
 			if (this.reviewData.reviewType === undefined || oContent.reviewData.reviewInfo === undefined)
 				return true;
 			return this.reviewData.reviewType === oContent.reviewData.reviewType
-				&& this.reviewData.reviewInfo.IsEqual(oContent.reviewData.reviewInfo, true)
+				&& this.reviewData.reviewInfo.IsEqual(oContent.reviewData.reviewInfo, false)
 		}
 		else
 		{
@@ -5472,7 +5546,7 @@
 				return false;
 
 			return this.reviewData.reviewType === oContent.ReviewType
-				&& this.reviewData.reviewInfo.IsEqual(oContent.ReviewInfo)
+				&& this.reviewData.reviewInfo.IsEqual(oContent.ReviewInfo, false)
 		}
 	}
 	MathTextAdditionalData.prototype.SetAdditionalDataFromContent = function (oContent, isCtrPrp)
@@ -6394,7 +6468,7 @@
 			[oRuleLast, true],
 		);
 
-		if (!this.CompareMathContent(oMathContentTemp))
+		if (!this.CompareMathContent(oMathContentTemp, true))
 		{
 			this.private_ProceedBeforeDivide(oRuleLast, false);
 			return true;
@@ -6404,7 +6478,7 @@
 			return false;
 		}
 	}
-	ProceedTokens.prototype.CompareMathContent = function (oMathContentCopy)
+	ProceedTokens.prototype.CompareMathContent = function (oMathContentCopy, isCheckStr)
 	{
 		let isSame = true;
 
@@ -6418,6 +6492,12 @@
 
 				if (oMathContentCopy.Content[i].Type !== para_Math_Run
 					&& !this.oCMathContent.Content[i])
+					isSame = false;
+
+				if (isCheckStr
+					&& oMathContentCopy.Content[i]
+					&& this.oCMathContent.Content[i]
+					&& oMathContentCopy.Content[i].GetTextOfElement().GetText() !== this.oCMathContent.Content[i].GetTextOfElement().GetText())
 					isSame = false;
 			}
 		}
@@ -6961,12 +7041,27 @@
 		{
 			let oStartPos			= arrPreContent.start;
 
+			// del space before converted content
+			let oSpacePos			= oStartPos.GetCopy();
+			oSpacePos.DecreasePosition();
+			if (oSpacePos.GetText() === " ")
+				oStartPos = oSpacePos;
+
 			// processing for pre-script "_2^j x ", "_(2+1)^(x) x ", "_2^j (1+y) "
 			if (oStartPos.GetText() === "_" && oLast.GetText() === "^" || oStartPos.GetText() === "^" && oLast.GetText() === "_")
 				return this.ProceedPreScript(oLast, oStartPos);
 
 			let oParamsCutContent	= {oDelMark : oStartPos, isWrapFirstContent: true, isDelLastSpace: true};
 			let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
+
+			// del space before converted content
+			if (oStartPos === oSpacePos)
+			{
+				let oFirstContent	= oMathContent.GetFirstContent();
+				let strText			= oFirstContent.text;
+				if (strText[0] === " ")
+					oFirstContent.text = oFirstContent.text.substring(1);
+			}
 
 			GetConvertContent(0, oMathContent, this.oCMathContent);
 		}

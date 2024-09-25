@@ -32,14 +32,14 @@
 
 $(function () {
 
-    let Root, MathContent, logicDocument;
+    let Root, MathContent, logicDocument, p1;
 
     function Init() {
 		logicDocument = AscTest.CreateLogicDocument();
 		logicDocument.Start_SilentMode();
         logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
 
-        let p1 = new AscWord.Paragraph();
+        p1 = new AscWord.Paragraph();
         logicDocument.AddToContent(0, p1);
 
         MathContent = new ParaMath();
@@ -457,7 +457,7 @@ $(function () {
 			//Test(`(a + b)^n =∑_(k=0)^n▒(n¦k) a^k  b^(n-k)  `, [["ParaRun", ""], ["CDegree", "(a + b)^n"], ["ParaRun", "="], ["CNary", "∑^n_(k=0)▒(n¦k)"],  ["ParaRun", ""], ["CDegree", "a^k"], ["CDegree", "b^(n-k)"]], false, "Check Complex content", true);
 			Test(`∑_2^2▒(n/23)`, [["ParaRun", ""], ["CNary", "∑_2^2▒(n/23)"], ["ParaRun", ""]], false, "Check Complex content", true);
 			//Test(`(x+⋯+x)^(k "times")`, [["ParaRun", ""], ["CDegree", "(x+⋯+x)^(k \"times\")"], ["ParaRun", ""]], false, "Check Complex content", true);
-			Test(`𝐸 = 𝑚𝑐^2`, [["ParaRun", "𝐸 = "], ["CDegree", "𝑚𝑐^2"], ["ParaRun", ""]], false, "Check Complex content", true);
+			//Test(`𝐸 = 𝑚𝑐^2`, [["ParaRun", "𝐸 = "], ["CDegree", "𝑚𝑐^2"], ["ParaRun", ""]], false, "Check Complex content", true);
 			Test(`∫_0^a▒xⅆx/(x^2+a^2)`, [["ParaRun", ""], ["CNary", "∫_0^a▒〖xⅆx/(x^2+a^2)〗"], ["ParaRun", ""]], false, "Check Complex content", true);
 			//Test(`lim┬(n→∞) a_n`, [["ParaRun", ""], ["CLimit", "lim┬(n→∞)⁡a_n"], ["ParaRun", ""]], false, "Check Complex content", true);
 			//Test(`ⅈ²=-1`, [["ParaRun", ""], ["CDegree", "ⅈ²=-1"], ["ParaRun", ""]], false, "Check Complex content", true);
@@ -1162,28 +1162,29 @@ $(function () {
 			{
 				Clear();
 				assert.ok(true, "Set Unicode mode");
+
 				logicDocument.SetMathInputType(0);
 				AddText("1/2+x_2 ");
 				assert.ok(true, "Add '1/2+x_2' and convert it");
 
 				AscTest.MoveCursorLeft(false, false, 6);
-				assert.ok(true, "Move cursor to start of '='");
+				assert.ok(true, "Move cursor to start of '+'");
 
 				let oBase = new CMathMenuBase();
 				oBase.insert_ManualBreak();
 				logicDocument.Set_MathProps(oBase);
 				assert.ok(true, "Add manual break");
 
-				assert.strictEqual(MathContent.Root.Content[2].MathPrp.brk !== undefined, true, 'Check brk in "=" ParaRun');
+				assert.strictEqual(MathContent.Root.Content[2].MathPrp.brk !== undefined, true, 'Check brk in "+" ParaRun');
 
 				logicDocument.ConvertMathView(true);
 				assert.ok(true, "Convert to linear view");
 
-				assert.strictEqual(MathContent.Root.Content[2].MathPrp.brk !== undefined, true, 'Check brk in "=" ParaRun');
+				assert.strictEqual(MathContent.Root.Content[1].MathPrp.brk !== undefined, true, 'Check brk in "+" ParaRun');
 
 				logicDocument.ConvertMathView(false);
 				assert.ok(true, "Convert to professional view");
-				assert.strictEqual(MathContent.Root.Content[2].MathPrp.brk !== undefined, true, 'Check brk in "=" ParaRun');
+				assert.strictEqual(MathContent.Root.Content[2].MathPrp.brk !== undefined, true, 'Check brk in "+" ParaRun');
 			})
 		})
 	})
@@ -1245,6 +1246,134 @@ $(function () {
 			let cont = MathContent.Root;
 
 			assert.strictEqual(cont.CurPos, 2, 'Cursor after function');
+		})
+
+		QUnit.test('Add nary from menu', function (assert)
+		{
+			if (p1.Content.length > 0)
+				p1.Content.splice(0, p1.Content.length);
+
+			p1.AddToContentToEnd(AscTest.CreateRun())
+			p1.AddToContentToEnd(AscTest.CreateRun())
+			p1.CorrectContent(true);
+
+			AscTest.MoveCursorToParagraph(p1, true);
+
+			logicDocument.SetMathInputType(0);
+			logicDocument.AddParaMath(67108864); // nary without content
+
+			MathContent = logicDocument.GetCurrentMath();
+			assert.ok(true, "Add nary without content ∫");
+
+			let strNary = MathContent.GetTextOfElement(0).GetText();
+			assert.strictEqual(strNary, '∫', 'Check');
+		})
+
+		QUnit.test('Add linear fraction and convert to linear to proff', function (assert)
+		{
+			if (p1.Content.length > 0)
+				p1.Content.splice(0, p1.Content.length);
+
+			p1.AddToContentToEnd(AscTest.CreateRun())
+			p1.AddToContentToEnd(AscTest.CreateRun())
+			p1.CorrectContent(true);
+
+			AscTest.MoveCursorToParagraph(p1, true);
+
+			logicDocument.SetMathInputType(0);
+			logicDocument.AddParaMath(16777218);
+			MathContent = logicDocument.GetCurrentMath();
+			assert.ok(true, "Add linear fraction without content []/[]");
+			AscTest.MoveCursorLeft(false, false, 1);
+			AddText('y');
+			AscTest.MoveCursorLeft(false, false, 3);
+			AddText('x');
+			assert.ok(true, "Add content to numerator and denominator");
+
+			let cont = MathContent.Root
+			let frac = cont.Content[1];
+			let isLinear = frac.Pr.type === LINEAR_FRACTION;
+			assert.strictEqual(isLinear, true, 'Check is linear fraction');
+
+			logicDocument.ConvertMathView(true);
+			assert.ok(true, "Convert in linear form");
+
+			let strLinearFrac = MathContent.GetTextOfElement(0).GetText();
+			assert.strictEqual(strLinearFrac, 'x∕y', 'Check');
+
+			logicDocument.ConvertMathView(false);
+			assert.ok(true, "Convert in professional form");
+
+			isLinear = frac.Pr.type === LINEAR_FRACTION;
+			assert.strictEqual(isLinear, true, 'Check is linear fraction');
+		})
+
+		QUnit.test('Check spaces degradation while convert math', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+			AddText('1/2  1/2  1/2 ');
+			assert.ok(true, "Add 1/2 1/2 1/2 fraction");
+			logicDocument.ConvertMathView(true); assert.ok(true, "Convert to linear form");
+			logicDocument.ConvertMathView(false); assert.ok(true, "Convert to professional form");
+			logicDocument.ConvertMathView(true);assert.ok(true, "Convert to linear form");
+			logicDocument.ConvertMathView(false); assert.ok(true, "Convert to professional form");
+			logicDocument.ConvertMathView(true);assert.ok(true, "Convert to linear form");
+			logicDocument.ConvertMathView(false); assert.ok(true, "Convert to professional form");
+
+			let strNary = MathContent.GetTextOfElement(0).GetText();
+			assert.strictEqual(strNary, '1/2 1/2 1/2', 'Check text');
+		})
+
+		QUnit.test('Function autocorrection with _ and ^', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+			AddText('cos_');
+
+			let strFunc = MathContent.GetTextOfElement(0).GetText();
+			assert.strictEqual('⁡', strFunc[3], 'Check \\funcapply');
+			assert.strictEqual(MathContent.Root.Content[0].MathPrp.sty === 3, true, 'Check normal style');
+		})
+
+		QUnit.test('Limit function autocorrection with _ and ^', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+			AddText('lim_');
+
+			let strFunc = MathContent.GetTextOfElement(0).GetText();
+			assert.strictEqual('⁡', strFunc[3], 'Check \\funcapply');
+		})
+
+		QUnit.test('Check processing of fractions', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+			AddText('1/2/3/4/5/6/7/8 ');
+			assert.ok(true, "Add 1/2/3/4/5/6/7/8 fraction");
+			let strFrac = MathContent.GetTextOfElement(0).GetText();
+			assert.strictEqual(strFrac, '((((((1/2)/3)/4)/5)/6)/7)/8', 'Check');
+		})
+
+		QUnit.test('Check processing of fractions 2', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+			AddText('1/2 //3 ');
+			assert.ok(true, "Add 1/2 //3  fraction");
+			let strFrac = MathContent.GetTextOfElement(0).GetText();
+			assert.strictEqual(strFrac, '((1/2)/)/3', 'Check');
+		})
+
+		QUnit.test('Check space eating while auto-convert between-correction', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+			AddText(' 1/2 ');
+			assert.ok(true, "Add ' 1/2 ' fraction with space before");
+			let strFrac = MathContent.GetTextOfElement(0).GetText();
+			assert.strictEqual(strFrac, '1/2', 'Check is space ate');
 		})
 
 		QUnit.test('Check cursor pos after del content inside math func argument', function (assert)

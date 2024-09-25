@@ -541,6 +541,9 @@ ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 	let nEndPos		= (isSelectedText == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length);
 	let isStrFont	= false;
 
+	// [Unicode] Investigate the mechanism for converting an escaped backslash. Information about separating it
+	// into a separate Run is not enough.
+
 	for (let i = nStartPos; i < nEndPos; i++)
 	{
 		let oCurrentElement		= this.Content[i];
@@ -607,7 +610,19 @@ ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 			}
 			else
 			{
-				oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+				// in Word if slash in separate ParaRun -> slash interpreted as an escaped slash
+				// if (strCurrentElement === "/" && this.Content.length === 1 && strLast !== "\\")
+				// {
+				// 	let oEscSlash		= new AscMath.MathText("\\/", this);
+				// 	let oAddData		= oEscSlash.GetAdditionalData();
+				// 	let oMathMetaData	= oAddData.GetMathMetaData();
+				// 	oMathMetaData.setIsEscapedSlash();
+				// 	oMathText.AddText(oEscSlash, this);
+				// }
+				// else
+				// {
+					oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+				//}
 			}
 		}
 	}

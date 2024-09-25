@@ -3391,7 +3391,24 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 		oMathRun = this.Content[this.Content.length - 1];
 	}
 
-	if (!oMathRun || !(oMathRun instanceof ParaRun) || (oMathRun && oMathRun instanceof ParaRun && !oAdditionalData.IsStyleEqual(oMathRun)))
+	let isEscapedSlash = oAdditionalData
+		?  oAdditionalData.GetMathMetaData().getIsEscapedSlash()
+		: false;
+	let oLastContent = oMathRun
+		? oMathRun.GetTextOfElement().GetLastContent()
+		: false;
+	let isPrevEscapedSlash = oLastContent
+		? oLastContent.GetAdditionalData().GetMathMetaData().getIsEscapedSlash()
+		: false;
+
+	if (isEscapedSlash
+		|| isPrevEscapedSlash
+		|| !oMathRun
+		|| !(oMathRun instanceof ParaRun)
+		|| (oMathRun
+			&& oMathRun instanceof ParaRun
+			&& oAdditionalData
+			&& !oAdditionalData.IsStyleEqual(oMathRun)))
 		oMathRun = new AscWord.CRun(undefined, true);
 
 	AscWord.TextToMathRunElements(text, function(item)
@@ -6052,23 +6069,35 @@ CMathContent.prototype.GetTextOfElement = function(oMathText, isDefaultText)
 	{
 		oMathText.Add(this.Content[i], false);
 
-		if (!(this.Content[i] instanceof ParaRun)) // если текущий элемент математический объект
+		if (!oMathText.IsLaTeX())
 		{
-			if (this.Content[i + 1] && !(this.Content[i + 1] instanceof ParaRun)) // если след эл. мат. объект
+			if (!(this.Content[i] instanceof ParaRun)) // если текущий элемент математический объект
 			{
-				oMathText.AddText(new AscMath.MathText(" ", this.Content[i]));
-			}
-			else if (this.Content[i + 1] && (this.Content[i + 1] instanceof ParaRun) && this.Content[i + 2] && !(this.Content[i + 2] instanceof ParaRun))
-			{
-				let strText = this.Content[i + 1].GetTextOfElement().GetText();
-				if (checkIsNotOperatorOrBracket(strText[0]))
+				if (this.Content[i + 1] && !(this.Content[i + 1] instanceof ParaRun)) // если след эл. мат. объект
+				{
 					oMathText.AddText(new AscMath.MathText(" ", this.Content[i]));
+				}
+				else if (this.Content[i + 1] && (this.Content[i + 1] instanceof ParaRun) && this.Content[i + 2] && !(this.Content[i + 2] instanceof ParaRun))
+				{
+					let strText = this.Content[i + 1].GetTextOfElement().GetText();
+					if (checkIsNotOperatorOrBracket(strText[0]))
+						oMathText.AddText(new AscMath.MathText(" ", this.Content[i]));
+				}
+				else if (this.Content[i + 1] && this.Content[i + 1] instanceof ParaRun) // если след элемент текстовый блок
+				{
+					let strText = this.Content[i + 1].GetTextOfElement().GetText();
+					if (!this.Content[i + 1].Is_Empty() && checkIsNotOperatorOrBracket(strText[0]))
+						oMathText.AddText(new AscMath.MathText(" ", this.Content[i]));
+				}
 			}
-			else if (this.Content[i + 1] && this.Content[i + 1] instanceof ParaRun) // если след элемент текстовый блок
+			else if (this.Content[i] instanceof ParaRun)
 			{
-				let strText = this.Content[i + 1].GetTextOfElement().GetText();
-				if (!this.Content[i + 1].Is_Empty() && checkIsNotOperatorOrBracket(strText[0]))
-					oMathText.AddText(new AscMath.MathText(" ", this.Content[i]));
+				if (this.Content[i + 1] && !(this.Content[i+1] instanceof ParaRun) && !(this.Content[i+1] instanceof CDelimiter))
+				{
+					let strText = this.Content[i].GetTextOfElement().GetText();
+					if (checkIsNotOperatorOrBracket(strText[strText.length - 1]) && !this.Content[i].Is_Empty())
+						oMathText.AddText(new AscMath.MathText(" ", this.Content[i]));
+				}
 			}
 		}
 	}

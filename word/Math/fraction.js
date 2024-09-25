@@ -695,6 +695,14 @@ CFraction.prototype.GetTextOfElement = function(oMathText)
 			default:				strFracSymbol = '/';	break;
 		}
 		oFracContent	= new AscMath.MathText(strFracSymbol, this);
+
+		if (this.Pr.type === LINEAR_FRACTION)
+		{
+			let oAddData	= oFracContent.GetAdditionalData();
+			let oMetaData	= oAddData.GetMathMetaData();
+			oMetaData.setIsLinearFraction(true);
+		}
+
 		oMathText.AddAfter(oPosNumerator, oFracContent);
 	}
 
