@@ -1006,6 +1006,7 @@
 		if (this.IsDoNotScroll()) {
 			let isOutOfForm = this.IsTextOutOfForm(this.content);
 			if ((this.IsMultiline() && isOutOfForm.ver) || (isOutOfForm.hor && this.IsMultiline() == false)) {
+				AscCommon.History.ForbidUnionPoint();
 				AscCommon.History.Undo();
 				AscCommon.History.Clear_Redo();
 			}
