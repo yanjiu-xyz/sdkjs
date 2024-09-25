@@ -3404,12 +3404,9 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 	if (isEscapedSlash
 		|| isPrevEscapedSlash
 		|| !oMathRun
-		|| !(oMathRun instanceof ParaRun)
-		|| (oMathRun
-			&& oMathRun instanceof ParaRun
-			&& oAdditionalData
-			&& !oAdditionalData.IsStyleEqual(oMathRun)))
-		oMathRun = new AscWord.CRun(undefined, true);
+		|| !(oMathRun instanceof AscWord.Run)
+		|| (oAdditionalData	&& !oAdditionalData.IsStyleEqual(oMathRun)))
+		oMathRun = new AscWord.Run(undefined, true);
 
 	AscWord.TextToMathRunElements(text, function(item)
 	{
