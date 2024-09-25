@@ -6596,32 +6596,6 @@
 		return true;
 	};
 	/**
-	 * Adds a comment to the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment author (optional).
-	 * @returns {ApiComment?} - Returns null if the comment was not added.
-	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddComment.js
-	 */
-	ApiDocument.prototype.AddComment = function(sText, sAuthor, sUserId)
-	{
-		if (!sText || typeof(sText) !== "string")
-			return null;
-	
-		if (typeof(sAuthor) !== "string")
-			sAuthor = "";
-		
-		let CommentData = private_CreateCommentData({
-			text: sText,
-			author: sAuthor,
-			userId: sUserId
-		});
-
-		return AddGlobalCommentToDocument(this.Document, CommentData);
-	};
-	/**
 	 * Returns a bookmark range.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -7906,7 +7880,7 @@
 			text: sText,
 			author: sAuthor,
 			userId: sUserId,
-			quoteText: sQuotedText
+			quoteText: null
 		});
 		
 		let comment = this.Document.AddComment(commentData);
@@ -21750,7 +21724,6 @@
 	ApiDocument.prototype["Last"]                        = ApiDocument.prototype.Last;
 	ApiDocument.prototype["Push"]                        = ApiDocument.prototype.Push;
 	ApiDocument.prototype["DeleteBookmark"]              = ApiDocument.prototype.DeleteBookmark;
-	ApiDocument.prototype["AddComment"]                  = ApiDocument.prototype.AddComment;
 	ApiDocument.prototype["GetBookmarkRange"]            = ApiDocument.prototype.GetBookmarkRange;
 	ApiDocument.prototype["GetSections"]                 = ApiDocument.prototype.GetSections;
 	ApiDocument.prototype["GetAllTablesOnPage"]          = ApiDocument.prototype.GetAllTablesOnPage;
