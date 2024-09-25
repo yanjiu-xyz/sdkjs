@@ -693,8 +693,7 @@ ParaMath.prototype.GetDirectTextPr = function()
  */
 ParaMath.prototype.Add = function(Item)
 {
-    var LogicDocument  = (this.Paragraph ? this.Paragraph.LogicDocument : undefined);
-    var TrackRevisions = (LogicDocument && true === LogicDocument.IsTrackRevisions() ? true : false);
+	let logicDocument = this.GetLogicDocument();
 
     var Type = Item.Type;
     var oSelectedContent = this.GetSelectContent();
@@ -715,19 +714,11 @@ ParaMath.prototype.Add = function(Item)
 
         if(oContent.bRoot == false && Run.IsPlaceholder())
         {
-            var CtrRunPr = oContent.Get_ParentCtrRunPr(false); // ctrPrp (не копия)
-
-			var isLocalTrack = false;
-            if (TrackRevisions)
+			AscCommon.executeNoRevisions(function()
 			{
-				isLocalTrack = LogicDocument.GetLocalTrackRevisions();
-				LogicDocument.SetLocalTrackRevisions(false);
-			}
-
-            Run.Apply_TextPr(CtrRunPr, undefined, true);
-
-            if (false !== isLocalTrack)
-                LogicDocument.SetLocalTrackRevisions(isLocalTrack);
+				var CtrRunPr = oContent.Get_ParentCtrRunPr(false); // ctrPrp (не копия)
+				Run.Apply_TextPr(CtrRunPr, undefined, true);
+			}, logicDocument, this);
         }
 
         if(Item.Value == 38)
@@ -770,29 +761,22 @@ ParaMath.prototype.Add = function(Item)
         // Выставляем позицию в начало этого рана
         oContent.CurPos = StartPos + 1;
         RightRun.MoveCursorToStartPos();
-
-        var lng = oContent.Content.length;
-        oContent.Load_FromMenu(Item.Menu, this.Paragraph, null, Item.GetText());
-        oContent.Correct_ContentCurPos();
-
-        var lng2 = oContent.Content.length;
-
-        TextPr.RFonts.SetAll("Cambria Math", -1);
-
-		var isLocalTrack = false;
-		if (TrackRevisions)
+		
+		// TODO: Need to refactor this code. Applying TextPr should be done in LoadFromMenu method
+		// or LoadFromMenu should return an array of added objects
+		let lng = oContent.Content.length;
+		oContent.Load_FromMenu(Item.Menu, this.Paragraph, TextPr, Item.GetText());
+		oContent.Correct_ContentCurPos();
+		
+		AscCommon.executeNoRevisions(function()
 		{
-			isLocalTrack = LogicDocument.GetLocalTrackRevisions();
-			LogicDocument.SetLocalTrackRevisions(false);
-		}
-
-        if(bPlh)
-            oContent.Apply_TextPr(TextPr, undefined, true);
-        else
-            oContent.Apply_TextPr(TextPr, undefined, false, StartPos + 1, StartPos + lng2 - lng);
-
-		if (false !== isLocalTrack)
-			LogicDocument.SetLocalTrackRevisions(isLocalTrack);
+			let lng2 = oContent.Content.length;
+			TextPr.RFonts.SetAll("Cambria Math", -1);
+			if (bPlh)
+				oContent.Apply_TextPr(TextPr, undefined, true);
+			else if (lng2 > lng)
+				oContent.Apply_TextPr(TextPr, undefined, false, StartPos + 1, StartPos + lng2 - lng);
+		}, logicDocument, this);
     }
 	
 	if ((para_Text === Type || para_Space === Type) && null !== NewElement)
