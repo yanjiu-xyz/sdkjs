@@ -106,7 +106,7 @@
         var Point2 = this.Points[this.Points.length - 1];
 
         // запрет на объединение
-        if (Point1.forbitUnion || Point2.forbitUnion) {
+        if (Point1.forbidUnion || Point2.forbidUnion) {
             return false;
         }
 
@@ -207,13 +207,13 @@
 
         return true;
 	};
-    History.prototype.ForbitUnionPoint = function(nIndex) {
+    History.prototype.ForbidUnionPoint = function(nIndex) {
         if (!nIndex) {
             nIndex = this.Points.length - 1;
         }
 
         if (this.Points[nIndex]) {
-            this.Points[nIndex].forbitUnion = true;
+            this.Points[nIndex].forbidUnion = true;
         }
     };
 	

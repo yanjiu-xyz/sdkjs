@@ -93,7 +93,7 @@
 		return (-1 !== oDoc.drawings.indexOf(this));
 	};
     CPdfDrawingPrototype.prototype.OnBlur = function() {
-        AscCommon.History.ForbitUnionPoint();
+        AscCommon.History.ForbidUnionPoint();
     };
     CPdfDrawingPrototype.prototype.recalculateContent = function() {
         let parentPrototype = Object.getPrototypeOf(Object.getPrototypeOf(this));
