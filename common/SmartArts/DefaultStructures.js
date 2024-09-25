@@ -681,7 +681,7 @@
 				idx: [1, 0, 0]
 			},
 			{
-				names: ["node0", "lnNode1", "alignNode1", "node1", "node2", "node3", "node4", "sibTrans2D1",
+				names: ["node0", "lnNode1", "alignNode1", "node1", "node2", "node3", "node4",
 					"asst0", "asst1", "asst2", "asst3", "asst4", "parChTrans2D1", "parChTrans2D2", "parChTrans2D3", "parChTrans2D4"],
 				clr: {type: g_clr_lt1},
 				idx: [2, 1, 0]
@@ -716,15 +716,6 @@
 				styleDef.addToLstStyleLbl(styleDef.styleLbl.length, generateStyleStyleLbl(info.names[j], color, idx));
 			}
 		}
-		//fixme
-		const templateOrd = ["node0", "lnNode1", "vennNode1", "alignNode1", "node1", "node2", "node3", "node4", "fgImgPlace1", "alignImgPlace1", "bgImgPlace1", "sibTrans2D1", "fgSibTrans2D1", "bgSibTrans2D1", "sibTrans1D1", "callout", "asst0", "asst1", "asst2", "asst3", "asst4", "parChTrans2D1", "parChTrans2D2", "parChTrans2D3", "parChTrans2D4", "parChTrans1D1", "parChTrans1D2", "parChTrans1D3", "parChTrans1D4", "fgAcc1", "conFgAcc1", "alignAcc1", "trAlignAcc1", "bgAcc1", "solidFgAcc1", "solidAlignAcc1", "solidBgAcc1", "fgAccFollowNode1", "alignAccFollowNode1", "bgAccFollowNode1", "fgAcc0", "fgAcc2", "fgAcc3", "fgAcc4", "bgShp", "dkBgShp", "trBgShp", "fgShp", "revTx"];
-		const map = {};
-		for (let j = 0; j < templateOrd.length; j += 1) {
-			map[templateOrd[j]] = j;
-		}
-		styleDef.styleLbl.sort(function (a, b) {
-			return map[a.name] - map[b.name];
-		})
 		return styleDef;
 	}
 	function generateScene3d() {
@@ -745,17 +736,17 @@
 		styleLbl.setStyle(new AscFormat.CShapeStyle());
 		styleLbl.style.setLnRef(new AscFormat.StyleRef());
 		styleLbl.style.lnRef.setIdx(idx[0]);
+		styleLbl.style.lnRef.setColor(AscFormat.CreateUniColorRGB(0, 0, 0));
 		styleLbl.style.setFillRef(new AscFormat.StyleRef());
 		styleLbl.style.fillRef.setIdx(idx[1]);
+		styleLbl.style.fillRef.setColor(AscFormat.CreateUniColorRGB(0, 0, 0));
 		styleLbl.style.setEffectRef(new AscFormat.StyleRef());
 		styleLbl.style.effectRef.setIdx(idx[2]);
+		styleLbl.style.effectRef.setColor(AscFormat.CreateUniColorRGB(0, 0, 0));
 		styleLbl.style.setFontRef(new AscFormat.FontRef());
 		styleLbl.style.fontRef.setIdx(AscFormat.fntStyleInd_minor);
 		if (color) {
-			const unicolor = AscFormat.CreateSchemeUnicolorWithMods(color.type, color.mods);
-			unicolor.setColor(new AscFormat.CSchemeColor());
-			unicolor.color.setId(g_clr_lt1);
-			styleLbl.style.fontRef.setColor(unicolor);
+			styleLbl.style.fontRef.setColor(AscFormat.CreateSchemeUnicolorWithMods(color.type, color.mods));
 		}
 		return styleLbl;
 	}
