@@ -35,10 +35,10 @@
 // Import
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 
-function CMathFractionPr()
+function CMathFractionPr(ctrPr)
 {
-	this.type = BAR_FRACTION;
-	this.ctrPr   = new CMathCtrlPr();
+	this.type	= BAR_FRACTION;
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 CMathFractionPr.prototype.GetRPr = function ()
 {
@@ -53,9 +53,9 @@ CMathFractionPr.prototype.Set_FromObject = function(Obj)
 };
 CMathFractionPr.prototype.Copy = function()
 {
-	var NewPr = new CMathFractionPr();
-	NewPr.type = this.type;
-	NewPr.ctrPr   = this.ctrPr;
+	var NewPr	= new CMathFractionPr();
+	NewPr.type	= this.type;
+	NewPr.ctrPr	= this.ctrPr;
 	return NewPr;
 };
 CMathFractionPr.prototype.Write_ToBinary = function(Writer)
@@ -89,17 +89,13 @@ function CFraction(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Numerator   = null;
-    this.Denominator = null;
+	this.Numerator   = null;
+	this.Denominator = null;
 
-    this.Pr = new CMathFractionPr();
+	this.Pr = new CMathFractionPr(this.CtrPrp);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
-
-	// согласно формату CtrPrp должен находится в FractionPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
 	AscCommon.g_oTableId.Add( this, this.Id );
 }

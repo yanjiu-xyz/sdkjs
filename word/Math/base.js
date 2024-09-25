@@ -3262,9 +3262,9 @@ CMathMenuBase.prototype.Set_DeleteForcedBreak = function()
  * ctrlPr - Control Properties
  * @constructor
  */
-function CMathCtrlPr(oParagraph)
+function CMathCtrlPr(ctrPr)
 {
-	this.rPr = new CTextPr(); //по умолчанию должен наследоваться от текущего абзаца
+	this.rPr = ctrPr || new CTextPr(); //по умолчанию должен наследоваться от текущего абзаца
 	this.del = new CTextPr();
 	this.ins = new CTextPr();
 }

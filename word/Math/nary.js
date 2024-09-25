@@ -36,15 +36,15 @@
 //если не выставлено в настройках
 /////////////////////****//////////////////////////
 
-function CMathNaryPr()
+function CMathNaryPr(ctrPr)
 {
-    this.chr     = undefined;
-    this.chrType = undefined;
-    this.grow    = false;
-    this.limLoc  = undefined;
-    this.subHide = false;
-    this.supHide = false;
-	this.ctrPr   = new CMathCtrlPr();
+	this.chr		= undefined;
+	this.chrType	= undefined;
+	this.grow		= false;
+	this.limLoc		= undefined;
+	this.subHide	= false;
+	this.supHide	= false;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
 
 CMathNaryPr.prototype.GetRPr = function ()
@@ -185,24 +185,20 @@ function CNary(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathNaryPr();
+	this.Pr = new CMathNaryPr(this.CtrPrp);
 
-    this.Base = null;
-    this.Sign = null;
-    this.LowerIterator = null;
-    this.UpperIterator = null;
-    this.Arg           = null;
+	this.Base = null;
+	this.Sign = null;
+	this.LowerIterator = null;
+	this.UpperIterator = null;
+	this.Arg           = null;
 
-    this.CurrentLimLoc = null;
+	this.CurrentLimLoc = null;
 
-    if(props !== null && props !== undefined)
-        this.init(props);
+	if(props !== null && props !== undefined)
+		this.init(props);
 
-	// согласно формату CtrPrp должен находится в NaryPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
-
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CNary.prototype = Object.create(CMathBase.prototype);
 CNary.prototype.constructor = CNary;

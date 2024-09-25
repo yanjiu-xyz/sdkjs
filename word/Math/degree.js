@@ -35,10 +35,10 @@
 // Import
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 
-function CMathDegreePr()
+function CMathDegreePr(ctrPr)
 {
-    this.type = DEGREE_SUPERSCRIPT;
-	this.ctrPr   = new CMathCtrlPr();
+	this.type	= DEGREE_SUPERSCRIPT;
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 CMathDegreePr.prototype.GetRPr = function ()
 {
@@ -90,18 +90,18 @@ function CDegreeBase(props, bInside)
 {
 	CMathBase.call(this, bInside);
 
-    this.upBase = 0; // отступ сверху для основания
-    this.upIter = 0; // отступ сверху для итератора
+	this.upBase = 0; // отступ сверху для основания
+	this.upIter = 0; // отступ сверху для итератора
 
-    this.Pr = new CMathDegreePr();
+	this.Pr = new CMathDegreePr(this.CtrPrp);
 
-    this.baseContent = null;
-    this.iterContent = null;
+	this.baseContent = null;
+	this.iterContent = null;
 
-    this.bNaryInline = false;
+	this.bNaryInline = false;
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 }
 CDegreeBase.prototype = Object.create(CMathBase.prototype);
 CDegreeBase.prototype.constructor = CDegreeBase;
@@ -671,11 +671,11 @@ CIterators.prototype.setPosition = function(pos, PosInfo)
     pos.x += this.size.width;
 };
 
-function CMathDegreeSubSupPr()
+function CMathDegreeSubSupPr(ctrPr)
 {
-    this.type   = DEGREE_SubSup;
-    this.alnScr = false;// не выровнены, итераторы идут в соответствии с наклоном буквы/мат. объекта
-	this.ctrPr   = new CMathCtrlPr();
+	this.type	= DEGREE_SubSup;
+	this.alnScr	= false;// не выровнены, итераторы идут в соответствии с наклоном буквы/мат. объекта
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 CMathDegreeSubSupPr.prototype.GetRPr = function ()
 {
@@ -739,15 +739,15 @@ function CDegreeSubSupBase(props, bInside)
 {
 	CMathBase.call(this, bInside);
 
-    this.bNaryInline = false;
+	this.bNaryInline = false;
 
-    this.Pr = new CMathDegreeSubSupPr();
+	this.Pr = new CMathDegreeSubSupPr(this.CtrPrp);
 
-    this.baseContent = null;
-    this.iters       = new CIterators(null, null);
+	this.baseContent = null;
+	this.iters       = new CIterators(null, null);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 }
 CDegreeSubSupBase.prototype = Object.create(CMathBase.prototype);
 CDegreeSubSupBase.prototype.constructor = CDegreeSubSupBase;

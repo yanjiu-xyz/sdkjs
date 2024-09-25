@@ -32,10 +32,10 @@
 
 "use strict";
 
-function CMathLimitPr()
+function CMathLimitPr(ctrPr)
 {
-	this.type = LIMIT_LOW;
-	this.ctrPr   = new CMathCtrlPr();
+	this.type	= LIMIT_LOW;
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 
 CMathLimitPr.prototype.GetRPr = function ()
@@ -225,16 +225,12 @@ function CLimit(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathLimitPr();
+	this.Pr = new CMathLimitPr(this.CtrPrp);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
-	// согласно формату CtrPrp должен находится в LimitPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
-
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CLimit.prototype = Object.create(CMathBase.prototype);
 CLimit.prototype.constructor = CLimit;
@@ -407,9 +403,9 @@ window["CMathMenuLimit"] = CMathMenuLimit;
 CMathMenuLimit.prototype["get_Pos"] = CMathMenuLimit.prototype.get_Pos;
 CMathMenuLimit.prototype["put_Pos"] = CMathMenuLimit.prototype.put_Pos;
 
-function CMathFuncPr()
+function CMathFuncPr(ctrPr)
 {
-	this.ctrPr   = new CMathCtrlPr();
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 CMathFuncPr.prototype.GetRPr = function ()
 {
@@ -450,16 +446,12 @@ function CMathFunc(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathFuncPr();
+	this.Pr = new CMathFuncPr(this.CtrPrp);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
-	// согласно формату CtrPrp должен находится в FuncPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
-
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CMathFunc.prototype = Object.create(CMathBase.prototype);
 CMathFunc.prototype.constructor = CMathFunc;
