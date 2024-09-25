@@ -1407,6 +1407,8 @@
 
 		getCurrentPluginGuid : function()
 		{
+			if (this.queueCommands.length === 0)
+				return "";
 			return this.queueCommands[0].guid;
 		},
 
@@ -1480,6 +1482,8 @@
 		setPluginMethodReturnAsync : function()
 		{
 			let currentPlugin = this.getCurrentPluginGuid();
+			if (currentPlugin === "")
+				return;
 			if (this.runnedPluginsMap[currentPlugin])
 				this.runnedPluginsMap[currentPlugin].methodReturnAsync = true;
 		},
