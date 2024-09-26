@@ -3330,6 +3330,7 @@
 			_t.decrementCounterLongAction();
 			callback();
 		});
+		this.builderFonts = {};
 	};
 
 	// Native
