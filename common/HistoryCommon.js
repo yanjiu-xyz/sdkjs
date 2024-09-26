@@ -4370,12 +4370,13 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_PDF_Document_AddItem					= window['AscDFH'].historyitem_type_PDF_Document | 1;
-	window['AscDFH'].historyitem_PDF_Document_RemoveItem				= window['AscDFH'].historyitem_type_PDF_Document | 2;
-	window['AscDFH'].historyitem_PDF_Document_AddPage					= window['AscDFH'].historyitem_type_PDF_Document | 3;
-	window['AscDFH'].historyitem_PDF_Document_RemovePage				= window['AscDFH'].historyitem_type_PDF_Document | 4;
-	window['AscDFH'].historyitem_PDF_Document_RotatePage				= window['AscDFH'].historyitem_type_PDF_Document | 5;
-	window['AscDFH'].historyitem_PDF_Document_RecognizePage				= window['AscDFH'].historyitem_type_PDF_Document | 6;
+	window['AscDFH'].historyitem_PDF_Document_AnnotsContent				= window['AscDFH'].historyitem_type_PDF_Document | 1;
+	window['AscDFH'].historyitem_PDF_Document_DrawingsContent			= window['AscDFH'].historyitem_type_PDF_Document | 2;
+	window['AscDFH'].historyitem_PDF_Document_FormsContent				= window['AscDFH'].historyitem_type_PDF_Document | 3;
+	window['AscDFH'].historyitem_PDF_Document_AddPage					= window['AscDFH'].historyitem_type_PDF_Document | 4;
+	window['AscDFH'].historyitem_PDF_Document_RemovePage				= window['AscDFH'].historyitem_type_PDF_Document | 5;
+	window['AscDFH'].historyitem_PDF_Document_RotatePage				= window['AscDFH'].historyitem_type_PDF_Document | 6;
+	window['AscDFH'].historyitem_PDF_Document_RecognizePage				= window['AscDFH'].historyitem_type_PDF_Document | 7;
 
 
 	AscDFH.historyitem_CustomPropertiesAddProperty = AscDFH.historyitem_type_CustomProperties | 0;
