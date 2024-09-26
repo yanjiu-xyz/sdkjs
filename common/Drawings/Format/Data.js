@@ -11565,6 +11565,11 @@ Because of this, the display is sometimes not correct.
         editor.ShowParaMarks = false;
       }
 
+      if (graphics.animationDrawer) {
+        graphics.animationDrawer.drawObject(this, graphics);
+        return;
+      }
+
       if(this.calcGeometry) {
         graphics.SaveGrState();
         graphics.SetIntegerGrid(false);
