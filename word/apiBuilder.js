@@ -2626,51 +2626,40 @@
 
 		if (typeof sFontFamily !== "string")
 			return null;
-
-		var oThis               = this;
-		var loader				= AscCommon.g_font_loader;
-		var fontinfo			= g_fontApplication.GetFontInfo(sFontFamily);
-		var isasync				= loader.LoadFont(fontinfo, setFontFamily);
+		
+		LoadFont(sFontFamily);
+		
 		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= undefined;
+		let oldSelectionInfo = Document.SaveDocumentState();
 
-		if (isasync === false)
-			setFontFamily()
-
-		function setFontFamily()
+		this.Select(false);
+		if (this.isEmpty || this.isEmpty === undefined)
 		{
-			oldSelectionInfo = Document.SaveDocumentState();
-
-			oThis.Select(false);
-			if (oThis.isEmpty || oThis.isEmpty === undefined)
-			{
-				Document.LoadDocumentState(oldSelectionInfo);
-				return null;
-			}
-
-			private_TrackRangesPositions();
-
-			var FontFamily = {
-				Name : sFontFamily,
-				Index : -1
-			};
-
-			var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
-			if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
-			{
-				Document.LoadDocumentState(oldSelectionInfo);
-				Document.UpdateSelection();
-	
-				return null;
-			}
-	
-			var ParaTextPr = new AscCommonWord.ParaTextPr({FontFamily : FontFamily});
-			Document.AddToParagraph(ParaTextPr);
-			
 			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+			return null;
 		}
 
+		private_TrackRangesPositions();
+
+		var FontFamily = {
+			Name : sFontFamily,
+			Index : -1
+		};
+
+		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
+		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			Document.UpdateSelection();
+
+			return null;
+		}
+
+		var ParaTextPr = new AscCommonWord.ParaTextPr({FontFamily : FontFamily});
+		Document.AddToParagraph(ParaTextPr);
+		
+		Document.LoadDocumentState(oldSelectionInfo);
+		Document.UpdateSelection();
 		return this;
 	};
 
@@ -7937,6 +7926,8 @@
 		let text   = GetStringParameter(sText, "");
 		let format = GetStringParameter(sFormat, "unicode");
 		
+		LoadFont("Cambria Math");
+		
 		let logicDocument = this.Document;
 		logicDocument.RemoveBeforePaste();
 		logicDocument.RemoveSelection();
@@ -8605,27 +8596,16 @@
 	{
 		if (typeof sFontFamily !== "string")
 			return null;
-
-		var oThis    = this;
-		var loader   = AscCommon.g_font_loader;
-		var fontinfo = g_fontApplication.GetFontInfo(sFontFamily);
-		var isasync  = loader.LoadFont(fontinfo, setFontFamily);
-
-		if (isasync === false)
-			setFontFamily()
-
-		function setFontFamily()
-		{
-			var FontFamily = {
-				Name : sFontFamily,
+		
+		LoadFont(sFontFamily);
+		this.Paragraph.SetApplyToAll(true);
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
+			FontFamily : {
+				Name  : sFontFamily,
 				Index : -1
-			};
-
-			oThis.Paragraph.SetApplyToAll(true);
-			oThis.Paragraph.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
-			oThis.Paragraph.SetApplyToAll(false);
-		}
-
+			}
+		}));
+		this.Paragraph.SetApplyToAll(false);
 		return this;
 	};
 	/**
@@ -10291,9 +10271,9 @@
 	 */
 	ApiRun.prototype.SetFontFamily = function(sFontFamily)
 	{
+		LoadFont(sFontFamily);
 		var oTextPr = this.GetTextPr();
 		oTextPr.SetFontFamily(sFontFamily);
-		
 		return oTextPr;
 	};
 	/**
@@ -13084,6 +13064,7 @@
 	 */
 	ApiTextPr.prototype.SetFontFamily = function(sFontFamily)
 	{
+		LoadFont(sFontFamily);
 		this.TextPr.RFonts.SetAll(sFontFamily, -1);
 		this.private_OnChange();
 		return this;
@@ -22777,6 +22758,12 @@
 	function private_GetLogicDocument()
 	{
 		return editor.WordControl.m_oLogicDocument;
+	}
+	
+	function LoadFont(fontName)
+	{
+		let api = private_GetLogicDocument().GetApi();
+		api.addBuilderFont(fontName);
 	}
 
 	function private_Twips2MM(twips)
