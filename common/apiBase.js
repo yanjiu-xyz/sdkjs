@@ -230,7 +230,8 @@
 		this.binaryChanges = false;
 
 		this.isBlurEditor = false;
-
+		
+		this.builderFonts = {};
 
 		this.formatPainter = new AscCommon.CFormatPainter(this);
 		this.eyedropper = new AscCommon.CEyedropper(this);
@@ -3310,9 +3311,26 @@
 	{
 		return this.asc_canPaste();
 	};
-	baseEditorsApi.prototype.onEndBuilderScript = function()
+	baseEditorsApi.prototype.onEndBuilderScript = function(callback)
 	{
+		if (callback)
+			callback(true);
+		
 		return true;
+	};
+	baseEditorsApi.prototype.addBuilderFont = function(fontName)
+	{
+		this.builderFonts[fontName] = true;
+	};
+	baseEditorsApi.prototype.loadBuilderFonts = function(callback)
+	{
+		let _t = this;
+		this.incrementCounterLongAction();
+		AscCommon.g_font_loader.LoadFonts(this.builderFonts, function(){
+			_t.decrementCounterLongAction();
+			callback();
+		});
+		this.builderFonts = {};
 	};
 
 	// Native

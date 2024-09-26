@@ -1454,22 +1454,24 @@
 
 					AscFonts.IsCheckSymbols = false;
 					
-					if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
+					let _t = this;
+					function onEndScript()
 					{
-						let _t = this;
-						this.api._afterEvalCommand(function() {
-							if (!_t.api.onEndBuilderScript())
+						_t.api.onEndBuilderScript(function(result)
+						{
+							if (!result)
 								commandReturnValue = undefined;
 							
 							_t.shiftCommand(commandReturnValue);
 						});
-						return;
 					}
+					
+					if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
+						this.api._afterEvalCommand(onEndScript);
 					else
-					{
-						if (!this.api.onEndBuilderScript())
-							commandReturnValue = undefined;
-					}
+						onEndScript();
+					
+					return;
 				}
 			}
 			catch (err)
