@@ -7071,7 +7071,7 @@ var editor;
 	spreadsheet_api.prototype.canRunBuilderScript = function() {
 		return this.asc_canPaste();
 	};
-	spreadsheet_api.prototype.onEndBuilderScript = function() {
+	spreadsheet_api.prototype.onEndBuilderScript = function(callback) {
 		let needDraw = null;
 		if (this.wb && this.wb.customFunctionEngine && this.wb.customFunctionEngine.needRecalculate) {
 			if (this.wbModel.addCustomFunctionToChanged()) {
@@ -7084,7 +7084,10 @@ var editor;
 			const ws = this.wb && this.wb.getWorksheet();
 			ws && ws.draw();
 		}
-
+		
+		if (callback)
+			callback(true);
+		
 		return true;
 	};
 

@@ -8544,11 +8544,15 @@ background-repeat: no-repeat;\
 	{
 		return this.asc_canPaste();
 	};
-	asc_docs_api.prototype.onEndBuilderScript = function()
+	asc_docs_api.prototype.onEndBuilderScript = function(callback)
 	{
 		this.asc_Recalculate();
 		let logicDocument = this.getLogicDocument();
 		logicDocument.FinalizeAction();
+		
+		if (callback)
+			callback(true)
+		
 		return true;
 	};
 

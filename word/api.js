@@ -9868,13 +9868,23 @@ background-repeat: no-repeat;\
 		logicDocument.CheckActionLock();
 		return true;
 	};
-	asc_docs_api.prototype.onEndBuilderScript = function()
+	asc_docs_api.prototype.onEndBuilderScript = function(callback)
 	{
-		let logicDocument = this.getLogicDocument();
-		logicDocument.Recalculate();
-		logicDocument.UpdateSelection();
-		logicDocument.UpdateInterface();
-		return logicDocument.FinalizeAction();
+		let _t = this;
+		this.loadBuilderFonts(function()
+		{
+			let logicDocument = _t.getLogicDocument();
+			logicDocument.Recalculate();
+			logicDocument.UpdateSelection();
+			logicDocument.UpdateInterface();
+			let result = logicDocument.FinalizeAction();
+			if (callback)
+				callback(result);
+			
+			return result;
+		});
+		
+		return true;
 	};
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем с полями
