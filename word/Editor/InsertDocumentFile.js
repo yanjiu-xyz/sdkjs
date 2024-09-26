@@ -35,21 +35,25 @@
 (function (undefined) {
 	function CInsertDocumentManager(api) {
 		this.api = api;
+		this.convertedFiles = [];
 	}
-
+	CInsertDocumentManager.prototype.closeConvertedFiles = function () {
+			for (let i = 0; i < this.convertedFiles.length; i++) {
+				this.convertedFiles[i]["close"]();
+			}
+	};
 	CInsertDocumentManager.prototype.insertDocuments_local = function (files) {
 		const oThis = this;
 		const api = this.api;
 		const fPromises = [];
-
 		for (let i = 0; i < files.length; i += 1) {
 			const fPromise = function () {
 				return new Promise(function (resolve) {
 					window["AscDesktopEditor"]["convertFile"](files[i], Asc.c_oAscFileType.CANVAS_WORD, function (file) {
 						if (file) {
+							oThis.convertedFiles.push(file);
 							const stream = file["get"]();
 							const imageMap = file["getImages"]();
-							file["close"]();
 							if (stream) {
 								resolve({stream: new Uint8Array(stream), imageMap: imageMap});
 							} else {
@@ -80,6 +84,7 @@
 		this.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
 	};
 	CInsertDocumentManager.prototype.endLongAction = function () {
+		this.closeConvertedFiles();
 		this.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
 	};
 	CInsertDocumentManager.prototype.insertTextFromFile_local = function () {
