@@ -910,6 +910,7 @@
   };
 
   DocsCoApi.prototype.connect = function() {
+    this.isCloseCoAuthoring = false;
     this.socketio.connect();
   };
 
