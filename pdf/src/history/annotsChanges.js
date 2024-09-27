@@ -105,15 +105,29 @@ CChangesAnnotArrayOfDoubleProperty.prototype.constructor = CChangesAnnotArrayOfD
 
 CChangesAnnotArrayOfDoubleProperty.prototype.WriteToBinary = function(Writer)
 {
-	var nNewCount = this.New.length;
-	Writer.WriteLong(nNewCount);
-	for (var nIndex = 0; nIndex < nNewCount; ++nIndex)
-		Writer.WriteDouble(this.New[nIndex]);
+	let nFlags = 0;
 
-	var nOldCount = this.Old.length;
-	Writer.WriteLong(nOldCount);
-	for (var nIndex = 0; nIndex < nOldCount; ++nIndex)
-		Writer.WriteDouble(this.Old[nIndex]);
+	if (undefined === this.New)
+		nFlags |= 1;
+
+	if (undefined === this.Old)
+		nFlags |= 2;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New) {
+		var nNewCount = this.New.length;
+		Writer.WriteLong(nNewCount);
+		for (var nIndex = 0; nIndex < nNewCount; ++nIndex)
+			Writer.WriteDouble(this.New[nIndex]);
+	}
+	
+	if (undefined !== this.Old) {
+		var nOldCount = this.Old.length;
+		Writer.WriteLong(nOldCount);
+		for (var nIndex = 0; nIndex < nOldCount; ++nIndex)
+			Writer.WriteDouble(this.Old[nIndex]);
+	}
 };
 CChangesAnnotArrayOfDoubleProperty.prototype.ReadFromBinary = function(Reader)
 {
@@ -122,15 +136,21 @@ CChangesAnnotArrayOfDoubleProperty.prototype.ReadFromBinary = function(Reader)
 	// Long : Count of the columns in the old grid
 	// Array of double : widths of columns in the old grid
 
-	var nCount = Reader.GetLong();
-	this.New = [];
-	for (var nIndex = 0; nIndex < nCount; ++nIndex)
-		this.New[nIndex] = Reader.GetDouble();
+	let nFlags = Reader.GetLong();
+	
+	if (!(nFlags & 1)) {
+		let nCount = Reader.GetLong();
+		this.New = [];
+		for (var nIndex = 0; nIndex < nCount; ++nIndex)
+			this.New[nIndex] = Reader.GetDouble();
+	}
 
-	nCount = Reader.GetLong();
-	this.Old = [];
-	for (var nIndex = 0; nIndex < nCount; ++nIndex)
-		this.Old[nIndex] = Reader.GetDouble();
+	if (!(nFlags & 2)) {
+		let nCount = Reader.GetLong();
+		this.Old = [];
+		for (var nIndex = 0; nIndex < nCount; ++nIndex)
+			this.Old[nIndex] = Reader.GetDouble();
+	} 
 };
 
 CChangesAnnotArrayOfDoubleProperty.prototype.Load = function(){

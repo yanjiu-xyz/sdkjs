@@ -742,7 +742,7 @@ CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
 	// long : Old
 
 
-	var nFlags = Reader.GetLong();
+	let nFlags = Reader.GetLong();
 
 	if (nFlags & 1)
 		this.Page = undefined;
