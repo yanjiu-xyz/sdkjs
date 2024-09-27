@@ -2264,7 +2264,7 @@
 					for (let i = 0; i < oTokens.length; i++) {
 						ConvertTokens(
 							oTokens[i],
-							oContext,
+							oContext
 						);
 					}
 					break;
@@ -2281,12 +2281,12 @@
 					{
 						ConvertTokens(
 							oTokens.left,
-							oContext,
+							oContext
 						);
 						oContext.Add_Text(oTokens.decimal)
 						ConvertTokens(
 							oTokens.right,
-							oContext,
+							oContext
 						);
 					}
 					else
@@ -2326,7 +2326,7 @@
 					if (oTokens.third) {
 						ConvertTokens(
 							oTokens.third,
-							oNary.getBase(),
+							oNary.getBase()
 						);
 
 						let oBase = oNary.getBase();
@@ -2518,7 +2518,7 @@
 
 						ConvertTokens(
 							oTokens.third,
-							oNary.getBase(),
+							oNary.getBase()
 						);
 
 						let oBase = oNary.getBase();
@@ -2639,7 +2639,7 @@
 					{
 						ConvertTokens(
 							oTokens.third,
-							MathFunc.getArgument(),
+							MathFunc.getArgument()
 						)
 					}
 
@@ -2664,7 +2664,7 @@
 						UnicodeArgument(
 							oTokens.value,
 							MathStructures.bracket_block,
-							Group.getBase(),
+							Group.getBase()
 						);
 					}
 					else
@@ -2684,7 +2684,7 @@
 						UnicodeArgument(
 							oTokens.value,
 							MathStructures.bracket_block,
-							Group.getBase(),
+							Group.getBase()
 						);
 					}
 					break;
@@ -2711,13 +2711,13 @@
 						UnicodeArgument(
 							oTokens.value,
 							MathStructures.bracket_block,
-							oAccent.getBase(),
+							oAccent.getBase()
 						);
 
 						UnicodeArgument(
 							oTokens.up ? oTokens.up : oTokens.down,
 							MathStructures.bracket_block,
-							Limit.getIterator(),
+							Limit.getIterator()
 						);
 					}
 					else
@@ -2740,7 +2740,7 @@
 						UnicodeArgument(
 							oTokens.value,
 							MathStructures.bracket_block,
-							oGroup.getBase(),
+							oGroup.getBase()
 						);
 					}
 					break;
@@ -2816,7 +2816,7 @@
 
 					ConvertTokens(
 						oTokens.value,
-						oFunc.getFName(),
+						oFunc.getFName()
 					);
 
 					let oName = oFunc.getFName();
@@ -2824,7 +2824,7 @@
 
 					ConvertTokens(
 						oTokens.third,
-						oFunc.getArgument(),
+						oFunc.getArgument()
 					)
 					break;
 				case MathStructures.matrix:
@@ -2878,7 +2878,7 @@
 							let oContent = oMatrix.getContentElement(intRow, intCol);
 							ConvertTokens(
 								oTokens.value[intRow][intCol],
-								oContent,
+								oContent
 							);
 
 							let oPr = oTokens.style.cols[intRow]
@@ -2913,7 +2913,7 @@
 						let oMathContent = oEqArray.getElementMathContent(i);
 						ConvertTokens(
 							oTokens.value[i],
-							oMathContent,
+							oMathContent
 						);
 					}
 					break;
@@ -2927,7 +2927,7 @@
 					UnicodeArgument(
 						oTokens.value,
 						MathStructures.bracket_block,
-						oBox.getBase(),
+						oBox.getBase()
 					)
 					break;
 				case MathStructures.rect:
@@ -2935,7 +2935,7 @@
 					UnicodeArgument(
 						oTokens.value,
 						MathStructures.bracket_block,
-						oBorderBox.getBase(),
+						oBorderBox.getBase()
 					)
 					break;
 				case MathStructures.limit:
@@ -2943,12 +2943,12 @@
 					UnicodeArgument(
 						oTokens.base,
 						MathStructures.bracket_block,
-						oLimit.getFName(),
+						oLimit.getFName()
 					);
 					UnicodeArgument(
 						oTokens.value,
 						MathStructures.bracket_block,
-						oLimit.getIterator(),
+						oLimit.getIterator()
 					);
 
 					break;
@@ -6339,10 +6339,10 @@
 					GetConvertContent(0, oMathContent, oMathCopy);
 					oMathCopy.Correct_Content(true);
 
-					return oMathCopy
+					return oMathCopy;
 				},
 				this,
-				[oRuleLast],
+				[oRuleLast]
 			);
 
 			if (!this.CompareMathContent(oMathContentTemp)) // если контент изменился, то преобразуем все после ▒
@@ -6428,9 +6428,9 @@
 				GetConvertContent(0, oMathContent, oMathContentCopy);
 				oMathContentCopy.Correct_Content(true);
 
-				return oMathContentCopy
+				return oMathContentCopy;
 			},
-			this,
+			this
 		);
 
 		if (!this.CompareMathContent(oMathContentCopy))
@@ -6465,7 +6465,7 @@
 		let oMathContentTemp = AscFormat.ExecuteNoHistory(
 			this.private_ProceedBeforeDivide,
 			this,
-			[oRuleLast, true],
+			[oRuleLast, true]
 		);
 
 		if (!this.CompareMathContent(oMathContentTemp, true))
@@ -6595,7 +6595,7 @@
 					if (strMathContent.split("_").length >= 2 && strMathContent.split("^").length >= 2)
 						return this.Tokens.brackets.Pairs.length > 0;
 				},
-				this,
+				this
 			);
 		}
 	};
@@ -7105,10 +7105,10 @@
 				GetConvertContent(0, oMathContent, oMathCopy);
 				oMathCopy.Correct_Content(true);
 
-				return oMathCopy
+				return oMathCopy;
 			},
 			this,
-			[oStartPos],
+			[oStartPos]
 		);
 
 		if (!this.CompareMathContent(oMathContentTemp))
