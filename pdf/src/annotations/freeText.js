@@ -598,7 +598,7 @@
         this.recalcInfo.recalculateGeometry = true;
 	};
     CAnnotationFreeText.prototype.RemoveComment = function() {
-        this.SetReplies([]);
+        this.EditCommentData(undefined);
     };
     CAnnotationFreeText.prototype.SetContents = function(contents) {
         if (this.GetContents() == contents)
@@ -804,25 +804,6 @@
 
         return aRCInfo;
     };
-    CAnnotationFreeText.prototype.SetReplies = function(aReplies) {
-        let oDoc = this.GetDocument();
-        let oViewer = editor.getDocumentRenderer();
-
-        if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
-            oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
-        }
-        this._replies = aReplies;
-
-        let oThis = this;
-        aReplies.forEach(function(reply) {
-            reply.SetReplyTo(oThis);
-        });
-
-        if (aReplies.length != 0)
-            oDoc.CheckComment(this);
-        else
-            editor.sync_RemoveComment(this.GetId());
-    };
     CAnnotationFreeText.prototype.GetAllFonts = function(fontMap) {
         let aRCInfo = this.GetRichContents();
         fontMap = fontMap || {};
@@ -872,7 +853,7 @@
     CAnnotationFreeText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc.asc_CCommentDataWord(null);
         if (this._replies.length == 0)
-            return oAscCommData;
+            return undefined;
 
         let oMainComm = this._replies[0];
         oAscCommData.asc_putText(oMainComm.GetContents());

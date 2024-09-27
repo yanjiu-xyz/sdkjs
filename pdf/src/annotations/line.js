@@ -455,14 +455,6 @@
             AscPDF.CAnnotationBase.prototype.SetContents.call(this, contents);
         }
     };
-    CAnnotationLine.prototype.SetReplies = function(aReplies) {
-        if (!this.IsUseContentAsComment()) {
-            AscPDF.CAnnotationFreeText.prototype.SetReplies.call(this, aReplies);
-        }
-        else {
-            AscPDF.CAnnotationBase.prototype.SetReplies.call(this, aReplies);
-        }  
-    };
     CAnnotationLine.prototype.GetAscCommentData = function() {
         if (!this.IsUseContentAsComment()) {
             return AscPDF.CAnnotationFreeText.prototype.GetAscCommentData.call(this);

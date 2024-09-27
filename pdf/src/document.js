@@ -2457,28 +2457,29 @@ var CPresentation = CPresentation || function(){};
 
         let oStickyComm;
         if (this.mouseDownAnnot) {
-            // если есть ответ, или это аннотация, где контент идёт как текста коммента то редактируем коммент
-            if ((this.mouseDownAnnot.GetContents() && this.mouseDownAnnot.IsUseContentAsComment()) || this.mouseDownAnnot.GetReply(0) != null) {
-                let newCommentData = new AscCommon.CCommentData();
-                newCommentData.Read_FromAscCommentData(AscCommentData);
-
-                let curCommentData = new AscCommon.CCommentData();
-                curCommentData.Read_FromAscCommentData(this.mouseDownAnnot.GetAscCommentData());
-                curCommentData.Add_Reply(newCommentData);
-
-                this.EditComment(this.mouseDownAnnot.GetId(), curCommentData);
-            }
-            // если аннотация где контент идет как текст коммента и контента нет, то выставляем контент
-            else if (this.mouseDownAnnot.GetContents() == null && this.mouseDownAnnot.IsUseContentAsComment()) {
+            if (this.mouseDownAnnot.IsUseContentAsComment() && !this.mouseDownAnnot.GetContents()) {
+                // If the annotation uses content as comment and there's no content, set the content
                 this.mouseDownAnnot.SetContents(AscCommentData.m_sText);
             }
-            // остался вариант FreeText или line с выставленным cap (контекст идёт как текст внутри стрелки)
-            // такому случаю выставляем ответ
             else {
-                let oReply = CreateAnnotByProps(oProps, this);
-                oReply.SetApIdx(this.GetMaxApIdx() + 2);
+                let oDataForEdit;
 
-                this.mouseDownAnnot.SetReplies([oReply]);
+                // For all other cases, add a reply to the comment
+                let newCommentData = new AscCommon.CCommentData();
+                newCommentData.Read_FromAscCommentData(AscCommentData);
+            
+                // if freetext or line with cap
+                if (!this.mouseDownAnnot.IsUseContentAsComment() && this.mouseDownAnnot.GetReply(0) == null) {
+                    oDataForEdit = newCommentData;
+                }
+                else {
+                    let curCommentData = new AscCommon.CCommentData();
+                    curCommentData.Read_FromAscCommentData(this.mouseDownAnnot.GetAscCommentData());
+                    curCommentData.Add_Reply(newCommentData);
+                    oDataForEdit = curCommentData;
+                }
+            
+                this.EditComment(this.mouseDownAnnot.GetId(), oDataForEdit);
             }
         }
         else {
@@ -2661,11 +2662,6 @@ var CPresentation = CPresentation || function(){};
             return annot.GetId() === Id;
         });
 
-        var oCurData = new AscCommon.CCommentData();
-		oCurData.Read_FromAscCommentData(oAnnotToEdit.GetAscCommentData());
-
-        this.History.Add(new CChangesPDFCommentData(oAnnotToEdit, oCurData, CommentData));
-        
         oAnnotToEdit.EditCommentData(CommentData);
         editor.sync_ChangeCommentData(Id, CommentData);
     };
