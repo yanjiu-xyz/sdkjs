@@ -1081,7 +1081,17 @@
 
 
 			_elem1.style.left = "0px";
-			_elem1.style.top = "-1000px";
+			let topStyle = "-1000px";
+
+			if (AscCommon.AscBrowser.isTelegramWebView)
+			{
+				if (!AscCommon.AscBrowser.isAndroid && !AscCommon.AscBrowser.isAppleDevices)
+					topStyle = "0px";
+				else if (AscCommon.AscBrowser.isAppleDevices && navigator.maxTouchPoints === 0)
+					topStyle = "0px";
+			}
+
+			_elem1.style.top = topStyle;
 			_elem1.style.right = "0px";
 			_elem1.style.bottom = "-100px";
 			_elem1.style.width = "auto";
