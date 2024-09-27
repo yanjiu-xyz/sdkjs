@@ -2450,6 +2450,11 @@
 		animPane.sentMouseMoveData = mouseMoveData;
 	}
 	CAnimItem.prototype.getNewCursorType = function (x, y) {
+		const isVerticalDrag = null !== editor.WordControl.m_oAnimPaneApi.list.Control.seqList.nPressedSlot;
+		if (isVerticalDrag) {
+			return 'grabbing';
+		}
+
 		const cursorTypes = {
 			'left': 'col-resize',
 			'right': 'col-resize',
@@ -2469,7 +2474,8 @@
 		mouseMoveData.X_abs = coords.X;
 		mouseMoveData.Y_abs = coords.Y;
 
-		if (!this.contextMenuButton.hit(x, y)) {
+		const isVerticalDrag = null !== editor.WordControl.m_oAnimPaneApi.list.Control.seqList.nPressedSlot;
+		if (!this.contextMenuButton.hit(x, y) && !isVerticalDrag) {
 			mouseMoveData.Type = Asc.c_oAscMouseMoveDataTypes.EffectInfo;
 			const tooltipInfo = this.getInfoForTooltip(x, y);
 			if (typeof tooltipInfo === 'string') {
