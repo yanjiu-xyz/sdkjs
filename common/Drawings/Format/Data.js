@@ -11617,7 +11617,9 @@ Because of this, the display is sometimes not correct.
       var RGBA = {R: 0, G: 0, B: 0, A: 255};
       this.brush.calculate(oParents.theme, oParents.slide, oParents.layout, oParents.master, RGBA);
     };
-
+	  SmartArt.prototype.getCompiledFill = function () {
+			return null;
+	  };
     SmartArt.prototype.recalculatePen = function () {
       this.pen = null;
       var oWhole = this.getWhole();
