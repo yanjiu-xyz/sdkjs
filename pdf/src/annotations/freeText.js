@@ -638,7 +638,8 @@
                 return true;
             }
 
-            for (let key of curKeys) {
+            for (let i = 0; i < curKeys.length; i++) {
+                let key = curKeys[i];
                 if (curRC[key] !== calcedRC[key]) {
                     return true;
                 }
@@ -747,7 +748,8 @@
                 return false;
             }
         
-            for (let key of keys1) {
+            for (let i = 0; i < keys1.length; i++) {
+                let key = keys1[i];
                 if (obj1[key] !== obj2[key]) {
                     return false;
                 }
