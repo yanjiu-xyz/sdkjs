@@ -1939,6 +1939,9 @@
 			return shapes;
 		}
 		const shadowShapes = this.parentNode.getShadowShapesByZOrder();
+		shadowShapes.sort(function (a, b) {
+			return a.node.getZOrderOff() - b.node.getZOrderOff()
+		})/*.reverse()*/;
 		const correctShadowShapes = shadowShapes.filter(function (shadowShape) {
 			if (shadowShape.height === 0 && shadowShape.width === 0 && shadowShape.node.algorithm instanceof TextAlgorithm) {
 				return false;
@@ -6724,42 +6727,15 @@ PresNode.prototype.getNamedNode = function (name) {
 		shapes.push.apply(shapes, tempShapes);
 	};
 	PresNode.prototype.getZOrderOff = function () {
-		let zOrderOff = this.layoutInfo.shape.zOrderOff;
-/*		if (zOrderOff === 0 && (this.algorithm instanceof SpaceAlgorithm)) {
-			let child = this.childs[0];
-			while (child && child.algorithm instanceof SpaceAlgorithm) {
-				zOrderOff += child.layoutInfo.shape.zOrderOff;
-				child = child.childs[0];
-			}
-		}*/
-		return zOrderOff;
+		return this.layoutInfo.shape.zOrderOff;
 	};
-	PresNode.prototype.getShadowShapesByZOrder = function () {
-		const shapes = [];
-		const elements = [this];
-		while (elements.length) {
-			const tempElements = [];
-			const element = elements.pop();
-			if (element.algorithm.isHierarchy()) {
-				element.collectHierarchyShapes(shapes);
-			} else {
-				const shape = element.getShape(false);
-				if (shape) {
-					shapes.push(shape);
-				}
-				for (let i = 0; i < element.childs.length; i += 1) {
-					const child = element.childs[i];
-					tempElements.push(child);
-				}
-				tempElements.sort(function (a, b) {
-					const aIndex = a.getZOrderOff();
-					const bIndex = b.getZOrderOff();
-					return aIndex - bIndex;
-				});
-				elements.push.apply(elements, tempElements);
-			}
+	PresNode.prototype.getShadowShapesByZOrder = function (shapes) {
+		shapes = shapes || [];
+		shapes.push(this.getShape());
+		for (let i = 0; i < this.childs.length; i += 1) {
+			this.childs[i].getShadowShapesByZOrder(shapes);
 		}
-		shapes.reverse();
+
 		return shapes;
 	}
 	PresNode.prototype.getChildIndex = function (child) {

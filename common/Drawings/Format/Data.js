@@ -9990,6 +9990,7 @@ Because of this, the display is sometimes not correct.
 			const smartartType = this.getTypeOfSmartArt();
 			switch (smartartType) {
 				case Asc.c_oAscSmartArtTypes.AlternatingHexagonList:
+				case Asc.c_oAscSmartArtTypes.HexagonRadial:
 				case Asc.c_oAscSmartArtTypes.AlternatingPictureBlocks:
 				case Asc.c_oAscSmartArtTypes.ArrowRibbon:
 				case Asc.c_oAscSmartArtTypes.AscendingPictureAccentProcess:
