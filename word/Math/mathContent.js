@@ -3368,7 +3368,7 @@ CMathContent.prototype.AddGroupedByStyleText = function (text, paragraph, mathSt
 		{
 			oMathRun.SetReviewTypeWithInfo(
 				oAdditionalData.reviewData.reviewType,
-				oAdditionalData.reviewData.reviewInfo,
+				oAdditionalData.reviewData.reviewInfo
 			);
 		}
 	}
@@ -3425,7 +3425,7 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 		{
 			oMathRun.SetReviewTypeWithInfo(
 				oAdditionalData.reviewData.reviewType,
-				oAdditionalData.reviewData.reviewInfo,
+				oAdditionalData.reviewData.reviewInfo
 			);
 		}
 
