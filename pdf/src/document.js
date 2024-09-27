@@ -4471,11 +4471,12 @@ var CPresentation = CPresentation || function(){};
 
         let oController = this.GetController();
 
-        let oTextArt    = this.GetController().createTextArt(nStyle, false);
+        let oTextArt = this.GetController().createTextArt(nStyle, false);
         oTextArt.SetDocument(this);
         oTextArt.SetPage(nPage);
         oTextArt.Recalculate();
-
+        oTextArt.checkExtentsByDocContent();
+        
         let oXfrm       = oTextArt.getXfrm();
         let nRotAngle    = this.Viewer.getPageRotate(nPage);
 

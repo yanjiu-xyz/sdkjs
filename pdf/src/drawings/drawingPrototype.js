@@ -402,6 +402,8 @@
 		
 		let result = content.EnterText(value);
 		content.RecalculateCurPos();
+        
+        this.checkExtentsByDocContent && this.checkExtentsByDocContent();
 		return result;
 	};
 	CPdfDrawingPrototype.prototype.CorrectEnterText = function(oldValue, newValue) {
