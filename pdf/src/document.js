@@ -157,7 +157,12 @@ var CPresentation = CPresentation || function(){};
         this._id = AscCommon.g_oIdCounter.Get_NewId();
 		AscCommon.g_oTableId.Add(this, this._id);
         
-		this.History        = new AscPDF.History(this);
+		this.History = new AscPDF.History(this);
+        this.History.Set_LogicDocument(this);
+        this.annotsContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
+        this.fieldsContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
+        this.drawingsContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
+
         if (AscCommon.History)
         {
             this.History.UserSaveMode   = AscCommon.History.UserSaveMode;
@@ -2419,7 +2424,7 @@ var CPresentation = CPresentation || function(){};
         this.annots.push(oAnnot);
         oPagesInfo.pages[nPageNum].annots.push(oAnnot);
 
-        this.History.Add(new CChangesPDFDocumentAddItem(this, oPagesInfo.pages[nPageNum].annots.length - 1, [oAnnot]));
+        this.History.Add(new CChangesPDFDocumentAnnotsContent(this, oPagesInfo.pages[nPageNum].annots.length - 1, [oAnnot], true));
         
         oAnnot.SetApIdx(oProps.apIdx == null ? this.GetMaxApIdx() + 2 : oProps.apIdx);
         oAnnot.AddToRedraw();
@@ -2452,28 +2457,29 @@ var CPresentation = CPresentation || function(){};
 
         let oStickyComm;
         if (this.mouseDownAnnot) {
-            // если есть ответ, или это аннотация, где контент идёт как текста коммента то редактируем коммент
-            if ((this.mouseDownAnnot.GetContents() && this.mouseDownAnnot.IsUseContentAsComment()) || this.mouseDownAnnot.GetReply(0) != null) {
-                let newCommentData = new AscCommon.CCommentData();
-                newCommentData.Read_FromAscCommentData(AscCommentData);
-
-                let curCommentData = new AscCommon.CCommentData();
-                curCommentData.Read_FromAscCommentData(this.mouseDownAnnot.GetAscCommentData());
-                curCommentData.Add_Reply(newCommentData);
-
-                this.EditComment(this.mouseDownAnnot.GetId(), curCommentData);
-            }
-            // если аннотация где контент идет как текст коммента и контента нет, то выставляем контент
-            else if (this.mouseDownAnnot.GetContents() == null && this.mouseDownAnnot.IsUseContentAsComment()) {
+            if (this.mouseDownAnnot.IsUseContentAsComment() && !this.mouseDownAnnot.GetContents()) {
+                // If the annotation uses content as comment and there's no content, set the content
                 this.mouseDownAnnot.SetContents(AscCommentData.m_sText);
             }
-            // остался вариант FreeText или line с выставленным cap (контекст идёт как текст внутри стрелки)
-            // такому случаю выставляем ответ
             else {
-                let oReply = CreateAnnotByProps(oProps, this);
-                oReply.SetApIdx(this.GetMaxApIdx() + 2);
+                let oDataForEdit;
 
-                this.mouseDownAnnot.SetReplies([oReply]);
+                // For all other cases, add a reply to the comment
+                let newCommentData = new AscCommon.CCommentData();
+                newCommentData.Read_FromAscCommentData(AscCommentData);
+            
+                // if freetext or line with cap
+                if (!this.mouseDownAnnot.IsUseContentAsComment() && this.mouseDownAnnot.GetReply(0) == null) {
+                    oDataForEdit = newCommentData;
+                }
+                else {
+                    let curCommentData = new AscCommon.CCommentData();
+                    curCommentData.Read_FromAscCommentData(this.mouseDownAnnot.GetAscCommentData());
+                    curCommentData.Add_Reply(newCommentData);
+                    oDataForEdit = curCommentData;
+                }
+            
+                this.EditComment(this.mouseDownAnnot.GetId(), oDataForEdit);
             }
         }
         else {
@@ -2656,11 +2662,6 @@ var CPresentation = CPresentation || function(){};
             return annot.GetId() === Id;
         });
 
-        var oCurData = new AscCommon.CCommentData();
-		oCurData.Read_FromAscCommentData(oAnnotToEdit.GetAscCommentData());
-
-        this.History.Add(new CChangesPDFCommentData(oAnnotToEdit, oCurData, CommentData));
-        
         oAnnotToEdit.EditCommentData(CommentData);
         editor.sync_ChangeCommentData(Id, CommentData);
     };
@@ -2863,7 +2864,7 @@ var CPresentation = CPresentation || function(){};
         if (this.mouseDownAnnot == oAnnot)
             this.mouseDownAnnot = null;
 
-        this.History.Add(new CChangesPDFDocumentRemoveItem(this, nPosInPage, [oAnnot]));
+        this.History.Add(new CChangesPDFDocumentAnnotsContent(this, nPosInPage, [oAnnot], false));
         
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
@@ -2892,7 +2893,7 @@ var CPresentation = CPresentation || function(){};
         this.drawings.splice(nPos, 1);
         oViewer.pagesInfo.pages[nPage].drawings.splice(nPosInPage, 1);
         
-        this.History.Add(new CChangesPDFDocumentRemoveItem(this, nPosInPage, [oDrawing]));
+        this.History.Add(new CChangesPDFDocumentDrawingsContent(this, nPosInPage, [oDrawing], false));
 
         oController.resetSelection(true);
         oController.resetTrackState();
@@ -2925,7 +2926,7 @@ var CPresentation = CPresentation || function(){};
         this.widgets.splice(nPos, 1);
         oViewer.pagesInfo.pages[nPage].fields.splice(nPosInPage, 1);
 
-        this.History.Add(new CChangesPDFDocumentRemoveItem(this, nPosInPage, [oForm]));
+        this.History.Add(new CChangesPDFDocumentFieldsContent(this, nPosInPage, [oForm], false));
 
         // удаляем из родителя
         let oParent = oForm.GetParent();
@@ -2963,7 +2964,7 @@ var CPresentation = CPresentation || function(){};
             let nIdx = this.widgetsParents.indexOf(oForm);
             if (nIdx != -1) {
                 this.widgetsParents.splice(nIdx, oForm);
-                this.History.Add(new CChangesPDFDocumentRemoveItem(this, -1, [oForm]))
+                this.History.Add(new CChangesPDFDocumentFieldsContent(this, -1, [oForm], false))
             }
 
             // проверяем родителя этого родителя
@@ -4458,7 +4459,7 @@ var CPresentation = CPresentation || function(){};
         oDrawing.SetPage(nPage);
         oDrawing.setParent(this);
 
-        this.History.Add(new CChangesPDFDocumentAddItem(this, nPosInTree, [oDrawing]));
+        this.History.Add(new CChangesPDFDocumentDrawingsContent(this, nPosInTree, [oDrawing], true));
 
         oDrawing.AddToRedraw();
         this.ClearSearch();
@@ -4470,11 +4471,12 @@ var CPresentation = CPresentation || function(){};
 
         let oController = this.GetController();
 
-        let oTextArt    = this.GetController().createTextArt(nStyle, false);
+        let oTextArt = this.GetController().createTextArt(nStyle, false);
         oTextArt.SetDocument(this);
         oTextArt.SetPage(nPage);
         oTextArt.Recalculate();
-
+        oTextArt.checkExtentsByDocContent();
+        
         let oXfrm       = oTextArt.getXfrm();
         let nRotAngle    = this.Viewer.getPageRotate(nPage);
 
@@ -4495,7 +4497,7 @@ var CPresentation = CPresentation || function(){};
         }
         oPagesInfo.pages[nPage].drawings.push(oTextArt);
 
-        this.History.Add(new CChangesPDFDocumentAddItem(this, oPagesInfo.pages[nPage].drawings.length - 1, [oTextArt]));
+        this.History.Add(new CChangesPDFDocumentDrawingsContent(this, oPagesInfo.pages[nPage].drawings.length - 1, [oTextArt], true));
 
         oTextArt.SetNeedRecalc(true);
         
@@ -5462,6 +5464,37 @@ var CPresentation = CPresentation || function(){};
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.Is_Inline = function() {};
+    CPDFDoc.prototype.Get_Api = function() {
+        return Asc.editor;
+    };
+    CPDFDoc.prototype.Get_CollaborativeEditing = function() {
+        return this.CollaborativeEditing;
+    };
+    CPDFDoc.prototype.Clear_ContentChanges = function() {
+        this.annotsContentChanges.Clear();
+        this.fieldsContentChanges.Clear();
+        this.drawingsContentChanges.Clear();
+    };
+    CPDFDoc.prototype.Add_ContentChanges = function(Changes) {
+        let oChange = Changes.m_pData.Data;
+        
+        switch (oChange.Type) {
+            case AscDFH.historyitem_PDF_Document_AnnotsContent:
+                this.annotsContentChanges.Add(Changes);
+                break;
+            case AscDFH.historyitem_PDF_Document_FieldsContent:
+                this.fieldsContentChanges.Add(Changes);
+                break;
+            case AscDFH.historyitem_PDF_Document_DrawingsContent:
+                this.drawingsContentChanges.Add(Changes);
+                break;
+        }
+    };
+    CPDFDoc.prototype.Refresh_ContentChanges = function() {
+        this.annotsContentChanges.Refresh();
+        this.fieldsContentChanges.Refresh();
+        this.drawingsContentChanges.Refresh();
+    };
     CPDFDoc.prototype.GetRecalcId = function () {
         return Infinity;
     };

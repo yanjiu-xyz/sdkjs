@@ -70,7 +70,6 @@
         this.recalculateTransform();
         this.updateTransformMatrix();
         this.recalculate();
-        this.checkExtentsByDocContent();
         this.recalculateShdw();
         this.SetNeedRecalc(false);
     };
