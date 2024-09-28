@@ -95,11 +95,23 @@ jobs:
         with:
           path: sdkjs
 
-      - name: check out repository
+      - name: check out repository sdkjs-forms current branch
+        id: sdkjs-forms
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-forms
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-forms
+          ref: ${{ github.ref }}
+      - name: check out repository sdkjs-forms master branch
+        if: steps.sdkjs-forms.outcome != 'success'
         uses: actions/checkout@v4
         with:
           repository: ONLYOFFICE/sdkjs-forms
+          token: ${{ secrets.READ_PAT }}
           path: sdkjs-forms
+          ref: master
 
       - name: Use Node.js 12
         uses: actions/setup-node@v1
