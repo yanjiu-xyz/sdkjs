@@ -31,10 +31,10 @@ jobs:
       - name: check out repository
         uses: actions/checkout@v3
 
-      - name: Use Node.js 20
+      - name: Use Node.js 18
         uses: actions/setup-node@v1
         with:
-            node-version: 20
+            node-version: 18
       
       - name: Run unit tests
         run: |
@@ -113,10 +113,10 @@ jobs:
           path: sdkjs-forms
           ref: master
 
-      - name: Use Node.js 12
+      - name: Use Node.js 18
         uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 18
 
       - name: Run builder tests
         run: |
