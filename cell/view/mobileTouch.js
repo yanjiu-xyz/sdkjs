@@ -201,31 +201,41 @@ function (window, undefined)
 		var pos;
 		var _api = this.WB;
 
+		let needInit = false;
+		let isSmoothScrolling = _api.getSmoothScrolling();
 		if ('v' === _scroll.directionLocked)
 		{
 			pos = -_scroll.y / _api.controller.settings.hscrollStep;
-			if (-_scroll.y >= -_scroll.maxScrollY)
+			if (-_scroll.y >= -_scroll.maxScrollY) {
+				needInit = isSmoothScrolling;
 				pos += 1;
-			_api._onScrollY(pos);
+			}
+			_api._onScrollY(pos, needInit);
 		}
 		else if ('h' === _scroll.directionLocked)
 		{
 			pos = -_scroll.x / _api.controller.settings.vscrollStep;
-			if (-_scroll.x >= -_scroll.maxScrollX)
+			if (-_scroll.x >= -_scroll.maxScrollX) {
+				needInit = isSmoothScrolling;
 				pos += 1;
-			_api._onScrollX(pos);
+			}
+			_api._onScrollX(pos, needInit);
 		}
 		else if ('n' === _scroll.directionLocked)
 		{
 			pos = -_scroll.y / _api.controller.settings.hscrollStep;
-			if (-_scroll.y >= -_scroll.maxScrollY)
+			if (-_scroll.y >= -_scroll.maxScrollY) {
+				needInit = isSmoothScrolling;
 				pos += 1;
-			_api._onScrollY(pos);
+			}
+			_api._onScrollY(pos, needInit);
 
 			pos = -_scroll.x / _api.controller.settings.vscrollStep;
-			if (-_scroll.x >= -_scroll.maxScrollX)
+			if (-_scroll.x >= -_scroll.maxScrollX) {
+				needInit = isSmoothScrolling;
 				pos += 1;
-			_api._onScrollX(pos);
+			}
+			_api._onScrollX(pos, needInit);
 		}
 	};
 	CMobileDelegateEditorCell.prototype.GetContextMenuType = function()
