@@ -358,16 +358,6 @@
 			this.parentControl.onChildUpdate(oBounds);
 		}
 	};
-	CControl.prototype.getCursorInfo = function (e, x, y) {
-		if (!this.hit(x, y)) {
-			return null;
-		} else {
-			return {
-				cursorType: "default",
-				tooltip: this.getTooltipText()
-			}
-		}
-	};
 	CControl.prototype.checkUpdateRect = function (oUpdateRect) {
 		var oBounds = this.getBounds();
 		if (oUpdateRect && oBounds) {
@@ -2455,13 +2445,23 @@
 			return 'grabbing';
 		}
 
+		let draggingAnimItem;
+		editor.WordControl.m_oAnimPaneApi.list.Control.seqList.forEachAnimItem(function (animItem) {
+			if (animItem.hitResult) {
+				draggingAnimItem = animItem;
+			}
+		});
+
+		const hitRes = draggingAnimItem
+			? draggingAnimItem.hitResult
+			: (this.hitResult || this.hitInEffectBar(x, y));
+
 		const cursorTypes = {
 			'left': 'col-resize',
 			'right': 'col-resize',
 			'partition': 'col-resize',
 			'center': 'ew-resize'
 		};
-		const hitRes = this.hitResult || this.hitInEffectBar(x, y);
 		const cursorType = hitRes ? cursorTypes[hitRes.type] : 'default';
 		return cursorType;
 	};
