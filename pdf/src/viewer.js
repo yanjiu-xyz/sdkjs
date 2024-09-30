@@ -2713,6 +2713,8 @@
 			oDrDoc.m_lDrawingEnd = lEndPage;
 			this.startVisiblePage = lStartPage;
 			this.endVisiblePage = lEndPage;
+
+			this.updatePageDetector();
 		};
 		this._paint = function()
 		{
@@ -2751,8 +2753,6 @@
 
 			ctx.strokeStyle = AscCommon.GlobalSkin.PageOutline;
 			ctx.lineWidth = lineW;
-
-			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
 			let isStretchPaint = this.isStretchPaint();
 			if (this.isClearPages)
@@ -2875,14 +2875,6 @@
 				
 				if (this.Api.watermarkDraw)
 					this.Api.watermarkDraw.Draw(ctx, x, y, w, h);
-
-				if (this.isLandscapePage(i)) {
-					let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (h >> 1);
-					this.pageDetector.addPage(i, x, y, h, w);
-				}
-				else {
-					this.pageDetector.addPage(i, x, y, w, h);
-				}
 			}
 			
 			this.isClearPages = false;
@@ -2904,6 +2896,32 @@
 			
 			// Обязательно делаем в конце, т.к. во время отрисовки происходит пересчет
 			this._checkTargetUpdate();
+		};
+		this.updatePageDetector = function() {
+			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
+
+			let yPos = this.scrollY >> 0;
+			let xCenter = this.width >> 1;
+
+			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+			{
+				let page = this.drawingPages[i];
+				if (!page)
+					break;
+
+				let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true);
+				let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true);
+				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+				if (this.isLandscapePage(i)) {
+					let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (h >> 1);
+					this.pageDetector.addPage(i, x, y, h, w);
+				}
+				else {
+					this.pageDetector.addPage(i, x, y, w, h);
+				}
+			}
 		};
 		this.isStretchPaint = function() {
 			return this.Api.WordControl.NoneRepaintPages;

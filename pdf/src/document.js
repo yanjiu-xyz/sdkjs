@@ -230,7 +230,11 @@ var CPresentation = CPresentation || function(){};
 
         let oFile = this.Viewer.file;
         for (let i = 0; i < oFile.pages.length; i++) {
-            let oPage   = this.Viewer.drawingPages[i];
+            let oPage = this.Viewer.drawingPages[i];
+            if (!oPage) {
+                continue;
+            }
+
             let nAngle  = this.Viewer.getPageRotate(i);
 
             let oPageTr = new AscCommon.CMatrix();
