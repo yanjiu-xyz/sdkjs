@@ -1511,79 +1511,7 @@ function CEditorPage(api)
 			document.addEventListener && document.addEventListener("transitioncancel", function() { _t.OnResize(false); }, false);
 		}
 
-		this.initEventsMobileAdvances();
-
 		this.Thumbnails.initEvents();
-	};
-
-	this.initEventsMobileAdvances = function()
-	{
-		if (!this.m_oApi.isMobileVersion)
-		{
-			this.m_oEditor.HtmlElement["ontouchstart"] = function (e)
-			{
-				oThis.onMouseDown(e.touches[0]);
-				return false;
-			};
-			this.m_oEditor.HtmlElement["ontouchmove"] = function (e)
-			{
-				oThis.onMouseMove(e.touches[0]);
-				return false;
-			};
-			this.m_oEditor.HtmlElement["ontouchend"] = function (e)
-			{
-				oThis.onMouseUp(e.changedTouches[0]);
-				return false;
-			};
-
-			this.m_oOverlay.HtmlElement["ontouchstart"] = function (e)
-			{
-				oThis.onMouseDown(e.touches[0]);
-				return false;
-			};
-			this.m_oOverlay.HtmlElement["ontouchmove"] = function (e)
-			{
-				oThis.onMouseMove(e.touches[0]);
-				return false;
-			};
-			this.m_oOverlay.HtmlElement["ontouchend"] = function (e)
-			{
-				oThis.onMouseUp(e.changedTouches[0]);
-				return false;
-			};
-
-			this.m_oTopRuler_horRuler.HtmlElement["ontouchstart"] = function (e)
-			{
-				oThis.horRulerMouseDown(e.touches[0]);
-				return false;
-			};
-			this.m_oTopRuler_horRuler.HtmlElement["ontouchmove"] = function (e)
-			{
-				oThis.horRulerMouseMove(e.touches[0]);
-				return false;
-			};
-			this.m_oTopRuler_horRuler.HtmlElement["ontouchend"] = function (e)
-			{
-				oThis.horRulerMouseUp(e.changedTouches[0]);
-				return false;
-			};
-
-			this.m_oLeftRuler_vertRuler.HtmlElement["ontouchstart"] = function (e)
-			{
-				oThis.verRulerMouseDown(e.touches[0]);
-				return false;
-			};
-			this.m_oLeftRuler_vertRuler.HtmlElement["ontouchmove"] = function (e)
-			{
-				oThis.verRulerMouseMove(e.touches[0]);
-				return false;
-			};
-			this.m_oLeftRuler_vertRuler.HtmlElement["ontouchend"] = function (e)
-			{
-				oThis.verRulerMouseUp(e.changedTouches[0]);
-				return false;
-			};
-		}
 	};
 
 	this.initEventsMobile = function()
