@@ -814,7 +814,9 @@ CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecogniz
 	let nPage = this.Page;
 
 	oFile.pages[nPage].isConvertedToShapes = bRecognize;
-	delete oDoc.Viewer.drawingPages[nPage].Image;
+    if (oDoc.Viewer.drawingPages[nPage]) {
+        delete oDoc.Viewer.drawingPages[nPage].Image;
+    }
 
 	oDoc.Viewer.paint(function() {
 		oDoc.Viewer.thumbnails._repaintPage(nPage);

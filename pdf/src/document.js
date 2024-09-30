@@ -230,7 +230,11 @@ var CPresentation = CPresentation || function(){};
 
         let oFile = this.Viewer.file;
         for (let i = 0; i < oFile.pages.length; i++) {
-            let oPage   = this.Viewer.drawingPages[i];
+            let oPage = this.Viewer.drawingPages[i];
+            if (!oPage) {
+                continue;
+            }
+
             let nAngle  = this.Viewer.getPageRotate(i);
 
             let oPageTr = new AscCommon.CMatrix();
@@ -2331,7 +2335,8 @@ var CPresentation = CPresentation || function(){};
             }
         });
         
-		oViewer.resize();
+		oViewer.resize(true);
+        oViewer.paint();
     };
     /**
 	 * Adds an interactive field to document.
@@ -4213,6 +4218,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
+        Asc.editor.canSave = false;
         this.StartAction(AscDFH.historydescription_Pdf_EditPage);
         let oDrDoc = this.GetDrawingDocument();
 
@@ -4306,6 +4312,7 @@ var CPresentation = CPresentation || function(){};
             _t.Viewer.paint(function() {
                 _t.Viewer.thumbnails._repaintPage(nPage);
             });
+            Asc.editor.canSave = true;
         };
         if(aUrls.length > 0) {
             AscCommon.sendImgUrls(Asc.editor, aUrls, function (data) {

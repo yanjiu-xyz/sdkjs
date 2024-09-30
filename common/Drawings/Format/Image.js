@@ -495,7 +495,7 @@
 
 		CImageShape.prototype.recalculateGeometry = function () {
 			this.calcGeometry = null;
-			if (isRealObject(this.spPr.geometry)) {
+			if (isRealObject(this.spPr && this.spPr.geometry)) {
 				this.calcGeometry = this.spPr.geometry;
 			} else {
 				var hierarchy = this.getHierarchy();
