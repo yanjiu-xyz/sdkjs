@@ -7920,6 +7920,9 @@
 	 * Add a math equation
 	 * @param sText {string} An equation written as a linear text string
 	 * @param [sFormat="unicode"] {"unicode" | "latex"} The format of the specified linear representation
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddMathEquation.js
 	 */
 	ApiDocument.prototype.AddMathEquation = function(sText, sFormat)
 	{
@@ -10572,31 +10575,62 @@
 		oDocument.UpdateSelection();
 		return comment;
 	};
-
+	
 	/**
 	 * Returns a text from the text run.
 	 * @memberof ApiRun
 	 * @param {object} oPr - The resulting string display properties.
-     * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string.
+	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string.
 	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string.
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetText.js
-	 */	
+	 */
 	ApiRun.prototype.GetText = function(oPr)
 	{
-		if (!oPr) {
+		if (!oPr)
 			oPr = {};
-		}
-
+		
 		let oProp = {
-			Text: "",
-			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
-			TabSymbol:			oPr["TabSymbol"],
-			ParaSeparator:		oPr["ParaSeparator"]
+			Text             : "",
+			NewLineSeparator : (oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
+			TabSymbol        : oPr["TabSymbol"],
+			ParaSeparator    : oPr["ParaSeparator"]
 		}
-
+		
 		return this.Run.GetText(oProp);
+	};
+	
+	/**
+	 * Move cursor to a specified position of the current text run.
+	 * If the current run is not assigned to any part of the document then returns false otherwise returns true.
+	 * If there was any selection in the document, it will be removed.
+	 * @memberof ApiRun
+	 * @param {number} [nPos=0] - Desired cursor position.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/MoveCursorToPos.js
+	 */
+	ApiRun.prototype.MoveCursorToPos = function(nPos)
+	{
+		let pos = GetNumberParameter(nPos, 0);
+		if (pos < 0)
+			pos = 0;
+		else if (pos > this.Run.GetElementsCount())
+			pos = this.Run.GetElementsCount();
+		
+		let document = private_GetLogicDocument();
+		if (!document)
+			return false;
+		
+		document.RemoveSelection();
+		
+		if (!this.Run.IsUseInDocument())
+			return false;
+		
+		this.Run.Make_ThisElementCurrent();
+		this.Run.SetCursorPosition(pos);
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -21868,6 +21902,7 @@
 	ApiRun.prototype["ToJSON"]                       = ApiRun.prototype.ToJSON;
 	ApiRun.prototype["AddComment"]                   = ApiRun.prototype.AddComment;
 	ApiRun.prototype["GetText"]                      = ApiRun.prototype.GetText;
+	ApiRun.prototype["MoveCursorToPos"]              = ApiRun.prototype.MoveCursorToPos;
 
 
 	ApiHyperlink.prototype["GetClassType"]           = ApiHyperlink.prototype.GetClassType;
