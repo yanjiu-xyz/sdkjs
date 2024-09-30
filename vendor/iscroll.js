@@ -1859,9 +1859,6 @@ function Indicator (scroller, options) {
 
 	for ( var i in options ) {
 		this.options[i] = options[i];
-
-		this.wrapperStyle.display = "none";
-		this.indicatorStyle.display = "none";
 	}
 
 	if (this.options.transparent) {
@@ -1870,6 +1867,9 @@ function Indicator (scroller, options) {
 		this.options.disableTouch = true;
 		this.options.disablePointer = true;
 		this.options.disableMouse = true;
+
+		this.wrapperStyle.display = "none";
+		this.indicatorStyle.display = "none";
 	}
 
 	this.sizeRatioX = 1;

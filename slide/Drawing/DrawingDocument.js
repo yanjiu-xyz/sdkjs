@@ -1157,6 +1157,21 @@ function CDrawingDocument()
 
 		oThis.TargetHtmlElement.style.display = isShow ? "block" : "none";
 	};
+	this.isDrawTargetGlass = function()
+	{
+		let isActive = true;
+		let api = oThis.m_oWordControl.m_oApi;
+
+		if (api.isBlurEditor)
+			isActive = false;
+		else if (api.isViewMode || api.isRestrictionView())
+			isActive = false;
+		if (-1 === this.m_lTimerTargetId)
+			isActive = false;
+
+		return isActive;
+	};
+
 	this.TargetShow      = function()
 	{
 		this.TargetShowNeedFlag = true;
@@ -4363,6 +4378,15 @@ function CThumbnailsManager()
 	// events
 	this.onMouseDown = function(e)
 	{
+		let mobileTouchManager = oThis.m_oWordControl ? oThis.m_oWordControl.MobileTouchManagerThumbnails : null;
+		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e))
+		{
+			mobileTouchManager.startTouchingInProcess();
+			let res = mobileTouchManager.mainOnTouchStart(e);
+			mobileTouchManager.stopTouchingInProcess();
+			return res;
+		}
+
 		if (oThis.m_oWordControl)
 		{
 			oThis.m_oWordControl.m_oApi.checkInterfaceElementBlur();
@@ -4571,6 +4595,15 @@ function CThumbnailsManager()
 
 	this.onMouseMove = function(e)
 	{
+		let mobileTouchManager = oThis.m_oWordControl ? oThis.m_oWordControl.MobileTouchManagerThumbnails : null;
+		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e))
+		{
+			mobileTouchManager.startTouchingInProcess();
+			let res = mobileTouchManager.mainOnTouchMove(e);
+			mobileTouchManager.stopTouchingInProcess();
+			return res;
+		}
+
 		if (oThis.m_oWordControl)
 			oThis.m_oWordControl.m_oApi.checkLastWork();
 
@@ -4672,6 +4705,15 @@ function CThumbnailsManager()
 
 	this.onMouseUp = function(e, bIsWindow)
 	{
+		let mobileTouchManager = oThis.m_oWordControl ? oThis.m_oWordControl.MobileTouchManagerThumbnails : null;
+		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e))
+		{
+			mobileTouchManager.startTouchingInProcess();
+			let res = mobileTouchManager.mainOnTouchEnd(e);
+			mobileTouchManager.stopTouchingInProcess();
+			return res;
+		}
+
 		if (oThis.m_oWordControl)
 			oThis.m_oWordControl.m_oApi.checkLastWork();
 
