@@ -972,7 +972,7 @@
 				const presNode = this.presOfArray.pop();
 				if (presNode.algorithm instanceof TextAlgorithm) {
 					this.presOf.textNode = presNode;
-				} else if (presNode.layoutInfo.shape && !presNode.layoutInfo.shape.hideGeom && presNode.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none && presNode.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) {
+				} else if (presNode.layoutInfo.shape && !presNode.layoutInfo.shape.hideGeom && presNode.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none) {
 					this.presOf.contentNode = presNode;
 				}
 			}
@@ -1939,23 +1939,11 @@
 			return shapes;
 		}
 		const shadowShapes = this.parentNode.getShadowShapesByZOrder();
-		shadowShapes.sort(function (a, b) {
-			return a.node.getZOrderOff() - b.node.getZOrderOff()
-		})/*.reverse()*/;
-		const correctShadowShapes = shadowShapes.filter(function (shadowShape) {
-			if (shadowShape.height === 0 && shadowShape.width === 0 && shadowShape.node.algorithm instanceof TextAlgorithm) {
-				return false;
-			}
-			if (shadowShape.shape.hideGeom && shadowShape.shape.type === AscFormat.LayoutShapeType_shapeType_rect && shadowShape.node.algorithm instanceof TextAlgorithm && !shadowShape.node.isTxXfrm()) {
-				return true;
-			}
-			return !shadowShape.shape.hideGeom && !shadowShape.node.isTxXfrm() && shadowShape.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none;
-		});
-		smartartAlgorithm.applyColorsDef(correctShadowShapes.slice().sort(function (shape1, shape2) {
+		smartartAlgorithm.applyColorsDef(this.parentNode.getDescendantFilteredShapes().sort(function (shape1, shape2) {
 			return shape2.shape.zOrderOff - shape1.shape.zOrderOff;
 		}));
-		for (let i = 0; i < correctShadowShapes.length; i++) {
-			const shadowShape = correctShadowShapes[i];
+		for (let i = 0; i < shadowShapes.length; i++) {
+			const shadowShape = shadowShapes[i];
 			const editorShape = shadowShape.getEditorShape(false, initObjects);
 			if (editorShape) {
 				shadowShape.editorShape = editorShape;
@@ -6701,43 +6689,48 @@ PresNode.prototype.getNamedNode = function (name) {
 	PresNode.prototype.isContentNode = function () {
 		return this.node.isContentNode();
 	};
-	PresNode.prototype.collectHierarchyShapes = function(shapes) {
-		const nodeElements = [this];
-		const tempShapes = [];
-		while (nodeElements.length) {
-			const element = nodeElements.pop();
-			if (element.algorithm.isHierarchy()) {
-				for (let i = 0; i < element.childs.length; i += 1) {
-					nodeElements.push(element.childs[i]);
-				}
-				const shape = element.getShape(false);
-				tempShapes.push(shape);
-			} else {
-				const childShapes = element.getShadowShapesByZOrder();
-				for (let i = childShapes.length - 1; i >= 0; i -= 1) {
-					tempShapes.push(childShapes[i]);
-				}
+	PresNode.prototype.getDescendantFilteredShapes = function () {
+		const nodes = [this];
+		const shapes = [];
+		while (nodes.length) {
+			const node = nodes.pop();
+			shapes.push(node.getShape());
+
+			for (let i = node.childs.length - 1; i >= 0; i -= 1) {
+				nodes.push(node.childs[i]);
 			}
 		}
-		tempShapes.sort(function (a, b) {
-			const aIndex = a.shape.zOrderOff;
-			const bIndex = b.shape.zOrderOff;
-			return bIndex - aIndex;
+		return shapes.filter(function (shadowShape) {
+			if (shadowShape.height === 0 && shadowShape.width === 0 && shadowShape.node.algorithm instanceof TextAlgorithm) {
+				return false;
+			}
+			if (shadowShape.shape.hideGeom && shadowShape.shape.type === AscFormat.LayoutShapeType_shapeType_rect && shadowShape.node.algorithm instanceof TextAlgorithm && !shadowShape.node.isTxXfrm()) {
+				return true;
+			}
+			return !shadowShape.shape.hideGeom && !shadowShape.node.isTxXfrm() && shadowShape.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none;
 		});
-		shapes.push.apply(shapes, tempShapes);
-	};
-	PresNode.prototype.getZOrderOff = function () {
-		return this.layoutInfo.shape.zOrderOff;
-	};
-	PresNode.prototype.getShadowShapesByZOrder = function (shapes) {
-		shapes = shapes || [];
-		shapes.push(this.getShape());
-		for (let i = 0; i < this.childs.length; i += 1) {
-			this.childs[i].getShadowShapesByZOrder(shapes);
+	}
+	PresNode.prototype.getShadowShapesByZOrder = function () {
+		const shapes = this.getDescendantFilteredShapes();
+		const sortedShapes = shapes.slice();
+		let sortedIndex = 0;
+		for (let i = 0; i < shapes.length; i++) {
+			const shape = shapes[i];
+			const zOrderOff = shape.shape.zOrderOff;
+			if (zOrderOff === 0) {
+				continue;
+			}
+			while (sortedShapes[sortedIndex] !== shape) {
+				sortedIndex += 1;
+			}
+			const sortedShape = sortedShapes[sortedIndex];
+			sortedShapes.splice(sortedIndex, 1);
+			const insertIndex = Math.min(Math.max(0, sortedIndex + zOrderOff), sortedShapes.length);
+			sortedShapes.splice(insertIndex, 0, sortedShape);
 		}
 
-		return shapes;
-	}
+		return sortedShapes;
+	};
 	PresNode.prototype.getChildIndex = function (child) {
 		for (let i = 0; i < this.childs.length; i++) {
 			if (this.childs[i] === child) {
