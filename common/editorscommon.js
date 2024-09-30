@@ -1057,6 +1057,8 @@
 			case c_oAscServerError.ConvertNEED_PARAMS :
 			case c_oAscServerError.ConvertUnknownFormat :
 			case c_oAscServerError.ConvertReadFile :
+			case c_oAscServerError.ConvertTemporaty :
+			case c_oAscServerError.ConvertDetect :
 			case c_oAscServerError.Convert :
 				nRes =
 					AscCommon.c_oAscAdvancedOptionsAction.Save === nAction ? Asc.c_oAscError.ID.ConvertationSaveError :
@@ -1675,6 +1677,8 @@
 		ConvertPASSWORD:          -91,
 		ConvertICU:               -92,
 		ConvertLIMITS:            -93,
+		ConvertTemporaty:         -94,
+		ConvertDetect:            -95,
 		ConvertDeadLetter:        -99,
 
 		Upload:              -100,

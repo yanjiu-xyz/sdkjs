@@ -10079,7 +10079,7 @@
 
                     let allScrollHeight = currentScrollCorrect + defaultScrollPxStep;
                     let scrollHeight = 0;
-                   for (let i = firstRow; i < 1000; i++) {
+                   for (let i = firstRow; i < gc_nMaxRow0; i++) {
                    	let _rowHeight = this._getRowHeight(i);
                    	scrollHeight += _rowHeight;
                    	if (scrollHeight >= allScrollHeight) {
@@ -11055,7 +11055,7 @@
 
 					let allScrollWidth = currentScrollCorrect + defaultScrollPxStep;
 					let scrollWidth = 0;
-					for (let i = firstCol; i < 1000; i++) {
+					for (let i = firstCol; i < gc_nMaxCol0; i++) {
 						let _colWidth = this._getColumnWidth(i);
 						scrollWidth += _colWidth;
 						if (scrollWidth >= allScrollWidth) {
