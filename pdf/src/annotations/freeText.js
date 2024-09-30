@@ -117,6 +117,8 @@
             return;
         }
 
+        AscCommon.History.Add(new CChangesPDFFreeTextRotate(this, this._rotate, nAngle));
+
         let oBodyPr = oTxShape.txBody.bodyPr;
         
         switch (nAngle) {
