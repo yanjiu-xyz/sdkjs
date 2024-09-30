@@ -2331,7 +2331,8 @@ var CPresentation = CPresentation || function(){};
             }
         });
         
-		oViewer.resize();
+		oViewer.resize(true);
+        oViewer.paint();
     };
     /**
 	 * Adds an interactive field to document.

@@ -763,7 +763,7 @@
 					_t.startTimer();
 				}
 
-				if (_t.isStarted && _t.pageDetector && _t.IsOpenFormsInProgress == false) {
+				if (_t.isStarted && _t.pageDetector && !oDoc.fontLoader.isWorking() && _t.IsOpenFormsInProgress == false) {
 					_t.sendEvent("onFileOpened");
 
 					_t.sendEvent("onPagesCount", _t.file.pages.length);
@@ -4299,7 +4299,7 @@
 		if (this.scrollY >= this.scrollMaxY)
 			this.scrollY = this.scrollMaxY;
 		
-		if (this.zoomCoordinate && this.isDocumentContentReady)
+		if (this.zoomCoordinate && this.isDocumentContentReady && Asc.editor.isDocumentLoadComplete)
 		{
 			var newPoint = this.ConvertCoordsToCursor(this.zoomCoordinate.x, this.zoomCoordinate.y, this.zoomCoordinate.index);
 			// oldsize используется чтобы при смене ориентации экрана был небольшой скролл
