@@ -427,8 +427,16 @@ function asc_CChartBinary(chart) {
     this["binary"] = null;
     if (chart && chart.getObjectType() === AscDFH.historyitem_type_ChartSpace)
     {
+        this["IsChartEx"] = chart.isChartEx();
         var writer = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false)), pptx_writer;
-        writer.WriteCT_ChartSpace(chart);
+        if(this["IsChartEx"])
+        {
+            writer.WriteCT_ChartExSpace(chart);
+        }
+        else
+        {
+            writer.WriteCT_ChartSpace(chart);
+        }
         this["binary"] = writer.memory.pos + ";" + writer.memory.GetBase64Memory();
         if(chart.theme)
         {
@@ -462,6 +470,8 @@ asc_CChartBinary.prototype = {
     asc_setThemeBinary: function(val) { this["themeBinary"] = val; },
     asc_setColorMapBinary: function(val){this["colorMapBinary"] = val;},
     asc_getColorMapBinary: function(){return this["colorMapBinary"];},
+    asc_setIsChartEx: function(val){this["IsChartEx"] = val;},
+    asc_getIsChartEx: function(){return this["IsChartEx"];},
     getChartSpace: function(workSheet)
     {
         var binary = this["binary"];
@@ -470,7 +480,12 @@ asc_CChartBinary.prototype = {
         AscCommon.pptx_content_loader.Clear();
         var oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChart() : new AscFormat.CChartSpace();
         var oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
-        oBinaryChartReader.ExternalReadCT_ChartSpace(stream.size , oNewChartSpace, workSheet);
+        if(this["IsChartEx"]) {
+            oBinaryChartReader.ExternalReadCT_ChartExSpace(stream.size , oNewChartSpace, workSheet);
+        }
+        else {
+            oBinaryChartReader.ExternalReadCT_ChartSpace(stream.size , oNewChartSpace, workSheet);
+        }
         return oNewChartSpace;
     },
 
@@ -2796,6 +2811,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             asc_chart_binary.asc_setBinary(chart["binary"]);
             asc_chart_binary.asc_setThemeBinary(chart["themeBinary"]);
             asc_chart_binary.asc_setColorMapBinary(chart["colorMapBinary"]);
+            asc_chart_binary.asc_setIsChartEx(chart["IsChartEx"]);
             var oNewChartSpace = asc_chart_binary.getChartSpace(model);
             var theme = asc_chart_binary.getTheme();
             if(theme)
