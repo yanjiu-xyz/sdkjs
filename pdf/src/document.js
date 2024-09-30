@@ -4213,6 +4213,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
+        Asc.editor.canSave = false;
         this.StartAction(AscDFH.historydescription_Pdf_EditPage);
         let oDrDoc = this.GetDrawingDocument();
 
@@ -4306,6 +4307,7 @@ var CPresentation = CPresentation || function(){};
             _t.Viewer.paint(function() {
                 _t.Viewer.thumbnails._repaintPage(nPage);
             });
+            Asc.editor.canSave = true;
         };
         if(aUrls.length > 0) {
             AscCommon.sendImgUrls(Asc.editor, aUrls, function (data) {
