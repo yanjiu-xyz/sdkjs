@@ -2187,7 +2187,7 @@ var CPresentation = CPresentation || function(){};
         if (oPage.H === undefined)
             oPage.H = oFile.pages[Math.max(nPos - 1, 0)].H;
 
-        oFile.pages.splice(nPos, 0, oPage);
+        oFile.addPage(nPos, oPage);
 	
 		oViewer.drawingPages.splice(nPos, 0, {
 			X : 0,
@@ -2277,7 +2277,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         // убираем информацию о странице
-        let aPages = oFile.pages.splice(nPos, 1);
+        let aPages = oFile.removePage(nPos);
 		oViewer.drawingPages.splice(nPos, 1);
         oViewer.pagesInfo.pages.splice(nPos, 1);
         
