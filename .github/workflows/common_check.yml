@@ -31,10 +31,10 @@ jobs:
       - name: check out repository
         uses: actions/checkout@v3
 
-      - name: Use Node.js 20
+      - name: Use Node.js 18
         uses: actions/setup-node@v1
         with:
-            node-version: 20
+            node-version: 18
       
       - name: Run unit tests
         run: |
@@ -95,16 +95,28 @@ jobs:
         with:
           path: sdkjs
 
-      - name: check out repository
+      - name: check out repository sdkjs-forms current branch
+        id: sdkjs-forms
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-forms
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-forms
+          ref: ${{ github.ref }}
+      - name: check out repository sdkjs-forms master branch
+        if: steps.sdkjs-forms.outcome != 'success'
         uses: actions/checkout@v4
         with:
           repository: ONLYOFFICE/sdkjs-forms
+          token: ${{ secrets.READ_PAT }}
           path: sdkjs-forms
+          ref: master
 
-      - name: Use Node.js 12
+      - name: Use Node.js 18
         uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 18
 
       - name: Run builder tests
         run: |

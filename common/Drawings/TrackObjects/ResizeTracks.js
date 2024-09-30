@@ -961,7 +961,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 this.resizedflipV = false;
             }
             
-            if (Asc.editor.isPdfEditor() && (Asc.editor.getPDFDoc().IsViewerObject(this.originalObject))) {
+            if (Asc.editor.isPdfEditor() && this.originalObject.IsAnnot()) {
                 let xMin = this.resizedPosX;
                 let xMax = this.resizedPosX + this.resizedExtX;
                 let yMin = this.resizedPosY;

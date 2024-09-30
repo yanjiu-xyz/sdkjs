@@ -745,10 +745,10 @@ CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 			{
 				let symbol;
 
-				if (this.Parent.Pr.SmallCaps)
-					symbol = String.fromCharCode(this.value).toLowerCase();
-				else if (this.Parent.Pr.Caps)
+				if (this.Parent.Pr.SmallCaps || this.Parent.Pr.Caps)
+				{
 					symbol = String.fromCharCode(this.value).toUpperCase();
+				}
 
 				letter						= symbol.charCodeAt(0);
 				this.RecalcInfo.StyleCode	= letter;
@@ -939,9 +939,12 @@ CMathText.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 			{
 				pGraphics.FillTextCode(X, Y, nUpperStr);
 			}
-			else if (InfoTextPr.TextPr.SmallCaps && nLowerStr !== this.value)
+			else if (InfoTextPr.TextPr.SmallCaps
+				&& this.value !== nUpperStr
+				&& this.value === nLowerStr)
 			{
-				pGraphics.FillTextCode(X, Y, nLowerStr);
+				pGraphics.SetFontSlot(this.FontSlot, smallcaps_Koef);
+				pGraphics.FillTextCode(X, Y, nUpperStr);
 			}
 			else
 			{

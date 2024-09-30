@@ -38,7 +38,6 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Vertices]		= CChangesPDFAnnot
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Contents]		= CChangesPDFAnnotContents;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Pos]				= CChangesPDFAnnotPos;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Page]			= CChangesPDFAnnotPage;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Replies]			= CChangesPDFAnnotReplies;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Creation_Date]	= CChangesPDFAnnotCreationDate;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Mod_Date]		= CChangesPDFAnnotModDate;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Author]			= CChangesPDFAnnotAuthor;
@@ -105,15 +104,29 @@ CChangesAnnotArrayOfDoubleProperty.prototype.constructor = CChangesAnnotArrayOfD
 
 CChangesAnnotArrayOfDoubleProperty.prototype.WriteToBinary = function(Writer)
 {
-	var nNewCount = this.New.length;
-	Writer.WriteLong(nNewCount);
-	for (var nIndex = 0; nIndex < nNewCount; ++nIndex)
-		Writer.WriteDouble(this.New[nIndex]);
+	let nFlags = 0;
 
-	var nOldCount = this.Old.length;
-	Writer.WriteLong(nOldCount);
-	for (var nIndex = 0; nIndex < nOldCount; ++nIndex)
-		Writer.WriteDouble(this.Old[nIndex]);
+	if (undefined === this.New)
+		nFlags |= 1;
+
+	if (undefined === this.Old)
+		nFlags |= 2;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New) {
+		var nNewCount = this.New.length;
+		Writer.WriteLong(nNewCount);
+		for (var nIndex = 0; nIndex < nNewCount; ++nIndex)
+			Writer.WriteDouble(this.New[nIndex]);
+	}
+	
+	if (undefined !== this.Old) {
+		var nOldCount = this.Old.length;
+		Writer.WriteLong(nOldCount);
+		for (var nIndex = 0; nIndex < nOldCount; ++nIndex)
+			Writer.WriteDouble(this.Old[nIndex]);
+	}
 };
 CChangesAnnotArrayOfDoubleProperty.prototype.ReadFromBinary = function(Reader)
 {
@@ -122,15 +135,21 @@ CChangesAnnotArrayOfDoubleProperty.prototype.ReadFromBinary = function(Reader)
 	// Long : Count of the columns in the old grid
 	// Array of double : widths of columns in the old grid
 
-	var nCount = Reader.GetLong();
-	this.New = [];
-	for (var nIndex = 0; nIndex < nCount; ++nIndex)
-		this.New[nIndex] = Reader.GetDouble();
+	let nFlags = Reader.GetLong();
+	
+	if (!(nFlags & 1)) {
+		let nCount = Reader.GetLong();
+		this.New = [];
+		for (var nIndex = 0; nIndex < nCount; ++nIndex)
+			this.New[nIndex] = Reader.GetDouble();
+	}
 
-	nCount = Reader.GetLong();
-	this.Old = [];
-	for (var nIndex = 0; nIndex < nCount; ++nIndex)
-		this.Old[nIndex] = Reader.GetDouble();
+	if (!(nFlags & 2)) {
+		let nCount = Reader.GetLong();
+		this.Old = [];
+		for (var nIndex = 0; nIndex < nCount; ++nIndex)
+			this.Old[nIndex] = Reader.GetDouble();
+	} 
 };
 
 CChangesAnnotArrayOfDoubleProperty.prototype.Load = function(){
@@ -160,11 +179,6 @@ CChangesPDFCommentData.prototype.private_SetValue = function(Value)
 {
 	let oComment = this.Class;
 	oComment.EditCommentData(Value);
-	let AscCommentData = oComment.GetAscCommentData();
-	let CommentData = new AscCommon.CCommentData();
-	CommentData.Read_FromAscCommentData(AscCommentData);
-
-	editor.sync_ChangeCommentData(oComment.GetId(), CommentData);
 };
 CChangesPDFCommentData.prototype.private_CreateObject = function()
 {
@@ -780,23 +794,6 @@ CChangesPDFAnnotContents.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetContents(Value);
-};
-
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
- */
-function CChangesPDFAnnotReplies(Class, Old, New, Color)
-{
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
-}
-CChangesPDFAnnotReplies.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
-CChangesPDFAnnotReplies.prototype.constructor = CChangesPDFAnnotReplies;
-CChangesPDFAnnotReplies.prototype.Type = AscDFH.historyitem_Pdf_Annot_Replies;
-CChangesPDFAnnotReplies.prototype.private_SetValue = function(Value)
-{
-	let oAnnot = this.Class;
-	oAnnot.SetReplies(Value);
 };
 
 /**

@@ -63,7 +63,8 @@ var AscBrowser = {
     chromeVersion : 70,
     iosVersion : 13,
     isAndroidNativeApp : false,
-	safariVersion : 17004001
+	safariVersion : 17004001,
+	isTelegramWebView : false
 };
 
 // user agent lower case
@@ -176,6 +177,8 @@ AscBrowser.isEmulateDevicePixelRatio = (AscBrowser.userAgent.indexOf("emulatedev
 AscBrowser.isNeedEmulateUpload = (AscBrowser.userAgent.indexOf("needemulateupload") > -1);
 
 AscBrowser.isAndroidNativeApp = (AscBrowser.userAgent.indexOf("ascandroidwebview") > -1);
+
+AscBrowser.isTelegramWebView = (typeof TelegramWebviewProxy === "object") ? true : false;
 
 AscBrowser.zoom = 1;
 

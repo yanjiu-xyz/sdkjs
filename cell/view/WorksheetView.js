@@ -10336,13 +10336,13 @@
         this._drawSelection();
 		//this._cleanPagesModeData();
 
-		if (!reinitScrollY && this.workbook.getSmoothScrolling()) {
+		/*if (!reinitScrollY && this.workbook.getSmoothScrolling()) {
 			reinitScrollY = oldEnd !== vr.r2;
-		}
+		}*/
 
 
 		if ((reinitScrollY && !this.workbook.getSmoothScrolling()) || (reinitScrollY && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
-			(0 > delta && initRowsCount && this._initRowsCount())) {
+			(0 > delta && initRowsCount && this._initRowsCount()) || (this.workbook.getSmoothScrolling() && initRowsCount)) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
 		}
 		this._reinitializeScroll();
@@ -11268,7 +11268,7 @@
 		}
 		
 		if ((reinitScrollX && !this.workbook.getSmoothScrolling()) || (reinitScrollX && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
-			(0 > delta && initColsCount && this._initColsCount())) {
+			(0 > delta && initColsCount && this._initColsCount()) || (this.workbook.getSmoothScrolling() && initColsCount)) {
 			if (reinitScrollX && (start - cFrozen) === 0 && 0 > delta && initColsCount) {
 				this._initColsCount();
 			}

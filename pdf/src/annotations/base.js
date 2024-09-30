@@ -708,15 +708,6 @@
         // oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
         // oGraphicsPDF.Stroke();
     };
-    CAnnotationBase.prototype.SetReplies = function(aReplies) {
-        let oDoc = this.GetDocument();
-        let oViewer = editor.getDocumentRenderer();
-
-        if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
-            oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
-        }
-        this._replies = aReplies;
-    };
     CAnnotationBase.prototype.GetReplies = function() {
         return this._replies;
     };
@@ -725,9 +716,23 @@
     };
     CAnnotationBase.prototype.RemoveComment = function() {
         this.SetContents(null);
-        this.SetReplies([]);
+        this.EditCommentData(undefined);
     };
     CAnnotationBase.prototype.EditCommentData = function(oCommentData) {
+        let oDoc = this.GetDocument();
+
+        let oCurAscCommData = this.GetAscCommentData();
+        let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
+		oCurData && oCurData.Read_FromAscCommentData(oCurAscCommData);
+
+        AscCommon.History.Add(new CChangesPDFCommentData(this, oCurData, oCommentData));
+
+        if (oCommentData == null) {
+            this._replies.length = 0;
+            Asc.editor.sync_RemoveComment(this.GetId());
+            return;
+        }
+
         let oFirstCommToEdit;
         if (this.GetApIdx() == oCommentData.m_sUserData)
             oFirstCommToEdit = this;
@@ -737,6 +742,13 @@
             });
         }
         
+        AscCommon.History.StartNoHistoryMode();
+        if (null == oFirstCommToEdit) {
+            AscPDF.CAnnotationText.prototype.AddReply.call(this, oCommentData);
+            oFirstCommToEdit = this.GetReply(0);
+            oDoc.CheckComment(this);
+        }
+
         if (oFirstCommToEdit.GetContents() != oCommentData.m_sText) {
             oFirstCommToEdit.SetContents(oCommentData.m_sText);
             oFirstCommToEdit.SetModDate(oCommentData.m_sOOTime);
@@ -770,9 +782,10 @@
             if (!this._replies.find(function(reply) {
                 return oReplyCommentData.m_sUserData == reply.GetApIdx();
             })) {
-                AscPDF.CAnnotationText.prototype.AddReply.call(this, oReplyCommentData);
+                AscPDF.CAnnotationText.prototype.AddReply.call(this, oReplyCommentData, i);
             }
         }
+        AscCommon.History.EndNoHistoryMode();
 
         if (this.IsComment()) {
             if (oCommentData.m_bSolved) {
@@ -791,9 +804,15 @@
                 this._replies[i].SetState(AscPDF.TEXT_ANNOT_STATE.Unknown);
             }
         }
+
+        Asc.editor.sync_ChangeCommentData(this.GetId(), oCommentData);
     };
     CAnnotationBase.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc.asc_CCommentDataWord(null);
+        if (null == this.GetContents()) {
+            return undefined;
+        }
+
         oAscCommData.asc_putText(this.GetContents());
         let sModDate = this.GetModDate();
         if (sModDate)

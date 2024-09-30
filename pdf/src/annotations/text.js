@@ -108,8 +108,9 @@
     CAnnotationText.prototype.ClearReplies = function() {
         this._replies = [];
     };
-    CAnnotationText.prototype.AddReply = function(CommentData) {
+    CAnnotationText.prototype.AddReply = function(CommentData, nPos) {
         let oReply = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), this.GetDocument());
+        let sUserData = CommentData.GetUserData();
 
         oReply.SetContents(CommentData.m_sText);
         oReply.SetCreationDate(CommentData.m_sOOTime);
@@ -118,13 +119,26 @@
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
         oReply.SetReplyTo(this.GetReplyTo() || this);
 
-        oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
-        CommentData.m_sUserData = oReply.GetApIdx();
+        if (sUserData) {
+            oReply.SetApIdx(sUserData);
+        }
+        else {
+            oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
+            CommentData.SetUserData(oReply.GetApIdx());
+        }
 
-        this._replies.push(oReply);
+        if (!nPos) {
+            nPos = this._replies.length;
+        }
+
+        this._replies.splice(nPos, 0, oReply);
     };
     CAnnotationText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc.asc_CCommentDataWord(null);
+        if (null == this.GetContents()) {
+            return undefined;
+        }
+
         oAscCommData.asc_putText(this.GetContents());
         let sModDate = this.GetModDate();
         if (sModDate)
