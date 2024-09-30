@@ -2265,7 +2265,11 @@
 		this.effectTypeImage = this.addControl(new CImageControl(this, effectImg.src, effectImg.width, effectImg.height));
 
 		this.effectLabel = this.addControl(new CLabel(this, this.getEffectLabelText(), EFFECT_LABEL_FONTSIZE, false, AscCommon.align_Left));
-		this.contextMenuButton = this.addControl(new CButton(this, null, null, showContextMenu));
+		this.contextMenuButton = this.addControl(new CButton(this, function (e, x, y) {
+			if (this.hit(x, y) && (e.Button === AscCommon.g_mouse_button_left)) {
+				this.pressedFlag = true;
+			}
+		}, null, showContextMenu));
 		this.contextMenuButton.icon = this.contextMenuButton.addControl(new CImageControl(
 			this.contextMenuButton,
 			AscCommon.GlobalSkin.type == 'light' ? menuButtonIcon_dark : menuButtonIcon_light,
@@ -2295,7 +2299,10 @@
 
 		function showContextMenu(e, x, y) {
 			if (this.hit(x, y) && !this.isHidden()) {
-				this.sendContextMenuEvent();
+				if (this.pressedFlag) {
+					this.sendContextMenuEvent();
+					this.pressedFlag = false;
+				}
 			}
 		}
 
