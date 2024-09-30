@@ -8083,7 +8083,7 @@ BinaryChartReader.prototype.ReadCT_Legend = function (type, length, val) {
         val.txPr.setParent(val);
     }
     else if (c_oserct_legendALIGN === type) {
-        val.setPos(this.stream.GetUChar())
+        val.setAlign(this.stream.GetUChar())
     }
     else if (c_oserct_legendEXTLST === type) {
         var oNewVal;
