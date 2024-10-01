@@ -5417,6 +5417,7 @@ var CPresentation = CPresentation || function(){};
             for (let i = 0; i < aObjects.length; i++) {
                 let aRect = aObjects[i].GetOrigRect();
                 let nPage = aObjects[i].GetPage();
+                let nRotRad = aObjects[i].GetRot ? aObjects[i].GetRot() : 0;
 
                 if (nDrawPage != nPage) {
                     continue;
@@ -5445,14 +5446,48 @@ var CPresentation = CPresentation || function(){};
                 let H = (aRect[3] - aRect[1]) * nScale + 0.5 >> 0;
 
                 oCtx.strokeStyle = "rgb(" + oColor.r + "," + oColor.g + "," + oColor.b + ")";
-                oOverlay.CheckPoint(indLeft + X, indTop + Y);
-                oOverlay.CheckPoint(indLeft + X + W, indTop + Y + H);
                 oCtx.lineWidth = 2;
-                oCtx.rect(indLeft + X, indTop + Y, W, H);
-                oCtx.stroke();
+
+                if (nRotRad != 0) {
+                    let cosTheta = Math.cos(nRotRad);
+                    let sinTheta = Math.sin(nRotRad);
+                
+                    let centerX = indLeft + X + W / 2;
+                    let centerY = indTop + Y + H / 2;
+                
+                    let corners = [
+                        { x: -W / 2, y: -H / 2 }, // верхний левый
+                        { x: W / 2, y: -H / 2 },  // верхний правый
+                        { x: W / 2, y: H / 2 },   // нижний правый
+                        { x: -W / 2, y: H / 2 },  // нижний левый
+                    ];
+                
+                    let rotatedCorners = corners.map(function (pt) {
+                        return {
+                            x: centerX + pt.x * cosTheta - pt.y * sinTheta,
+                            y: centerY + pt.x * sinTheta + pt.y * cosTheta
+                        };
+                    });
+                
+                    oCtx.beginPath();
+                    oOverlay.CheckPoint(rotatedCorners[0].x, rotatedCorners[0].y);
+                    oCtx.moveTo(rotatedCorners[0].x, rotatedCorners[0].y);
+                    for (let i = 1; i < rotatedCorners.length; i++) {
+                        oOverlay.CheckPoint(rotatedCorners[i].x, rotatedCorners[i].y);
+                        oCtx.lineTo(rotatedCorners[i].x, rotatedCorners[i].y);
+                    }
+                    oCtx.closePath();
+                    oCtx.stroke();
+                } else {
+                    oOverlay.CheckPoint(indLeft + X, indTop + Y);
+                    oOverlay.CheckPoint(indLeft + X + W, indTop + Y + H);
+
+                    oCtx.beginPath();
+                    oCtx.rect(indLeft + X, indTop + Y, W, H);
+                    oCtx.stroke();
+                }
             }
         }
-
     };
     CPDFDoc.prototype.Show_ForeignSelectedObjectLabel = function(userId, foreignSelectObj, color) {
 		let oApi = Asc.editor;
