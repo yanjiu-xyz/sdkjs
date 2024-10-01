@@ -2222,6 +2222,7 @@ var CPresentation = CPresentation || function(){};
 
         this.History.Add(new CChangesPDFDocumentAddPage(this, nPos, [oPage]));
 
+        this.History.StartNoHistoryMode();
         for (let nPage = nPos + 1; nPage < oViewer.pagesInfo.pages.length; nPage++) {
             if (oViewer.pagesInfo.pages[nPage].fields) {
                 oViewer.pagesInfo.pages[nPage].fields.forEach(function(field) {
@@ -2239,6 +2240,7 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
+        this.History.EndNoHistoryMode();
 
         oViewer.paint();
     };
@@ -2300,6 +2302,7 @@ var CPresentation = CPresentation || function(){};
 
         this.History.Add(new CChangesPDFDocumentRemovePage(this, nPos, aPages));
 
+        this.History.StartNoHistoryMode();
         // проставляем новые номера страниц объектам на остальных страницах
         for (let nPage = nPos; nPage < oViewer.pagesInfo.pages.length; nPage++) {
             if (oViewer.pagesInfo.pages[nPage].fields) {
@@ -2318,6 +2321,7 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
+        this.History.EndNoHistoryMode();
 
         oViewer.paint();
     };
