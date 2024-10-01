@@ -82,6 +82,7 @@ jobs:
           node-qunit-puppeteer tests/word/styles/displayStyle.html 30000 "--no-sandbox"
           node-qunit-puppeteer tests/word/styles/paraPr.html 30000 "--no-sandbox"
           node-qunit-puppeteer tests/word/styles/styleApplicator.html 30000 "--no-sandbox"
+          node-qunit-puppeteer tests/word/text-autocorrection/as-you-type.html 30000 "--no-sandbox"
           node-qunit-puppeteer tests/word/plugins/pluginsApi.html 30000 "--no-sandbox"
           node-qunit-puppeteer tests/word/revisions/paragraph.html 30000 "--no-sandbox"
           node-qunit-puppeteer tests/word/merge-documents/mergeDocuments.html 30000 "--no-sandbox"
