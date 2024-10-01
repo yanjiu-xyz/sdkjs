@@ -2105,7 +2105,8 @@
 				deltaY = 0;
 			}
 
-			if (this.smoothWheelCorrector) {
+			const wb = window["Asc"]["editor"].wb;
+			if (this.smoothWheelCorrector && !wb.smoothScroll) {
 				deltaX = this.smoothWheelCorrector.get_DeltaX(deltaX);
 				deltaY = this.smoothWheelCorrector.get_DeltaY(deltaY);
 			}
@@ -2118,11 +2119,15 @@
 			this.handlers.trigger("updateWorksheet", /*x*/undefined, /*y*/undefined, /*ctrlKey*/undefined,
 				function () {
 					if (deltaX && (!self.smoothWheelCorrector || !self.smoothWheelCorrector.isBreakX())) {
-						deltaX = Math.sign(deltaX) * Math.ceil(Math.abs(deltaX / 3));
+						if (!wb.smoothScroll) {
+							deltaX = Math.sign(deltaX) * Math.ceil(Math.abs(deltaX / 3));
+						}
 						self.scrollHorizontal(deltaX, event);
 					}
 					if (deltaY && (!self.smoothWheelCorrector || !self.smoothWheelCorrector.isBreakY())) {
-						deltaY = Math.sign(deltaY) * Math.ceil(Math.abs(deltaY * self.settings.wheelScrollLinesV / 3));
+						if (!wb.smoothScroll) {
+							deltaY = Math.sign(deltaY) * Math.ceil(Math.abs(deltaY * self.settings.wheelScrollLinesV / 3));
+						}
 						self.scrollVertical(deltaY, event);
 					}
 					self._onMouseMove(event);
