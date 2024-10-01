@@ -3271,6 +3271,11 @@ var editor;
 
 			this.wb.MobileTouchManager.initEvents(AscCommon.g_inputContext.HtmlArea.id);
 		}
+		else
+		{
+			this.wb.MobileTouchManager = new AscCommonExcel.CMobileTouchManager({eventsElement: "cell_mobile_element", desktopMode : true});
+			this.wb.MobileTouchManager.Init(this);
+		}
 
 		this.asc_CheckGuiControlColors();
 		this.sendColorThemes(this.wbModel.theme);

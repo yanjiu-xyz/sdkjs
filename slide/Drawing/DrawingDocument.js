@@ -4293,9 +4293,11 @@ function CThumbnailsManager()
 	this.initEvents = function()
 	{
 		var control = this.m_oWordControl.m_oThumbnails.HtmlElement;
-		control.onmousedown = this.onMouseDown;
-		control.onmousemove = this.onMouseMove;
-		control.onmouseup = this.onMouseUp;
+
+		AscCommon.addMouseEvent(control, "down", this.onMouseDown);
+		AscCommon.addMouseEvent(control, "move", this.onMouseMove);
+		AscCommon.addMouseEvent(control, "up", this.onMouseUp);
+
 		control.onmouseout = this.onMouseLeave;
 
 		control.onmousewheel = this.onMouseWhell;

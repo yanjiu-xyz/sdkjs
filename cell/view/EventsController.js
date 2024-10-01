@@ -1621,6 +1621,15 @@
 
 		/** @param event {MouseEvent} */
 		asc_CEventsController.prototype._onMouseDown = function (event) {
+			let touchManager = this.view.Api.wb.MobileTouchManager;
+			if (touchManager && touchManager.checkTouchEvent(event))
+			{
+				touchManager.startTouchingInProcess();
+				let res = touchManager.mainOnTouchStart(event);
+				touchManager.stopTouchingInProcess();
+				return res;
+			}
+
 			var t = this;
 			asc["editor"].checkInterfaceElementBlur();
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
@@ -1851,6 +1860,15 @@
 
 		/** @param event {MouseEvent} */
 		asc_CEventsController.prototype._onMouseUp = function (event) {
+			let touchManager = this.view.Api.wb.MobileTouchManager;
+			if (touchManager && touchManager.checkTouchEvent(event))
+			{
+				touchManager.startTouchingInProcess();
+				let res = touchManager.mainOnTouchEnd(event);
+				touchManager.stopTouchingInProcess();
+				return res;
+			}
+
 			var button = AscCommon.getMouseButton(event);
 			AscCommon.global_mouseEvent.UnLockMouse();
 
@@ -1943,6 +1961,15 @@
 
 		/** @param event {MouseEvent} */
 		asc_CEventsController.prototype._onMouseMove = function (event) {
+			let touchManager = this.view.Api.wb.MobileTouchManager;
+			if (touchManager && touchManager.checkTouchEvent(event))
+			{
+				touchManager.startTouchingInProcess();
+				let res = touchManager.mainOnTouchMove(event);
+				touchManager.stopTouchingInProcess();
+				return res;
+			}
+
 			var t = this;
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 			var coord = t._getCoordinates(event);

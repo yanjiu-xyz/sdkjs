@@ -393,7 +393,7 @@
     this.mainGraphics = new AscCommon.CGraphics();
     this.trackOverlay = new AscCommon.COverlay();
     this.trackOverlay.IsCellEditor = true;
-    if(this.Api.isMobileVersion) {
+    if(/*this.Api.isMobileVersion*/true) {
         this.mainOverlay = new AscCommon.COverlay();
         this.mainOverlay.IsCellEditor = true;
     }
@@ -1258,7 +1258,7 @@
 			this.controller.reinitScrollY(this.controller.vsbApi.settings, this.getSmoothScrolling() ? ws.getFirstVisibleRowSmoothScroll(true) :  ws.getFirstVisibleRow(true), ws.getVerticalScrollRange(), ws.getVerticalScrollMax());
 		}
 
-		if (this.Api.isMobileVersion) {
+		if (this.MobileTouchManager) {
 			this.MobileTouchManager.Resize();
 		}
 	};

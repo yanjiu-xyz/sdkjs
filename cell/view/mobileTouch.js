@@ -60,9 +60,10 @@ function (window, undefined)
 	CMobileDelegateEditorCell.prototype.constructor = CMobileDelegateEditorCell;
 	CMobileDelegateEditorCell.prototype.Resize = function()
 	{
-		var _element = document.getElementById("editor_sdk");
-		this.Offset.X = _element.offsetLeft;
-		this.Offset.Y = _element.offsetTop;
+		let _element = document.getElementById("editor_sdk");
+		let pos = AscCommon.UI.getBoundingClientRect(_element);
+		this.Offset.X = pos.x || pos.left;
+		this.Offset.Y = pos.y || pos.top;
 
 		this.Size.W = _element.offsetWidth;
 		this.Size.H = _element.offsetHeight;
@@ -537,7 +538,8 @@ function (window, undefined)
 			scroller_id : this.iScrollElement,
 			bounce : false,
 			eventsElement : this.eventsElement,
-			click : false
+			click : false,
+			transparentIndicators : this.isDesktopMode
 		});
 
 		this.delegate.Init();
@@ -1017,6 +1019,9 @@ function (window, undefined)
 	// отрисовка текстового селекта
 	CMobileTouchManager.prototype.CheckSelect = function(overlay, color, drDocument)
 	{
+		if (!this.desktopTouchState)
+			return;
+
 		if (!this.SelectEnabled)
 			return;
 

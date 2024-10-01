@@ -64,7 +64,8 @@ var AscBrowser = {
     iosVersion : 13,
     isAndroidNativeApp : false,
 	safariVersion : 17004001,
-	isTelegramWebView : false
+	isTelegramWebView : false,
+	maxTouchPoints : 0
 };
 
 // user agent lower case
@@ -144,6 +145,8 @@ if (AscBrowser.isAppleDevices)
 	}
 	AscBrowser.iosVersion = iosversion;
 }
+
+if (navigator.maxTouchPoints) AscBrowser.maxTouchPoints = navigator.maxTouchPoints;
 
 // android devices detect
 AscBrowser.isAndroid = (AscBrowser.userAgent.indexOf("android") > -1);

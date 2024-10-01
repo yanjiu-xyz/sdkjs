@@ -5629,6 +5629,10 @@ CDocument.prototype.Set_TargetPos = function(X, Y, PageNum)
 	this.TargetPos.Y       = Y;
 	this.TargetPos.PageNum = PageNum;
 };
+CDocument.prototype.Get_TargetPos = function()
+{
+	return this.TargetPos;
+};
 /**
  * Запрос на перерисовку заданного отрезка страниц.
  * @param StartPage

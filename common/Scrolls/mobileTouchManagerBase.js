@@ -241,7 +241,10 @@
 	};
 	CMobileDelegateEditor.prototype.ConvertCoordsFromCursor = function(x, y)
 	{
-		return this.DrawingDocument.ConvertCoordsFromCursor2(x, y);
+		let res = this.DrawingDocument.ConvertCoordsFromCursor2(x, y);
+		if (undefined === res.pageIndex)
+			res.Page = res.DrawPage;
+		return res;
 	};
 	CMobileDelegateEditor.prototype.GetElementOffset = function()
 	{
@@ -312,17 +315,14 @@
 		var _target = this.LogicDocument.IsSelectionUse();
 		if (_target === false)
 		{
-			/*
+			let targetPos = this.LogicDocument.Get_TargetPos();
+			if (!targetPos)
+				return;
+
 			_info = {
-				X : this.DrawingDocument.m_dTargetX,
-				Y : this.DrawingDocument.m_dTargetY,
-				Page : this.DrawingDocument.m_lTargetPage
-			};
-			*/
-			_info = {
-				X : this.LogicDocument.TargetPos.X,
-				Y : this.LogicDocument.TargetPos.Y,
-				Page : this.LogicDocument.TargetPos.PageNum
+				X : targetPos.X,
+				Y : targetPos.Y,
+				Page : targetPos.PageNum
 			};
 
 			_transform = this.DrawingDocument.TextMatrix;
@@ -508,7 +508,7 @@
 	CMobileDelegateEditor.prototype.GetScrollerParent = function()
 	{
 		if (this.IsNativeViewer())
-			return document.getElementById(this.Api.HtmlElementName);
+			return document.getElementById("id_main");
 		return this.HtmlPage.m_oMainView.HtmlElement;
 	};
 	CMobileDelegateEditor.prototype.GetScrollerSize = function()
@@ -570,7 +570,7 @@
 	};
 	CMobileDelegateEditor.prototype.IsReader = function()
 	{
-		return (null != this.DrawingDocument.m_oDocumentRenderer);
+		return false;//(null != this.DrawingDocument.m_oDocumentRenderer);
 	};
 	CMobileDelegateEditor.prototype.IsNativeViewer = function()
 	{
@@ -581,6 +581,8 @@
 
 	CMobileDelegateEditor.prototype.Logic_GetNearestPos = function(x, y, page)
 	{
+		if (this.IsNativeViewer())
+			return null;
 		return this.LogicDocument.Get_NearestPos(page, x, y);
 	};
 	CMobileDelegateEditor.prototype.Logic_OnMouseDown = function(e, x, y, page)
@@ -597,14 +599,20 @@
 	};
 	CMobileDelegateEditor.prototype.Drawing_OnMouseDown = function(e)
 	{
+		if (this.IsNativeViewer())
+			return this.DrawingDocument.m_oDocumentRenderer.onMouseDown(e);
 		return this.HtmlPage.onMouseDown(e);
 	};
 	CMobileDelegateEditor.prototype.Drawing_OnMouseMove = function(e)
 	{
+		if (this.IsNativeViewer())
+			return this.DrawingDocument.m_oDocumentRenderer.onMouseMove(e);
 		return this.HtmlPage.onMouseMove(e);
 	};
 	CMobileDelegateEditor.prototype.Drawing_OnMouseUp = function(e)
 	{
+		if (this.IsNativeViewer())
+			return this.DrawingDocument.m_oDocumentRenderer.onMouseUp(e);
 		return this.HtmlPage.onMouseUp(e);
 	};
 
@@ -777,7 +785,7 @@
 	CMobileTouchManagerBase.prototype.CreateScrollerDiv = function(_wrapper)
 	{
 		var _scroller = document.createElement('div');
-		var _style = "position: absolute; z-index: 0; margin: 0; padding: 0; -webkit-tap-highlight-color: rgba(0,0,0,0); width: 100%; heigth: 100%; display: block;";
+		var _style = "position: absolute; z-index: -1; margin: 0; padding: 0; -webkit-tap-highlight-color: rgba(0,0,0,0); width: 100%; heigth: 100%; display: block;";
 		_style += "-webkit-transform: translateZ(0); -moz-transform: translateZ(0); -ms-transform: translateZ(0); -o-transform: translateZ(0); transform: translateZ(0);";
 		_style += "touch-action:none;-webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;";
 		_style += "-webkit-text-size-adjust: none; -moz-text-size-adjust: none; -ms-text-size-adjust: none; -o-text-size-adjust: none; text-size-adjust: none;";

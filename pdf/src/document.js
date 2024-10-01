@@ -5915,6 +5915,29 @@ var CPresentation = CPresentation || function(){};
 		return null;
 	};
 
+    // for touch
+    CPDFDoc.prototype.GetSelectionBounds = function()
+    {
+        return null;
+    };
+    CPDFDoc.prototype.IsInForm = function(x, y, pageIndex)
+    {
+        // TODO:
+        return (null != this.Viewer.getPageFieldByMouse(false)) ? true : false;
+    };
+    CPDFDoc.prototype.IsFormFieldEditing = function()
+    {
+        return false;
+    };
+    CPDFDoc.prototype.IsNumberingSelection = function()
+    {
+        return false;
+    };
+    CPDFDoc.prototype.Get_TargetPos = function()
+    {
+        return null;
+    };
+
     function CActionQueue(oDoc) {
         this.doc                = oDoc;
         this.actions            = [];
