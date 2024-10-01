@@ -2469,7 +2469,9 @@
 			'partition': 'col-resize',
 			'center': 'ew-resize'
 		};
-		const cursorType = hitRes ? cursorTypes[hitRes.type] : 'default';
+		const cursorType = hitRes
+			? cursorTypes[hitRes.type]
+			: this.contextMenuButton.hit(x, y) ? 'default' : 'ns-resize';
 		return cursorType;
 	};
 	CAnimItem.prototype.getMouseMoveData = function (x, y) {
