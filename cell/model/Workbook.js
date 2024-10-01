@@ -12931,8 +12931,10 @@
 			return false;
 		}
 
+		let newRes;
 		if (oldObj || newObj) {
 			let cloneNewOnj = newObj && newObj.clone();
+			newRes = cloneNewOnj;
 			if (cloneNewOnj) {
 				cloneNewOnj.Id = newObj.Id;
 				cloneNewOnj._ws = this;
@@ -12967,7 +12969,7 @@
 			}
 		}
 
-		return true;
+		return newRes ? newRes : true;
 	};
 
 	Worksheet.prototype.deleteUserProtectedRanges = function (range) {

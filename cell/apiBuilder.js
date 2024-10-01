@@ -8970,8 +8970,9 @@
 					settings.asc_setUsers(users);
 				}
 			}
-			if (this.worksheet.editUserProtectedRanges(null, settings, true)) {
-				result = new ApiProtectedRange(settings);
+			let editRes = this.worksheet.editUserProtectedRanges(null, settings, true);
+			if (typeof editRes === "object") {
+				result = new ApiProtectedRange(editRes);
 			} else {
 				logError(new Error('Protected range cannot be added.'));
 			}
@@ -13512,7 +13513,11 @@
 			if (worksheet) {
 				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 				newProtectedRange.asc_setName(sTitle);
-				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				if (typeof editRes === "object") {
+					this.protectedRange = editRes;
+				}
+				if (editRes) {
 					result = true;
 				}
 			}
@@ -13537,7 +13542,11 @@
 			if (worksheet) {
 				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 				newProtectedRange.asc_setRef(sRange);
-				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				if (typeof editRes === "object") {
+					this.protectedRange = editRes;
+				}
+				if (editRes) {
 					result = true;
 				}
 			}
@@ -13589,7 +13598,10 @@
 				}
 				users.push(newUser);
 				newProtectedRange.asc_setUsers(users);
-				worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				if (typeof editRes === "object") {
+					this.protectedRange = editRes;
+				}
 				result = new ApiProtectedRangeUserInfo(newUser, this.protectedRange);
 			}
 		}
@@ -13681,7 +13693,11 @@
 			if (worksheet) {
 				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 				newProtectedRange.asc_setType(nType);
-				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				if (typeof editRes === "object") {
+					this.protectedRange = editRes;
+				}
+				if (editRes) {
 					result = true;
 				}
 			}
@@ -16685,6 +16701,7 @@
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
 	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;
+	Api.prototype["ClearCustomFunctions"] = Api.prototype.ClearCustomFunctions;
 	Api.prototype["AddCustomFunctionLibrary"] = Api.prototype.AddCustomFunctionLibrary;
 
 	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
