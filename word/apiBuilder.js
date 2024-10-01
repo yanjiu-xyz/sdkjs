@@ -1711,6 +1711,7 @@
 		if (startPara.Id === endPara.Id)
 		{
 			RangeParagraphsList.push(new ApiParagraph(startPara));
+			this.Paragraphs = RangeParagraphsList;
 			return RangeParagraphsList;
 		}
 
@@ -1746,7 +1747,6 @@
 		}
 
 		this.Paragraphs = RangeParagraphsList;
-
 		return RangeParagraphsList;
 	};
 
