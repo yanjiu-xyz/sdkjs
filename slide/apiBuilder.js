@@ -1735,9 +1735,7 @@
         }
 
         let drawingObjects = this.Master.cSld.spTree;
-        return drawingObjects.map(function(drawing) {
-            return private_GetDrawingApi(drawing);
-        });
+        return private_GetApiDrawings(drawingObjects);
     };
 
     /**
@@ -2060,9 +2058,7 @@
         }
 
         let drawingObjects = this.Layout.cSld.spTree;
-        return drawingObjects.map(function(drawing) {
-            return private_GetDrawingApi(drawing);
-        });
+        return private_GetApiDrawings(drawingObjects);
     };
 
     /**
@@ -3201,9 +3197,7 @@
         }
 
         let drawingObjects = this.Slide.getDrawingObjects();
-        return drawingObjects.map(function(drawing) {
-            return private_GetDrawingApi(drawing);
-        });
+        return private_GetApiDrawings(drawingObjects);
     };
 
     /**
@@ -5020,7 +5014,7 @@
         return sType;
     }
 
-    function private_GetDrawingApi(drawing) {
+    function private_GetApiDrawing(drawing) {
         switch (drawing.getObjectType()) {
             case AscDFH.historyitem_type_Shape:
                 return new ApiShape(drawing);
@@ -5032,11 +5026,20 @@
                 return new ApiOleObject(drawing);
             case AscDFH.historyitem_type_GraphicFrame:
                 return new ApiTable(drawing);
+			case AscDFH.historyitem_type_ChartSpace:
+				return new ApiChart(drawing);
         }
-
         return null;
     }
-    
+	
+	function private_GetApiDrawings(drawingObjects) {
+		return drawingObjects.map(function(drawing) {
+			return private_GetApiDrawing(drawing);
+		}).filter(function(apiDrawing) {
+			return !!apiDrawing;
+		});
+	}
+	
 	function private_GetAllDrawingsWithType(aDrawings, nObjectType, fCreateBuilderWrapper) {
 		let aWrappers = [];
 		for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {

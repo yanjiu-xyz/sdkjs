@@ -1599,7 +1599,7 @@
 			sScreenTipText = "";
 
 		this.GetAllParagraphs();
-		if (this.Paragraphs.length > 1)
+		if (this.Paragraphs.length !== 1)
 			return null;
 
 		var Document	= editor.private_GetLogicDocument();
