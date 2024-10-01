@@ -4368,7 +4368,7 @@
 				oLogicDocument.Document_UpdateInterfaceState(false);
 			}
 		}
-		let oCustomProperties = oApi.getCustomProperties();
+		let oCustomProperties = oApi.getCustomProperties && oApi.getCustomProperties();
 		if(oCustomProperties && oCustomProperties.Lock === this)
 		{
 			oApi.sendEvent("asc_onCustomPropertiesLocked", this.Is_Locked());
