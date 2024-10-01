@@ -2819,7 +2819,7 @@ var CPresentation = CPresentation || function(){};
         let oContent;
         if (oForm) {
             if (oForm.GetType() == AscPDF.FIELD_TYPES.text && oForm.IsCanEditText() && oForm.IsMultiline()) {
-                oForm.EnterText([13]);
+                Asc.editor.asc_enterText([13]);
                 oContent = oForm.GetDocContent();
             }
             else {

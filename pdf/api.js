@@ -248,7 +248,7 @@
 		let oActiveDrawing	= oDoc.activeDrawing;
 
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
-			let sText = oActiveForm.content.GetSelectedText(false);
+			let sText = oActiveForm.content.GetSelectedText(false, {NewLine: true});
 			if (!sText)
 				return;
 
@@ -259,7 +259,7 @@
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
 		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			let sText = oActiveAnnot.GetDocContent().GetSelectedText(false);
+			let sText = oActiveAnnot.GetDocContent().GetSelectedText(false, {NewLine: true});
 			if (!sText)
 				return;
 
@@ -377,9 +377,6 @@
 		
 		if (!this.needPasteText || typeof(data) != "string")
 			return;
-
-		if (oActiveForm && (oActiveForm.GetType() != AscPDF.FIELD_TYPES.text || oActiveForm.IsMultiline() == false))
-			data = data.trim().replace(/[\n\r]/g, ' ');
 
 		AscFonts.FontPickerByCharacter.checkText(data, this, processPaste);
 

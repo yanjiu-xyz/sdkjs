@@ -1030,8 +1030,26 @@
 	};
 	CAnnotationFreeText.prototype.EnterText = function(value) {
 		let docContent = this.GetDocContent();
-		
-		let result = docContent.EnterText(value);
+        let codePoints = typeof(value) === "string" ? value.codePointsArray() : value;
+
+        function correctCodePoints(codePoints) {
+            function correctCodePoint(codePoint) {
+                if ([9, 10, 13].includes(codePoint)) {
+                    return 32;
+                }
+                else {
+                    return codePoint;
+                }
+            }
+
+            if (Array.isArray(codePoints)) {
+                return codePoints.map(correctCodePoint);
+            }
+
+            return correctCodePoint(codePoints);
+        };
+
+		let result = docContent.EnterText(correctCodePoints(codePoints));
 		this.OnChangeTextContent();
 		return result;
 	};
