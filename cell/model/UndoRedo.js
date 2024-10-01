@@ -2518,7 +2518,7 @@ function (window, undefined) {
 				wb.oApi.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 			}
 		} else if (AscCH.historyitem_Workbook_Calculate === Type) {
-			if (!bUndo) {
+			if (!bUndo && wb.bCollaborativeChanges) {
 				wb.calculate(Data.elem, nSheetId);
 			}
 		} else if (bUndo && AscCH.historyitem_Workbook_PivotWorksheetSource === Type) {
