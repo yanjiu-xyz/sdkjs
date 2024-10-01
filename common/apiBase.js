@@ -3313,8 +3313,11 @@
 	};
 	baseEditorsApi.prototype.onEndBuilderScript = function(callback)
 	{
-		if (callback)
-			callback(true);
+		let _t = this;
+		this.loadBuilderFonts(function()
+		{
+			return _t._onEndBuilderScript(callback);
+		});
 		
 		return true;
 	};
@@ -3331,6 +3334,14 @@
 			callback();
 		});
 		this.builderFonts = {};
+	};
+	baseEditorsApi.prototype._onEndBuilderScript = function(callback)
+	{
+		// This method is intended to be overridden
+		if (callback)
+			callback(true);
+		
+		return true;
 	};
 
 	// Native

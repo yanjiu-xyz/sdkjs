@@ -8544,20 +8544,14 @@ background-repeat: no-repeat;\
 	{
 		return this.asc_canPaste();
 	};
-	asc_docs_api.prototype.onEndBuilderScript = function(callback)
+	asc_docs_api.prototype._onEndBuilderScript = function(callback)
 	{
-		let _t = this;
-		this.loadBuilderFonts(function()
-		{
-			_t.asc_Recalculate();
-			let logicDocument = _t.getLogicDocument();
-			logicDocument.FinalizeAction();
-			
-			if (callback)
-				callback(true)
-			
-			return true;
-		});
+		this.asc_Recalculate();
+		let logicDocument = this.getLogicDocument();
+		logicDocument.FinalizeAction();
+		
+		if (callback)
+			callback(true)
 		
 		return true;
 	};

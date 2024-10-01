@@ -9868,23 +9868,17 @@ background-repeat: no-repeat;\
 		logicDocument.CheckActionLock();
 		return true;
 	};
-	asc_docs_api.prototype.onEndBuilderScript = function(callback)
+	asc_docs_api.prototype._onEndBuilderScript = function(callback)
 	{
-		let _t = this;
-		this.loadBuilderFonts(function()
-		{
-			let logicDocument = _t.getLogicDocument();
-			logicDocument.Recalculate();
-			logicDocument.UpdateSelection();
-			logicDocument.UpdateInterface();
-			let result = logicDocument.FinalizeAction();
-			if (callback)
-				callback(result);
-			
-			return result;
-		});
+		let logicDocument = this.getLogicDocument();
+		logicDocument.Recalculate();
+		logicDocument.UpdateSelection();
+		logicDocument.UpdateInterface();
+		let result = logicDocument.FinalizeAction();
+		if (callback)
+			callback(result);
 		
-		return true;
+		return result;
 	};
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем с полями

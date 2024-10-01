@@ -7076,27 +7076,22 @@ var editor;
 	spreadsheet_api.prototype.canRunBuilderScript = function() {
 		return this.asc_canPaste();
 	};
-	spreadsheet_api.prototype.onEndBuilderScript = function(callback) {
-		let _t = this;
-		this.loadBuilderFonts(function() {
-			let needDraw = null;
-			if (_t.wb && _t.wb.customFunctionEngine && _t.wb.customFunctionEngine.needRecalculate) {
-				if (_t.wbModel.addCustomFunctionToChanged()) {
-					needDraw = true;
-				}
-				_t.wb.customFunctionEngine.needRecalculate = false;
+	spreadsheet_api.prototype._onEndBuilderScript = function(callback) {
+		let needDraw = null;
+		if (this.wb && this.wb.customFunctionEngine && this.wb.customFunctionEngine.needRecalculate) {
+			if (this.wbModel.addCustomFunctionToChanged()) {
+				needDraw = true;
 			}
-			_t.asc_endPaste(true);
-			if (needDraw) {
-				const ws = _t.wb && _t.wb.getWorksheet();
-				ws && ws.draw();
-			}
-			
-			if (callback)
-				callback(true);
-			
-			return true;
-		});
+			this.wb.customFunctionEngine.needRecalculate = false;
+		}
+		this.asc_endPaste(true);
+		if (needDraw) {
+			const ws = this.wb && this.wb.getWorksheet();
+			ws && ws.draw();
+		}
+		
+		if (callback)
+			callback(true);
 		
 		return true;
 	};
