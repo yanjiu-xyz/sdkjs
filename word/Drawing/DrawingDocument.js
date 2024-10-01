@@ -2256,6 +2256,9 @@ function CDrawingDocument()
 		}
 
 		this.MoveTargetInInputContext();
+
+		if (this.m_oWordControl.MobileTouchManager)
+			this.m_oWordControl.MobileTouchManager.CheckGlassUpdate();
 	};
 
 	this.MoveTargetInInputContext = function ()
@@ -2545,6 +2548,23 @@ function CDrawingDocument()
 			else
 				oThis.showTarget(true);
 		}
+	};
+
+	this.isDrawTargetGlass = function()
+	{
+		let isActive = true;
+		let api = oThis.m_oWordControl.m_oApi;
+
+		if (!oThis.m_oWordControl.IsFocus)
+			isActive = false;
+		else if (oThis.m_oWordControl.m_oApi.isBlurEditor)
+			isActive = false;
+		else if (api.isViewMode || (api.isRestrictionView() && !api.isRestrictionForms()))
+			isActive = false;
+		if (-1 === this.m_lTimerTargetId)
+			isActive = false;
+
+		return isActive;
 	};
 
 	this.TargetShow = function ()

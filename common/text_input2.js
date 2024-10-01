@@ -942,7 +942,7 @@
 		{
 			_style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
 			_style += "color:transparent;caret-color:transparent;background:transparent;";
-			_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView) ? "font-size:0px;" : "font-size:8px;";
+			_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView && (AscCommon.AscBrowser.maxTouchPoints > 0)) ? "font-size:0px;" : "font-size:8px;";
 		}
 		else
 		{
@@ -1218,14 +1218,8 @@
 
 		if (!this.isDisableKeyboard)
 		{
-			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms() && !this.Api.isPdfEditor())
+			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
 			{
-				this.isDisableKeyboard = true;
-			}
-
-			if (this.Api.isPdfEditor() && this.Api.isMobileVersion)
-			{
-				// temporary
 				this.isDisableKeyboard = true;
 			}
 		}

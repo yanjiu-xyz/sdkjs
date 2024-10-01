@@ -73,8 +73,14 @@
 		if (AscCommon.g_inputContext)
 			AscCommon.g_inputContext.onResize(this.HtmlElementName);
 		
-		if (this.isMobileVersion)
-			this.WordControl.initEventsMobile();
+		this.WordControl.initEventsMobile();
+		this.DocumentRenderer.touchManager = this.WordControl.MobileTouchManager;
+
+		if (undefined !== this.startMobileOffset)
+		{
+			this.WordControl.setOffsetTop(this.startMobileOffset.offset, this.startMobileOffset.offsetScrollTop);
+			delete this.startMobileOffset;
+		}
 		
 		// destroy unused memory
 		let isEditForms = true;

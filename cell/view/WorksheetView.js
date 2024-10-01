@@ -8563,7 +8563,7 @@
 
         if (!(Number.MAX_VALUE === x1 && -Number.MAX_VALUE === x2 && Number.MAX_VALUE === y1 &&
           -Number.MAX_VALUE === y2)) {
-            if(this.workbook.Api.isMobileVersion) {
+            if(this.workbook.Api.wb.MobileTouchManager) {
                 //Add radius of mobile pins
                 var nRad = (AscCommon.MOBILE_SELECT_TRACK_ROUND / 2 + 0.5) >> 0;
                 nRad = AscCommon.AscBrowser.convertToRetinaValue(nRad, true);

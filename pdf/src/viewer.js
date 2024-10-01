@@ -234,6 +234,7 @@
 		this.doc.DrawingDocument	= this.drawingDocument;
 		Asc.editor.WordControl.m_oLogicDocument = this.doc;
 		Asc.editor.WordControl.m_oDrawingDocument.m_oLogicDocument = this.doc;
+		this.touchManager = null;
 
 		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
 		if (!this.isXP && AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
@@ -1811,19 +1812,15 @@
 			}
 			return null;
 		};
-		this.getPageFieldByMouse = function(bGetHidden)
+		this.getPageFieldByCoords = function(x, y, pageIndex, bGetHidden)
 		{
-			var pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-			if (!pageObject)
-				return null;
-
-			var pageFields = this.pagesInfo.pages[pageObject.index];
+			var pageFields = this.pagesInfo.pages[pageIndex];
 			if (pageFields.fields)
 			{
 				for (var i = 0, len = pageFields.fields.length; i < len; i++)
 				{
-					if (pageObject.x >= pageFields.fields[i]._origRect[0] && pageObject.x <= pageFields.fields[i]._origRect[2] &&
-					pageObject.y >= pageFields.fields[i]._origRect[1] && pageObject.y <= pageFields.fields[i]._origRect[3]) {
+					if (x >= pageFields.fields[i]._origRect[0] && x <= pageFields.fields[i]._origRect[2] &&
+						y >= pageFields.fields[i]._origRect[1] && y <= pageFields.fields[i]._origRect[3]) {
 						if (bGetHidden) {
 							return pageFields.fields[i];
 						}
@@ -1834,6 +1831,14 @@
 				}
 			}
 			return null;
+		};
+		this.getPageFieldByMouse = function(bGetHidden)
+		{
+			var pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+			if (!pageObject)
+				return null;
+
+			return this.getPageFieldByCoords(pageObject.x, pageObject.y, pageObject.index, bGetHidden);
 		};
 		this.getPageAnnotByMouse = function(bGetHidden)
 		{
@@ -1967,6 +1972,14 @@
 
 		this.onMouseDown = function(e)
 		{
+			if (oThis.touchManager && oThis.touchManager.checkTouchEvent(e))
+			{
+				oThis.touchManager.startTouchingInProcess();
+				let res = oThis.touchManager.mainOnTouchStart(e);
+				oThis.touchManager.stopTouchingInProcess();
+				return res;
+			}
+
 			oThis.isFocusOnThumbnails = false;
 			AscCommon.stopEvent(e);
 
@@ -2076,6 +2089,14 @@
 
 		this.onMouseUp = function(e)
 		{
+			if (oThis.touchManager && oThis.touchManager.checkTouchEvent(e))
+			{
+				oThis.touchManager.startTouchingInProcess();
+				let res = oThis.touchManager.mainOnTouchEnd(e);
+				oThis.touchManager.stopTouchingInProcess();
+				return res;
+			}
+
 			oThis.isFocusOnThumbnails = false;
 			//if (e && e.preventDefault)
 			//	e.preventDefault();
@@ -2142,6 +2163,14 @@
 
 		this.onMouseMove = function(e)
 		{
+			if (oThis.touchManager && oThis.touchManager.checkTouchEvent(e))
+			{
+				oThis.touchManager.startTouchingInProcess();
+				let res = oThis.touchManager.mainOnTouchMove(e);
+				oThis.touchManager.stopTouchingInProcess();
+				return res;
+			}
+
 			if (!oThis.file || !oThis.file.isValid())
 				return;
 
@@ -3094,30 +3123,30 @@
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0 || !this.pageDetector)
 				return null;
 
-				let x = xInp - this.x;
-				let y = yInp - this.y;
-				
-				var pageCoords = null;
-				var pageIndex = 0;
-				for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
-				{
-					pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
-					if (y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
-						break;
-				}
-				if (pageIndex > this.endVisiblePage)
-					pageIndex = this.endVisiblePage;
+			let x = xInp - this.x;
+			let y = yInp - this.y;
 
-				let oDoc = this.getPDFDoc();
+			var pageCoords = null;
+			var pageIndex = 0;
+			for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
+			{
+				pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
+				if (y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
+					break;
+			}
+			if (pageIndex > this.endVisiblePage)
+				pageIndex = this.endVisiblePage;
 
-				let _x = oDoc.pagesTransform[pageIndex].normal.TransformPointX(x, y);
-				let _y = oDoc.pagesTransform[pageIndex].normal.TransformPointY(x, y);
+			let oDoc = this.getPDFDoc();
 
-				return {
-					index : pageIndex,
-					x : _x,
-					y : _y
-				};
+			let _x = oDoc.pagesTransform[pageIndex].normal.TransformPointX(x, y);
+			let _y = oDoc.pagesTransform[pageIndex].normal.TransformPointY(x, y);
+
+			return {
+				index : pageIndex,
+				x : _x,
+				y : _y
+			};
 		};
 
 		this.getPageByCoords2 = function(xInp, yInp)
