@@ -4371,7 +4371,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_PDF_Document_AnnotsContent				= window['AscDFH'].historyitem_type_PDF_Document | 1;
 	window['AscDFH'].historyitem_PDF_Document_DrawingsContent			= window['AscDFH'].historyitem_type_PDF_Document | 2;
-	window['AscDFH'].historyitem_PDF_Document_FormsContent				= window['AscDFH'].historyitem_type_PDF_Document | 3;
+	window['AscDFH'].historyitem_PDF_Document_FieldsContent				= window['AscDFH'].historyitem_type_PDF_Document | 3;
 	window['AscDFH'].historyitem_PDF_Document_AddPage					= window['AscDFH'].historyitem_type_PDF_Document | 4;
 	window['AscDFH'].historyitem_PDF_Document_RemovePage				= window['AscDFH'].historyitem_type_PDF_Document | 5;
 	window['AscDFH'].historyitem_PDF_Document_RotatePage				= window['AscDFH'].historyitem_type_PDF_Document | 6;
@@ -4855,6 +4855,7 @@
 	window['AscDFH'].historydescription_Pdf_FieldSelectOption	= 0x2a7;
 	window['AscDFH'].historydescription_Pdf_ExecActions			= 0x2a8;
 	window['AscDFH'].historydescription_Pdf_FreeTextFitTextBox	= 0x2a9;
+	window['AscDFH'].historydescription_Pdf_AddComment			= 0x2b0;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

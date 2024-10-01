@@ -2437,67 +2437,75 @@ var CPresentation = CPresentation || function(){};
         return oAnnot;
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
-        let oViewer     = editor.getDocumentRenderer();
-        let pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let nPage       = pageObject ? pageObject.index : this.GetCurPage();
-        let nGrScale    = 1.25 * (96 / oViewer.file.pages[nPage].Dpi);
-        let posToAdd    = this.anchorPositionToAdd ? this.anchorPositionToAdd : {x: 10, y: 10};
-        
-        let X2 = posToAdd.x + 40 / nGrScale;
-        let Y2 = posToAdd.y + 40 / nGrScale;
+        let oCurHistory = AscCommon.History;
+        AscCommon.History = this.History;
 
-        let oProps = {
-            rect:           [posToAdd.x, posToAdd.y, X2, Y2],
-            page:           nPage,
-            name:           AscCommon.CreateGUID(),
-            type:           AscPDF.ANNOTATIONS_TYPES.Text,
-            author:         AscCommentData.m_sUserName,
-            modDate:        AscCommentData.m_sOOTime,
-            creationDate:   AscCommentData.m_sOOTime,
-            contents:       AscCommentData.m_sText,
-            hidden:         false
-        }
-
-        this.anchorPositionToAdd = null;
-
-        let oStickyComm;
-        if (this.mouseDownAnnot) {
-            if (this.mouseDownAnnot.IsUseContentAsComment() && !this.mouseDownAnnot.GetContents()) {
-                // If the annotation uses content as comment and there's no content, set the content
-                this.mouseDownAnnot.SetContents(AscCommentData.m_sText);
-            }
-            else {
-                let oDataForEdit;
-
-                // For all other cases, add a reply to the comment
-                let newCommentData = new AscCommon.CCommentData();
-                newCommentData.Read_FromAscCommentData(AscCommentData);
+        let res = this.DoAction(function() {
+            let oViewer     = editor.getDocumentRenderer();
+            let pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+            let nPage       = pageObject ? pageObject.index : this.GetCurPage();
+            let nGrScale    = 1.25 * (96 / oViewer.file.pages[nPage].Dpi);
+            let posToAdd    = this.anchorPositionToAdd ? this.anchorPositionToAdd : {x: 10, y: 10};
             
-                // if freetext or line with cap
-                if (!this.mouseDownAnnot.IsUseContentAsComment() && this.mouseDownAnnot.GetReply(0) == null) {
-                    oDataForEdit = newCommentData;
+            let X2 = posToAdd.x + 40 / nGrScale;
+            let Y2 = posToAdd.y + 40 / nGrScale;
+
+            let oProps = {
+                rect:           [posToAdd.x, posToAdd.y, X2, Y2],
+                page:           nPage,
+                name:           AscCommon.CreateGUID(),
+                type:           AscPDF.ANNOTATIONS_TYPES.Text,
+                author:         AscCommentData.m_sUserName,
+                modDate:        AscCommentData.m_sOOTime,
+                creationDate:   AscCommentData.m_sOOTime,
+                contents:       AscCommentData.m_sText,
+                hidden:         false
+            }
+
+            this.anchorPositionToAdd = null;
+
+            let oStickyComm;
+            if (this.mouseDownAnnot) {
+                if (this.mouseDownAnnot.IsUseContentAsComment() && !this.mouseDownAnnot.GetContents()) {
+                    // If the annotation uses content as comment and there's no content, set the content
+                    this.mouseDownAnnot.SetContents(AscCommentData.m_sText);
                 }
                 else {
-                    let curCommentData = new AscCommon.CCommentData();
-                    curCommentData.Read_FromAscCommentData(this.mouseDownAnnot.GetAscCommentData());
-                    curCommentData.Add_Reply(newCommentData);
-                    oDataForEdit = curCommentData;
+                    let oDataForEdit;
+
+                    // For all other cases, add a reply to the comment
+                    let newCommentData = new AscCommon.CCommentData();
+                    newCommentData.Read_FromAscCommentData(AscCommentData);
+                
+                    // if freetext or line with cap
+                    if (!this.mouseDownAnnot.IsUseContentAsComment() && this.mouseDownAnnot.GetReply(0) == null) {
+                        oDataForEdit = newCommentData;
+                    }
+                    else {
+                        let curCommentData = new AscCommon.CCommentData();
+                        curCommentData.Read_FromAscCommentData(this.mouseDownAnnot.GetAscCommentData());
+                        curCommentData.Add_Reply(newCommentData);
+                        oDataForEdit = curCommentData;
+                    }
+                
+                    this.EditComment(this.mouseDownAnnot.GetId(), oDataForEdit);
                 }
-            
-                this.EditComment(this.mouseDownAnnot.GetId(), oDataForEdit);
             }
-        }
-        else {
-            oStickyComm = this.AddAnnot(oProps);
-            AscCommentData.m_sUserData = oStickyComm.GetApIdx();
-            AscCommentData.m_sQuoteText = "";
-            this.CheckComment(oStickyComm);
-        }
-        
-        if (!oStickyComm)
-            this.UpdateUndoRedo();
-        
-        return oStickyComm;
+            else {
+                oStickyComm = this.AddAnnot(oProps);
+                AscCommentData.m_sUserData = oStickyComm.GetApIdx();
+                AscCommentData.m_sQuoteText = "";
+                this.CheckComment(oStickyComm);
+            }
+            
+            if (!oStickyComm)
+                this.UpdateUndoRedo();
+            
+            return oStickyComm;
+        }, AscDFH.historydescription_Pdf_AddComment, this);
+
+        AscCommon.History = oCurHistory;
+        return res;
     };
     CPDFDoc.prototype.convertPixToMM = function(pix) {
         return this.GetDrawingDocument().GetMMPerDot(pix);
