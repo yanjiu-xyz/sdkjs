@@ -3434,7 +3434,12 @@ var editor;
 		this.wbModel.setActive(where);
 		this.wb.updateWorksheetByModel();
 		this.wb.showWorksheet();
+		this.wbModel.dependencyFormulas.lockRecal();
 		History.EndTransaction();
+		if (this.wbModel.dependencyFormulas.changedCell) {
+			this.wbModel.dependencyFormulas.changedCell = null;
+		}
+		this.wbModel.dependencyFormulas.unlockRecal();
 		// Посылаем callback об изменении списка листов
 		this.sheetsChanged();
 		this.inkDrawer.endSilentMode();
@@ -3829,8 +3834,8 @@ var editor;
         }
         t.wbModel.handleChartsOnWorksheetsRemove(arrSheets);
         t.wb.updateWorksheetByModel();
+		History.EndTransaction();
         t.wb.showWorksheet();
-        History.EndTransaction();
         // Посылаем callback об изменении списка листов
         t.sheetsChanged();
       }

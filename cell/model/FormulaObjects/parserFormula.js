@@ -9182,6 +9182,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.oPrevIterResult = null;
 		this.oDiffBetweenIter = null;
 		this.bShowCycleWarn = true;
+		this.oRecursionCells = null;
 
 		this.bIsEnabledRecursion = null;
 		this.nMaxIterations = null; // Max iterations of recursion calculations. Default value: 100.
@@ -9693,6 +9694,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	/**
 	 * Method returns a flag who recognizes show warn about cycle reference error or not.
+	 * @memberof CalcRecursion
 	 * @returns {boolean}
 	 */
 	CalcRecursion.prototype.getShowCycleWarn = function () {
@@ -9700,11 +9702,62 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	/**
 	 * Method sets a flag who recognizes show warn about cycle reference error or not.
+	 * @memberof CalcRecursion
 	 * @param {boolean} bShowCycleWarn
 	 */
 	CalcRecursion.prototype.setShowCycleWarn = function (bShowCycleWarn) {
 		this.bShowCycleWarn = bShowCycleWarn;
-	}
+	};
+	/**
+	 * Method adds an index of a recursive cell to the list of recursive cells.
+	 * @memberof CalcRecursion
+	 * @param {number} nCellIndex
+	 */
+	CalcRecursion.prototype.addRecursiveCell = function (nCellIndex) {
+		if (!this.oRecursionCells) {
+			this.oRecursionCells = {};
+		}
+
+		this.oRecursionCells[nCellIndex] = true;
+	};
+	/**
+	 * Method checks a cell is recursive or not by index of cell.
+	 * @memberof CalcRecursion
+	 * @param {number} nCellId
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.isRecursiveCell = function (nCellId) {
+		return !!(this.oRecursionCells && this.oRecursionCells[nCellId]);
+	};
+	/**
+	 * Method clears a list of recursive cells.
+	 * @memberof CalcRecursion
+	 */
+	CalcRecursion.prototype.clearRecursionCells = function () {
+		this.oRecursionCells = null;
+	};
+	/**
+	 * Method finds recursive cell by parserFormula.
+	 * @memberof CalcRecursion
+	 * @param {parserFormula} oParserFormula
+	 */
+	CalcRecursion.prototype.findRecursionCell = function (oParserFormula) {
+		const oThis = this;
+		const oParentCell = oParserFormula.getParent();
+
+		if (!(oParentCell instanceof AscCommonExcel.CCellWithFormula)) {
+			return;
+		}
+		oParserFormula.ws._getCell(oParentCell.nRow, oParentCell.nCol, function (oCell) {
+			if (oCell.isFormula()) {
+				oCell.initStartCellForIterCalc(); // check cell has recursion formula
+				if (oThis.getStartCellIndex()) {
+					oThis.addRecursiveCell(AscCommonExcel.getCellIndex(oCell.nRow, oCell.nCol));
+					oThis.setStartCellIndex(null);
+				}
+			}
+		});
+	};
 
 	const g_cCalcRecursion = new CalcRecursion();
 
