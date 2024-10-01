@@ -5518,6 +5518,7 @@ var CPresentation = CPresentation || function(){};
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.Is_Inline = function() {};
+    CPDFDoc.prototype.OnChangeForm = function() {};
     CPDFDoc.prototype.Get_Api = function() {
         return Asc.editor;
     };
