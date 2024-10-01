@@ -1987,19 +1987,16 @@
 					
 					if (oThis.overlay.m_oContext)
 					{
-						var pixX = AscCommon.AscBrowser.convertToRetinaValue(x, true);
-						var pixY = AscCommon.AscBrowser.convertToRetinaValue(y, true);
+						let pageCoords = oThis.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+						let isSelectionUse = oThis.file.isSelectionUse();
+						let selection = oThis.file.getSelection();
+						let pageSelQuads = pageCoords ? selection.quads.find(function(pageQuads) {
+							return pageQuads.page == pageCoords.index;
+						}) : null;
 
-						if (pixX >= 0 && pixY >= 0 && pixX < oThis.canvasOverlay.width && pixY < oThis.canvasOverlay.height)
+						if (oThis.canSelectPageText() && pageCoords && isSelectionUse && AscPDF.IsInQuads(pageSelQuads.quads, pageCoords.x, pageCoords.y))
 						{
-							var pixelOnOverlay = oThis.overlay.m_oContext.getImageData(pixX, pixY, 1, 1);
-							if (Math.abs(pixelOnOverlay.data[0] - 51) < 10 &&
-								Math.abs(pixelOnOverlay.data[1] - 102) < 10 &&
-								Math.abs(pixelOnOverlay.data[2] - 204) < 10 &&
-								oThis.canSelectPageText())
-							{
-								isInSelection = true;
-							}
+							isInSelection = true;
 						}
 					}
 

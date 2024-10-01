@@ -81,56 +81,7 @@
         oViewer.paint(setRedrawPageOnRepaint);
     };
     CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
-        let oCtx = Asc.editor.getDocumentRenderer().overlay.m_oContext;
-        oCtx.save();
-        oCtx.setTransform(1, 0, 0, 1, 0, 0);
-
-        let aQuads = this.GetQuads();
-        
-        let isInQuads = false; 
-        for (let i = 0; i < aQuads.length; i++) {
-            let aPoints = aQuads[i];
-
-            let oPoint1 = {
-                x: aPoints[0],
-                y: aPoints[1]
-            }
-            let oPoint2 = {
-                x: aPoints[2],
-                y: aPoints[3]
-            }
-
-            let oPoint3 = {
-                x: aPoints[4],
-                y: aPoints[5]
-            }
-            let oPoint4 = {
-                x: aPoints[6],
-                y: aPoints[7]
-            }
-
-            let X1 = oPoint1.x;
-            let Y1 = oPoint1.y;
-            let X2 = oPoint2.x;
-            let Y2 = oPoint2.y;
-            let X3 = oPoint3.x;
-            let Y3 = oPoint3.y;
-            let X4 = oPoint4.x;
-            let Y4 = oPoint4.y;
-
-            oCtx.beginPath();
-            oCtx.moveTo(X1, Y1);
-            oCtx.lineTo(X2, Y2);
-            oCtx.lineTo(X4, Y4);
-            oCtx.lineTo(X3, Y3);
-            oCtx.closePath();
-
-            if (oCtx.isPointInPath(x, y))
-                isInQuads = true;
-        }
-
-        oCtx.restore();
-        return isInQuads;
+        return IsInQuads(this.GetQuads(), x, y);
     };
     CAnnotationTextMarkup.prototype.DrawSelected = function(overlay) {
         overlay.m_oContext.lineWidth    = 3;
@@ -766,11 +717,63 @@
         return [xMin, yMin, xMax, yMax];
     }
 
+    function IsInQuads(aQuads, x, y) {
+        let oCtx = Asc.editor.getDocumentRenderer().overlay.m_oContext;
+        oCtx.save();
+        oCtx.setTransform(1, 0, 0, 1, 0, 0);
+
+        let isInQuads = false; 
+        for (let i = 0; i < aQuads.length; i++) {
+            let aPoints = aQuads[i];
+
+            let oPoint1 = {
+                x: aPoints[0],
+                y: aPoints[1]
+            }
+            let oPoint2 = {
+                x: aPoints[2],
+                y: aPoints[3]
+            }
+
+            let oPoint3 = {
+                x: aPoints[4],
+                y: aPoints[5]
+            }
+            let oPoint4 = {
+                x: aPoints[6],
+                y: aPoints[7]
+            }
+
+            let X1 = oPoint1.x;
+            let Y1 = oPoint1.y;
+            let X2 = oPoint2.x;
+            let Y2 = oPoint2.y;
+            let X3 = oPoint3.x;
+            let Y3 = oPoint3.y;
+            let X4 = oPoint4.x;
+            let Y4 = oPoint4.y;
+
+            oCtx.beginPath();
+            oCtx.moveTo(X1, Y1);
+            oCtx.lineTo(X2, Y2);
+            oCtx.lineTo(X4, Y4);
+            oCtx.lineTo(X3, Y3);
+            oCtx.closePath();
+
+            if (oCtx.isPointInPath(x, y))
+                isInQuads = true;
+        }
+
+        oCtx.restore();
+        return isInQuads;
+    }
+
     window["AscPDF"].CAnnotationTextMarkup  = CAnnotationTextMarkup;
     window["AscPDF"].CAnnotationHighlight   = CAnnotationHighlight;
     window["AscPDF"].CAnnotationUnderline   = CAnnotationUnderline;
     window["AscPDF"].CAnnotationStrikeout   = CAnnotationStrikeout;
     window["AscPDF"].CAnnotationSquiggly    = CAnnotationSquiggly;
     window["AscPDF"].CAnnotationCaret       = CAnnotationCaret;
+    window["AscPDF"].IsInQuads              = IsInQuads;
 })();
 
