@@ -1143,7 +1143,7 @@
 
 		beforeVisibleRangeHeight += this.getScrollCorrect();
 		let defaultScrollPxStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
-		return (beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep;
+		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep);
 	};
 
 	WorksheetView.prototype.getVerticalSmoothScrollRange = function (/*bCheckEqual*/) {
@@ -1172,7 +1172,7 @@
 		let defaultScrollPxStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
 		let beforeVisibleRangeHeight = this._getRowTop(row) - this.cellsTop;
 		beforeVisibleRangeHeight += this.getScrollCorrect();
-		return (beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep;
+		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep);
 	};
 
 	WorksheetView.prototype.getFirstVisibleColSmoothScroll = function (allowPane) {
@@ -1188,7 +1188,7 @@
 
 		beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
 		let defaultScrollPxStep = Asc.round(this.defaultColWidthPx * this.getZoom());
-		return (beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep;
+		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
 	};
 
 	WorksheetView.prototype.getHorizontalSmoothScrollRange = function (/*bCheckEqual*/) {
@@ -1217,7 +1217,7 @@
 		let defaultScrollPxStep = Asc.round(this.defaultColWidthPx * this.getZoom());
 		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft;
 		beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
-		return (beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep;
+		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
 	};
 
     WorksheetView.prototype.getLastVisibleRow = function () {
