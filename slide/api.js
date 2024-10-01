@@ -8546,12 +8546,18 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.onEndBuilderScript = function(callback)
 	{
-		this.asc_Recalculate();
-		let logicDocument = this.getLogicDocument();
-		logicDocument.FinalizeAction();
-		
-		if (callback)
-			callback(true)
+		let _t = this;
+		this.loadBuilderFonts(function()
+		{
+			_t.asc_Recalculate();
+			let logicDocument = _t.getLogicDocument();
+			logicDocument.FinalizeAction();
+			
+			if (callback)
+				callback(true)
+			
+			return true;
+		});
 		
 		return true;
 	};

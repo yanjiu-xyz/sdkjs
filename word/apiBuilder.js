@@ -22797,7 +22797,10 @@
 	
 	function LoadFont(fontName)
 	{
-		let api = private_GetLogicDocument().GetApi();
+		let api = Asc.editor ? Asc.editor : editor;
+		if (!api)
+			return;
+		
 		api.addBuilderFont(fontName);
 	}
 
