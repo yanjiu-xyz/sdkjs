@@ -198,6 +198,7 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
         let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove,  true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
         if (nPos === false) continue;
 
+        oItem.AddToRedraw();
         // Remove from document annots array
         let indexInAnnots = oDocument.annots.indexOf(oItem);
         if (indexInAnnots !== -1)
@@ -213,7 +214,6 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
             editor.sync_RemoveComment(oItem.GetId());
 
         oViewer.DrawingObjects.resetSelection();
-        oItem.AddToRedraw();
     }
 
     oDocument.SetMouseDownObject(null);
@@ -382,6 +382,8 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
             if (oItem.IsWidget()) {
                 let nPage = oItem.GetPage();
 
+                oItem.AddToRedraw();
+
                 // Remove from document widgets array
                 let indexInWidgets = oDocument.widgets.indexOf(oItem);
                 if (indexInWidgets !== -1)
@@ -392,8 +394,7 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
                 let indexInFields = fieldsArray.indexOf(oItem);
                 if (indexInFields !== -1)
                     fieldsArray.splice(indexInFields, 1);
-
-                oItem.AddToRedraw();
+                
             } else {
                 let indexInParents = oDocument.widgetsParents.indexOf(oItem);
                 if (indexInParents !== -1)
@@ -553,6 +554,7 @@ CChangesPDFDocumentDrawingsContent.prototype.private_RemoveInArrayLoad = functio
         let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove,  true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
         if (nPos === false) continue;
 
+        oItem.AddToRedraw();
         // Remove from document drawings array
         let indexInDrawings = oDocument.drawings.indexOf(oItem);
         if (indexInDrawings !== -1)
@@ -565,7 +567,6 @@ CChangesPDFDocumentDrawingsContent.prototype.private_RemoveInArrayLoad = functio
             drawingsArray.splice(indexInDrawingsArray, 1);
 
         oViewer.DrawingObjects.resetSelection();
-        oItem.AddToRedraw();
     }
 
     oDocument.SetMouseDownObject(null);
