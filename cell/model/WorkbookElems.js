@@ -15456,6 +15456,27 @@ function RangeDataManagerElem(bbox, data)
 		return sPath;
 	};
 
+	ExternalReference.prototype.addDataSetFrom = function (eR) {
+		if (!eR.SheetDataSet) {
+			return;
+		}
+		for (let i = 0; i < eR.SheetDataSet.length; i++) {
+			let _sheetId = eR.SheetDataSet[i].SheetId;
+			let sheetName = eR.SheetNames[_sheetId];
+			if (sheetName) {
+				let sheetDataSet = this.getSheetDataSetByName(sheetName);
+				if (sheetDataSet) {
+					//add new from eR to this
+					sheetDataSet.addFrom(eR.SheetDataSet[i])
+				} else {
+					//add new structure
+
+				}
+			}
+		}
+	};
+
+
 
 	function asc_CExternalReference() {
 		this.type = null;
@@ -15662,6 +15683,18 @@ function RangeDataManagerElem(bbox, data)
 			row = new ExternalRow();
 			row.R = index;
 			this.Row.push(row);
+		}
+
+		return row;
+	};
+
+	ExternalSheetDataSet.prototype.addFrom = function(oSheetDataSet) {
+		var row = null;
+
+		for (var i = 0; i < oSheetDataSet.Row.length; i++) {
+			if (!this.Row[i]) {
+				this.Row[i] = oSheetDataSet.Row[i].clone();
+			}
 		}
 
 		return row;

@@ -854,7 +854,7 @@
 			}
 		},
 		changeExternalLink: function(prepared) {
-			var notifyData = {type: c_oNotifyType.ChangeExternalLink, data: prepared.data, preparedData: prepared.preparedData};
+			var notifyData = {type: c_oNotifyType.ChangeExternalLink, data: prepared.data, preparedData: prepared.preparedData, existedWs: prepared.existedWs};
 			for (var listenerId in prepared.listeners) {
 				prepared.listeners[listenerId].notify(notifyData);
 			}
@@ -5034,10 +5034,10 @@
 		}
 	};
 
-	Workbook.prototype.getExternalReferenceById = function (id) {
+	Workbook.prototype.getExternalReferenceById = function (id, returnIndex) {
 		for (var i = 0; i < this.externalReferences.length; i++) {
 			if (this.externalReferences[i].Id === id) {
-				return this.externalReferences[i];
+				return returnIndex ? i : this.externalReferences[i];
 			}
 		}
 		return null;
