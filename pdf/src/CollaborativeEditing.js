@@ -111,14 +111,16 @@ CPDFCollaborativeEditing.prototype.GetDocument = function() {
 CPDFCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalInfo, IsUpdateInterface, isAfterAskSave) {
 	if (!this.canSendChanges())
 		return;
-    // Пересчитываем позиции
-    this.Refresh_DCChanges();
-
-    let oDoc        = this.GetDocument();
-    let oHistory    = oDoc.History;
+	
+	let oDoc        = this.GetDocument();
+	let oHistory    = oDoc.History;
 	
 	let localHistory = AscCommon.History;
 	AscCommon.History = oHistory;
+	
+	// Пересчитываем позиции
+	this.Refresh_DCChanges();
+
 	
 	AscCommon.DocumentEditorApi.prototype.asc_Save.apply(this, arguments);
 	
