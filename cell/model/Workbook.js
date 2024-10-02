@@ -1909,7 +1909,10 @@
 						let oStartCellIndex = g_cCalcRecursion.getStartCellIndex();
 						if (oStartCellIndex) {
 							// Fill 0 value for empty cells with recursive formula.
-							if (oCell.getNumberValue() == null && oCell.getValueText() == null) {
+							if (oCell.getNumberValue() == null && (oCell.getValueText() == null || oCell.getValueText() === '#NUM!')) {
+								if (oCell.getType() !== CellValueType.Number) {
+									oCell.setTypeInternal(CellValueType.Number);
+								}
 								oCell.setValueNumberInternal(0);
 							}
 							// Check result of the formula is convergent

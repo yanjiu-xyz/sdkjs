@@ -7369,8 +7369,10 @@
 			if (formula.parent && nRow !== undefined && nCol !== undefined) {
 				var cell = formula.ws.getCell3(nRow, nCol);
 				var oldValue = cell.getValue();
+				let caTemp = formula.ca;
 				formula.setFormula(formula.getFormula());
 				formula.parse();
+				formula.ca = caTemp;
 				var formulaRes = formula.calculate();
 				var newValue = formula.simplifyRefType(formulaRes, formula.ws, nRow, nCol);
 				if (fLogger) {
