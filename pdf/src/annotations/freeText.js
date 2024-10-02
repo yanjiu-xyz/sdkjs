@@ -925,7 +925,7 @@
                 this.selectedObjects.length = 0;
 
                 this.spTree.forEach(function(sp) {
-                    if (!(sp instanceof AscFormat.CConnectionShape)) {
+                    if (!(sp instanceof AscPDF.CPdfConnectionShape)) {
                         sp.selectStartPage = _t.selectStartPage;
                         _t.selectedObjects.push(sp);
                     }

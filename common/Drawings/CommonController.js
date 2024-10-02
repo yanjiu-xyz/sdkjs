@@ -1525,7 +1525,7 @@
 
 
 						if (AscFormat.isLeftButtonDoubleClick(e) && !e.ShiftKey && !e.CtrlKey && ((this.selection.groupSelection && this.selection.groupSelection.selectedObjects.length === 1) || this.selectedObjects.length === 1)) {
-							var drawing = this.selectedObjects[0].parent;
+							var drawing = this.selectedObjects[0] && this.selectedObjects[0].parent;
 
 							if (object.getObjectType() === AscDFH.historyitem_type_ChartSpace && this.handleChartDoubleClick) {
 								this.handleChartDoubleClick(drawing, object, e, x, y, pageIndex);
