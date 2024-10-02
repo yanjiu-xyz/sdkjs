@@ -118,25 +118,28 @@
         }
 
         AscCommon.History.Add(new CChangesPDFFreeTextRotate(this, this._rotate, nAngle));
-
-        let oBodyPr = oTxShape.txBody.bodyPr;
-        
-        switch (nAngle) {
-            case 0:
-                oBodyPr.setVert();
-                break;
-            case 90:
-                oBodyPr.setVert(AscFormat.nVertTTvert270);
-                break;
-            case 180:
-                oBodyPr.setRot(-nAngle * 60000);
-                oBodyPr.setVert(AscFormat.nVertTTwordArtVert);
-                oBodyPr.anchor = AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM;
-                break;
-            case 270:
-                oBodyPr.setVert(AscFormat.nVertTTeaVert);
-                break;
-        }
+		
+		AscCommon.ExecuteNoHistory(function() {
+			let oBodyPr = oTxShape.txBody.bodyPr;
+			
+			switch (nAngle) {
+				case 0:
+					oBodyPr.setVert();
+					break;
+				case 90:
+					oBodyPr.setVert(AscFormat.nVertTTvert270);
+					break;
+				case 180:
+					oBodyPr.setRot(-nAngle * 60000);
+					oBodyPr.setVert(AscFormat.nVertTTwordArtVert);
+					oBodyPr.anchor = AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM;
+					break;
+				case 270:
+					oBodyPr.setVert(AscFormat.nVertTTeaVert);
+					break;
+			}
+		}, undefined, this);
+		
         this._rotate = nAngle;
         this.SetNeedRecalc(true);
     };
@@ -250,17 +253,20 @@
         this._lineEnd = nType;
         
         this.SetWasChanged(true);
-
-        if (this.spTree.length == 3) {
-            let oTargetSp = this.spTree[1];
-            let oLine = oTargetSp.pen;
-            oLine.setTailEnd(new AscFormat.EndArrow());
-            let nLineEndType = getInnerLineEndType(nType);
-            
-
-            oLine.tailEnd.setType(nLineEndType);
-            oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
-        }
+		
+		AscCommon.ExecuteNoHistory(function() {
+			if (3 === this.spTree.length)
+			{
+				let oTargetSp = this.spTree[1];
+				let oLine     = oTargetSp.pen;
+				oLine.setTailEnd(new AscFormat.EndArrow());
+				let nLineEndType = getInnerLineEndType(nType);
+				
+				
+				oLine.tailEnd.setType(nLineEndType);
+				oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
+			}
+		}, undefined, this);
     };
     CAnnotationFreeText.prototype.GetLineEnd = function() {
         return this._lineEnd;
@@ -281,76 +287,74 @@
     CAnnotationFreeText.prototype.CheckInnerShapesProps = function() {
         let nOpacity = this.GetOpacity();
 
-        AscCommon.History.StartNoHistoryMode();
-
-        let aStrokeColor = this.GetStrokeColor();
-        if (aStrokeColor.length == 0) {
-            aStrokeColor = [0, 0, 0];
-        }
-        
-        if (aStrokeColor) {
-            let oRGB    = this.GetRGBColor(aStrokeColor);
-            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-            oFill.transparent = nOpacity * 100 * 2.55;
-            
-            let oTxBoxShape = this.GetTextBoxShape();
-            let oLine = oTxBoxShape.spPr.ln;
-            if (this.GetWidth() == 0) {
-                oLine.setFill(AscFormat.CreateNoFillUniFill());
-            }
-            else {
-                oLine.setFill(oFill);
-            }
-
-            for (let i = 0; i < this.spTree.length; i++) {
-                let oLine = this.spTree[i].spPr.ln;
-                oLine.setFill(oFill);
-            }
-        }
-        
-        let aFillColor = this.GetFillColor();
-        if (aFillColor.length == 0) {
-            aFillColor = [1, 1, 1];
-        }
-
-        if (aFillColor) {
-            let oRGB    = this.GetRGBColor(aFillColor);
-            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-            oFill.transparent = nOpacity * 100 * 2.55;
-            for (let i = 0; i < this.spTree.length; i++) {
-                this.spTree[i].setFill(oFill);
-            }
-        }
-
-        let nWidthPt = this.GetWidth();
-        for (let i = 0; i < this.spTree.length; i++) {
-            let oLine = this.spTree[i].spPr.ln;
-            if (nWidthPt == 0 && this.GetTextBoxShape() !== this.spTree[i]) {
-                oLine.setW(0.5 * g_dKoef_pt_to_mm * 36000.0);
-            }
-            else {
-                if (nWidthPt == 0) {
-                    oLine.setFill(AscFormat.CreateNoFillUniFill());
-                }
-
-                oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
-            }
-            
-            oLine.Fill.transparent = nOpacity * 100 * 2.55;
-        }
-
-        let nLineEndType = this.GetLineEnd();
-        if (this.spTree[1] && this.spTree[1].getPresetGeom() == "line") {
-            let oTargetSp = this.spTree[1];
-            let oLine = oTargetSp.spPr.ln;
-            oLine.setTailEnd(new AscFormat.EndArrow());
-            let nInnerType = getInnerLineEndType(nLineEndType);
-            
-            oLine.tailEnd.setType(nInnerType);
-            oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
-        }
-
-        AscCommon.History.EndNoHistoryMode();
+		AscCommon.ExecuteNoHistory(function() {
+			let aStrokeColor = this.GetStrokeColor();
+			if (aStrokeColor.length == 0) {
+				aStrokeColor = [0, 0, 0];
+			}
+			
+			if (aStrokeColor) {
+				let oRGB    = this.GetRGBColor(aStrokeColor);
+				let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+				oFill.transparent = nOpacity * 100 * 2.55;
+				
+				let oTxBoxShape = this.GetTextBoxShape();
+				let oLine = oTxBoxShape.spPr.ln;
+				if (this.GetWidth() == 0) {
+					oLine.setFill(AscFormat.CreateNoFillUniFill());
+				}
+				else {
+					oLine.setFill(oFill);
+				}
+	
+				for (let i = 0; i < this.spTree.length; i++) {
+					let oLine = this.spTree[i].spPr.ln;
+					oLine.setFill(oFill);
+				}
+			}
+			
+			let aFillColor = this.GetFillColor();
+			if (aFillColor.length == 0) {
+				aFillColor = [1, 1, 1];
+			}
+	
+			if (aFillColor) {
+				let oRGB    = this.GetRGBColor(aFillColor);
+				let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+				oFill.transparent = nOpacity * 100 * 2.55;
+				for (let i = 0; i < this.spTree.length; i++) {
+					this.spTree[i].setFill(oFill);
+				}
+			}
+	
+			let nWidthPt = this.GetWidth();
+			for (let i = 0; i < this.spTree.length; i++) {
+				let oLine = this.spTree[i].spPr.ln;
+				if (nWidthPt == 0 && this.GetTextBoxShape() !== this.spTree[i]) {
+					oLine.setW(0.5 * g_dKoef_pt_to_mm * 36000.0);
+				}
+				else {
+					if (nWidthPt == 0) {
+						oLine.setFill(AscFormat.CreateNoFillUniFill());
+					}
+	
+					oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+				}
+				
+				oLine.Fill.transparent = nOpacity * 100 * 2.55;
+			}
+	
+			let nLineEndType = this.GetLineEnd();
+			if (this.spTree[1] && this.spTree[1].getPresetGeom() == "line") {
+				let oTargetSp = this.spTree[1];
+				let oLine = oTargetSp.spPr.ln;
+				oLine.setTailEnd(new AscFormat.EndArrow());
+				let nInnerType = getInnerLineEndType(nLineEndType);
+				
+				oLine.tailEnd.setType(nInnerType);
+				oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
+			}
+		}, undefined, this);
     };
     CAnnotationFreeText.prototype.SetCallout = function(aCallout) {
         let oDoc = this.GetDocument();
@@ -364,101 +368,104 @@
     CAnnotationFreeText.prototype.GetCallout = function(bScaled) {
         return this._callout;
     };
-    CAnnotationFreeText.prototype.SetWidth = function(nWidthPt) {
-        AscCommon.History.Add(new CChangesPDFAnnotStrokeWidth(this, this.GetWidth(), nWidthPt));
-
-        this._width = nWidthPt; 
-
-        for (let i = 1; i < this.spTree.length; i++) {
-            let oLine = this.spTree[i].spPr.ln;
-            if (nWidthPt == 0 && this.spTree[i] != this.GetTextBoxShape()) {
-                oLine.setW(0.5 * g_dKoef_pt_to_mm * 36000.0);
-            }
-            else {
-                if (nWidthPt == 0) {
-                    oLine.setFill(AscFormat.CreateNoFillUniFill());
-                }
-                else {
-                    AscCommon.History.StartNoHistoryMode();
-                    this.SetStrokeColor(this.GetStrokeColor());
-                    AscCommon.History.EndNoHistoryMode();
-                }
-
-                oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
-            }
-        }
-    };
-    CAnnotationFreeText.prototype.SetStrokeColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor() || [], aColor));
-        
-        this._strokeColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-
-        let oTxBoxShape = this.GetTextBoxShape();
-        let oLine = oTxBoxShape.spPr.ln;
-        if (this.GetWidth() == 0) {
-            oLine.setFill(AscFormat.CreateNoFillUniFill());
-        }
-        else {
-            oLine.setFill(oFill);
-        }
-        
-
-        for (let i = 1; i < this.spTree.length; i++) {
-            let oLine = this.spTree[i].spPr.ln;
-            oLine.setFill(oFill);
-        }
-    };
-    CAnnotationFreeText.prototype.SetOpacity = function(value) {
-        this._opacity = value;
-        this.SetWasChanged(true);
-
-        for (let i = 1; i < this.spTree.length; i++) {
-            let oLine = this.spTree[i].spPr.ln;
-            oLine.Fill.transparent = value * 100 * 2.55;
-
-            let oFill = this.spPr.Fill;
-            oFill.transparent = value * 100 * 2.55;
-
-            this.spTree[i].handleUpdateLn();
-            this.spTree[i].handleUpdateFill();
-        }
-    };
-    CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor() || [], aColor));
-
-        this._fillColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        for (let i = 0; i < this.spTree.length; i++) {
-            this.spTree[i].setFill(oFill);
-        }
-    };
-    CAnnotationFreeText.prototype.SetRect = function(aOrigRect) {
-        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
-
-        this._origRect = aOrigRect;
-
-        let oXfrm = this.getXfrm();
-        if (oXfrm) {
-            AscCommon.History.StartNoHistoryMode();
-
-            this.spPr.xfrm.extX = (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm;
-            this.spPr.xfrm.extY = (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm;
-            this.spPr.xfrm.offX = aOrigRect[0] * g_dKoef_pt_to_mm;
-            this.spPr.xfrm.offY = aOrigRect[1] * g_dKoef_pt_to_mm;
-            this.updateTransformMatrix();
-            this.recalcGeometry();
-
-            AscCommon.History.EndNoHistoryMode();
-        }
-
-        this.SetNeedRecalc(true);
-        this.SetWasChanged(true);
-    };
+	CAnnotationFreeText.prototype.SetWidth = function(nWidthPt) {
+		AscCommon.History.Add(new CChangesPDFAnnotStrokeWidth(this, this.GetWidth(), nWidthPt));
+		
+		this._width = nWidthPt;
+		
+		AscCommon.ExecuteNoHistory(function() {
+			for (let i = 1; i < this.spTree.length; i++) {
+				let oLine = this.spTree[i].spPr.ln;
+				if (nWidthPt == 0 && this.spTree[i] != this.GetTextBoxShape()) {
+					oLine.setW(0.5 * g_dKoef_pt_to_mm * 36000.0);
+				}
+				else {
+					if (nWidthPt == 0) {
+						oLine.setFill(AscFormat.CreateNoFillUniFill());
+					}
+					else {
+						this.SetStrokeColor(this.GetStrokeColor());
+					}
+					
+					oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+				}
+			}
+		}, undefined, this);
+	};
+	CAnnotationFreeText.prototype.SetStrokeColor = function(aColor) {
+		AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor() || [], aColor));
+		
+		this._strokeColor = aColor;
+		
+		AscCommon.ExecuteNoHistory(function() {
+			let oRGB  = this.GetRGBColor(aColor);
+			let oFill = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+			
+			let oTxBoxShape = this.GetTextBoxShape();
+			let oLine       = oTxBoxShape.spPr.ln;
+			if (this.GetWidth() == 0) {
+				oLine.setFill(AscFormat.CreateNoFillUniFill());
+			}
+			else {
+				oLine.setFill(oFill);
+			}
+			for (let i = 1; i < this.spTree.length; i++) {
+				let oLine = this.spTree[i].spPr.ln;
+				oLine.setFill(oFill);
+			}
+		}, undefined, this);
+	};
+	CAnnotationFreeText.prototype.SetOpacity = function(value) {
+		this._opacity = value;
+		this.SetWasChanged(true);
+		
+		AscCommon.ExecuteNoHistory(function() {
+			for (let i = 1; i < this.spTree.length; i++) {
+				let oLine = this.spTree[i].spPr.ln;
+				oLine.Fill.transparent = value * 100 * 2.55;
+				
+				let oFill = this.spPr.Fill;
+				oFill.transparent = value * 100 * 2.55;
+				
+				this.spTree[i].handleUpdateLn();
+				this.spTree[i].handleUpdateFill();
+			}
+		}, undefined, this);
+	};
+	CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
+		AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor() || [], aColor));
+		
+		this._fillColor = aColor;
+		
+		AscCommon.ExecuteNoHistory(function() {
+			let oRGB  = this.GetRGBColor(aColor);
+			let oFill = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+			for (let i = 0; i < this.spTree.length; i++)
+			{
+				this.spTree[i].setFill(oFill);
+			}
+		}, undefined, this);
+	};
+	CAnnotationFreeText.prototype.SetRect = function(aOrigRect) {
+		AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
+		
+		this._origRect = aOrigRect;
+		
+		let oXfrm = this.getXfrm();
+		if (oXfrm) {
+			AscCommon.ExecuteNoHistory(function() {
+				this.spPr.xfrm.extX = (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm;
+				this.spPr.xfrm.extY = (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm;
+				this.spPr.xfrm.offX = aOrigRect[0] * g_dKoef_pt_to_mm;
+				this.spPr.xfrm.offY = aOrigRect[1] * g_dKoef_pt_to_mm;
+				this.updateTransformMatrix();
+				this.recalcGeometry();
+			}, undefined, this);
+		}
+		
+		this.SetNeedRecalc(true);
+		this.SetWasChanged(true);
+	};
     CAnnotationFreeText.prototype.GetTextBoxRect = function() {
         let aOrigRect   = this.GetOrigRect();
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
@@ -1499,12 +1506,12 @@
         this._origRect[1] = y;
         this._origRect[2] = x + nWidth;
         this._origRect[3] = y + nHeight;
-
-        let oXfrm = this.getXfrm();
-        AscCommon.History.StartNoHistoryMode();
-        oXfrm.setOffX((this._origRect[0]) * g_dKoef_pt_to_mm);
-        oXfrm.setOffY((this._origRect[1]) * g_dKoef_pt_to_mm);
-        AscCommon.History.EndNoHistoryMode();
+	
+		AscCommon.ExecuteNoHistory(function() {
+			let oXfrm = this.getXfrm();
+			oXfrm.setOffX((this._origRect[0]) * g_dKoef_pt_to_mm);
+			oXfrm.setOffY((this._origRect[1]) * g_dKoef_pt_to_mm);
+		}, undefined, this);
 
         this.SetNeedRecalc(true);
         this.SetWasChanged(true);
