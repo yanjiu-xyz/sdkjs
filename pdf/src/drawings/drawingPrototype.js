@@ -233,7 +233,7 @@
             return;
         }
 
-        AscCommon.History.Add(new CChangesPdfDrawingObjectProperty(this, AscDFH.historyitem_type_Pdf_Drawing_Document, this._doc, oDoc));
+        AscCommon.History.Add(new CChangesPDFDocumentSetDocument(this, this._doc, oDoc));
         this._doc = oDoc;
     };
     CPdfDrawingPrototype.prototype.OnContentChange = function() {

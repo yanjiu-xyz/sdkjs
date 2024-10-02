@@ -4333,14 +4333,13 @@
 	AscDFH.historyitem_Pdf_Annot_Display			= AscDFH.historyitem_type_Pdf_Annot | 10;
 	AscDFH.historyitem_Pdf_Annot_Name				= AscDFH.historyitem_type_Pdf_Annot | 11;
 	AscDFH.historyitem_Pdf_Annot_File_Idx			= AscDFH.historyitem_type_Pdf_Annot | 12;
-	AscDFH.historyitem_Pdf_Annot_Document			= AscDFH.historyitem_type_Pdf_Annot | 13;
-	AscDFH.historyitem_Pdf_Annot_Stroke				= AscDFH.historyitem_type_Pdf_Annot | 14;
-	AscDFH.historyitem_Pdf_Annot_StrokeWidth		= AscDFH.historyitem_type_Pdf_Annot | 15;
-	AscDFH.historyitem_Pdf_Annot_Fill				= AscDFH.historyitem_type_Pdf_Annot | 16;
-	AscDFH.historyitem_Pdf_Annot_Opacity			= AscDFH.historyitem_type_Pdf_Annot | 17;
-	AscDFH.historyitem_Pdf_Annot_Quads				= AscDFH.historyitem_type_Pdf_Annot | 18;
-	AscDFH.historyitem_Pdf_Annot_Intent				= AscDFH.historyitem_type_Pdf_Annot | 19;
-	AscDFH.historyitem_Pdf_Annot_WasChanged			= AscDFH.historyitem_type_Pdf_Annot | 20;
+	AscDFH.historyitem_Pdf_Annot_Stroke				= AscDFH.historyitem_type_Pdf_Annot | 13;
+	AscDFH.historyitem_Pdf_Annot_StrokeWidth		= AscDFH.historyitem_type_Pdf_Annot | 14;
+	AscDFH.historyitem_Pdf_Annot_Fill				= AscDFH.historyitem_type_Pdf_Annot | 15;
+	AscDFH.historyitem_Pdf_Annot_Opacity			= AscDFH.historyitem_type_Pdf_Annot | 16;
+	AscDFH.historyitem_Pdf_Annot_Quads				= AscDFH.historyitem_type_Pdf_Annot | 17;
+	AscDFH.historyitem_Pdf_Annot_Intent				= AscDFH.historyitem_type_Pdf_Annot | 18;
+	AscDFH.historyitem_Pdf_Annot_WasChanged			= AscDFH.historyitem_type_Pdf_Annot | 19;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
@@ -4364,18 +4363,18 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	AscDFH.historyitem_type_Pdf_Drawing_Page		= AscDFH.historyitem_type_Pdf_Drawing | 1;
-	AscDFH.historyitem_type_Pdf_Drawing_Document	= AscDFH.historyitem_type_Pdf_Drawing | 2;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_PDF_Document_AnnotsContent				= window['AscDFH'].historyitem_type_PDF_Document | 1;
-	window['AscDFH'].historyitem_PDF_Document_DrawingsContent			= window['AscDFH'].historyitem_type_PDF_Document | 2;
-	window['AscDFH'].historyitem_PDF_Document_FieldsContent				= window['AscDFH'].historyitem_type_PDF_Document | 3;
-	window['AscDFH'].historyitem_PDF_Document_AddPage					= window['AscDFH'].historyitem_type_PDF_Document | 4;
-	window['AscDFH'].historyitem_PDF_Document_RemovePage				= window['AscDFH'].historyitem_type_PDF_Document | 5;
-	window['AscDFH'].historyitem_PDF_Document_RotatePage				= window['AscDFH'].historyitem_type_PDF_Document | 6;
-	window['AscDFH'].historyitem_PDF_Document_RecognizePage				= window['AscDFH'].historyitem_type_PDF_Document | 7;
+	window['AscDFH'].historyitem_PDF_Document_AnnotsContent   = window['AscDFH'].historyitem_type_PDF_Document | 1;
+	window['AscDFH'].historyitem_PDF_Document_DrawingsContent = window['AscDFH'].historyitem_type_PDF_Document | 2;
+	window['AscDFH'].historyitem_PDF_Document_FieldsContent   = window['AscDFH'].historyitem_type_PDF_Document | 3;
+	window['AscDFH'].historyitem_PDF_Document_AddPage         = window['AscDFH'].historyitem_type_PDF_Document | 4;
+	window['AscDFH'].historyitem_PDF_Document_RemovePage      = window['AscDFH'].historyitem_type_PDF_Document | 5;
+	window['AscDFH'].historyitem_PDF_Document_RotatePage      = window['AscDFH'].historyitem_type_PDF_Document | 6;
+	window['AscDFH'].historyitem_PDF_Document_RecognizePage   = window['AscDFH'].historyitem_type_PDF_Document | 7;
+	window['AscDFH'].historyitem_PDF_Document_SetDocument     = window['AscDFH'].historyitem_type_PDF_Document | 8;
 
 
 	AscDFH.historyitem_CustomPropertiesAddProperty = AscDFH.historyitem_type_CustomProperties | 0;

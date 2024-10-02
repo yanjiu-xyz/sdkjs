@@ -604,7 +604,7 @@
             return;
         }
 
-        AscCommon.History.Add(new CChangesAnnotObjectProperty(this, AscDFH.historyitem_Pdf_Annot_Document, this._doc, oDoc));
+        AscCommon.History.Add(new CChangesPDFDocumentSetDocument(this, this._doc, oDoc));
         this._doc = oDoc;
     };
     CAnnotationBase.prototype.GetDocument = function() {

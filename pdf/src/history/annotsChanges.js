@@ -45,7 +45,6 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Display]			= CChangesPDFAnnot
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Intent]			= CChangesPDFAnnotIntent;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Name]			= CChangesPDFAnnotName;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_File_Idx]		= CChangesPDFAnnotApIdx;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Document]		= CChangesAnnotObjectProperty;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Stroke]			= CChangesPDFAnnotStroke;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Fill]			= CChangesPDFAnnotFill;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_StrokeWidth]		= CChangesPDFAnnotStrokeWidth;
@@ -61,40 +60,6 @@ AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_RC]			= CChange
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Align]			= CChangesPDFFreeTextAlign;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Rotate]		= CChangesPDFFreeTextRotate;
 
-
-let annotChangesMap = {};
-window['AscDFH'].annotChangesMap = annotChangesMap;
-
-function CChangesAnnotObjectProperty(Class, Type, OldPr, NewPr) {
-	this.Type = Type;
-	var _OldPr = OldPr && OldPr.Get_Id ? OldPr.Get_Id() : undefined;
-	var _NewPr = NewPr && NewPr.Get_Id ? NewPr.Get_Id() : undefined;
-	AscDFH.CChangesBaseStringProperty.call(this, Class, _OldPr, _NewPr);
-}
-CChangesAnnotObjectProperty.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
-CChangesAnnotObjectProperty.prototype.constructor = CChangesAnnotObjectProperty;
-
-CChangesAnnotObjectProperty.prototype.ReadFromBinary = function (reader) {
-	reader.Seek2(reader.GetCurPos() - 4);
-	this.Type = reader.GetLong();
-	AscDFH.CChangesBaseStringProperty.prototype.ReadFromBinary.call(this, reader);
-};
-CChangesAnnotObjectProperty.prototype.private_SetValue = function (Value) {
-	var oObject = null;
-	if (typeof Value === "string") {
-		oObject = AscCommon.g_oTableId.Get_ById(Value);
-		if (!oObject) {
-			oObject = null;
-		}
-	}
-	if (AscDFH.annotChangesMap[this.Type]) {
-		AscDFH.annotChangesMap[this.Type](this.Class, oObject);
-	}
-};
-CChangesAnnotObjectProperty.prototype.Load = function(){
-	this.Redo();
-	this.RefreshRecalcData();
-};
 
 function CChangesAnnotArrayOfDoubleProperty(Class, Old, New) {
 	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
@@ -157,12 +122,7 @@ CChangesAnnotArrayOfDoubleProperty.prototype.Load = function(){
 	this.RefreshRecalcData();
 };
 
-window['AscDFH'].CChangesAnnotObjectProperty = CChangesAnnotObjectProperty;
 window['AscDFH'].CChangesAnnotArrayOfDoubleProperty = CChangesAnnotArrayOfDoubleProperty;
-
-annotChangesMap[AscDFH.historyitem_Pdf_Annot_Document] = function (oAnnot, value) {
-	oAnnot.SetDocument(value);
-};
 
 /**
  * @constructor

@@ -41,6 +41,7 @@ AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddPage]			= CChangesPDFDo
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemovePage]		= CChangesPDFDocumentRemovePage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RotatePage]		= CChangesPDFDocumentRotatePage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RecognizePage]	= CChangesPDFDocumentRecognizePage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      = CChangesPDFDocumentSetDocument;
 
 /**
  * @constructor
@@ -822,4 +823,23 @@ CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecogniz
 	oDoc.Viewer.paint(function() {
 		oDoc.Viewer.thumbnails._repaintPage(nPage);
 	});
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFDocumentSetDocument(Class, Old, New)
+{
+	let oldId = Old && Old.Get_Id ? Old.Get_Id() : undefined;
+	let newId = New && New.Get_Id ? New.Get_Id() : undefined;
+	AscDFH.CChangesBaseStringProperty.call(this, Class, oldId, newId);
+}
+CChangesPDFDocumentSetDocument.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFDocumentSetDocument.prototype.constructor = CChangesPDFDocumentSetDocument;
+CChangesPDFDocumentSetDocument.prototype.Type = AscDFH.historyitem_PDF_Document_SetDocument;
+CChangesPDFDocumentSetDocument.prototype.private_SetValue = function(value)
+{
+	let doc = AscCommon.g_oTableId.Get_ById(value);
+	this.Class.SetDocument(doc);
 };
