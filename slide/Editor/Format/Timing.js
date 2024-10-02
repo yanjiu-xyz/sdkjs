@@ -13536,6 +13536,9 @@
     MoveAnimationDrawObject.prototype.canGroup = function () {
         return false;
     };
+    MoveAnimationDrawObject.prototype.canResize = function () {
+        return true;
+    };
     MoveAnimationDrawObject.prototype.draw = function (oGraphics) {
         if (oGraphics.IsThumbnail === true ||
             oGraphics.IsDemonstrationMode === true ||

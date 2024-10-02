@@ -202,6 +202,10 @@
 				return -1;
 			}
 
+			if(object.canResize && !object.canResize()) {
+				return -1;
+			}
+
 			if (object.cropObject) {
 				return hitToCropHandles(x, y, object);
 			}

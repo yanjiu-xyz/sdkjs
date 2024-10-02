@@ -1325,6 +1325,9 @@
     CAnnotationBase.prototype.canEditText = function () {
         return false;
     };
+    CAnnotationBase.prototype.canResize = function () {
+        return true;
+    };
 
     function formatTimestampToPDF(timestamp) {
         const date = new Date(parseInt(timestamp));

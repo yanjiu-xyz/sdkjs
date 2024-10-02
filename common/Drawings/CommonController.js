@@ -2152,7 +2152,7 @@
 										false,
 										false,
 										undefined,
-										isDrawHandles && cropObject.canEdit()
+										isDrawHandles && cropObject.canEdit() && cropObject.canResize()
 									);
 									drawingDocument.DrawTrack(
 										AscFormat.TYPE_TRACK.CROP,
@@ -2164,7 +2164,7 @@
 										false,
 										false,
 										undefined,
-										isDrawHandles && oCrop.canEdit()
+										isDrawHandles && oCrop.canEdit() && oCrop.canResize()
 									);
 								}
 							}
@@ -2184,7 +2184,7 @@
 									AscFormat.CheckObjectLine(oTx),
 									oTx.canRotate(),
 									undefined,
-									isDrawHandles && oTx.canEdit()
+									isDrawHandles && oTx.canEdit() && oTx.canResize()
 								);
 								oTx.drawAdjustments(drawingDocument);
 							}
@@ -2201,7 +2201,7 @@
 								false,
 								oGrp.canRotate(),
 								undefined,
-								isDrawHandles && oGrp.canEdit()
+								isDrawHandles && oGrp.canEdit() && oGrp.canResize()
 							);
 							const oGrpTx = oGrp.selection.textSelection;
 							const oGrpChart = oGrp.selection.chartSelection;
@@ -2217,7 +2217,7 @@
 									AscFormat.CheckObjectLine(oGrpTx),
 									oGrpTx.canRotate(),
 									undefined,
-									isDrawHandles && this.selection.groupSelection.canEdit()
+									isDrawHandles && this.selection.groupSelection.canEdit() && this.selection.groupSelection.canResize()
 								);
 							} else if (oGrpChart) {
 								oGrpChart.drawSelect(drawingDocument, pageIndex);
@@ -2237,7 +2237,7 @@
 										AscFormat.CheckObjectLine(oDrawing),
 										oDrawing.canRotate() && !Asc.editor.isPdfEditor(),
 										undefined,
-										isDrawHandles && oGrp.canEdit());
+										isDrawHandles && oGrp.canEdit() && oGrp.canResize());
 								}
 							}
 							if (aGrpSelected.length === 1) {
@@ -2268,7 +2268,7 @@
 									AscFormat.CheckObjectLine(oDrawing),
 									oDrawing.canRotate(),
 									undefined,
-									isDrawHandles && oDrawing.canEdit()
+									isDrawHandles && oDrawing.canEdit() && oDrawing.canResize()
 								);
 							}
 						}

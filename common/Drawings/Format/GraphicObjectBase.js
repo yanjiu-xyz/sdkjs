@@ -974,6 +974,12 @@
 		}
 		return this.getNoRot() === false;
 	};
+	CGraphicObjectBase.prototype.canResize = function () {
+		if (!this.canEdit()) {
+			return false;
+		}
+		return this.getNoResize() === false;
+	};
 	CGraphicObjectBase.prototype.canSelect = function () {
 		return this.getNoSelect() === false;
 	};

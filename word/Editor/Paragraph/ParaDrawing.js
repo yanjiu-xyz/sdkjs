@@ -299,6 +299,10 @@ ParaDrawing.prototype.canRotate = function()
 {
 	return AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.canRotate == "function" && this.GraphicObj.canRotate();
 };
+ParaDrawing.prototype.canResize = function()
+{
+	return AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.canResize == "function" && this.GraphicObj.canResize();
+};
 ParaDrawing.prototype.GetParagraph = function()
 {
 	return this.Get_ParentParagraph();

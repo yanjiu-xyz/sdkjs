@@ -5333,6 +5333,9 @@
     CPlotArea.prototype.canMove = function() {
         return true;
     };
+    CPlotArea.prototype.canResize = function() {
+        return true;
+    };
     CPlotArea.prototype.reindexSeries = function() {
         if(this.parent) {
             this.parent.reindexSeries();
@@ -10366,6 +10369,9 @@
         return false;
     };
     CLegend.prototype.canMove = function() {
+        return true;
+    };
+    CLegend.prototype.canResize = function() {
         return true;
     };
     CLegend.prototype.selectObject = function() {
