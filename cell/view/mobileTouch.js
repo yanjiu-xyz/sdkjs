@@ -530,7 +530,7 @@ function (window, undefined)
 
 		this.iScroll = new window.IScrollMobile(_element, {
 			scrollbars: true,
-			mouseWheel: true,
+			mouseWheel: !this.isDesktopMode,
 			interactiveScrollbars: true,
 			shrinkScrollbars: 'scale',
 			fadeScrollbars: true,

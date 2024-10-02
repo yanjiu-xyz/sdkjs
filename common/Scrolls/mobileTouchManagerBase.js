@@ -1695,8 +1695,6 @@
 			ctx.fillStyle = targetElement.style.backgroundColor;
 			ctx.fill();
 			ctx.beginPath();
-
-			this.isGlassDrawed = true;
 		}
 
 		ctx.beginPath();
@@ -1709,6 +1707,8 @@
 		overlay.CheckRect(posMouseX - rad, posMouseY - glassOffset - glassSize, glassSize, glassSize);
 
 		ctx.restore();
+
+		this.isGlassDrawed = true;
 	};
 
 	// отрисовка текстового селекта
