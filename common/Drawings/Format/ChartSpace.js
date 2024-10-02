@@ -373,7 +373,7 @@ function(window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetNvGrFrProps] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetThemeOverride] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ShapeSetBDeleted] = CChangesDrawingsBool;
-	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChartData] = CChangesDrawingsObjectNoId;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChartData] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetParent] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChart] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetClrMapOvr] = CChangesDrawingsObject;
@@ -1777,7 +1777,7 @@ function(window, undefined) {
 		return this.dataRefs;
 	};
 	CChartSpace.prototype.setChartData = function(pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
 		this.chartData = pr;
 	};
 	CChartSpace.prototype.clearDataRefs = function () {

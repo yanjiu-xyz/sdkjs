@@ -2541,6 +2541,7 @@
 	window['AscDFH'].historyitem_ChartSpace_RemoveUserShape   = window['AscDFH'].historyitem_type_ChartSpace | 19;
 	window['AscDFH'].historyitem_ChartSpace_ChartStyle        = window['AscDFH'].historyitem_type_ChartSpace | 20;
 	window['AscDFH'].historyitem_ChartSpace_ChartColors       = window['AscDFH'].historyitem_type_ChartSpace | 21;
+	window['AscDFH'].historyitem_ChartSpace_SetChartData      = window['AscDFH'].historyitem_type_ChartSpace | 22;
 
 	window['AscDFH'].historyitem_Legend_SetLayout      = window['AscDFH'].historyitem_type_Legend | 1;
 	window['AscDFH'].historyitem_Legend_AddLegendEntry = window['AscDFH'].historyitem_type_Legend | 2;
@@ -2593,18 +2594,18 @@
 	window['AscDFH'].historyitem_Marker_SetSpPr   = window['AscDFH'].historyitem_type_Marker | 2;
 	window['AscDFH'].historyitem_Marker_SetSymbol = window['AscDFH'].historyitem_type_Marker | 3;
 
-	window['AscDFH'].historyitem_PlotArea_AddChart    = window['AscDFH'].historyitem_type_PlotArea | 1;
-	window['AscDFH'].historyitem_PlotArea_SetCatAx    = window['AscDFH'].historyitem_type_PlotArea | 2;
-	window['AscDFH'].historyitem_PlotArea_SetDateAx   = window['AscDFH'].historyitem_type_PlotArea | 3;
-	window['AscDFH'].historyitem_PlotArea_SetDTable   = window['AscDFH'].historyitem_type_PlotArea | 4;
-	window['AscDFH'].historyitem_PlotArea_SetLayout   = window['AscDFH'].historyitem_type_PlotArea | 5;
-	window['AscDFH'].historyitem_PlotArea_SetSerAx    = window['AscDFH'].historyitem_type_PlotArea | 6;
-	window['AscDFH'].historyitem_PlotArea_SetSpPr     = window['AscDFH'].historyitem_type_PlotArea | 7;
-	window['AscDFH'].historyitem_PlotArea_SetValAx    = window['AscDFH'].historyitem_type_PlotArea | 8;
-	window['AscDFH'].historyitem_PlotArea_AddAxis     = window['AscDFH'].historyitem_type_PlotArea | 9;
-	window['AscDFH'].historyitem_PlotArea_RemoveChart = window['AscDFH'].historyitem_type_PlotArea | 10;
-	window['AscDFH'].historyitem_PlotArea_RemoveAxis  = window['AscDFH'].historyitem_type_PlotArea | 11;
-	window['AscDFH'].historyitem_PlotArea_SetPlotAreaRegion  = window['AscDFH'].historyitem_type_PlotArea | 11;
+	window['AscDFH'].historyitem_PlotArea_AddChart          = window['AscDFH'].historyitem_type_PlotArea | 1;
+	window['AscDFH'].historyitem_PlotArea_SetCatAx          = window['AscDFH'].historyitem_type_PlotArea | 2;
+	window['AscDFH'].historyitem_PlotArea_SetDateAx         = window['AscDFH'].historyitem_type_PlotArea | 3;
+	window['AscDFH'].historyitem_PlotArea_SetDTable         = window['AscDFH'].historyitem_type_PlotArea | 4;
+	window['AscDFH'].historyitem_PlotArea_SetLayout         = window['AscDFH'].historyitem_type_PlotArea | 5;
+	window['AscDFH'].historyitem_PlotArea_SetSerAx          = window['AscDFH'].historyitem_type_PlotArea | 6;
+	window['AscDFH'].historyitem_PlotArea_SetSpPr           = window['AscDFH'].historyitem_type_PlotArea | 7;
+	window['AscDFH'].historyitem_PlotArea_SetValAx          = window['AscDFH'].historyitem_type_PlotArea | 8;
+	window['AscDFH'].historyitem_PlotArea_AddAxis           = window['AscDFH'].historyitem_type_PlotArea | 9;
+	window['AscDFH'].historyitem_PlotArea_RemoveChart       = window['AscDFH'].historyitem_type_PlotArea | 10;
+	window['AscDFH'].historyitem_PlotArea_RemoveAxis        = window['AscDFH'].historyitem_type_PlotArea | 11;
+	window['AscDFH'].historyitem_PlotArea_SetPlotAreaRegion = window['AscDFH'].historyitem_type_PlotArea | 12;
 
 	window['AscDFH'].historyitem_NumFmt_SetFormatCode   = window['AscDFH'].historyitem_type_NumFmt | 1;
 	window['AscDFH'].historyitem_NumFmt_SetSourceLinked = window['AscDFH'].historyitem_type_NumFmt | 2;

@@ -483,6 +483,68 @@
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;
+
+
+		this.m_oFactoryClass[AscDFH.historyitem_type_Address] = AscFormat.CAddress;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Axis] = AscFormat.CAxis;
+		this.m_oFactoryClass[AscDFH.historyitem_type_AxisUnits] = AscFormat.CAxisUnits;
+		this.m_oFactoryClass[AscDFH.historyitem_type_AxisUnitsLabel] = AscFormat.CAxisUnitsLabel;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Binning] = AscFormat.CBinning;
+		this.m_oFactoryClass[AscDFH.historyitem_type_CategoryAxisScaling] = AscFormat.CCategoryAxisScaling;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ChartData] = AscFormat.CChartData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Clear] = AscFormat.CClear;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Copyrights] = AscFormat.CCopyrights;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Data] = AscFormat.CData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataLabel] = AscFormat.CDataLabel;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataLabelHidden] = AscFormat.CDataLabelHidden;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataLabels] = AscFormat.CDataLabels;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataLabelVisibilities] = AscFormat.CDataLabelVisibilities;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataPoint] = AscFormat.CDataPoint;
+		this.m_oFactoryClass[AscDFH.historyitem_type_FormatOverride] = AscFormat.CFormatOverride;
+		this.m_oFactoryClass[AscDFH.historyitem_type_FormatOverrides] = AscFormat.CFormatOverrides;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Formula] = AscFormat.CFormula;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoCache] = AscFormat.CGeoCache;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildEntities] = AscFormat.CGeoChildEntities;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildEntitiesQuery] = AscFormat.CGeoChildEntitiesQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildEntitiesQueryResult] = AscFormat.CGeoChildEntitiesQueryResult;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildEntitiesQueryResults] = AscFormat.CGeoChildEntitiesQueryResults;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildTypes] = AscFormat.CGeoChildTypes;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoData] = AscFormat.CGeoData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataEntityQuery] = AscFormat.CGeoDataEntityQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataEntityQueryResult] = AscFormat.CGeoDataEntityQueryResult;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataEntityQueryResults] = AscFormat.CGeoDataEntityQueryResults;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataPointQuery] = AscFormat.CGeoDataPointQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataPointToEntityQuery] = AscFormat.CGeoDataPointToEntityQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataPointToEntityQueryResult] = AscFormat.CGeoDataPointToEntityQueryResult;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataPointToEntityQueryResults] = AscFormat.CGeoDataPointToEntityQueryResults;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Geography] = AscFormat.CGeography;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoHierarchyEntity] = AscFormat.CGeoHierarchyEntity;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocation] = AscFormat.CGeoLocation;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocationQuery] = AscFormat.CGeoLocationQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocationQueryResult] = AscFormat.CGeoLocationQueryResult;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocationQueryResults] = AscFormat.CGeoLocationQueryResults;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocations] = AscFormat.CGeoLocations;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoPolygon] = AscFormat.CGeoPolygon;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoPolygons] = AscFormat.CGeoPolygons;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Gridlines] = AscFormat.CGridlines;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Dimension] = AscFormat.CDimension;
+		this.m_oFactoryClass[AscDFH.historyitem_type_NumericDimension] = AscFormat.CNumericDimension;
+		this.m_oFactoryClass[AscDFH.historyitem_type_PercentageColorPosition] = AscFormat.CPercentageColorPosition;
+		this.m_oFactoryClass[AscDFH.historyitem_type_PlotAreaRegion] = AscFormat.CPlotAreaRegion;
+		this.m_oFactoryClass[AscDFH.historyitem_type_PlotSurface] = AscFormat.CPlotSurface;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Series] = AscFormat.CSeries;
+		this.m_oFactoryClass[AscDFH.historyitem_type_SeriesElementVisibilities] = AscFormat.CSeriesElementVisibilities;
+		this.m_oFactoryClass[AscDFH.historyitem_type_SeriesLayoutProperties] = AscFormat.CSeriesLayoutProperties;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Statistics] = AscFormat.CStatistics;
+		this.m_oFactoryClass[AscDFH.historyitem_type_StringDimension] = AscFormat.CStringDimension;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Subtotals] = AscFormat.CSubtotals;
+		this.m_oFactoryClass[AscDFH.historyitem_type_TextData] = AscFormat.CTextData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_TickMarks] = AscFormat.CTickMarks;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueAxisScaling] = AscFormat.CValueAxisScaling;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueColorEndPosition] = AscFormat.CValueColorEndPosition;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueColorMiddlePosition] = AscFormat.CValueColorMiddlePosition;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueColorPositions] = AscFormat.CValueColorPositions;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueColors] = AscFormat.CValueColors;
 		
 		this.InitOFormClasses();
 	};
