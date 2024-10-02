@@ -3701,6 +3701,9 @@ function(window, undefined) {
 		if (this.textLink !== null) {
 			copy.setTextLink(this.textLink);
 		}
+		if(this.chartData) {
+			copy.setChartData(this.chartData.createDuplicate());
+		}
 		if (!oPr || false !== oPr.cacheImage) {
 			copy.cachedImage = this.getBase64Img();
 			copy.cachedPixH = this.cachedPixH;

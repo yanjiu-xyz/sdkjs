@@ -6411,7 +6411,7 @@ BinaryChartWriter.prototype.WriteCT_Binning = function (oVal) {
     if(oVal.underflow !== null) {
         if (typeof oVal.underflow === "undefined") {
             this.bs.WriteItem(c_oserct_chartExBinningUNDERAUTO, function() {
-                oThis.memory.WriteByte(oVal.underflow);
+                oThis.memory.WriteByte(0);
             });
         } else {
             this.bs.WriteItem(c_oserct_chartExBinningUNDERVAL, function() {
@@ -6609,7 +6609,7 @@ BinaryChartWriter.prototype.WriteCT_CategoryAxisScaling = function (oVal) {
     if(oVal.gapWidth !== null) {
         if (typeof oVal.gapWidth === "undefined") {
             this.bs.WriteItem(c_oserct_chartExCatScalingGAPAUTO, function() {
-                oThis.memory.WriteByte(oVal.gapWidth);
+                oThis.memory.WriteByte(0);
             });
         } else {
             this.bs.WriteItem(c_oserct_chartExCatScalingGAPVAL, function() {
@@ -13956,7 +13956,8 @@ BinaryChartReader.prototype.ReadCT_Binning = function (type, length, val) {
     }
     else if (c_oserct_chartExBinningUNDERAUTO === type)
     {
-        val.setUnderflow(this.stream.GetUChar());
+		this.stream.GetUChar();
+        val.setUnderflow(undefined);
     }
     else if (c_oserct_chartExBinningOVERVAL === type)
     {
@@ -14198,7 +14199,8 @@ BinaryChartReader.prototype.ReadCT_CategoryAxisScaling = function (type, length,
     }
     else if (c_oserct_chartExCatScalingGAPAUTO === type)
     {
-        val.setGapWidth(this.stream.GetUChar());
+		this.stream.GetUChar();
+        val.setGapWidth(undefined);
     }
     else
     {
