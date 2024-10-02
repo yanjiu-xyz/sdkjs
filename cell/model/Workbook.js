@@ -5016,17 +5016,20 @@
 
 	Workbook.prototype.removeExternalReferenceBySheet = function (sheetId) {
 		//пока предполагаю, что здесь будет массив asc_CExternalReference
-		var index = this.getExternalLinkIndexBySheetId(sheetId);
+		let index = this.getExternalLinkIndexBySheetId(sheetId);
 		if (index !== null) {
-			var eR = this.externalReferences[index - 1];
-			if (eR.SheetNames.length === 1) {
-				//удаляем ссылку
-				this.removeExternalReference(index, true);
-			} else {
-				var to = eR.clone();
-				eR.removeSheetById(sheetId);
-				this.changeExternalReference(index, eR);
-			}
+			let eR = this.externalReferences[index - 1];
+			// If there are no more listeners for the external document, delete the external link
+			this.removeExternalReference(index, true);
+
+			// if (eR.SheetNames.length === 1) {
+			// 	//удаляем ссылку
+			// 	this.removeExternalReference(index, true);
+			// } else {
+			// 	let to = eR.clone();
+			// 	eR.removeSheetById(sheetId);
+			// 	this.changeExternalReference(index, eR);
+			// }
 			this.handlers && this.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
 	};
@@ -13889,17 +13892,53 @@
 		//3. проверям, не ссылаются ли на эти ссылки кто-то другой
 		if (externalLinks && fOld) {
 			let listenerId = fOld.getListenerId();
-			for (i in externalLinks) {
-				if (null != listenerId) {
-					let sheetId = externalLinks[i];
-					let sheetContainer = fOld.wb && fOld.wb.dependencyFormulas && fOld.wb.dependencyFormulas.sheetListeners && fOld.wb.dependencyFormulas.sheetListeners[sheetId];
-					if (sheetContainer && Object.keys(sheetContainer.cellMap).length === 0) {
-						//если есть ссылки на внешние источники, необходимо их удалить
-						this.ws && this.ws.workbook && this.ws.workbook.removeExternalReferenceBySheet(sheetId);
+
+			for (let index in externalLinks) {
+				// check all external link listeners
+				// let erIndex = this.getExternalLinkIndexBySheetId(sheetId);
+				let eR = this.ws.workbook.externalReferences[+index - 1];
+
+				if (eR && null != listenerId) {
+					let hasListeners;
+					for (let ws in eR.worksheets) {
+						// if listeners are found, then we interrupt the cycle and move on to the next external link
+						if (hasListeners) {
+							break
+						}
+
+						let wsId = eR.worksheets[ws].getId();
+						let sheetContainer = fOld.wb && fOld.wb.dependencyFormulas && fOld.wb.dependencyFormulas.sheetListeners && fOld.wb.dependencyFormulas.sheetListeners[wsId];
+
+						if (sheetContainer) {
+							if (Object.keys(sheetContainer.cellMap).length === 0 && Object.keys(sheetContainer.areaMap).length === 0) {
+								hasListeners = false;
+							} else {
+								hasListeners = true;
+							}
+						}
+					}
+
+					if (!hasListeners) {
+						this.ws && this.ws.workbook && this.ws.workbook.removeExternalReference(+index, true);
 					}
 				}
 			}
 		}
+
+		// //3. проверям, не ссылаются ли на эти ссылки кто-то другой
+		// if (externalLinks && fOld) {
+		// 	let listenerId = fOld.getListenerId();
+		// 	for (i in externalLinks) {
+		// 		if (null != listenerId) {
+		// 			let sheetId = externalLinks[i];
+		// 			let sheetContainer = fOld.wb && fOld.wb.dependencyFormulas && fOld.wb.dependencyFormulas.sheetListeners && fOld.wb.dependencyFormulas.sheetListeners[sheetId];
+		// 			if (sheetContainer && Object.keys(sheetContainer.cellMap).length === 0) {
+		// 				//если есть ссылки на внешние источники, необходимо их удалить
+		// 				this.ws && this.ws.workbook && this.ws.workbook.removeExternalReferenceBySheet(sheetId);
+		// 			}
+		// 		}
+		// 	}
+		// }
 	};
 
 	Cell.prototype.setValueGetParsed=function(val,callback, isCopyPaste, byRef, dynamicRange) {

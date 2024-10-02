@@ -7305,7 +7305,8 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 				var wsF, wsT;
-				var externalLink = _3DRefTmp[3];
+				let sheetName = _3DRefTmp[1];
+				let externalLink = _3DRefTmp[3];
 				//check on add to this document
 				let thisTitle = externalLink && window["Asc"]["editor"] && window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
 				if (thisTitle === externalLink) {
@@ -7322,14 +7323,14 @@ function parserFormula( formula, parent, _ws ) {
 							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
 								parseResult.externalReferenesNeedAdd[externalLink] = [];
 							}
-							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: _3DRefTmp[1]});
+							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: sheetName /*_3DRefTmp[1]*/});
 						}
 					}
 
-					wsF = t.wb.getExternalWorksheet(externalLink, _3DRefTmp[1]);
+					wsF = t.wb.getExternalWorksheet(externalLink, sheetName /*_3DRefTmp[1]*/);
 					wsT = wsF;
 				} else {
-					wsF = t.wb.getWorksheetByName(_3DRefTmp[1]);
+					wsF = t.wb.getWorksheetByName(sheetName/*_3DRefTmp[1]*/);
 					wsT = (null !== _3DRefTmp[2]) ? t.wb.getWorksheetByName(_3DRefTmp[2]) : wsF;
 				}
 
