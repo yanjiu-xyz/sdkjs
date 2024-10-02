@@ -159,7 +159,7 @@
 	};
 	CTextBoxContent.prototype.EnterText = function(value) {
 		let oParentPDF = this.ParentPDF;
-		let isAllowLineBreak = oParentPDF.IsForm() && oForm.GetType() == AscPDF.FIELD_TYPES.text && oParentPDF.IsMultiline();
+		let isAllowLineBreak = oParentPDF.IsForm() && oParentPDF.GetType() == AscPDF.FIELD_TYPES.text && oParentPDF.IsMultiline();
 
 		if (undefined === value
 			|| null === value
