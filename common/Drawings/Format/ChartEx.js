@@ -282,17 +282,17 @@ function (window, undefined) {
 	CAxis.prototype.isValuesAxis = function () {
 		return (this.scaling instanceof CValueAxisScaling);
 	};
-	CAxisBase.prototype.isChartExCat = function() {
+	CAxis.prototype.isChartExCat = function() {
 		return (this.scaling instanceof CCategoryAxisScaling);
 	};
-	CAxisBase.prototype.isChartEx = function() {
+	CAxis.prototype.isChartEx = function() {
 		return true;
 	};
 
-	CAxisBase.prototype.isHorizontal = function() {
+	CAxis.prototype.isHorizontal = function() {
 		return !this.isVertical();
 	};
-	CAxisBase.prototype.isVertical = function() {
+	CAxis.prototype.isVertical = function() {
 		return this.isValuesAxis();
 	};
 
