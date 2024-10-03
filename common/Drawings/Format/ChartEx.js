@@ -285,6 +285,9 @@ function (window, undefined) {
 	CAxisBase.prototype.isChartExCat = function() {
 		return (this.scaling instanceof CCategoryAxisScaling);
 	};
+	CAxisBase.prototype.isChartEx = function() {
+		return true;
+	};
 
 	CAxisBase.prototype.isHorizontal = function() {
 		return !this.isVertical();

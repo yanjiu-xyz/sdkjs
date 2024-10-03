@@ -7875,7 +7875,7 @@
         return false;
     };
     CAxisBase.prototype.updateNumFormat = function() {
-        if(this.isChartExCat()) return;
+        if(this.isChartEx()) return;
         var oNumFmt = this.numFmt;
         if(!oNumFmt) {
             oNumFmt = new CNumFmt();

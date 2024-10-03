@@ -6481,11 +6481,11 @@ BinaryChartWriter.prototype.WriteCT_ChartExTitle = function (oVal) {
             oThis.WriteCT_PosAlign(oVal.align);
         });
     }
-    if(oVal.overlay !== null) {
-        this.bs.WriteItem(c_oserct_chartExTitleOVERLAY, function() {
-            oThis.memory.WriteBool(oVal.overlay);
-        });
-    }
+    // if(oVal.overlay !== null) {
+    //     this.bs.WriteItem(c_oserct_chartExTitleOVERLAY, function() {
+    //         oThis.memory.WriteBool(oVal.overlay);
+    //     });
+    // }
 };
 BinaryChartWriter.prototype.WriteCT_ChartExLegend = function (oVal) {
     var oThis = this;
