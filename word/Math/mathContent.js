@@ -6015,6 +6015,7 @@ CMathContent.prototype.haveMixedContent = function(isLaTeX)
 	let isNormalText	= 0;
 	let isCustomContent	= 0;
 	let nMathContent	= 0;
+	let isSpace			= 0;
 
 	for (let i = 0; i < this.Content.length; i++)
 	{
@@ -6026,6 +6027,12 @@ CMathContent.prototype.haveMixedContent = function(isLaTeX)
 			
 			if (oCurrentContent.IsContainNormalText())
 				isNormalText = 1;
+
+			if (oCurrentContent.IsContainSpaces())
+				isSpace = 1;
+
+			// if (oCurrentContent.Content.length > 0)
+			// 	nMathContent++;
 		}
 		else
 		{
@@ -6044,7 +6051,7 @@ CMathContent.prototype.haveMixedContent = function(isLaTeX)
 				return true;
 		}
 
-		if (isOperator + isNormalText > 1 || (!isLaTeX && nMathContent > 1))
+		if (isOperator + isNormalText + isSpace > 1 || (!isLaTeX && nMathContent > 1))
 			return true;
 	}
 
@@ -6089,7 +6096,8 @@ CMathContent.prototype.GetTextOfElement = function(oMathText, isDefaultText)
 			}
 			else if (this.Content[i] instanceof ParaRun)
 			{
-				if (this.Content[i + 1] && !(this.Content[i+1] instanceof ParaRun) && !(this.Content[i+1] instanceof CDelimiter))
+				if (this.Content[i + 1] && !(this.Content[i+1] instanceof ParaRun)
+					&& !(this.Content[i+1] instanceof CDelimiter || this.Content[i+1] instanceof CMathFunc))
 				{
 					let strText = this.Content[i].GetTextOfElement().GetText();
 					if (checkIsNotOperatorOrBracket(strText[strText.length - 1]) && !this.Content[i].Is_Empty())

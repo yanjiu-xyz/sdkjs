@@ -797,34 +797,33 @@
 				type: Struc.nary,
 				value: Literals.nary.LaTeX[oFuncContent.data],
 				style: oPr,
-				thirdStyle: oPr,
-				third: oThirdContent,
+				third: oThirdContent
 			}
 		}
-		// else if (AscMath.MathLiterals.func.IsLaTeXIncludeLimit(name))
-		// {
-		// 	return {
-		// 		type: Struc.func_lim,
-		// 		value: {
-		// 			type: Struc.char,
-		// 			value: name.slice(1),
-		// 			style: oPr,
-		// 		},
-		// 		style: oPr,
-		// 		third: oThirdContent,
-		// 	}
-		// }
-		else if (AscMath.MathLiterals.func.IsLaTeXIncludeNormal(name) || AscMath.MathLiterals.func.IsLaTeXIncludeLimit(name))
+		else if (AscMath.MathLiterals.func.IsLaTeXIncludeNormal(name))
 		{
 			return {
 				type: Struc.func,
 				value: {
 					type: Struc.char,
-					value: name.slice(1),
-					style: oPr,
+					value: oFuncContent.data.slice(1),
+					style: oPr
 				},
 				style: oPr,
-				third: oThirdContent,
+				third: oThirdContent
+			}
+		}
+		else if (AscMath.MathLiterals.func.IsLaTeXIncludeLimit(name))
+		{
+			return {
+				type: Struc.func_lim,
+				value: {
+					type: Struc.char,
+					value: oFuncContent.data.slice(1),
+					style: oPr
+				},
+				style: oPr,
+				third: oThirdContent
 			}
 		}
 	};
@@ -1043,7 +1042,7 @@
 			}
 		}
 
-		if (oBaseContent && (oBaseContent.type === Struc.func || oBaseContent.type == Struc.func_lim || oBaseContent.type ===  Struc.nary))
+		if (oBaseContent && (oBaseContent.type === Struc.func || oBaseContent.type == Struc.func_lim || oBaseContent.type === Struc.nary))
 		{
 			oThirdContent = this.GetArguments(1);
 		}

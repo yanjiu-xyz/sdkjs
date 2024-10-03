@@ -1288,7 +1288,7 @@
 	};
 	TokenFunctionLiteral.prototype.IsLaTeXIncludeNormal = function (str)
 	{
-		if (MathAutoCorrectionFuncNames.includes(str.slice(1)) || (str.length > 1 && str[0] === "\\"))
+		if (MathAutoCorrectionFuncNames.includes(str.slice(1)))
 			return str;
 	}
 	TokenFunctionLiteral.prototype.IsLaTeXIncludeLimit = function (str)
@@ -1296,35 +1296,35 @@
 		if (limitFunctions.includes(str.slice(1)))
 			return str;
 	}
-	// TokenFunctionLiteral.prototype.IsUnicodeInclude = function(arrStr)
-	// {
-	// 	if (!arrStr)
-	// 		return;
-	//
-	// 	if (!Array.isArray(arrStr))
-	// 		arrStr = [arrStr];
-	//
-	// 	let strLast = "";
-	//
-	// 	function IsFunc(arrStr)
-	// 	{
-	// 		let str = arrStr.join("");
-	// 		if (oMathAutoCorrection.arrFunctionsNames[str] === null)
-	// 			strLast = str;
-	// 	}
-	//
-	// 	for (let i = 1; i <= arrStr.length; i++)
-	// 	{
-	// 		IsFunc(arrStr.slice(0, i), i);
-	// 	}
-	//
-	// 	if (strLast)
-	// 		return strLast;
-	// };
-	// TokenFunctionLiteral.prototype.GetUnicodeToken = function (arrStr)
-	// {
-	// 	return this.IsUnicodeInclude(arrStr);
-	// };
+	TokenFunctionLiteral.prototype.IsUnicodeInclude = function(arrStr)
+	{
+		if (!arrStr)
+			return;
+
+		if (!Array.isArray(arrStr))
+			arrStr = [arrStr];
+
+		let strLast = "";
+
+		function IsFunc(arrStr)
+		{
+			let str = arrStr.join("");
+			if (oMathAutoCorrection.arrFunctionsNames[str] === null)
+				strLast = str;
+		}
+
+		for (let i = 1; i <= arrStr.length; i++)
+		{
+			IsFunc(arrStr.slice(0, i), i);
+		}
+
+		if (strLast)
+			return strLast;
+	};
+	TokenFunctionLiteral.prototype.GetUnicodeToken = function (arrStr)
+	{
+		return this.IsUnicodeInclude(arrStr);
+	};
 
 	function TokenSpecialLiteral()
 	{
@@ -2414,14 +2414,15 @@
 				case MathStructures.sub_sub:
 					if (oTokens.value && oTokens.value.type === MathStructures.func)
 					{
-						let oFunc = oContext.Add_Function({ctrPrp: oTokens.value.style.style}, null, null);
-						let oFuncName = oFunc.getFName();
+						let oStyle		= oTokens.value.style.style
+						let oFunc		= oContext.Add_Function({ctrPrp: oStyle}, null, null);
+						let oFuncName	= oFunc.getFName();
 
 						let Pr = (oTokens.up && oTokens.down)
 							? {}
 							: (oTokens.up)
-								? {type: DEGREE_SUPERSCRIPT}
-								: {type: DEGREE_SUBSCRIPT}
+								? {type: DEGREE_SUPERSCRIPT, ctrPrp : oStyle}
+								: {type: DEGREE_SUBSCRIPT, ctrPrp : oStyle}
 
 						let SubSup = oFuncName.Add_Script(
 							oTokens.up && oTokens.down,
@@ -2431,9 +2432,8 @@
 							null
 						);
 
-						oTokens.value.type = 0;
 						UnicodeArgument(
-							oTokens.value.value,
+							oTokens.value,
 							MathStructures.bracket_block,
 							SubSup.getBase()
 						);

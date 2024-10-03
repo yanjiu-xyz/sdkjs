@@ -853,7 +853,7 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 		if (undefined === strStartCode)
 			strStartCode = '\\int';
 
-		oMathText.AddText(new AscMath.MathText(strStartCode, oUpper));
+		oMathText.AddText(new AscMath.MathText(strStartCode, this));
 
 		if (oLower)
 		{

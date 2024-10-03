@@ -1215,7 +1215,7 @@
 				oBase.type = Struc.func;
 			}
 			else if (LimitNames.includes(strBase)) {
-				oBase.type = Struc.func_lim ;
+				oBase.type = Struc.func_lim;
 			}
 		}
 
@@ -1288,7 +1288,7 @@
 		{
 			if (this.oLookahead.class)
 			{
-				if (this.oLookahead.data.charCodeAt(0) === 8289)
+				if (this.oLookahead.data.charCodeAt(0) === 8289 || this.oLookahead.data === " ")
 					this.EatToken(this.oLookahead.class);
 
 				oThirdSoOperand = this.GetOperandLiteral();
@@ -1370,6 +1370,7 @@
 					style: {supStyle: oSupStyle, subStyle: oSubStyle},
 				};
 			}
+
 			return {
 				type: Struc.sub_sub,
 				value: oBase,
@@ -1997,19 +1998,22 @@
 		if (this.IsExpSubSupLiteral())
 		{
 			let oContent = this.GetExpSubSupLiteral(this.GetContentOfLiteral(oBase));
-			if (oBase.type !== Struc.func_lim)
+
+			if (oBase.type === Struc.func_lim)
 			{
-				return oContent;
+				return {
+					type: Struc.func_lim,
+					value: { type: Struc.char, value: oContent.value.value},
+					up: oContent.up,
+					down: oContent.down,
+					isBelow: oContent.down ? LIMIT_LOW : LIMIT_UP,
+					style: oContent.style,
+					third: oContent.third,
+				};
 			}
 			else
 			{
-				return {
-					type: Struc.limit,
-					base: oContent.value,
-					value: oContent.down ? oContent.down : oContent.up,
-					isBelow: oContent.down ? LIMIT_LOW : LIMIT_UP,
-					style: oContent.style,
-				}
+				return oContent;
 			}
 		}
 
@@ -2255,6 +2259,10 @@
 					value: this.EatToken(this.oLookahead.class).data
 				})
 			}
+			else if (this.oLookahead.class === Literals.operator.id && !this.IsDoubleIteratorDegree())
+			{
+				oExpLiteral.push(this.GetOperatorLiteral())
+			}
 			else if (this.IsPreScriptLiteral())
 			{
 				let oPreScriptLiteral = this.GetPreScriptLiteral();
@@ -2276,11 +2284,6 @@
 					value: this.EatToken(this.oLookahead.class).data,
 					style: oPr,
 				})
-			}
-
-			if (this.oLookahead.class === Literals.operator.id && !this.IsDoubleIteratorDegree())
-			{
-				oExpLiteral.push(this.GetOperatorLiteral())
 			}
 		}
 
