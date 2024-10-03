@@ -695,14 +695,14 @@ CChangesPDFDocumentRemovePage.prototype.private_ReadItem = function(Reader)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseLongProperty}
+ * @extends {AscDFH.CChangesBaseProperty}
  */
 function CChangesPDFDocumentRotatePage(Class, nPage, Old, New)
 {
-	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
 	this.Page = nPage;
 }
-CChangesPDFDocumentRotatePage.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFDocumentRotatePage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesPDFDocumentRotatePage.prototype.constructor = CChangesPDFDocumentRotatePage;
 CChangesPDFDocumentRotatePage.prototype.Type = AscDFH.historyitem_PDF_Document_RotatePage;
 CChangesPDFDocumentRotatePage.prototype.private_SetValue = function(Value)
@@ -721,7 +721,7 @@ CChangesPDFDocumentRotatePage.prototype.WriteToBinary = function(Writer)
 		nFlags |= 2;
 
 	if (undefined === this.Old)
-		nFlags |= 3;
+		nFlags |= 4;
 
 	Writer.WriteLong(nFlags);
 
@@ -736,27 +736,19 @@ CChangesPDFDocumentRotatePage.prototype.WriteToBinary = function(Writer)
 };
 CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
 {
-	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
-	// 2-bit : IsUndefined New
-	// 3-bit : IsUndefined Old
-	// long : New
-	// long : Old
-
-
 	let nFlags = Reader.GetLong();
-
+	
 	if (nFlags & 1)
 		this.Page = undefined;
 	else
 		this.Page = Reader.GetLong();
-
+	
 	if (nFlags & 2)
 		this.New = undefined;
 	else
 		this.New = Reader.GetLong();
-
-	if (nFlags & 3)
+	
+	if (nFlags & 4)
 		this.Old = undefined;
 	else
 		this.Old = Reader.GetLong();
