@@ -306,7 +306,11 @@
 				if(t.isDocumentLoadComplete) {
 					//todo disconnect and downloadAs ability
 					t.sendEvent("asc_onError", Asc.c_oAscError.ID.EditingError, c_oAscError.Level.NoCritical);
-					t.asc_setViewMode(true);
+					if (t.isCoAuthoringEnable) {
+						t.asc_coAuthoringDisconnect();
+					} else {
+						t.asc_setViewMode(true);
+					}
 				}
 				else {
 					t.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
