@@ -1220,7 +1220,9 @@
 		{
 			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
 			{
-				this.isDisableKeyboard = true;
+				// в пдф даем комментировать и заполнять формы во вью с сохранением в копию
+				if (!this.Api.isPdfEditor())
+					this.isDisableKeyboard = true;
 			}
 		}
 
