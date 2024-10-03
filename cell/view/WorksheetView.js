@@ -11439,7 +11439,9 @@
         x += this.cellsLeft;
         y += this.cellsTop;
 
-		x = this.drawingCtx.getWidth() - x;
+		if (window.rightToleft) {
+			x = this.drawingCtx.getWidth() - x;
+		}
 
         if (!skipCol) {
 			sum = this._getColLeft(this.nColsCount);
