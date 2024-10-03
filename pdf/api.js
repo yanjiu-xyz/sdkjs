@@ -990,6 +990,7 @@
 
 		function addFreeText() {
 			oDoc.DoAction(function() {
+				oDoc.BlurActiveObject();
 				oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage);
 			}, AscDFH.historydescription_Pdf_AddAnnot, this);
 		}
