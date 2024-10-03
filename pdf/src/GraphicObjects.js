@@ -1282,6 +1282,53 @@
         }
         this.applyDocContentFunction(AscWord.CDocumentContent.prototype.SetParagraphIndent, [Indent], AscWord.CTable.prototype.SetParagraphIndent);
     };
+    CGraphicObjects.prototype.endTrackNewShape = function() {
+        this.curState.bStart = this.curState.bStart !== false;
+        let aTracks = this.arrTrackObjects;
+        let bNewShape = false;
+        let bRet = false;
+        if (aTracks.length > 0) {
+            let nT;
+            for (nT = 0; nT < aTracks.length; ++nT) {
+                let oTrack = aTracks[nT];
+                if (!oTrack.getShape) {
+                    break;
+                }
+            }
+            if (nT === aTracks.length) {
+                bNewShape = true;
+            }
+            if (bNewShape) {
+                bRet = AscFormat.StartAddNewShape.prototype.onMouseUp.call(this.curState, {
+                    ClickCount: 1,
+                    X: 0,
+                    Y: 0
+                }, 0, 0, 0);
+            }
+            else {
+                this.curState.onMouseUp({
+                    ClickCount: 1,
+                    X: 0,
+                    Y: 0
+                }, 0, 0, 0);
+                bRet = true;
+            }
+        }
+        else {
+            bRet = AscFormat.StartAddNewShape.prototype.onMouseUp.call(this.curState, {
+                ClickCount: 1,
+                X: 0,
+                Y: 0
+            }, 0, 0, 0);
+        }
+    
+        const oApi = this.getEditorApi();
+        if (oApi.isInkDrawerOn()) {
+            oApi.stopInkDrawer();
+        }
+
+        return bRet;
+    };
 
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = function() {};
     CGraphicObjects.prototype.saveDocumentState = function(){};
@@ -1301,7 +1348,6 @@
     CGraphicObjects.prototype.changeTextCase            = AscFormat.DrawingObjectsController.prototype.changeTextCase;
     CGraphicObjects.prototype.handleDblClickEmptyShape  = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
     CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
-    CGraphicObjects.prototype.endTrackNewShape          = AscFormat.DrawingObjectsController.prototype.endTrackNewShape;
     CGraphicObjects.prototype.removeCallback            = AscFormat.DrawingObjectsController.prototype.removeCallback;
     CGraphicObjects.prototype.getAllSingularDrawings    = AscFormat.DrawingObjectsController.prototype.getAllSingularDrawings;
 
