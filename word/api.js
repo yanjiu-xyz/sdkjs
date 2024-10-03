@@ -9036,12 +9036,6 @@ background-repeat: no-repeat;\
 		else if (this.isUseNativeViewer && this.isDocumentRenderer())
 		{
 			oAdditionalData["c"] = 'savefromorigin';
-			if (this.currentPassword) {
-				oAdditionalData["password"] = this.currentPassword;
-				if (DownloadType.Print !== downloadType) {
-					oAdditionalData["savepassword"] = this.currentPassword;
-				}
-			}
 		}
 
 		let canDownloadFromBytes = null == options.oDocumentMailMerge && null == options.oMailMergeSendData

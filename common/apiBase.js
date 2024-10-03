@@ -3860,6 +3860,7 @@
 
 	baseEditorsApi.prototype.asc_setCurrentPassword = function(password)
 	{
+		this.currentPasswordOld = this.currentPassword;
 		this.currentPassword = password;
 		this.asc_Save(false, undefined, true);
 		if (!(this.DocInfo && this.DocInfo.get_OfflineApp())) {
