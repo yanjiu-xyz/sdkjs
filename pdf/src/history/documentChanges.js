@@ -768,7 +768,7 @@ CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
  */
 function CChangesPDFDocumentRecognizePage(Class, nPage, Old, New)
 {
-	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New);
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
 	this.Page = nPage;
 }
 CChangesPDFDocumentRecognizePage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
@@ -778,13 +778,14 @@ CChangesPDFDocumentRecognizePage.prototype.WriteToBinary = function(Writer)
 {
 	let nFlags = 0;
 
-	if (undefined === this.Page)
+	if (undefined !== this.Page)
 		nFlags |= 1;
-	if (undefined === this.New)
+	
+	if (true === this.New)
 		nFlags |= 2;
-	if (undefined === this.Old)
-		nFlags |= 3;
-
+	
+	if (true === this.Old)
+		nFlags |= 4;
 	
 	Writer.WriteLong(nFlags);
 	if (undefined !== this.Page)
@@ -793,21 +794,14 @@ CChangesPDFDocumentRecognizePage.prototype.WriteToBinary = function(Writer)
 CChangesPDFDocumentRecognizePage.prototype.ReadFromBinary = function(Reader)
 {
 	let nFlags = Reader.GetLong();
-
+	
 	if (nFlags & 1)
-		this.Page = undefined;
-	else
 		this.Page = Reader.GetLong();
-
-	if (nFlags & 2)
-		this.New = false;
 	else
-		this.New = true;
-
-	if (nFlags & 3)
-		this.Old = false;
-	else
-		this.Old = true;
+		this.Page = undefined;
+	
+	this.New = !!(nFlags & 2);
+	this.Old = !!(nFlags & 4);
 };
 CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecognize)
 {
