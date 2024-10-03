@@ -441,6 +441,8 @@ CDocumentContentBase.prototype.MoveCursorToNearestPos = function(oNearestPos)
 		var oTopDocument = oParent.Is_TopDocument(true);
 		if (oTopDocument)
 			oTopDocument.RemoveSelection();
+		else
+			this.RemoveSelection();
 	}
 
 	oPara.Set_ParaContentPos(oNearestPos.ContentPos, true, -1, -1);
