@@ -4464,8 +4464,8 @@ function(window, undefined) {
 				} else if (cachedData.clusteredColumn.results) {
 						return key ? cachedData.clusteredColumn.results[key].occurrence : cachedData.clusteredColumn.results;
 				}
-			} else if (cachedData.waterfall) {
-				return key ? cachedData.waterfall[key] : cachedData.waterfall;
+			} else if (cachedData.waterfall && cachedData.waterfall.numArr) {
+				return key ? cachedData.waterfall.numArr[key].val : cachedData.waterfall.numArr;
 			} else if (cachedData.funnel) {
 				return key ? cachedData.funnel[key] : cachedData.funnel;
 			}
