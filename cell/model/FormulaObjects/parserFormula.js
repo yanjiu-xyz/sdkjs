@@ -8792,6 +8792,21 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 		}
+
+		if (this.importFunctionsRangeLinks) {
+			for (let i in this.importFunctionsRangeLinks) {
+				let externalLink = this.wb.getExternalLinkByName(i);
+				if (externalLink) {
+					for (let j in this.importFunctionsRangeLinks[i]) {
+						let _rangeInfo = this.importFunctionsRangeLinks[i][j];
+						let _ws = externalLink.worksheets[_rangeInfo.sheet];
+						if (_ws) {
+							this._buildDependenciesRef(_ws.getId(), AscCommonExcel.g_oRangeCache.getRangesFromSqRef(_rangeInfo.range)[0], null, false);
+						}
+					}
+				}
+			}
+		}
 	};
 	parserFormula.prototype._buildDependenciesRef = function(wsId, bbox, isDefName, isStart) {
 		if (this.isTable) {

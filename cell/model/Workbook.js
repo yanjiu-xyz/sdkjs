@@ -13896,10 +13896,12 @@
 		if (externalLinks && fOld) {
 			let listenerId = fOld.getListenerId();
 
-			for (let index in externalLinks) {
+			for (let link in externalLinks) {
 				// check all external link listeners
 				// let erIndex = this.getExternalLinkIndexBySheetId(sheetId);
-				let eR = this.ws.workbook.externalReferences[+index - 1];
+				// let eR = this.ws.workbook.externalReferences[+index - 1];
+				let index = this.ws.workbook.getExternalLinkIndexBySheetId(externalLinks[link]);
+				let eR = this.ws.workbook.externalReferences[index - 1];
 
 				if (eR && null != listenerId) {
 					let hasListeners;
@@ -13922,7 +13924,7 @@
 					}
 
 					if (!hasListeners) {
-						this.ws && this.ws.workbook && this.ws.workbook.removeExternalReference(+index, true);
+						this.ws && this.ws.workbook && this.ws.workbook.removeExternalReference(index, true);
 					}
 				}
 			}
@@ -14121,6 +14123,7 @@
 			} else if(arrayFormula && this.formulaParsed.checkFirstCellArray(this)) {
 				//***array-formula***
 				var fText = "=" + this.formulaParsed.getFormula();
+				this.formulaParsed.removeDependencies();
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_DeleteFormula, this.ws.getId(),
 					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText), true);
 			} else {
