@@ -524,16 +524,10 @@ CMathFunc.prototype.GetTextOfElement = function(oMathText)
 	else
 	{
 		let oNamePos		= oMathText.Add(oFuncName, true, 0);
-		let oArgumentPos	= oMathText.Add(oArgument, true, 0);
+		let oArgumentPos	= oMathText.Add(oArgument, true, 1);
 		let oArgumentToken	= oMathText.GetExact(oArgumentPos);
 
 		oMathText.AddAfter(oNamePos, new AscMath.MathText("⁡", this.Pr.GetRPr()));
-
-		if (oArgument.haveMixedContent() && !oArgumentToken.IsBracket)
-		{
-			oMathText.SetGlobalStyle(this.Pr.GetRPr());
-			oMathText.WrapExactElement(oArgumentPos, "〖", "〗");
-		}
 	}
 
 	return oMathText;
