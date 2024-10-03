@@ -18525,7 +18525,8 @@
 						ctrlKey = true;
 						dynamicSelectionRange = newFP.ref;
 					}
-				} else if (!applyByArray) {
+				} else if (!applyByArray && !ctrlKey) {
+					// TODO ctrlKey+enter used to fills the selected cell range with the current entry. Dynamic arrays will have to work the same
 					// refInfo = {cannoChangeFormulaArray: true|false, applyByArray: true|false, ctrlKey: true|false, dynamicRange: range}
 					let refInfo = ws.getRefDynamicInfo(newFP, calculateResult);
 					if (refInfo) {
