@@ -840,7 +840,8 @@ CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecogniz
     }
 
 	oDoc.Viewer.paint(function() {
-		oDoc.Viewer.thumbnails._repaintPage(nPage);
+        let oThumbnails = oDoc.Viewer.thumbnails;
+        oThumbnails && oThumbnails._repaintPage(nPage);
 	});
 };
 
