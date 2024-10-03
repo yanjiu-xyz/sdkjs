@@ -456,7 +456,15 @@
 			this.vsb = document.createElement('div');
 			this.vsb.id = "ws-v-scrollbar";
 			this.vsb.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
-			this.widget.appendChild(this.vsb);
+			//TODO test rtl
+			/*if (window.rightToleft) {
+				this.vsb.style.left = "0px";
+				this.widget.prepend(this.vsb);
+				this.widget.children[1].style.left = this.vsb.clientWidth + "px";
+				this.widget.children[1].style.overflow = "visible"
+			} else {*/
+				this.widget.appendChild(this.vsb);
+			//}
 
 			if (!this.vsbApi) {
 				settings = this.createScrollSettings();
@@ -1331,6 +1339,9 @@
 			};
 
 			if ((dc !== 0 || dr !== 0) && false === t.handlers.trigger("isGlobalLockEditCell")) {
+				if (window.rightToleft) {
+					dc = -dc;
+				}
 				if (isChangeVisibleAreaMode) {
 					t.handlers.trigger("changeVisibleArea", !shiftKey, dc, dr, false, function (d) {
 						const wb = window["Asc"]["editor"].wb;

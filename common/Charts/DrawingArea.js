@@ -629,10 +629,10 @@ function FrozenPlace(ws, type) {
 			}
 			autoShapeTrack.m_oOverlay.CheckPoint1(x - nW, top);
 			autoShapeTrack.m_oOverlay.CheckPoint2(x + nW, bottom);
-			autoShapeTrack.drawImage(sFrozenImageRotUrl, x, top, nW, bottom);
+			autoShapeTrack.drawImage(sFrozenImageRotUrl, _this.worksheet.checkRtl(x), top, nW, bottom);
 		}
 		else {
-			autoShapeTrack.m_oOverlay.DrawFrozenPlaceVerLine(x, top, bottom);
+			autoShapeTrack.m_oOverlay.DrawFrozenPlaceVerLine(_this.worksheet.checkRtl(x), top, bottom);
 		}
 	};
 	_this.drawSelection = function(drawingDocument, shapeCtx, shapeOverlayCtx, autoShapeTrack, trackOverlay) {

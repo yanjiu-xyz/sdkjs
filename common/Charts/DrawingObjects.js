@@ -1385,12 +1385,21 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             {
                 if (this.worksheet) {
                     coordsFrom = this.getDrawingObjects().calculateCoords(_t.from);
-                    metrics.x = this.pxToMm( coordsFrom.x );
-                    metrics.y = this.pxToMm( coordsFrom.y );
+                    if (!window.rightToleft) {
+                        metrics.x = this.pxToMm( coordsFrom.x );
+                        metrics.y = this.pxToMm( coordsFrom.y );
+                        coordsTo = this.getDrawingObjects().calculateCoords(_t.to);
+                        metrics.extX = this.pxToMm( coordsTo.x - coordsFrom.x );
+                        metrics.extY = this.pxToMm( coordsTo.y - coordsFrom.y );
+                    } else {
+                        metrics.y = this.pxToMm( coordsFrom.y );
 
-                    coordsTo = this.getDrawingObjects().calculateCoords(_t.to);
-                    metrics.extX = this.pxToMm( coordsTo.x - coordsFrom.x );
-                    metrics.extY = this.pxToMm( coordsTo.y - coordsFrom.y );
+                        coordsTo = this.getDrawingObjects().calculateCoords(_t.to);
+                        metrics.extX = this.pxToMm(  coordsFrom.x - coordsTo.x );
+                        metrics.extY = this.pxToMm( coordsTo.y - coordsFrom.y );
+
+                        metrics.x = this.pxToMm( coordsTo.x );
+                    }
                 }
                 break;
             }
@@ -1443,6 +1452,12 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 ret.Pos.Y = _yc - _t.graphicObject.extX/2;
                 ret.ext.cx = _t.graphicObject.extY;
                 ret.ext.cy = _t.graphicObject.extX;
+            }
+
+            if (window.rightToleft) {
+                let temp = fromX;
+                fromX = toX;
+                toX = temp;
             }
 
             var fromColCell = this.worksheet.findCellByXY(fromX, fromY, true, false, true);
@@ -1512,6 +1527,12 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 this.Pos.Y = _yc - _t.graphicObject.extX/2;
                 this.ext.cx = _t.graphicObject.extY;
                 this.ext.cy = _t.graphicObject.extX;
+            }
+
+            if (window.rightToleft) {
+                let temp = fromX;
+                fromX = toX;
+                toX = temp;
             }
 
             var fromColCell = this.worksheet.findCellByXY(fromX, fromY, true, false, true);
@@ -4727,7 +4748,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 			var resultRowOff = cell.rowOff > rowHeight ? rowHeight : cell.rowOff;
 			var resultColOff = cell.colOff > colWidth ? colWidth : cell.colOff;
 			coords.y = ws._getRowTop(cell.row) + ws.objectRender.convertMetric(resultRowOff, 3, 0) - ws._getRowTop(0);
-			coords.x = ws._getColLeft(cell.col) + ws.objectRender.convertMetric(resultColOff, 3, 0) - ws._getColLeft(0);
+			coords.x = ws._getColLeft(cell.col) + ws.objectRender.convertMetric(resultColOff, 3, 0) + ws._getColLeft(0);
+            coords.x = ws.checkRtl(coords.x);
 		}
 		return coords;
 	};

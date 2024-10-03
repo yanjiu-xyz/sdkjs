@@ -2385,6 +2385,11 @@
 					var oMatrix = new AscCommon.CMatrix();
 					oMatrix.tx = rect._x;
 					oMatrix.ty = rect._y;
+					//TODO !!!rtl print
+					if (window.rightToleft) {
+						oMatrix.sx = -1;
+						oMatrix.tx = (ctx.getWidth() * vector_koef) - oMatrix.tx;
+					}
 					graphics.transform3(oMatrix);
 					var shapeDrawer = new AscCommon.CShapeDrawer();
 					shapeDrawer.Graphics = graphics;

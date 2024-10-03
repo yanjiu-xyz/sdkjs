@@ -1087,7 +1087,12 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 			}
 
 			if (_r > _x) {
-				that.roundRect(_x +  0.5 * that.context.lineWidth, that.scroller.y -  0.5 * that.context.lineWidth, that.scroller.w - roundDPR, that.scroller.h - roundDPR, that.settings.cornerRadius * roundDPR);
+				let _x1 = _x +  0.5 * that.context.lineWidth;
+				let _w1 = that.scroller.w - roundDPR;
+				if (window.rightToleft) {
+					_x1 = that.canvasW - (_x1 + _w1);
+				}
+				that.roundRect(_x1, that.scroller.y -  0.5 * that.context.lineWidth, _w1, that.scroller.h - roundDPR, that.settings.cornerRadius * roundDPR);
 			}
 		}
 
@@ -1629,7 +1634,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 				if ( that.settings.isVerticalScroll )
 					that.scrollByY( that.settings.vscrollStep );
 				else if ( that.settings.isHorizontalScroll )
-					that.scrollByX( that.settings.hscrollStep );
+					that.scrollByX( that.settings.hscrollStep * (window.rightToleft ? -1 : 1));
 
 				if(that.mouseDown)
 				scrollTimeout = setTimeout( doScroll, isFirst ? that.settings.initialDelay : that.settings.arrowRepeatFreq );
@@ -1647,7 +1652,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 				if ( that.settings.isVerticalScroll )
 					that.scrollByY( -that.settings.vscrollStep );
 				else if ( that.settings.isHorizontalScroll )
-					that.scrollByX( -that.settings.hscrollStep );
+					that.scrollByX( that.settings.hscrollStep * (window.rightToleft ? 1 : -1));
 
                 if(that.mouseDown)
 				scrollTimeout = setTimeout( doScroll, isFirst ? that.settings.initialDelay : that.settings.arrowRepeatFreq );

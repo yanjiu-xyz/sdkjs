@@ -123,7 +123,7 @@
     var kCurHyperlink = "pointer";
     // Курсор для перемещения области выделения
     var kCurMove = "move";
-    var kCurSEResize = "se-resize";
+    var kCurSEResize = window.rightToleft ? "sw-resize" : "se-resize";
     var kCurNEResize = "ne-resize";
     var kCurAutoFilter = "pointer";
     var kCurEWResize = "ew-resize";
@@ -146,6 +146,10 @@
 
 	//limit rows for prepare metrics. if more then limit -> metrics will prepare dynamic
 	var nMaxPrintRows = 150000;
+
+	window.rightToleft = false;
+	let rightToLeftOffset = window.rightToleft ? 1 : 0;
+
 
     function getMergeType(merged) {
 		var res = c_oAscMergeType.none;
@@ -1295,13 +1299,27 @@
         };
     };
 
-	WorksheetView.prototype._getColLeft = function (i) {
+	WorksheetView.prototype._getColLeft = function (i, saveRealRightToLeft, ctx) {
+		ctx = ctx || this.drawingCtx;
+		let realRightToleft = window.rightToleft;
+		if (!saveRealRightToLeft) {
+			window.rightToleft = false;
+		}
+
 		this._updateColumnPositions();
 
 		var l = this.cols.length;
-		return this.cellsLeft + ((i < l) ? this.cols[i].left : (((0 === l) ? 0 :
-			this.cols[l - 1].left + this.cols[l - 1].width) + (!this.model.isDefaultWidthHidden()) *
-			Asc.round(this.defaultColWidthPx * this.getZoom(true) * this.getRetinaPixelRatio()) * (i - l)));
+		let defaultWidth = Asc.round(this.defaultColWidthPx * this.getZoom(true) * this.getRetinaPixelRatio());
+		let posReal = this.cellsLeft + ((i < l) ? this.cols[i].left : (((0 === l) ? 0 :
+				this.cols[l - 1].left + this.cols[l - 1].width) + (!this.model.isDefaultWidthHidden()) * defaultWidth * (i - l)));
+
+		if (window.rightToleft) {
+			posReal = ctx.getWidth() - posReal - (i < l ? this.cols[i].width : defaultWidth);
+		}
+
+		window.rightToleft = realRightToleft;
+
+		return posReal;
 	};
     WorksheetView.prototype.getCellLeft = function (column, units) {
 		var u = units >= 0 && units <= 3 ? units : 0;
@@ -1614,6 +1632,9 @@
 		}
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
 			return;
+		}
+		if (window.rightToleft) {
+			x2 = this.drawingCtx.getWidth() - x2;
 		}
     	var viewMode = this.handlers.trigger('getViewMode');
 		var t = this;
@@ -3731,6 +3752,18 @@
 						leftDiff / mmToPx, topDiff / mmToPx);
 				}
 
+				if (window.rightToleft) {
+					if (!_transform) {
+						_transform = new AscCommon.CMatrix();
+					}
+					let transformMatrix = new AscCommon.CMatrix();
+					transformMatrix.sx = -1;
+					transformMatrix.tx = drawingCtx.getWidth();
+					let newTransformMatrix = _transform.Multiply(transformMatrix);
+					drawingCtx.setTransform(newTransformMatrix.sx, newTransformMatrix.shy, newTransformMatrix.shx, newTransformMatrix.sy, newTransformMatrix.tx, newTransformMatrix.ty);
+					drawingCtx.updateTransforms();
+				}
+
 				let offsetCols = printPagesData.startOffsetPx;
 				//range = printPagesData.pageRange;
 				let offsetX = t._getColLeft(range.c1) - printPagesData.leftFieldInPx + offsetCols - titleWidth;
@@ -4557,6 +4590,14 @@
         var isPrint = this.usePrintScale;
         var activeNamedSheetView = !isPrint && this.model.getActiveNamedSheetViewId() !== null;
 
+		if (window.rightToleft) {
+			let _transform = this.drawingCtx.Transform ? this.drawingCtx.Transform : new AscCommon.CMatrix();
+			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
+			this.drawingCtx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, this.drawingCtx.getWidth(), transformMatrix.ty);
+
+			this.drawingCtx.updateTransforms()
+		}
+
         this._drawHeader(null, this.headersLeft, this.headersTop, this.headersWidth,
           this.headersHeight, kHeaderDefault, true, -1);
         this.drawingCtx.beginPath()
@@ -4567,6 +4608,24 @@
           .setFillStyle(activeNamedSheetView ? this.settings.header.cornerColorSheetView : this.settings.header.cornerColor)
           .fill();
     };
+	WorksheetView.prototype._drawText = function (stringRender, ctx, textX, textY, textW, color) {
+		stringRender.render(ctx, /*window.rightToleft ? (ctx.getWidth() - textX - textW) : */textX, textY, textW, color);
+		return stringRender;
+	};
+	WorksheetView.prototype._fillText = function (ctx, text, x, y, maxWidth, charWidths, angle) {
+		if (window.rightToleft) {
+			let charsWidth = 0;
+			for (let i in charWidths) {
+				charsWidth += charWidths[i];
+			}
+			ctx.fillText( text, x + charsWidth, y, maxWidth, charWidths, angle)
+		} else {
+			ctx.fillText(text, x, y, maxWidth, charWidths);
+		}
+
+		return ctx;
+
+	};
 
     /** Рисует заголовки видимых колонок */
     WorksheetView.prototype._drawColumnHeaders = function (drawingCtx, start, end, style, offsetXForDraw, offsetYForDraw) {
@@ -4759,7 +4818,7 @@
 			}
 		};
 		let drawLeftBorder = function (_selected) {
-			if (style !== kHeaderDefault && isColHeader) {
+			if ((style !== kHeaderDefault || window.rightToleft) && isColHeader) {
 				// Select col (left border)
 				ctx.lineVerPrevPx(x, y, y2);
 			}
@@ -4805,7 +4864,7 @@
 				let x1Diff = 0;
 				let x2Diff = 0;
 				if (_selected) {
-					x1Diff = (isFirstRowSelection ? (_toRetina(1) + 1) : 1);
+					x1Diff = (isFirstRowSelection ? (_toRetina(1) + 1) : (1 - rightToLeftOffset));
 					x2Diff = (isFirstRowSelection ? _toRetina(1) : 0);
 				}
 				ctx.lineHorPrevPx(x - x1Diff, y2, x2 + x2Diff);
@@ -4858,7 +4917,8 @@
         var textY = this._calcTextVertPos(y, h, bl, tm, Asc.c_oAscVAlign.Bottom);
 
 		ctx.AddClipRect(x, y, w, h);
-		ctx.setFillStyle(color).fillText(text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
+		ctx.setFillStyle(color);
+		this._fillText(ctx, text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
 		ctx.RemoveClipRect();
     };
 
@@ -5177,7 +5237,7 @@
 		//by clean down thin border
 		let correctX = 0;
 		let correctY = -1*(_toRetina(1) + 1);
-		let correctW = (this.getRetinaPixelRatio() >= 2 ? _toRetina(1) : 0);
+		let correctW = (this.getRetinaPixelRatio() >= 2 ? _toRetina(1) : 0) + 2 * rightToLeftOffset;
 		let correctH = _toRetina(2) + 1;
 
         var rowStartTmp = Math.max(this.visibleRange.r1, rowStart);
@@ -5454,7 +5514,7 @@
 					if (x1 - offsetX < t.cellsLeft) {
 						widthOffset = t.cellsLeft - (x1 - offsetX);
 					}
-					clipX = x1 - offsetX + widthOffset;
+					clipX = x1 - offsetX + widthOffset + rightToLeftOffset;
 					clipY = y1 - offsetY + heightOffset;
 					clipWidth = width - widthOffset;
 					clipHeight = height - heightOffset;
@@ -5729,7 +5789,7 @@
 				var fillGrid = findFillColor || hasFill;
 				findFillColor = findFillColor || (!hasFill && mc && this.settings.cells.defaultState.background);
 
-				var x = this._getColLeft(col) - (fillGrid ? 1 : 0);
+				var x = this._getColLeft(col) - (fillGrid ? 1 : 0) + rightToLeftOffset;
 				var y = top - (fillGrid ? 1 : 0);
 				var w = width + (fillGrid ? +1 : -1) + mwidth;
 				var h = height + (fillGrid ? +1 : -1) + mheight;
@@ -5778,9 +5838,27 @@
 				drawCells[i] = 1;
 			}
 		}
+
+		let _originalMatrix;
+		let _ctx = drawingCtx || this.drawingCtx;
+		if (window.rightToleft) {
+			_originalMatrix = _ctx.Transform ? _ctx.Transform.CreateDublicate() : _ctx._mbt.clone();
+			let _transform = new AscCommon.CMatrix();
+			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
+
+			_ctx.setTransform(1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, transformMatrix.tx, transformMatrix.ty);
+			_ctx.updateTransforms();
+		}
+		
 		// draw text
 		for (i in drawCells) {
 			this._drawCellText(drawingCtx, cfIterator, i >> 0, row, colStart, colEnd, offsetX, offsetY);
+		}
+
+		if (_originalMatrix) {
+			_ctx.setTransform(_originalMatrix.sx, _originalMatrix.shy, _originalMatrix.shx,
+				_originalMatrix.sy, _originalMatrix.tx, _originalMatrix.ty);
+			_ctx.updateTransforms();
 		}
     };
 
@@ -5977,6 +6055,12 @@
 				var oMatrix = new AscCommon.CMatrix();
 				oMatrix.tx = rect._x;
 				oMatrix.ty = rect._y;
+				//TODO rtl!!! print + offset left side
+				if (window.rightToleft) {
+					oMatrix.sx = -1;
+					oMatrix.tx = (ctx.getWidth() * dScale) - oMatrix.tx;
+				}
+
 				graphics.transform3(oMatrix);
 				var shapeDrawer = new AscCommon.CShapeDrawer();
 				shapeDrawer.Graphics = graphics;
@@ -5999,7 +6083,7 @@
 			return true;
 		}
 
-		var x = this._getColLeft(col) - offsetX + 1;
+		var x = this._getColLeft(col) - offsetX + 1 + 2*rightToLeftOffset;
 		width -= 3; // indent
 		top += 1 - offsetY;
 
@@ -6027,6 +6111,10 @@
 		var ct = this._getCellTextCache(col, row);
 		if (!ct) {
 			return null;
+		}
+
+		if (window.rightToleft) {
+			offsetX = -offsetX;
 		}
 
 		var c = this._getVisibleCell(col, row);
@@ -6059,15 +6147,15 @@
 			}
 		}
 
-		var x1 = this._getColLeft(colL) - offsetX;
+		var x1 = this.checkRtl(this._getColLeft(colL), ctx) - offsetX;
 		var y1 = this._getRowTop(rowT) - offsetY;
-		var w = this._getColLeft(colR + 1) - offsetX - x1;
+		var w = this.checkRtl(this._getColLeft(colR  + 1), ctx) - offsetX - x1;
 		var h = this._getRowTop(rowB + 1) - offsetY - y1;
 		var x2 = x1 + w - (isTrimmedR ? 0 : gridlineSize);
 		var y2 = y1 + h;
 		var bl = y2 - Asc.round(
 				(isMerged ? (ct.metrics.height - ct.metrics.baseline) : this._getRowDescender(rowB)) * this.getZoom());
-		var x1ct = isMerged ? x1 : this._getColLeft(col) - offsetX;
+		var x1ct = isMerged ? x1 : this._getColLeft(col, true, ctx) - offsetX;
 		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
 		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, ct.cellHA);
 		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
@@ -6081,7 +6169,7 @@
 
 		if (ct.angle) {
 
-			xb1 = this._getColLeft(col) - offsetX;
+			xb1 = this._getColLeft(col, true, ctx) - offsetX;
 			yb1 = this._getRowTop(row) - offsetY;
 			wb = this._getColumnWidth(col);
 			hb = this._getRowHeight(row);
@@ -6090,7 +6178,7 @@
 			txtRotW = ct.textBound.width + xb1 - ct.textBound.offsetX;
 
 			if (isMerged) {
-				wb = this._getColLeft(colR + 1) - this._getColLeft(colL);
+				wb = this._getColLeft(colR + 1, true, ctx) - this._getColLeft(colL, true, ctx);
 				hb = this._getRowTop(rowB + 1) - this._getRowTop(rowT);
 				ctx.AddClipRect(xb1, yb1, wb, hb);
 				clipUse = true;
@@ -6119,7 +6207,7 @@
 							if (0 == colLeft) {
 								break;
 							}
-							if (txtRotX >= this._getColLeft(colLeft)) {
+							if (txtRotX >= this._getColLeft(colLeft, true, ctx)) {
 								break;
 							}
 							--colLeft;
@@ -6134,7 +6222,7 @@
 								--colRight;
 								break;
 							}
-							if (txtRotW <= this._getColLeft(colRight)) {
+							if (txtRotW <= this._getColLeft(colRight, true, ctx)) {
 								--colRight;
 								break;
 							}
@@ -6195,7 +6283,7 @@
 				}
 			}
 
-			this.stringRender.render(drawingCtx, 0, 0, textW, color);
+			this._drawText(this.stringRender, drawingCtx, 0, 0, textW, color);
 			this.stringRender.resetTransform(isPrintPreview ? null : drawingCtx);
 
 			if (transformMatrix) {
@@ -6247,7 +6335,8 @@
 					}
 				}
 			}
-			this.stringRender.restoreInternalState(ct.state).render(drawingCtx, textX, textY, textW, color);
+
+			this._drawText(this.stringRender.restoreInternalState(ct.state), drawingCtx, textX, textY, textW, color)
 			ctx.RemoveClipRect();
 		}
 
@@ -6853,7 +6942,7 @@
 				let _y2 = Math.min(tY1 + textHeight * _zoom, y2);
 				if (_x1 < _x2 && _y1 < _y2) {
 					ctx.AddClipRect(x1, y1, x2 - x1, y2 - y1);
-					this.stringRender.render(undefined, tX1, tY1, 100, this.settings.activeCellBorderColor);
+					this._drawText(this.stringRender, undefined, tX1, tY1, 100, this.settings.activeCellBorderColor);
 					ctx.RemoveClipRect();
 				}
 			}
@@ -6973,10 +7062,10 @@
 
 			switch (type) {
 				case c_oAscBorderType.Hor:
-					ctx.lineHor(x1, y1, x2);
+					ctx.lineHor(x1 + rightToLeftOffset, y1, x2 + rightToLeftOffset);
 					break;
 				case c_oAscBorderType.Ver:
-					ctx.lineVer(x1, y1, y2);
+					ctx.lineVer(x1 + 2*rightToLeftOffset, y1, y2);
 					break;
 				case c_oAscBorderType.Diag:
 					ctx.lineDiag(x1, y1, x2, y2);
@@ -7364,8 +7453,8 @@
 		ctx.setLineWidth(1).setStrokeStyle(color).beginPath();
 		var fHorLine, fVerLine;
 		if (isLocked) {
-			fHorLine = ctx.dashLineCleverHor;
-			fVerLine = ctx.dashLineCleverVer;
+			fHorLine = this._dashLineCleverHor;
+			fVerLine = this._dashLineCleverVer;
 		} else {
 			fHorLine = ctx.lineHorPrevPx;
 			fVerLine = ctx.lineVerPrevPx;
@@ -7375,24 +7464,34 @@
 			var row = this.topLeftFrozenCell.getRow0();
 			var col = this.topLeftFrozenCell.getCol0();
 			if (0 < row) {
-				fHorLine.apply(ctx, [0, this._getRowTop(row), ctx.getWidth()]);
+				fHorLine.apply(ctx, [0, this._getRowTop(row), ctx.getWidth(), ctx]);
 			} else {
-				fHorLine.apply(ctx, [this.headersLeft, this.headersTop + this.headersHeight, this.headersLeft + this.headersWidth]);
+				fHorLine.apply(ctx, [this.headersLeft, this.headersTop + this.headersHeight, this.headersLeft + this.headersWidth, ctx]);
 			}
 
 			if (0 < col) {
-				fVerLine.apply(ctx, [this._getColLeft(col), 0, ctx.getHeight()]);
+				fVerLine.apply(ctx, [this._getColLeft(col), 0, ctx.getHeight(), ctx]);
 			} else {
-				fVerLine.apply(ctx, [this.headersLeft + this.headersWidth, this.headersTop, this.headersTop + this.headersHeight]);
+				fVerLine.apply(ctx, [this.headersLeft + this.headersWidth, this.headersTop, this.headersTop + this.headersHeight, ctx]);
 
 			}
 			ctx.stroke();
 
 		} else if (this.model.getSheetView().asc_getShowRowColHeaders()) {
-			fHorLine.apply(ctx, [this.headersLeft, this.headersTop + this.headersHeight, this.headersLeft + this.headersWidth]);
-			fVerLine.apply(ctx, [this.headersWidth + this.headersLeft, this.headersTop, this.headersTop + this.headersHeight]);
+			fHorLine.apply(ctx, [this.headersLeft + rightToLeftOffset, this.headersTop + this.headersHeight, this.headersLeft + this.headersWidth, ctx]);
+			fVerLine.apply(ctx, [this.headersWidth + this.headersLeft, this.headersTop, this.headersTop + this.headersHeight, ctx]);
 			ctx.stroke();
 		}
+	};
+
+	WorksheetView.prototype._dashLineCleverVer = function (x, y1, y2, ctx) {
+		ctx.dashLineCleverVer(window.rightToleft ? (ctx.getWidth() - x) : x, y1, y2)
+		return ctx;
+	};
+
+	WorksheetView.prototype._dashLineCleverHor = function (x1, y, x2, ctx) {
+		ctx.dashLineCleverHor(window.rightToleft ? (ctx.getWidth() - x2) : x1, y, window.rightToleft ? (ctx.getWidth() - x1) : x2)
+		return ctx;
 	};
 
     WorksheetView.prototype.drawFrozenGuides = function ( x, y, target ) {
@@ -7698,8 +7797,8 @@
         let dashThickLine = AscCommonExcel.selectionLineType.DashThick & selectionLineType;
 
         if (isDashLine || dashThickLine) {
-            fHorLine = ctx.dashLineCleverHor;
-            fVerLine = ctx.dashLineCleverVer;
+            fHorLine = this._dashLineCleverHor;
+            fVerLine = this._dashLineCleverVer;
         } else {
             fHorLine = ctx.lineHorPrevPx;
             fVerLine = ctx.lineVerPrevPx;
@@ -7765,17 +7864,18 @@
             ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
 
             ctx.beginPath();
+
             if (drawTopSide && !firstRow) {
-                fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+                fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff + rightToLeftOffset*1, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff + rightToLeftOffset*1, ctx]);
             }
             if (drawBottomSide) {
-                fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2]);
+                fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2, ctx]);
             }
             if (drawLeftSide && !firstCol) {
-                fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+                fVerLine.apply(ctx, [x1 - rightToLeftOffset*1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff, ctx]);
             }
             if (drawRightSide) {
-                fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
+                fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff -rightToLeftOffset*1, y1, y2 + !isDashLine * (1 + isRetina * 1), ctx]);
             }
             ctx.closePath().stroke();
 		}
@@ -7804,19 +7904,21 @@
             ctx.setStrokeStyle(colorN);
             ctx.beginPath();
             if (drawTopSide) {
-                fHorLine.apply(ctx, [x1 + isRetina * 1, y1 + 1 + isRetina * !firstRow * 1, x2 - 1 - isRetina * 1]);
+                fHorLine.apply(ctx, [x1 + isRetina * 1 + rightToLeftOffset*1, y1 + 1 + isRetina * !firstRow * 1, x2 - 1 - isRetina * 1 + rightToLeftOffset*1, ctx]);
             }
             if (drawBottomSide) {
-                fHorLine.apply(ctx, [x1 + isRetina * 1, y2 - 1 - isRetina * 1, x2 - 1 - isRetina * 1]);
+                fHorLine.apply(ctx, [x1 + isRetina * 1+ rightToLeftOffset*1, y2 - 1 - isRetina * 1, x2 - 1 - isRetina * 1+ rightToLeftOffset*1, ctx]);
             }
             if (drawLeftSide) {
-                fVerLine.apply(ctx, [x1 + 1 + isRetina * !firstCol * 1, y1 + isRetina * 1, y2 - 2 - isRetina * !firstCol * 1]);
+                fVerLine.apply(ctx, [x1 + 1 + isRetina * !firstCol * 1, y1 + isRetina * 1, y2 - 2 - isRetina * !firstCol * 1, ctx]);
             }
             if (drawRightSide) {
-                fVerLine.apply(ctx, [x2 - 1 - isRetina * 1, y1 + isRetina * 1, y2 - 2 - isRetina * 1]);
+                fVerLine.apply(ctx, [x2 - 1 - isRetina * 1, y1 + isRetina * 1, y2 - 2 - isRetina * 1, ctx]);
             }
             ctx.closePath().stroke();
         }
+
+
 
         // Отрисовка квадратов для move/resize
         let isResize = AscCommonExcel.selectionLineType.Resize & selectionLineType;
@@ -7831,11 +7933,11 @@
 
 			ctx.setFillStyle(colorN);
             if (drawRightSide && drawBottomSide) {
-                ctx.fillRect(x2 - diffBorder, y2 - diffBorder, sizeBorder, sizeBorder);
+                ctx.fillRect(x2 - diffBorder + rightToLeftOffset*1, y2 - diffBorder, sizeBorder, sizeBorder);
             }
             ctx.setFillStyle(strokeColor);
             if (drawRightSide && drawBottomSide) {
-                ctx.fillRect(x2 - diff, y2 - diff, size, size);
+                ctx.fillRect(x2 - diff + rightToLeftOffset*1, y2 - diff, size, size);
             }
 
             if (isResize) {
@@ -7937,6 +8039,16 @@
 
         // set clipping rect to cells area
         var ctx = this.overlayCtx;
+
+		if (window.rightToleft) {
+			let _transform = ctx.Transform ? ctx.Transform : new AscCommon.CMatrix();
+			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
+			//transformMatrix.RotateAt(180, this.drawingCtx.getWidth() / 2, this.drawingCtx.getHeight() / 2);
+			ctx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, ctx.getWidth(), transformMatrix.ty);
+
+			ctx.updateTransforms()
+		}
+
         ctx.save().beginPath()
           .rect(this.cellsLeft, this.cellsTop, ctx.getWidth() - this.cellsLeft, ctx.getHeight() - this.cellsTop)
           .clip();
@@ -8668,10 +8780,14 @@
 
         var x1 = this._getColLeft(col) - offsetX - gridlineSize;
         var h = ctx.getHeight();
-        var width = Asc.round((x - x1) / (this.getZoom(true) * this.getRetinaPixelRatio()));
+        var width = Asc.round((window.rightToleft ? (this.drawingCtx.getWidth() - x1) - x : (x - x1)) / (this.getZoom(true) * this.getRetinaPixelRatio()));
         if ( 0 > width ) {
             width = 0;
         }
+
+		if (window.rightToleft) {
+			x = this.drawingCtx.getWidth() - x;
+		}
 
         ctx.clear();
         this._drawSelection();
@@ -8683,7 +8799,7 @@
             type      : Asc.c_oAscMouseMoveType.ResizeColumn,
             sizeCCOrPt: this.model.colWidthToCharCount(width),
             sizePx    : width,
-            x         : AscCommon.AscBrowser.convertToRetinaValue(x1 + this._getColumnWidth(col)),
+            x         : AscCommon.AscBrowser.convertToRetinaValue(window.rightToleft ? (this.drawingCtx.getWidth() - (x1 + this._getColumnWidth(col))) : x1 + this._getColumnWidth(col)),
             y         : AscCommon.AscBrowser.convertToRetinaValue(this.cellsTop)
         } );
     };
@@ -8715,7 +8831,7 @@
             type      : Asc.c_oAscMouseMoveType.ResizeRow,
             sizeCCOrPt: AscCommonExcel.convertPxToPt(height),
             sizePx    : height,
-            x         : AscCommon.AscBrowser.convertToRetinaValue(this.cellsLeft),
+            x         : AscCommon.AscBrowser.convertToRetinaValue(window.rightToleft ? (this.drawingCtx.getWidth() - this.cellsLeft) : this.cellsLeft),
             y         : AscCommon.AscBrowser.convertToRetinaValue(y1 + this._getRowHeight(row))
         } );
     };
@@ -11182,6 +11298,19 @@
         var lastColWidth = (scrollRight && oldVCE_isPartial) ?
         ctxW - (this._getColLeft(oldEnd) - leftOldStart + this.cellsLeft + diffWidth) : 0;
 
+
+		let drawingTransform = null;
+		if (window.rightToleft) {
+			let drawingTransform = this.drawingGraphicCtx.Transform ? this.drawingGraphicCtx.Transform.clone() : new AscCommon.CMatrix();
+			let transformMatrix = new AscCommon.CMatrix();
+			transformMatrix.sx = -1;
+			transformMatrix.tx = ctx.getWidth();
+			let newTransformMatrix = drawingTransform.Multiply(transformMatrix);
+			this.drawingGraphicCtx.setTransform(newTransformMatrix.sx, newTransformMatrix.shy, newTransformMatrix.shx, newTransformMatrix.sy, newTransformMatrix.tx, newTransformMatrix.ty);
+			this.drawingGraphicCtx.updateTransforms();
+		}
+
+
         // Перемещаем область
         var moveWidth = oldW - lastColWidth;
         if (moveWidth > 0) {
@@ -11196,7 +11325,7 @@
             }
         }
         // Очищаем область
-        var clearLeft = this.cellsLeft + diffWidth + (scrollRight && moveWidth > 0 ? moveWidth : 0);
+        var clearLeft = this.cellsLeft + diffWidth + (scrollRight && moveWidth > 0 ? moveWidth : 0) + rightToLeftOffset;
         var clearWidth = (moveWidth > 0) ? Math.abs(dx) + lastColWidth : ctxW - (this.cellsLeft + diffWidth);
         ctx.setFillStyle(this.settings.cells.defaultState.background)
           .fillRect(clearLeft, y, clearWidth, ctxH);
@@ -11257,6 +11386,11 @@
 			ctx.RemoveClipRect();
 		}
 
+		if (drawingTransform) {
+			this.drawingGraphicCtx.setTransform(drawingTransform.sx, drawingTransform.shy, drawingTransform.shx, drawingTransform.sy, drawingTransform.tx, drawingTransform.ty);
+			this.drawingGraphicCtx.updateTransforms();
+		}
+
         // Отрисовывать нужно всегда, вдруг бордеры
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells();
@@ -11304,6 +11438,9 @@
 
         x += this.cellsLeft;
         y += this.cellsTop;
+
+		x = this.drawingCtx.getWidth() - x;
+
         if (!skipCol) {
 			sum = this._getColLeft(this.nColsCount);
 			if (sum < x) {
@@ -11366,12 +11503,17 @@
 	 * @returns {*}
 	 * @private
 	 */
-	WorksheetView.prototype._findColUnderCursor = function (x, canReturnNull, half) {
+	WorksheetView.prototype._findColUnderCursor = function (x, canReturnNull, half, ignoreRtl) {
 		var activeCellCol = half ? this._getSelection().activeCell.col : -1;
 		var w, dx = 0;
 		var c = this.visibleRange.c1;
 		var offset = this._getOffsetX(c);
 		var c2, x1, x2, cFrozen, widthDiff = -this.getHorizontalScrollCorrect();
+
+		if (!ignoreRtl && window.rightToleft) {
+			x = this.drawingCtx.getWidth() - x;
+		}
+
 		if (x >= this.cellsLeft) {
 			if (this.topLeftFrozenCell) {
 				cFrozen = this.topLeftFrozenCell.getCol0();
@@ -11800,6 +11942,9 @@
 	};
 
 	WorksheetView.prototype.getCursorTypeFromXY = function (x, y) {
+		if (window.rightToleft) {
+			x = this.drawingCtx.getWidth() - x;
+		}
 		var canEdit = this.workbook.canEdit();
 		var viewMode = this.handlers.trigger('getViewMode');
 		this.handlers.trigger("checkLastWork");
@@ -11954,7 +12099,7 @@
 		if (readyMode && y <= this.cellsTop && this.groupHeight && y < this.groupHeight) {
 			c = null;
 			if(x > this.groupWidth + this.headersWidth) {
-				c = this._findColUnderCursor(x, true);
+				c = this._findColUnderCursor(x, true, null, true);
 			}
 			col = -1;
 			if (c) {
@@ -12011,7 +12156,7 @@
 		}
 
 		if (y <= this.cellsTop && x >= this.cellsLeft && y >= this.headersTop) {
-			c = this._findColUnderCursor(x, true);
+			c = this._findColUnderCursor(x, true, null, true);
 			if (c === null) {
 				return oResDefault;
 			}
@@ -12056,7 +12201,7 @@
 				}
 			}
 			if (y <= this.cellsTop && x >= this.cellsLeft) {
-				c = this._findColUnderCursor(x, true);
+				c = this._findColUnderCursor(x, true, null, true);
 				if (c !== null) {
 					target = c_oTargetType.ColumnHeader;
 					col = c.col;
@@ -12108,7 +12253,7 @@
         }
 
 		if (x > this.cellsLeft && y > this.cellsTop) {
-			c = this._findColUnderCursor(x, true);
+			c = this._findColUnderCursor(x, true, null, true);
 			r = this._findRowUnderCursor(y, true);
 			if (c === null || r === null) {
 				return oResDefault;
@@ -12440,11 +12585,11 @@
     WorksheetView.prototype._getRangeByXY = function (x, y) {
 		var c1, r1, c2, r2;
 
-		if (x < this.cellsLeft && y < this.cellsTop) {
+		if (this.checkRtl(x) < this.cellsLeft && y < this.cellsTop) {
 		    c1 = r1 = 0;
 			c2 = gc_nMaxCol0;
 			r2 = gc_nMaxRow0;
-		} else if (x < this.cellsLeft) {
+		} else if (this.checkRtl(x) < this.cellsLeft) {
 			r1 = r2 = this._findRowUnderCursor(y).row;
 			c1 = 0;
 			c2 = gc_nMaxCol0;
@@ -13481,7 +13626,14 @@
         xL += offsetX;
         yL += offsetY;
 
+		if (window.rightToleft) {
+			xL = this.drawingCtx.getWidth() - xL;
+		}
+
         var width = this._getColumnWidth(col);
+		if (window.rightToleft) {
+			width = -width;
+		}
         var height = this._getRowHeight(row);
 
         if ( AscBrowser.isCustomScaling() ) {
@@ -14110,10 +14262,10 @@
         var ar = table ? table.Ref.clone() : this.model.getSelection().getLast().clone(true);
 
         // Получаем координаты левого верхнего угла выделения
-        var xL = this._getColLeft(ar.c1);
+        var xL = this._getColLeft(ar.c1, true);
         var yL = this._getRowTop(ar.r1);
         // Получаем координаты правого нижнего угла выделения
-        var xR = this._getColLeft(ar.c2 + 1);
+        var xR = this._getColLeft(ar.c2 + 1, true);
         var yR = this._getRowTop(ar.r2 + 1);
 
         // range для пересчета видимой области
@@ -14130,7 +14282,7 @@
         var dRow;
 
         // Пересчитываем X и Y относительно видимой области
-        x += (this._getColLeft(this.visibleRange.c1) - this.cellsLeft);
+        x += (this._getColLeft(this.visibleRange.c1, true) - this.cellsLeft);
         y += (this._getRowTop(this.visibleRange.r1) - this.cellsTop);
 
         // Вычисляем расстояние от (x, y) до (xL, yL)
@@ -18627,6 +18779,9 @@
 			c = this._getVisibleCell(mc.c1, mc.r1);
 			fl = this._getCellFlags(c);
 		}
+
+		fl.wrapText = col === 0 && window.rightToleft;
+
 		var align = c.getAlign();
 		var indent = align && align.indent;
 		if (AscCommon.align_Distributed === fl.textAlign) {
@@ -18850,8 +19005,11 @@
 				var vro = getVisibleRangeObject();
 				var i, w, h, arrLeftS = [], arrRightS = [], arrBottomS = [];
 				var offsX = t._getColLeft(vro.vr.c1) - t._getColLeft(0) - vro.offsetX;
+				if (window.rightToleft) {
+					offsX = -offsX;
+				}
 				var offsY = t._getRowTop(vro.vr.r1) - t._getRowTop(0) - vro.offsetY;
-				var cellX = t._getColLeft(_c1) - offsX, cellY = t._getRowTop(_r1) - offsY;
+				var cellX = t._getColLeft(_c1, true) - offsX, cellY = t._getRowTop(_r1) - offsY;
 				var _left = cellX;
 				for (i = _c1; i >= vro.vr.c1; --i) {
 					w = t._getColumnWidth(i);
@@ -19973,6 +20131,8 @@
 			return false;
 		}
 
+		offsetX -= rightToLeftOffset;
+
 		var drawCurrentFilterButtons = function (filter) {
 			var autoFilter = filter.isAutoFilter() ? filter : filter.AutoFilter;
 
@@ -20044,7 +20204,7 @@
 							continue;
 						}
 
-						t.af_drawCurrentButton(offsetX, offsetY, {isSortState: isSortState, isSetFilter: isSetFilter, row: row, col: col});
+						t.af_drawCurrentButton(offsetX - rightToLeftOffset, offsetY, {isSortState: isSortState, isSetFilter: isSetFilter, row: row, col: col});
 					}
 				}
 			}
@@ -23526,7 +23686,8 @@
 
 		if(w > tm.width + 3) {
 			var diff = bActive ? 1 : 0;
-			ctx.setFillStyle(st.color).fillText(text, x + w / 2 - tm.width / 2 + diff, y + Asc.round(tm.baseline) + h / 2 -  tm.height / 2 + diff, undefined, sr.charWidths);
+			ctx.setFillStyle(st.color);
+			this._fillText(ctx, text, x + w / 2 - tm.width / 2 + diff, y + Asc.round(tm.baseline) + h / 2 -  tm.height / 2 + diff, undefined, sr.charWidths);
 		}
 
 		ctx.stroke();
@@ -26797,6 +26958,17 @@
 	WorksheetView.prototype.initRenderingSettings = function () {
 		this.renderingSettings = new CRenderingSettings();
 	};
+
+	WorksheetView.prototype.checkRtl = function (x, ctx) {
+		if (window.rightToleft) {
+			if (!ctx) {
+				ctx = this.drawingCtx;
+			}
+			return ctx.getWidth() - x;
+		}
+		return x;
+	};
+	
 
 	function CRenderingSettings() {
 		this.splitRowBG = null; //number - how much row need skip, every 2,3 and..
