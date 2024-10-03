@@ -2660,6 +2660,7 @@ var CPresentation = CPresentation || function(){};
 		
         if (checkEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
             AscCommon.History.Remove_LastPoint();
+            this.UpdateInterface();
             return;
         }
 
@@ -2670,6 +2671,8 @@ var CPresentation = CPresentation || function(){};
             AscCommon.History.Undo();
             AscCommon.History.Clear_Redo();
         }
+
+        this.UpdateInterface();
     };
 
     CPDFDoc.prototype.Refresh_RecalcData = function(){};

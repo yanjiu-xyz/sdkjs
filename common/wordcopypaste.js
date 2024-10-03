@@ -4484,9 +4484,11 @@ PasteProcessor.prototype =
 			if (oObjectsForDownload.aUrls.length > 0) {
 				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 					let oImageMap = {};
-					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-
-					addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arrImages);
+					AscCommon.ExecuteNoHistory(function() {
+						ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+						addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arrImages);
+					});
+					
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}, true);
 			} else {
@@ -5148,7 +5150,9 @@ PasteProcessor.prototype =
 		if (oObjectsForDownload.aUrls.length > 0) {
 			AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 				var oImageMap = {};
-				ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+				AscCommon.ExecuteNoHistory(function() {
+					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+				});
 				correctDrawingsForPdf(oPDFSelContent.Drawings, oThis.oDocument.DrawingDocument);
 				addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, aContent.aPastedImages);
 				oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
@@ -5245,7 +5249,9 @@ PasteProcessor.prototype =
 			if (oObjectsForDownload.aUrls.length > 0) {
 				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 					let oImageMap = {};
-					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+					AscCommon.ExecuteNoHistory(function() {
+						ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+					});
 					addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arr_Images);
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}, true);
@@ -5587,12 +5593,30 @@ PasteProcessor.prototype =
 				}
 			};
 
+			AscCommon.ExecuteNoHistory(function() {
+				for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
+					AscFormat.checkBlipFillRasterImages(presentationSelectedContent.Drawings[i].Drawing);
+					if (presentationSelectedContent.Drawings[i].Drawing.IsPdfDrawing && presentationSelectedContent.Drawings[i].Drawing.IsGraphicFrame()) {
+						let oGrFrame = presentationSelectedContent.Drawings[i].Drawing;
+						oGrFrame.applyDrawingSize({Width: nPageW *  2 / 3});
+						oGrFrame.graphicObject.Set_TableW(tblwidth_Mm, nPageW * 2 / 3);
+					}
+					if (!presentationSelectedContent.Drawings[i].Drawing.IsPdfDrawing) {
+						presentationSelectedContent.Drawings.splice(i, 1);
+						i--;
+					}
+				}
+			});
+
 			let oObjectsForDownload = GetObjectsForImageDownload(arr_Images, p_url === this.api.documentId);
 			if (oObjectsForDownload.aUrls.length > 0) {
 				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 					let oImageMap = {};
-					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-					addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arr_Images);
+					AscCommon.ExecuteNoHistory(function() {
+						ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+						addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arr_Images);
+					});
+					
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}, true);
 			} else {
@@ -5600,21 +5624,6 @@ PasteProcessor.prototype =
 				for(let nImg = 0; nImg < arr_Images.length; ++nImg) {
 					oImageMap[nImg] = arr_Images[nImg].Url
 				}
-
-				AscCommon.ExecuteNoHistory(function() {
-					for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
-						AscFormat.checkBlipFillRasterImages(presentationSelectedContent.Drawings[i].Drawing);
-						if (presentationSelectedContent.Drawings[i].Drawing.IsPdfDrawing && presentationSelectedContent.Drawings[i].Drawing.IsGraphicFrame()) {
-							let oGrFrame = presentationSelectedContent.Drawings[i].Drawing;
-							oGrFrame.applyDrawingSize({Width: nPageW *  2 / 3});
-							oGrFrame.graphicObject.Set_TableW(tblwidth_Mm, nPageW * 2 / 3);
-						}
-						if (!presentationSelectedContent.Drawings[i].Drawing.IsPdfDrawing) {
-							presentationSelectedContent.Drawings.splice(i, 1);
-							i--;
-						}
-					}
-				});
 
 				oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 			}
