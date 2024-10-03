@@ -286,6 +286,13 @@ function (window, undefined) {
 		return (this.scaling instanceof CCategoryAxisScaling);
 	};
 
+	CAxisBase.prototype.isHorizontal = function() {
+		return !this.isVertical();
+	};
+	CAxisBase.prototype.isVertical = function() {
+		return this.isValuesAxis();
+	};
+
 	// AxisUnits
 	drawingsChangesMap[AscDFH.historyitem_AxisUnits_SetUnitsLabel] = function (oClass, value) {
 		oClass.unitsLabel = value;
