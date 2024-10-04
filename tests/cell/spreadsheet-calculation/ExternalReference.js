@@ -876,6 +876,61 @@ $(function () {
 		assert.ok(oParser.parse(true, null, parseResult), "'[book.xlsx]Sheet 1'!A1");
 	});
 
+	QUnit.test("Test: \"Change external reference tests\"", function (assert) {
+		let fLink = '[new.xlsx]';
+		let sLink = '[new(1).xlsx]';
+		let parseResult = new AscCommonExcel.ParseResult([]);
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 1, 0);
+		
+		oParser = new parserFormula("'" + fLink + "Sheet1" + "'" + "!A1", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'" + fLink + "Sheet1" + "'" + "!A1");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", '#NAME!');
+		
+		assert.strictEqual(wb.externalReferences.length, 0, 'Reference length before add the first link');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'Reference length before add the second link');
+
+		oParser.isParsed = false;
+		assert.ok(oParser.parse(true, null, parseResult), "'" + fLink + "Sheet1" + "'" + "!A1");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", 'result after add reference');
+
+		//update external reference structure
+		initReference(wb.externalReferences[0], "Sheet1", "A1", [["1000"]], true);
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 1000, 'EXTERNAL_AFTER_INIT');
+
+		let externalWs = createExternalWorksheet("Sheet1");
+		externalWs.getRange2("A1").setValue("2000");
+		wb.externalReferences[0].updateData([externalWs]);
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 2000, 'EXTERNAL_AFTER_UPDATE');
+
+		// add the second link
+		oParser = new parserFormula("'" + sLink + "Sheet1" + "'" + "!A1", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'" + sLink + "Sheet1" + "'" + "!A1");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", '#NAME!');
+
+		assert.strictEqual(wb.externalReferences.length, 1, 'Reference length before add the second link');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 2, 'Reference length after add the second link');
+
+		oParser.isParsed = false;
+		assert.ok(oParser.parse(true, null, parseResult), "'" + sLink + "Sheet1" + "'" + "!A1");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", 'result after add reference');
+
+		initReference(wb.externalReferences[1], "Sheet1", "A1", [["1111"]], true);
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 1111, 'EXTERNAL_AFTER_INIT');
+
+		let secondExternalWs = createExternalWorksheet("Sheet1");
+		secondExternalWs.getRange2("A1").setValue("2222");
+		wb.externalReferences[1].updateData([secondExternalWs]);
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 2222, 'EXTERNAL_AFTER_UPDATE');
+
+
+		ws.getRange2("A100").setValue("='[new.xlsx]Sheet1'!A1");
+		assert.strictEqual(wb.externalReferences.length, 2, 'Amount of references before changing a cell');
+		ws.getRange2("A100").setValue("1");
+		assert.strictEqual(wb.externalReferences.length, 1, 'Amount of references after changing a cell with the reference');
+
+	});
 
 	// Mocks for API Testing
 	Asc.spreadsheet_api.prototype._init = function () {

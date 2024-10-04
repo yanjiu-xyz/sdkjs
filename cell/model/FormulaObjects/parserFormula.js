@@ -6292,14 +6292,15 @@ function parserFormula( formula, parent, _ws ) {
 		}
 	};
 	parserFormula.prototype._changeExternalLink = function(data) {
+		let existedWs = data.existedWs;
 		for (let i = 0; i < this.outStack.length; i++) {
 			let elem = this.outStack[i];
 			if (elem.type === cElementType.cell3D) {
-				this.outStack[i] = new AscCommonExcel.cRef3D(elem.value, data.existedWs, data.data.to);
+				this.outStack[i] = new AscCommonExcel.cRef3D(elem.value, existedWs ? existedWs : elem.ws, data.data.to);
 			} else if (elem.type === cElementType.cellsRange3D) {
-				this.outStack[i] = new AscCommonExcel.cArea3D(elem.value, data.existedWs, data.existedWs, data.data.to);
+				this.outStack[i] = new AscCommonExcel.cArea3D(elem.value, existedWs ? existedWs : elem.wsFrom, existedWs ? existedWs : elem.wsTo, data.data.to);
 			} else if (elem.type === cElementType.name3D) {
-				this.outStack[i] = new AscCommonExcel.cName3D(elem.value, data.existedWs, data.data.to);
+				this.outStack[i] = new AscCommonExcel.cName3D(elem.value, existedWs ? existedWs : elem.ws, data.data.to);
 			}
 		}
 	};
