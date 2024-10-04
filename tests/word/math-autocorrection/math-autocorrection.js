@@ -1186,6 +1186,19 @@ $(function () {
 				assert.ok(true, "Convert to professional view");
 				assert.strictEqual(MathContent.Root.Content[2].MathPrp.brk !== undefined, true, 'Check brk in "+" ParaRun');
 			})
+
+			QUnit.test('Check complex content in math func', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(0);
+
+				AddText('cos  \\theta ');
+
+				assert.ok(true, "Convert to linear view");
+
+				let strFunc = MathContent.GetTextOfElement(0).GetText();
+				assert.strictEqual(strFunc, 'cos⁡〖 θ〗', 'Check complex math func content');
+			})
 		})
 	})
 

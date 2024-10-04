@@ -6063,12 +6063,23 @@ CMathContent.prototype.GetTextOfElement = function(oMathText, isDefaultText)
 
 	const checkIsNotOperatorOrBracket = function (symbol)
 	{
-		return !AscMath.MathLiterals.operator.SearchU(symbol) // если не содержит оператор, скобки
-		&& !AscMath.MathLiterals.lrBrackets.SearchU(symbol)
-		&& !AscMath.MathLiterals.rBrackets.SearchU(symbol)
-		&& !AscMath.MathLiterals.lBrackets.SearchU(symbol)
-	}
+		if (!symbol)
+			return true;
 
+		let isNotOperatorOrBracket = true;
+
+		for (let i = 0; i < symbol.length; i++)
+		{
+			isNotOperatorOrBracket = !AscMath.MathLiterals.operator.SearchU(symbol[i]) // если не содержит оператор, скобки
+				&& !AscMath.MathLiterals.lrBrackets.SearchU(symbol[i])
+				&& !AscMath.MathLiterals.rBrackets.SearchU(symbol[i])
+				&& !AscMath.MathLiterals.lBrackets.SearchU(symbol[i])
+
+			if (!isNotOperatorOrBracket)
+				return false;
+		}
+	}
+	// refactor this to normal methods
 	for (let i = 0; i < this.Content.length; i++)
 	{
 		oMathText.Add(this.Content[i], false);
@@ -6100,7 +6111,7 @@ CMathContent.prototype.GetTextOfElement = function(oMathText, isDefaultText)
 					&& !(this.Content[i+1] instanceof CDelimiter || this.Content[i+1] instanceof CMathFunc))
 				{
 					let strText = this.Content[i].GetTextOfElement().GetText();
-					if (checkIsNotOperatorOrBracket(strText[strText.length - 1]) && !this.Content[i].Is_Empty())
+					if (checkIsNotOperatorOrBracket(strText) && !this.Content[i].Is_Empty())
 						oMathText.AddText(new AscMath.MathText(" ", this.Content[i]));
 				}
 			}

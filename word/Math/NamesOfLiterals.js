@@ -2432,6 +2432,7 @@
 							null
 						);
 
+						oTokens.value.type = MathStructures.char;
 						UnicodeArgument(
 							oTokens.value,
 							MathStructures.bracket_block,

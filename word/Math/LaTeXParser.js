@@ -800,6 +800,14 @@
 				third: oThirdContent
 			}
 		}
+		else if (!oThirdContent)
+		{
+			return {
+				type: Struc.func,
+				value: oFuncContent.data.slice(1),
+				style: oPr
+			}
+		}
 		else if (AscMath.MathLiterals.func.IsLaTeXIncludeNormal(name))
 		{
 			return {
@@ -1044,6 +1052,7 @@
 
 		if (oBaseContent && (oBaseContent.type === Struc.func || oBaseContent.type == Struc.func_lim || oBaseContent.type === Struc.nary))
 		{
+			this.SkipOneSpace();
 			oThirdContent = this.GetArguments(1);
 		}
 
@@ -1473,6 +1482,12 @@
 			this.oLookahead = this.oTokenizer.GetNextToken();
 		}
 	};
+	CLaTeXParser.prototype.SkipOneSpace = function ()
+	{
+		if (this.oLookahead.data === " ") {
+			this.oLookahead = this.oTokenizer.GetNextToken();
+		}
+	}
 	CLaTeXParser.prototype.GetArguments = function (intCountOfArguments)
 	{
 		let oArgument = [];
