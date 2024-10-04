@@ -605,7 +605,6 @@ CChangesPDFDocumentAddPage.prototype.Undo = function()
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
 		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-		nPos = pageChanges.Get
 		oDocument.RemovePage(nPos);
 	}
 	
