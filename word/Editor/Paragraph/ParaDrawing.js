@@ -313,6 +313,7 @@ ParaDrawing.prototype.GetRun = function()
 };
 ParaDrawing.prototype.GetDocumentContent = function()
 {
+	// TODO: Check why do we need to skip BlockLevelSdt here. If it's not necessary then merge this method with GetParentDocumentContent
 	const oParagraph = this.GetParagraph();
 	let oDocumentContent = (oParagraph ? oParagraph.GetParent() : null);
 	if (oDocumentContent && oDocumentContent.IsBlockLevelSdtContent())
@@ -320,6 +321,11 @@ ParaDrawing.prototype.GetDocumentContent = function()
 		oDocumentContent = oDocumentContent.Parent.Parent;
 	}
 	return oDocumentContent;
+};
+ParaDrawing.prototype.GetParentDocumentContent = function()
+{
+	let para = this.GetParagraph();
+	return para ? para.GetParent() : null;
 };
 ParaDrawing.prototype.Get_Run = function()
 {
