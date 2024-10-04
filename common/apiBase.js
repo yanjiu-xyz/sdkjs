@@ -1329,6 +1329,9 @@
 	baseEditorsApi.prototype._haveOtherChanges = function () {
 		return false;
 	};
+	baseEditorsApi.prototype._haveChanges = function() {
+		return AscCommon.History.Have_Changes();
+	};
 	baseEditorsApi.prototype._onSaveCallback = function (e) {
 		var t = this;
 		var nState;
@@ -2668,7 +2671,7 @@
 		if (this.canSave && this._saveCheck() && this.canSendChanges()) {
 			this.IsUserSave = !isAutoSave;
 
-			if (this.asc_isDocumentCanSave() || AscCommon.History.Have_Changes() || this._haveOtherChanges() ||
+			if (this.asc_isDocumentCanSave() || this._haveChanges() || this._haveOtherChanges() ||
 				this.canUnlockDocument || this.forceSaveUndoRequest) {
 				if (this._prepareSave(isIdle)) {
 					// Не даем пользователю сохранять, пока не закончится сохранение (если оно началось)

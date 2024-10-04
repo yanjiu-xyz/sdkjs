@@ -1817,30 +1817,9 @@
 			}
 		}
 	};
-	PDFEditorApi.prototype.asc_Save = function (isAutoSave, isIdle) {
-		let t = this;
-		let res = false;
+	PDFEditorApi.prototype._haveChanges = function() {
 		let oDoc = this.getPDFDoc();
-
-		if (this.canSave && this._saveCheck() && this.canSendChanges()) {
-			this.IsUserSave = !isAutoSave;
-
-			if (this.asc_isDocumentCanSave() || oDoc.History.Have_Changes() || this._haveOtherChanges() ||
-				this.canUnlockDocument || this.forceSaveUndoRequest) {
-				if (this._prepareSave(isIdle)) {
-					// Не даем пользователю сохранять, пока не закончится сохранение (если оно началось)
-					this.canSave = false;
-					this.CoAuthoringApi.askSaveChanges(function (e) {
-						t._onSaveCallback(e);
-					});
-					res = true;
-				}
-			} else if (this.isForceSaveOnUserSave && this.IsUserSave) {
-				this.forceSave();
-			}
-			this.checkSaveDocumentEvent(this.IsUserSave);
-		}
-		return res;
+		return oDoc.History.Have_Changes();
 	};
 	PDFEditorApi.prototype.pre_Save = function(_images) {
 		this.isSaveFonts_Images = true;
