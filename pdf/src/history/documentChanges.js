@@ -147,9 +147,10 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
     if (this.Items.length <= 0)
         return;
 
-    let oDocument = this.Class;
-    let oViewer = Asc.editor.getDocumentRenderer();
+    let oDocument       = this.Class;
+    let oViewer         = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
+    let pageChanges     = oDocument.pagesContentChanges;
 
     for (let i = 0; i < this.Items.length; ++i) {
         let oItem = this.Items[i];
@@ -162,20 +163,23 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
         // Ensure position is within bounds
         nPos = Math.min(nPos, oDocument.annots.length);
 
-        // Insert into document annots array
-        oDocument.annots.splice(nPos, 0, oItem);
+        nPage = pageChanges.GetPos(nPage);
+        if (false != nPage) {
+            // Insert into document annots array
+            oDocument.annots.splice(nPos, 0, oItem);
 
-        // Insert into viewer annots array
-        let annotsArray = oViewer.pagesInfo.pages[nPage].annots;
-        nPos = Math.min(nPos, annotsArray.length);
-        annotsArray.splice(nPos, 0, oItem);
-
-        if (oItem.IsComment())
-            editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
-
-        oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+            // Insert into viewer annots array
+            let annotsArray = oViewer.pagesInfo.pages[nPage].annots;
+            nPos = Math.min(nPos, annotsArray.length);
+            annotsArray.splice(nPos, 0, oItem);
+            oItem.AddToRedraw();
+            oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+            if (oItem.IsComment()) {
+                Asc.editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
+            }
+        }
+        
         oViewer.DrawingObjects.resetSelection();
-        oItem.AddToRedraw();
     }
 
     oDocument.SetMouseDownObject(null);
@@ -186,9 +190,10 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
     if (this.Items.length <= 0)
         return;
 
-    let oDocument = this.Class;
-    let oViewer = Asc.editor.getDocumentRenderer();
+    let oDocument       = this.Class;
+    let oViewer         = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
+    let pageChanges     = oDocument.pagesContentChanges;
 
     // Remove items in reverse order to maintain indices
     for (let i = this.Items.length - 1; i >= 0; --i) {
@@ -199,20 +204,24 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
         let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove,  true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
         if (nPos === false) continue;
 
-        oItem.AddToRedraw();
-        // Remove from document annots array
-        let indexInAnnots = oDocument.annots.indexOf(oItem);
-        if (indexInAnnots !== -1)
-            oDocument.annots.splice(indexInAnnots, 1);
-
         // Remove from viewer annots array
-        let annotsArray = oViewer.pagesInfo.pages[nPage].annots;
-        let indexInPageAnnots = annotsArray.indexOf(oItem);
-        if (indexInPageAnnots !== -1)
-            annotsArray.splice(indexInPageAnnots, 1);
+        nPage = pageChanges.GetPos(nPage);
+        if (false != nPage) {
+            oItem.AddToRedraw();
+            // Remove from document annots array
+            let indexInAnnots = oDocument.annots.indexOf(oItem);
+            if (indexInAnnots !== -1)
+                oDocument.annots.splice(indexInAnnots, 1);
 
-        if (oItem.IsComment())
-            editor.sync_RemoveComment(oItem.GetId());
+            let annotsArray = oViewer.pagesInfo.pages[nPage].annots;
+            let indexInPageAnnots = annotsArray.indexOf(oItem);
+            if (indexInPageAnnots !== -1)
+                annotsArray.splice(indexInPageAnnots, 1);
+        }
+
+        if (oItem.IsComment()) {
+            Asc.editor.sync_RemoveComment(oItem.GetId());
+        }
 
         oViewer.DrawingObjects.resetSelection();
     }
@@ -327,9 +336,10 @@ CChangesPDFDocumentFieldsContent.prototype.private_InsertInArrayLoad = function(
     if (this.Items.length <= 0)
         return;
 
-    let oDocument = this.Class;
-    let oViewer = Asc.editor.getDocumentRenderer();
+    let oDocument       = this.Class;
+    let oViewer         = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
+    let pageChanges     = oDocument.pagesContentChanges;
 
     for (let i = 0; i < this.Items.length; ++i) {
         let oItem = this.Items[i];
@@ -344,12 +354,14 @@ CChangesPDFDocumentFieldsContent.prototype.private_InsertInArrayLoad = function(
 
                 // Insert into document widgets array
                 nPos = Math.min(nPos, oDocument.widgets.length);
-                oDocument.widgets.splice(nPos, 0, oItem);
-
-                // Insert into viewer fields array
-                let fieldsArray = oViewer.pagesInfo.pages[nPage].fields;
-                nPos = Math.min(nPos, fieldsArray.length);
-                fieldsArray.splice(nPos, 0, oItem);
+                nPage = pageChanges.GetPos(nPage);
+                if (false !== nPage) {
+                    oDocument.widgets.splice(nPos, 0, oItem);
+                    // Insert into viewer fields array
+                    let fieldsArray = oViewer.pagesInfo.pages[nPage].fields;
+                    nPos = Math.min(nPos, fieldsArray.length);
+                    fieldsArray.splice(nPos, 0, oItem);
+                }
 
                 oItem.AddToRedraw();
             } else {
@@ -367,9 +379,10 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
     if (this.Items.length <= 0)
         return;
 
-    let oDocument = this.Class;
-    let oViewer = Asc.editor.getDocumentRenderer();
+    let oDocument       = this.Class;
+    let oViewer         = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
+    let pageChanges     = oDocument.pagesContentChanges;
 
     // Remove items in reverse order to maintain indices
     for (let i = this.Items.length - 1; i >= 0; --i) {
@@ -383,20 +396,23 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
             if (oItem.IsWidget()) {
                 let nPage = oItem.GetPage();
 
-                oItem.AddToRedraw();
+                nPage = pageChanges.GetPos(nPage);
+                if (false !== nPage) {
+                    oItem.AddToRedraw();
 
-                // Remove from document widgets array
-                let indexInWidgets = oDocument.widgets.indexOf(oItem);
-                if (indexInWidgets !== -1)
-                    oDocument.widgets.splice(indexInWidgets, 1);
+                    // Remove from document widgets array
+                    let indexInWidgets = oDocument.widgets.indexOf(oItem);
+                    if (indexInWidgets !== -1)
+                        oDocument.widgets.splice(indexInWidgets, 1);
 
-                // Remove from viewer fields array
-                let fieldsArray = oViewer.pagesInfo.pages[nPage].fields;
-                let indexInFields = fieldsArray.indexOf(oItem);
-                if (indexInFields !== -1)
-                    fieldsArray.splice(indexInFields, 1);
-                
-            } else {
+                    // Remove from viewer fields array
+                    let fieldsArray = oViewer.pagesInfo.pages[nPage].fields;
+                    let indexInFields = fieldsArray.indexOf(oItem);
+                    if (indexInFields !== -1)
+                        fieldsArray.splice(indexInFields, 1);
+                }
+            }
+            else {
                 let indexInParents = oDocument.widgetsParents.indexOf(oItem);
                 if (indexInParents !== -1)
                     oDocument.widgetsParents.splice(indexInParents, 1);
@@ -519,15 +535,13 @@ CChangesPDFDocumentDrawingsContent.prototype.private_InsertInArrayLoad = functio
 		
 		// Adjust position based on content changes
 		let nPos = drawingChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
-		if (false !== nPos)
-		{
-			nPos = Math.min(nPos, pdfDocument.drawings.length);
-			pdfDocument.drawings.splice(nPos, 0, oItem);
-		}
-		
+		if (nPos === false) continue;
+			
+		nPos = Math.min(nPos, pdfDocument.drawings.length);
 		nPage = pageChanges.GetPos(nPage);
 		if (false !== nPage)
 		{
+			pdfDocument.drawings.splice(nPos, 0, oItem);
 			let drawingsArray = oViewer.pagesInfo.pages[nPage].drawings;
 			
 			nPos = Math.min(nPos, drawingsArray.length);
@@ -558,16 +572,15 @@ CChangesPDFDocumentDrawingsContent.prototype.private_RemoveInArrayLoad = functio
 		let nPage = oItem.GetPage();
 		
 		let nPos = drawingChanges.Check(AscCommon.contentchanges_Remove, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
-		if (false !== nPos)
-		{
-			let indexInDrawings = pdfDocument.drawings.indexOf(oItem);
-			if (indexInDrawings !== -1)
-				pdfDocument.drawings.splice(indexInDrawings, 1);
-		}
+        if (nPos === false) continue;
 		
 		nPage = pageChanges.GetPos(nPage);
 		if (false !== nPage)
 		{
+            let indexInDrawings = pdfDocument.drawings.indexOf(oItem);
+			if (indexInDrawings !== -1)
+				pdfDocument.drawings.splice(indexInDrawings, 1);
+
 			let drawingsArray        = oViewer.pagesInfo.pages[nPage].drawings;
 			let indexInDrawingsArray = drawingsArray.indexOf(oItem);
 			if (indexInDrawingsArray !== -1)
