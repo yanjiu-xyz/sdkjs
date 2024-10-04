@@ -10600,13 +10600,14 @@
 	};
 	
 	/**
-	 * Move cursor to a specified position of the current text run.
-	 * If the current run is not assigned to any part of the document then returns false otherwise returns true.
-	 * If there was any selection in the document, it will be removed.
+	 * Moves a cursor to a specified position of the current text run.
+	 * If the current run is not assigned to any document part, then <b>false</b> is returned. Otherwise, this method returns <b>true</b>.
+	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiRun
 	 * @param {number} [nPos=0] - Desired cursor position.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/MoveCursorToPos.js
 	 */
 	ApiRun.prototype.MoveCursorToPos = function(nPos)
