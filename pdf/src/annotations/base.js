@@ -1086,7 +1086,7 @@
         let sContents       = this.GetContents();
         let BES             = this.GetBorderEffectStyle();
         let BEI             = this.GetBorderEffectIntensity();
-        let aStrokeColor    = this.GetStrokeColor();
+        let aStrokeColor    = this.GetType() == AscPDF.ANNOTATIONS_TYPES.Text ? this.GetFillColor() : this.GetStrokeColor();
         let nBorder         = this.GetBorder();
         let nBorderW        = this.GetWidth();
         let sModDate        = this.GetModDate(true);
