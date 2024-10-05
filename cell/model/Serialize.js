@@ -13841,7 +13841,7 @@
     InitOpenManager.prototype.ParseNum = function(oNum, oNumFmts, _useNumId) {
         var oRes = new AscCommonExcel.Num();
         var useNumId = false;
-        if (null != oNum && null != oNum.f) {
+        if (null != oNum && oNum.f) {//Excel ignors empty format. bug 70667
             oRes.f = oNum.f;
         } else {
             var sStandartNumFormat = AscCommonExcel.aStandartNumFormats[oNum.id];
