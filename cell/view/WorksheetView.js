@@ -10359,8 +10359,21 @@
         // Очищаем область
         var clearTop = this.cellsTop + diffHeight + (scrollDown && moveHeight > 0 ? moveHeight : 0);
         var clearHeight = (moveHeight > 0) ? Math.abs(dy) + lastRowHeight : ctxH - (this.cellsTop + diffHeight);
+        let clearOffset = 0;
+        if (this.workbook.getSmoothScrolling()) {
+			//need clear full row height
+			let firstDrawRow = vr.r1;
+			if (moveHeight > 0 && scrollDown) {
+				firstDrawRow = oldEnd + ((oldVRE_isPartial || (delta === 0)) ? 0 : 1);
+			}
+
+			let firstDrawRowPos = this.getCellTopRelative(firstDrawRow, undefined, true);
+			if (firstDrawRowPos && clearTop > firstDrawRowPos) {
+				clearOffset = clearTop - firstDrawRowPos;
+			}
+		}
         ctx.setFillStyle(this.settings.cells.defaultState.background)
-          .fillRect(this.headersLeft - this.groupWidth, clearTop, ctxW, clearHeight);
+          .fillRect(this.headersLeft - this.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
         this.drawingGraphicCtx.clearRect(this.headersLeft - this.groupWidth, clearTop, ctxW, clearHeight);
 
 		this._updateDrawingArea();
