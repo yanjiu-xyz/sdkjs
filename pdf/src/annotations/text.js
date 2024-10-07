@@ -124,7 +124,7 @@
         }
         else {
             oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
-            CommentData.SetUserData(oReply.GetApIdx());
+            CommentData.SetUserData(oReply.GetId());
         }
 
         if (!nPos) {
@@ -152,7 +152,7 @@
             bSolved = true;
         oAscCommData.asc_putSolved(bSolved);
         oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = this.GetApIdx();
+        oAscCommData.m_sUserData = this.GetId();
 
         this._replies.forEach(function(reply) {
             oAscCommData.m_aReplies.push(reply.GetAscCommentData());

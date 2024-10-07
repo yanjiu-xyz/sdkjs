@@ -2498,7 +2498,7 @@ var CPresentation = CPresentation || function(){};
             }
             else {
                 oStickyComm = this.AddAnnot(oProps);
-                AscCommentData.m_sUserData = oStickyComm.GetApIdx();
+                AscCommentData.m_sUserData = oStickyComm.GetId();
                 AscCommentData.m_sQuoteText = "";
                 this.CheckComment(oStickyComm);
             }

@@ -734,11 +734,11 @@
         }
 
         let oFirstCommToEdit;
-        if (this.GetApIdx() == oCommentData.m_sUserData)
+        if (this.GetId() == oCommentData.m_sUserData)
             oFirstCommToEdit = this;
         else {
             oFirstCommToEdit = this._replies.find(function(oReply) {
-                return oCommentData.m_sUserData == oReply.GetApIdx(); 
+                return oCommentData.m_sUserData == oReply.GetId(); 
             });
         }
         
@@ -762,7 +762,7 @@
                 continue;
 
             oReplyCommentData = oCommentData.m_aReplies.find(function(item) {
-                return item.m_sUserData == oReply.GetApIdx(); 
+                return item.m_sUserData == oReply.GetId(); 
             });
 
             if (oReplyCommentData) {
@@ -780,7 +780,7 @@
         for (let i = 0; i < oCommentData.m_aReplies.length; i++) {
             oReplyCommentData = oCommentData.m_aReplies[i];
             if (!this._replies.find(function(reply) {
-                return oReplyCommentData.m_sUserData == reply.GetApIdx();
+                return oReplyCommentData.m_sUserData == reply.GetId();
             })) {
                 AscPDF.CAnnotationText.prototype.AddReply.call(this, oReplyCommentData, i);
             }
@@ -821,7 +821,7 @@
         oAscCommData.asc_putUserName(this.GetAuthor());
         oAscCommData.asc_putSolved(false);
         oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = this.GetApIdx();
+        oAscCommData.m_sUserData = this.GetId();
 
         this._replies.forEach(function(reply) {
             oAscCommData.m_aReplies.push(reply.GetAscCommentData());

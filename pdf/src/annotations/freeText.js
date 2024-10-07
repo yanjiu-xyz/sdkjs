@@ -892,7 +892,7 @@
         oAscCommData.asc_putUserName(oMainComm.GetAuthor());
         oAscCommData.asc_putSolved(false);
         oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = oMainComm.GetApIdx();
+        oAscCommData.m_sUserData = oMainComm.GetId();
 
         this._replies.forEach(function(reply, index) {
             if (index == 0)
