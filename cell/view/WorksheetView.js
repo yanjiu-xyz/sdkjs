@@ -27017,6 +27017,13 @@
 					cell.setValue(valF, null, true);
 				});
 			}
+
+			// todo it works correctly, external dependencies are loaded, but additional checks are needed
+			// let afterExternalReferences = ws.getExternalReferencesByCell(rangeF, true, true);
+			// if (afterExternalReferences /*&& !_compare(afterExternalReferences, beforeExternalReferences)*/) {
+			// 	//t.model.workbook.handlers.trigger("asc_onNeedUpdateExternalReference");
+			// 	ws.updateExternalReferenceByCell(rangeF, true);
+			// }
 		}
 
 		ws.model.workbook.dependencyFormulas.unlockRecal();
@@ -28325,7 +28332,16 @@
 					sFormula = sFormula.substr(1);
 					var offset = new AscCommon.CellBase(0, 0);
 					var assemb, _p_ = new AscCommonExcel.parserFormula(sFormula, null, ws.model);
-					if (_p_.parse()) {
+
+					let parseResult = new AscCommonExcel.ParseResult();
+					if (_p_.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
+						if (parseResult.externalReferenesNeedAdd && ws && ws.model && ws.model.workbook) {
+							ws.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+							
+							// we create the formula again and parse it to correctly obtain externalLink and elements in outStack
+							_p_ = new AscCommonExcel.parserFormula(sFormula, null, ws.model);
+							_p_.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)
+						}
 						assemb = _p_.changeOffset(offset, null, true).assemble(true);
 						rangeStyle.formula = {range: range, val: "=" + assemb};
 					} else {
