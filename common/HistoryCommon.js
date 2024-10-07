@@ -1830,7 +1830,8 @@
 	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2227 << 16;
 	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2228 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2229 << 16;
-
+	window['AscDFH'].historyitem_type_Pdf_Page				= 2230 << 16;
+	
 	window['AscDFH'].historyitem_type_CustomProperties      = 2300 << 16;
 	
 	

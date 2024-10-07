@@ -58,6 +58,21 @@ CChangesPDFDocumentAnnotsContent.prototype.IsContentChange = function(){
     return true;
 };
 
+CChangesPDFDocumentAnnotsContent.prototype.ReadFromBinary = function (reader) {
+    this.PageId = reader.GetString2();
+    AscDFH.CChangesDrawingsContent.prototype.ReadFromBinary.call(this, reader);
+};
+CChangesPDFDocumentAnnotsContent.prototype.WriteToBinary = function (writer) {
+    let oViewer = Asc.editor.getDocumentRenderer();
+    if (!this.PageId) {
+        let nPage = this.Items[0].GetPage();
+        this.PageId = oViewer.pagesInfo.pages[nPage].GetId();
+    }
+    writer.WriteString2(this.PageId);
+
+    AscDFH.CChangesDrawingsContent.prototype.WriteToBinary.call(this, writer);
+};
+
 CChangesPDFDocumentAnnotsContent.prototype.Undo = function()
 {
     let oDocument = this.Class;
@@ -150,11 +165,10 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
     let oDocument       = this.Class;
     let oViewer         = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
-    let pageChanges     = oDocument.pagesContentChanges;
+    let oPage          = AscCommon.g_oTableId.Get_ById(this.PageId);
 
     for (let i = 0; i < this.Items.length; ++i) {
         let oItem = this.Items[i];
-        let nPage = oItem.GetPage();
 
         // Adjust position based on content changes
         let nPos = oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
@@ -163,13 +177,12 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
         // Ensure position is within bounds
         nPos = Math.min(nPos, oDocument.annots.length);
 
-        nPage = pageChanges.GetPos(nPage);
-        if (false !== nPage) {
+        if (oPage) {
             // Insert into document annots array
             oDocument.annots.splice(nPos, 0, oItem);
 
             // Insert into viewer annots array
-            let annotsArray = oViewer.pagesInfo.pages[nPage].annots;
+            let annotsArray = oPage.annots;
             nPos = Math.min(nPos, annotsArray.length);
             annotsArray.splice(nPos, 0, oItem);
             oItem.AddToRedraw();
@@ -193,27 +206,25 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
     let oDocument       = this.Class;
     let oViewer         = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
-    let pageChanges     = oDocument.pagesContentChanges;
+    let oPage          = AscCommon.g_oTableId.Get_ById(this.PageId);
 
     // Remove items in reverse order to maintain indices
     for (let i = this.Items.length - 1; i >= 0; --i) {
         let oItem = this.Items[i];
-        let nPage = oItem.GetPage();
 
         // Adjust position based on content changes
         let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove,  true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
         if (nPos === false) continue;
 
         // Remove from viewer annots array
-        nPage = pageChanges.GetPos(nPage);
-        if (false !== nPage) {
+        if (oPage) {
             oItem.AddToRedraw();
             // Remove from document annots array
             let indexInAnnots = oDocument.annots.indexOf(oItem);
             if (indexInAnnots !== -1)
                 oDocument.annots.splice(indexInAnnots, 1);
 
-            let annotsArray = oViewer.pagesInfo.pages[nPage].annots;
+            let annotsArray = oPage.annots;
             let indexInPageAnnots = annotsArray.indexOf(oItem);
             if (indexInPageAnnots !== -1)
                 annotsArray.splice(indexInPageAnnots, 1);
@@ -248,6 +259,21 @@ CChangesPDFDocumentFieldsContent.prototype.constructor = CChangesPDFDocumentFiel
 CChangesPDFDocumentFieldsContent.prototype.Type = AscDFH.historyitem_PDF_Document_FieldsContent;
 CChangesPDFDocumentFieldsContent.prototype.IsContentChange = function(){
     return true;
+};
+
+CChangesPDFDocumentFieldsContent.prototype.ReadFromBinary = function (reader) {
+    this.PageId = reader.GetString2();
+    AscDFH.CChangesDrawingsContent.prototype.ReadFromBinary.call(this, reader);
+};
+CChangesPDFDocumentFieldsContent.prototype.WriteToBinary = function (writer) {
+    let oViewer = Asc.editor.getDocumentRenderer();
+    if (!this.PageId) {
+        let nPage = this.Items[0].GetPage();
+        this.PageId = oViewer.pagesInfo.pages[nPage].GetId();
+    }
+    writer.WriteString2(this.PageId);
+
+    AscDFH.CChangesDrawingsContent.prototype.WriteToBinary.call(this, writer);
 };
 
 CChangesPDFDocumentFieldsContent.prototype.Undo = function()
@@ -337,9 +363,8 @@ CChangesPDFDocumentFieldsContent.prototype.private_InsertInArrayLoad = function(
         return;
 
     let oDocument       = this.Class;
-    let oViewer         = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
-    let pageChanges     = oDocument.pagesContentChanges;
+    let oPage           = AscCommon.g_oTableId.Get_ById(this.PageId);
 
     for (let i = 0; i < this.Items.length; ++i) {
         let oItem = this.Items[i];
@@ -350,15 +375,12 @@ CChangesPDFDocumentFieldsContent.prototype.private_InsertInArrayLoad = function(
 
         if (oItem.IsForm()) {
             if (oItem.IsWidget()) {
-                let nPage = oItem.GetPage();
-
                 // Insert into document widgets array
                 nPos = Math.min(nPos, oDocument.widgets.length);
-                nPage = pageChanges.GetPos(nPage);
-                if (false !== nPage) {
+                if (oPage) {
                     oDocument.widgets.splice(nPos, 0, oItem);
                     // Insert into viewer fields array
-                    let fieldsArray = oViewer.pagesInfo.pages[nPage].fields;
+                    let fieldsArray = oPage.fields;
                     nPos = Math.min(nPos, fieldsArray.length);
                     fieldsArray.splice(nPos, 0, oItem);
                 }
@@ -380,9 +402,8 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
         return;
 
     let oDocument       = this.Class;
-    let oViewer         = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
-    let pageChanges     = oDocument.pagesContentChanges;
+    let oPage           = AscCommon.g_oTableId.Get_ById(this.PageId);
 
     // Remove items in reverse order to maintain indices
     for (let i = this.Items.length - 1; i >= 0; --i) {
@@ -394,10 +415,7 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
 
         if (oItem.IsForm()) {
             if (oItem.IsWidget()) {
-                let nPage = oItem.GetPage();
-
-                nPage = pageChanges.GetPos(nPage);
-                if (false !== nPage) {
+                if (oPage) {
                     oItem.AddToRedraw();
 
                     // Remove from document widgets array
@@ -406,7 +424,7 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
                         oDocument.widgets.splice(indexInWidgets, 1);
 
                     // Remove from viewer fields array
-                    let fieldsArray = oViewer.pagesInfo.pages[nPage].fields;
+                    let fieldsArray = oPage.fields;
                     let indexInFields = fieldsArray.indexOf(oItem);
                     if (indexInFields !== -1)
                         fieldsArray.splice(indexInFields, 1);
@@ -442,6 +460,20 @@ CChangesPDFDocumentDrawingsContent.prototype.IsContentChange = function(){
     return true;
 };
 
+CChangesPDFDocumentDrawingsContent.prototype.ReadFromBinary = function (reader) {
+    this.PageId = reader.GetString2();
+    AscDFH.CChangesDrawingsContent.prototype.ReadFromBinary.call(this, reader);
+};
+CChangesPDFDocumentDrawingsContent.prototype.WriteToBinary = function (writer) {
+    let oViewer = Asc.editor.getDocumentRenderer();
+    if (!this.PageId) {
+        let nPage = this.Items[0].GetPage();
+        this.PageId = oViewer.pagesInfo.pages[nPage].GetId();
+    }
+    writer.WriteString2(this.PageId);
+
+    AscDFH.CChangesDrawingsContent.prototype.WriteToBinary.call(this, writer);
+};
 CChangesPDFDocumentDrawingsContent.prototype.Undo = function()
 {
     let oDocument = this.Class;
@@ -526,23 +558,21 @@ CChangesPDFDocumentDrawingsContent.prototype.private_InsertInArrayLoad = functio
 	let pdfDocument    = this.Class;
 	let oViewer        = Asc.editor.getDocumentRenderer();
 	let drawingChanges = pdfDocument.drawingsContentChanges;
-	let pageChanges    = pdfDocument.pagesContentChanges;
+	let oPage          = AscCommon.g_oTableId.Get_ById(this.PageId);
 	
 	for (let i = 0; i < this.Items.length; ++i)
 	{
 		let oItem = this.Items[i];
-		let nPage = oItem.GetPage();
 		
 		// Adjust position based on content changes
 		let nPos = drawingChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
 		if (nPos === false) continue;
-			
 		nPos = Math.min(nPos, pdfDocument.drawings.length);
-		nPage = pageChanges.GetPos(nPage);
-		if (false !== nPage)
+		
+		if (oPage)
 		{
 			pdfDocument.drawings.splice(nPos, 0, oItem);
-			let drawingsArray = oViewer.pagesInfo.pages[nPage].drawings;
+			let drawingsArray = oPage.drawings;
 			
 			nPos = Math.min(nPos, drawingsArray.length);
 			drawingsArray.splice(nPos, 0, oItem);
@@ -563,25 +593,23 @@ CChangesPDFDocumentDrawingsContent.prototype.private_RemoveInArrayLoad = functio
 	let pdfDocument    = this.Class;
 	let oViewer        = Asc.editor.getDocumentRenderer();
 	let drawingChanges = pdfDocument.drawingsContentChanges;
-	let pageChanges    = pdfDocument.pagesContentChanges;
+	let oPage          = AscCommon.g_oTableId.Get_ById(this.PageId);
 	
 	// Remove items in reverse order to maintain indices
 	for (let i = this.Items.length - 1; i >= 0; --i)
 	{
 		let oItem = this.Items[i];
-		let nPage = oItem.GetPage();
 		
 		let nPos = drawingChanges.Check(AscCommon.contentchanges_Remove, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
         if (nPos === false) continue;
 		
-		nPage = pageChanges.GetPos(nPage);
-		if (false !== nPage)
+		if (oPage)
 		{
             let indexInDrawings = pdfDocument.drawings.indexOf(oItem);
 			if (indexInDrawings !== -1)
 				pdfDocument.drawings.splice(indexInDrawings, 1);
 
-			let drawingsArray        = oViewer.pagesInfo.pages[nPage].drawings;
+			let drawingsArray        = oPage.drawings;
 			let indexInDrawingsArray = drawingsArray.indexOf(oItem);
 			if (indexInDrawingsArray !== -1)
 				drawingsArray.splice(indexInDrawingsArray, 1);
@@ -647,11 +675,12 @@ CChangesPDFDocumentAddPage.prototype.Load = function()
 	{
 		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
 		nPos = pageChanges.Check(AscCommon.contentchanges_Add, nPos);
-		pdfDocument.AddPage(nPos);
+		pdfDocument.AddPage(nPos, this.Items[nIndex]);
 	}
 };
 CChangesPDFDocumentAddPage.prototype.private_WriteItem = function(Writer, oPage)
 {
+    Writer.WriteString2(oPage.Id);
 	Writer.WriteLong(oPage.Rotate);
 	Writer.WriteLong(oPage.Dpi);
 	Writer.WriteLong(oPage.W);
@@ -660,6 +689,7 @@ CChangesPDFDocumentAddPage.prototype.private_WriteItem = function(Writer, oPage)
 CChangesPDFDocumentAddPage.prototype.private_ReadItem = function(Reader)
 {
 	return {
+        Id: Reader.GetString2(),
 		Rotate: Reader.GetLong(),
 		Dpi: Reader.GetLong(),
 		W: Reader.GetLong(),
@@ -724,6 +754,7 @@ CChangesPDFDocumentRemovePage.prototype.Load = function()
 };
 CChangesPDFDocumentRemovePage.prototype.private_WriteItem = function(Writer, oPage)
 {
+    Writer.WriteString2(oPage.Id);
 	Writer.WriteLong(oPage.Rotate);
 	Writer.WriteLong(oPage.Dpi);
 	Writer.WriteLong(oPage.W);
@@ -732,6 +763,7 @@ CChangesPDFDocumentRemovePage.prototype.private_WriteItem = function(Writer, oPa
 CChangesPDFDocumentRemovePage.prototype.private_ReadItem = function(Reader)
 {
 	return {
+        Id: Reader.GetString2(),
 		Rotate: Reader.GetLong(),
 		Dpi: Reader.GetLong(),
 		W: Reader.GetLong(),

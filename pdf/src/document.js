@@ -2195,10 +2195,21 @@ var CPresentation = CPresentation || function(){};
 			Image : undefined
 		});
 
+        let oPageInfo;
+        // from history
+        if (oPage.Id) {
+            oPageInfo = AscCommon.g_oTableId.GetById(oPage.Id);
+        }
+        // to history
+        else {
+            oPageInfo = new AscPDF.CPageInfo();
+            oPage.Id = oPageInfo.Id;
+        }
+
         if (oViewer.pagesInfo.pages.length == 0)
             oViewer.pagesInfo.setCount(1);
         else
-            oViewer.pagesInfo.pages.splice(nPos, 0, new AscPDF.CPageInfo());
+            oViewer.pagesInfo.pages.splice(nPos, 0, oPageInfo);
 
         // can be uninitialized on Apply_Changes
         if (oViewer.thumbnails) {
@@ -2279,8 +2290,11 @@ var CPresentation = CPresentation || function(){};
         // убираем информацию о странице
         let aPages = oFile.removePage(nPos);
 		oViewer.drawingPages.splice(nPos, 1);
-        oViewer.pagesInfo.pages.splice(nPos, 1);
+        let aPagesInfo = oViewer.pagesInfo.pages.splice(nPos, 1);
         
+        // to history
+        aPages[0].Id = aPagesInfo[0].Id;
+
         // can be uninitialized on Apply_Changes
         if (oViewer.thumbnails) {
             oViewer.thumbnails._deletePage(nPos);
