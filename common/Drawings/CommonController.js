@@ -4300,6 +4300,7 @@
 					//Set the properties which was already set. It needs for the fast coediting. TODO: check it
 					oChartSpace.setChart(oChartSpace.chart.createDuplicate());
 					oChartSpace.setStyle(oChartSpace.style);
+					oChartSpace.setDisplayTrendlinesEquation(false);
 
 					//Apply chart preset TODO: remove this when chartStyle will be implemented
 					var oChart = oChartSpace.chart;
@@ -4514,6 +4515,7 @@
 					}
 
 					ret.putStyle(chart_space.getChartStyleIdx());
+					ret.putDisplayTrendlinesEquation(chart_space.getDisplayTrendlinesEquation());
 
 					ret.putTitle(isRealObject(chart.title) ? (chart.title.overlay ? c_oAscChartTitleShowSettings.overlay : c_oAscChartTitleShowSettings.noOverlay) : c_oAscChartTitleShowSettings.none);
 

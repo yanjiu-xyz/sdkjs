@@ -14323,6 +14323,9 @@
         if(AscFormat.isRealNumber(this.trendlineType)) {
             oCopy.setTrendlineType(this.trendlineType);
         }
+        if(this.trendlineLbl) {
+            oCopy.setTrendlineLbl(this.trendlineLbl.createDuplicate());
+        }
     };
     CTrendLine.prototype.applyChartStyle = function(oChartStyle, oColors, oAdditionalData, bReset) {
         if(!this.parent) {
@@ -14466,6 +14469,35 @@
     };
     CTrendLine.prototype.Refresh_RecalcData2 = function(pageIndex, object) {
         this.onChartInternalUpdate();
+    };
+    CTrendLine.prototype.createLabel = function() {
+        let oLabel = new AscFormat.CDLbl();
+        let oChartSpace = this.getChartSpace();
+        if(!oChartSpace)
+            return oLabel;
+        let oChartStyle = oChartSpace.chartStyle;
+        let oChartColors = oChartSpace.chartColors;
+        if(!oChartStyle || !oChartColors)
+            return oLabel;
+        let oTrendlineLabelStyle = oChartStyle.trendlineLabel;
+        if(!oTrendlineLabelStyle)
+            return oLabel;
+        oLabel.setParent(this);
+        oLabel.applyStyleEntry(oTrendlineLabelStyle, oChartColors.generateColors(1), 0, true);
+        return oLabel;
+    };
+
+    CTrendLine.prototype.setShowLabel = function(bShow) {
+        if(bShow) {
+            if(!this.trendlineLbl) {
+                this.setTrendlineLbl(this.createLabel());
+            }
+        }
+        else {
+            if(this.trendlineLbl) {
+                this.setTrendlineLbl(null);
+            }
+        }
     };
 
     function CUpDownBars() {

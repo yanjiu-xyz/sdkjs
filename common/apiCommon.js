@@ -1067,6 +1067,8 @@ function (window, undefined) {
 		this.depthAxes = [];
 
 		this.view3D = null;
+
+		this.displayTrendlinesEquation = false;
 	}
 
 	//TODO:remove this---------------------
@@ -1292,6 +1294,9 @@ function (window, undefined) {
 			return false;
 		}
 		if (this.view3D && oPr.view3D && !this.view3D.isEqual(oPr.view3D)) {
+			return false;
+		}
+		if(this.displayTrendlinesEquation !== oPr.displayTrendlinesEquation) {
 			return false;
 		}
 		return true;
@@ -1656,6 +1661,12 @@ function (window, undefined) {
 		if (this.chartSpace) {
 			this.chartSpace.onDataUpdate();
 		}
+	};
+	asc_ChartSettings.prototype.getDisplayTrendlinesEquation = function() {
+		return this.displayTrendlinesEquation;
+	};
+	asc_ChartSettings.prototype.putDisplayTrendlinesEquation = function(v) {
+		this.displayTrendlinesEquation = v;
 	};
 
 	/** @constructor */
@@ -6124,7 +6135,8 @@ function (window, undefined) {
 	prot["getView3d"] = prot.getView3d;
 	prot["putView3d"] = prot.putView3d;
 	prot["setView3d"] = prot.setView3d;
-
+	prot["getDisplayTrendlinesEquation"] = prot.getDisplayTrendlinesEquation;
+	prot["putDisplayTrendlinesEquation"] = prot.putDisplayTrendlinesEquation;
 
 	window["AscCommon"].asc_CRect = asc_CRect;
 	prot = asc_CRect.prototype;

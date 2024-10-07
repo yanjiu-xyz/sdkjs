@@ -9217,6 +9217,58 @@ function(window, undefined) {
 		}
 		return oChartStyleCache.getStyleIdx(this.getChartType(), this.chartStyle.id);
 	};
+	CChartSpace.prototype.getDisplayTrendlinesEquation = function () {
+		let aSeries = this.getAllSeries();
+		let bResult = null;
+		if(aSeries.length === 0) {
+			return bResult;
+		}
+		let aAllTrendlines = [];
+		let oTrendline;
+		for(let nSer = 0; nSer < aSeries.length; ++nSer) {
+			oTrendline = aSeries[nSer].trendline;
+			if(oTrendline) {
+				aAllTrendlines.push(oTrendline);
+			}
+		}
+		if(aAllTrendlines.length === 0) {
+			return null;
+		}
+		if(!oTrendline) {
+			return bResult;
+		}
+		oTrendline = aAllTrendlines[0];
+		bResult = oTrendline.trendlineLbl !== null;
+		for(let nIdx = 1; nIdx < aAllTrendlines.length; ++nIdx) {
+			let bLbl = aAllTrendlines[nIdx].trendlineLbl !== null;
+			if(bResult !== bLbl) {
+				return undefined;
+			}
+		}
+		return bResult;
+	};
+	CChartSpace.prototype.setDisplayTrendlinesEquation = function (bValue) {
+		if(bValue === this.getDisplayTrendlinesEquation()) {
+			return;
+		}
+		let aSeries = this.getAllSeries();
+		let bResult = null;
+		if(aSeries.length === 0) {
+			return;
+		}
+		let aAllTrendlines = [];
+		let oTrendline;
+		for(let nSer = 0; nSer < aSeries.length; ++nSer) {
+			oTrendline = aSeries[nSer].trendline;
+			if(oTrendline) {
+				aAllTrendlines.push(oTrendline);
+			}
+		}
+		for(let nIdx = 0; nIdx < aAllTrendlines.length; ++nIdx) {
+			aAllTrendlines[nIdx].setShowLabel(bValue);
+		}
+		return bResult;
+	};
 	CChartSpace.prototype.buildSeries = function (aRefs) {
 		if (!Array.isArray(aRefs)) {
 			return Asc.c_oAscError.ID.No;
