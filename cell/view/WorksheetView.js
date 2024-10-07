@@ -27532,6 +27532,9 @@
 			var valF = arrFormula[i].val;
 			var arrayRef = arrFormula[i].arrayRef;
 
+			if (arrFormula[i].ca) {
+				AscCommonExcel.g_cCalcRecursion.setCellPasteValue(arrFormula[i].oldValue);
+			}
 			//***array-formula***
 			if (arrayRef && window['AscCommonExcel'].bIsSupportArrayFormula) {
 				var rangeFormulaArray = ws.model.getRange3(arrayRef.r1, arrayRef.c1, arrayRef.r2, arrayRef.c2);
@@ -28759,6 +28762,7 @@
 			var sId = _newVal.getName();
 
 			if (pastedFormula || modelFormula) {
+				let oFromCell = formulaProps.cell;
 				//formula
 				if (pastedFormula && !isOneMerge) {
 
@@ -28828,13 +28832,25 @@
 							assemb = applySpecialOperationFormula(cellValueDataDup, modelVal, assemb, modelFormula, needOperation, isEmptyPasted, isEmptyModel);
 						}
 						if (assemb !== null) {
-							rangeStyle.formula = {range: range, val: "=" + assemb, arrayRef: arrayFormulaRef};
+							rangeStyle.formula = {
+								range: range,
+								val: "=" + assemb,
+								arrayRef: arrayFormulaRef,
+								ca: oFromCell.getFormulaParsed().ca,
+								oldValue: oFromCell.getNumberValue()
+							};
 						}
 					}
 				} else if (modelFormula && needOperation !== null) {
 					assemb = applySpecialOperationFormula(cellValueDataDup, modelVal, null, modelFormula, needOperation, isEmptyPasted, isEmptyModel);
 					if (assemb !== null) {
-						rangeStyle.formula = {range: range, val: "=" + assemb, arrayRef: arrayFormulaRef};
+						rangeStyle.formula = {
+							range: range,
+							val: "=" + assemb,
+							arrayRef: arrayFormulaRef,
+							ca: oFromCell.getFormulaParsed().ca,
+							oldValue: oFromCell.getNumberValue()
+						};
 					}
 				}
 			}
