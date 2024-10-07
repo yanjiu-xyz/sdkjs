@@ -1365,7 +1365,8 @@
 							if (t.targetInfo) {
 								wb._onUpdateWorksheet(t.targetInfo.coordX, t.targetInfo.coordY, false);
 							}
-							t.scroll(d);
+							const ws = wb.getWorksheet();
+							t.scroll(ws.convertOffsetToSmooth(d));
 							_checkLastTab();
 						});
 				}

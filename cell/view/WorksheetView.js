@@ -1191,7 +1191,7 @@
 
 
 		beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
-		let defaultScrollPxStep = Asc.round(this.defaultColWidthPx * this.getZoom());
+		let defaultScrollPxStep = Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
 	};
 
@@ -1218,7 +1218,7 @@
 			tmp -= 1;
 		}*/
 		let col = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
-		let defaultScrollPxStep = Asc.round(this.defaultColWidthPx * this.getZoom());
+		let defaultScrollPxStep = Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
 		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft;
 		beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
@@ -11157,7 +11157,7 @@
         var fixStartCol = new asc_Range(vr.c1, vr.r1, vr.c1, vr.r2);
 
 		let isReverse = delta < 0;
-		let unitDeltaStep = Asc.round(this.defaultColWidthPx * this.getZoom());
+		let unitDeltaStep = Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
 		let defaultScrollPxStep = Math.ceil(unitDeltaStep * Math.abs(delta));
 
 		let deltaCols = 0, deltaCorrect = 0;
@@ -13262,6 +13262,55 @@
         return (new Asc.Range(c1, r1, c1, r1)).getName(AscCommonExcel.g_R1C1Mode ?
 			AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
     };
+
+	WorksheetView.prototype.convertOffsetToSmooth = function (offset) {
+		if (!this.workbook.getSmoothScrolling()) {
+			return offset;
+		}
+
+		let vr = this.visibleRange;
+		if (offset.col !== 0) {
+			if (offset.col < 0) {
+				//left
+				let x1 = this.getCellLeft(vr.c1);
+				let x2 = this.getCellLeft(Math.max(vr.c1 + offset.col, 0));
+				let rowsWidth = x1 - x2;
+				let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom() * this.getRetinaPixelRatio());
+				offset.col = -rowsWidth / unitDeltaStep;
+				offset.col -= this.getHorizontalScrollCorrect() / unitDeltaStep;
+			} else {
+				//down
+				/*let x1 = this.getCellLeft(vr.c2);
+				let x2 = this.getCellLeft(vr.c2 + offset.col);
+				let rowsWidth = x2 - x1;
+				let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
+				offset.col = rowsWidth / unitDeltaStep;
+				offset.col += this.getHorizontalScrollCorrect() / unitDeltaStep;*/
+			}
+			//this.setHorizontalScrollCorrect(0);
+		}
+		if (offset.row !== 0) {
+			if (offset.row < 0) {
+				//up
+				let y1 = this.getCellTop(vr.r1);
+				let y2 = this.getCellTop(Math.max(vr.r1 + offset.row, 0));
+				let rowsHeight = y1 - y2;
+				let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
+				offset.row = -rowsHeight / unitDeltaStep;
+				offset.row -= this.getScrollCorrect() / unitDeltaStep;
+			} else {
+				//down
+				/*let y1 = this.getCellTop(vr.r2);
+				let y2 = this.getCellTop(vr.r2 + offset.row);
+				let rowsHeight = y2 - y1;
+				let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
+				offset.row = rowsHeight / unitDeltaStep;
+				offset.row += this.getScrollCorrect() / unitDeltaStep;*/
+			}
+			//this.setScrollCorrect(0);
+		}
+		return offset;
+	};
 
 	WorksheetView.prototype.getSelectionRangeValue = function (absName, addSheet) {
 		return this.getSelectionRangeValues(absName, addSheet).join(AscCommon.FormulaSeparators.functionArgumentSeparator);
