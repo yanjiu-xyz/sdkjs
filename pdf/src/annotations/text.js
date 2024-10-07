@@ -110,7 +110,6 @@
     };
     CAnnotationText.prototype.AddReply = function(CommentData, nPos) {
         let oReply = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), this.GetDocument());
-        let sUserData = CommentData.GetUserData();
 
         oReply.SetContents(CommentData.m_sText);
         oReply.SetCreationDate(CommentData.m_sOOTime);
@@ -118,14 +117,7 @@
         oReply.SetAuthor(CommentData.m_sUserName);
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
         oReply.SetReplyTo(this.GetReplyTo() || this);
-
-        if (sUserData) {
-            oReply.SetApIdx(sUserData);
-        }
-        else {
-            oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
-            CommentData.SetUserData(oReply.GetId());
-        }
+        CommentData.SetUserData(oReply.GetId());
 
         if (!nPos) {
             nPos = this._replies.length;

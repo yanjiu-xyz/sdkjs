@@ -40,12 +40,13 @@
     {
         // если аннотация не shape based
         if (this.Id == undefined) {
+            this.Id = AscCommon.g_oIdCounter.Get_NewId();
             if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
-				this.Id = AscCommon.g_oIdCounter.Get_NewId();
 				AscCommon.g_oTableId.Add(this, this.Id);
 			}
         }
 
+        this._apIdx = -1;
         this.type = nType;
 
         this._author                = undefined;
@@ -752,6 +753,7 @@
         if (oFirstCommToEdit.GetContents() != oCommentData.m_sText) {
             oFirstCommToEdit.SetContents(oCommentData.m_sText);
             oFirstCommToEdit.SetModDate(oCommentData.m_sOOTime);
+            oFirstCommToEdit.SetAuthor(oCommentData.m_sUserName);
         }
 
         let aReplyToDel = [];
@@ -894,12 +896,23 @@
     };
     CAnnotationBase.prototype.SetApIdx = function(nIdx) {
         let oDoc = Asc.editor.getPDFDoc();
-        oDoc.UpdateApIdx(nIdx);
 
         this._apIdx = nIdx;
         oDoc.History.Add(new CChangesPDFAnnotApIdx(this, undefined, nIdx));
     };
     CAnnotationBase.prototype.GetApIdx = function() {
+        if (-1 == this._apIdx) {
+            if (undefined == this.GetId()) {
+                return -1;
+            }
+            else {
+                let nApIdx = Number(this.GetId().replace("_", ""));
+                if (!isNaN(nApIdx)) {
+                    return nApIdx;
+                }
+            }
+        }
+
         return this._apIdx;
     };
     CAnnotationBase.prototype.AddToRedraw = function() {

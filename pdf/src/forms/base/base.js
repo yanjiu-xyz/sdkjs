@@ -212,10 +212,21 @@
         return true;
     };
     CBaseField.prototype.SetApIdx = function(nIdx) {
-        this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
     };
     CBaseField.prototype.GetApIdx = function() {
+        if (-1 == this._apIdx) {
+            if (undefined == this.GetId()) {
+                return -1;
+            }
+            else {
+                let nApIdx = Number(this.GetId().replace("_", ""));
+                if (!isNaN(nApIdx)) {
+                    return nApIdx;
+                }
+            }
+        }
+
         return this._apIdx;
     };
 

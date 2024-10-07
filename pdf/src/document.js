@@ -682,13 +682,6 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.ClearFieldsToCommit = function() {
         this.fieldsToCommit = [];
     };
-    CPDFDoc.prototype.UpdateApIdx = function(newApIdx) {
-        if (this.maxApIdx < newApIdx)
-            this.maxApIdx = newApIdx;
-    };
-    CPDFDoc.prototype.GetMaxApIdx = function() {
-        return this.maxApIdx;
-    };
     CPDFDoc.prototype.SelectNextForm = function() {
         let oViewer         = editor.getDocumentRenderer();
         let oDrDoc          = this.GetDrawingDocument();
@@ -2436,9 +2429,7 @@ var CPresentation = CPresentation || function(){};
 
         this.History.Add(new CChangesPDFDocumentAnnotsContent(this, oPagesInfo.pages[nPageNum].annots.length - 1, [oAnnot], true));
         
-        oAnnot.SetApIdx(oProps.apIdx == null ? this.GetMaxApIdx() + 2 : oProps.apIdx);
         oAnnot.AddToRedraw();
-
         return oAnnot;
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
