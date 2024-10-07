@@ -932,6 +932,33 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"Access to external reference tests\"", function (assert) {
+		// for bug 69792
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 1, 0);
+		let parseResult = new AscCommonExcel.ParseResult([]);
+		oParser = new parserFormula("'[book.xlsx]Sheet 1'!A1", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[book.xlsx]Sheet 1'!A1");
+
+		oParser = new parserFormula("'[book.xlsx]Sheet1'!A1", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[book.xlsx]Sheet1'!A1");
+
+		// set extrefs to 0
+		wb.externalReferences.length = 0;
+
+		assert.strictEqual(wb.externalReferences.length, 0, 'External reference length before add');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'External reference length after add');
+
+		oParser = new parserFormula("'[book.xlsx]Sheet2'!A1", cellWithFormula, ws);
+		assert.strictEqual(oParser.parse(true, null, parseResult), false, "Trying to access not existed sheet in existed externalRef");
+
+		assert.strictEqual(wb.externalReferences.length, 1);
+
+		//remove external reference
+		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
+		assert.strictEqual(wb.externalReferences.length, 0);
+	});
+
 	// Mocks for API Testing
 	Asc.spreadsheet_api.prototype._init = function () {
 		this._loadModules();
