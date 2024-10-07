@@ -676,7 +676,16 @@
         function setRunPr(oRun, oRCInfo) {
             let oRFonts = new CRFonts();
             let oRGB = AscPDF.CBaseField.prototype.GetRGBColor(oRCInfo["color"]);
-            
+            let nVertAlign = AscCommon.vertalign_Baseline;
+            if (typeof(oRCInfo["vertical"]) == "number") {
+                if (oRCInfo["vertical"] >= 0) {
+                    nVertAlign = AscCommon.vertalign_SuperScript;
+                }
+                else if (oRCInfo["vertical"] < 0) {
+                    nVertAlign = AscCommon.vertalign_SubScript;
+                }
+            }
+
             if (oRCInfo["actual"]) {
                 oRFonts.SetAll(oRCInfo["actual"], -1);
             }
@@ -694,6 +703,7 @@
             oRun.SetUnderline(Boolean(oRCInfo["underlined"]));
             oRun.SetFontSize(oRCInfo["size"]);
             oRun.Set_RFonts2(oRFonts);
+            oRun.SetVertAlign(nVertAlign);
         }
         
         for (let i = 0; i < aRCInfo.length; i++) {
@@ -781,6 +791,16 @@
                 let isEmbed = false;
                 let prefix  = AscFonts.getEmbeddedFontPrefix();
 
+                let nVertAlign;
+                switch (oRun.GetVertAlign()) {
+                    case AscCommon.vertalign_SuperScript:
+                        nVertAlign = 0;
+                        break;
+                    case AscCommon.vertalign_SubScript:
+                        nVertAlign = -0.01;
+                        break;
+                }
+
                 if (sFont.startsWith(prefix)) {
                     sFont = sFont.substr(prefix.length);
                     isEmbed = true;
@@ -794,7 +814,8 @@
                     "underlined":       oRun.Get_Underline(),
                     "size":             oRun.Get_FontSize(),
                     "color":            aPdfColor,
-                    "text":             sText
+                    "text":             sText,
+                    "vertical":         nVertAlign
                 };
 
                 if (isEmbed) {
