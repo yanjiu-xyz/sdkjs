@@ -639,7 +639,7 @@ CChangesPDFDocumentAddPage.prototype.Redo = function()
 	oDocument.SetMouseDownObject(null);
 	oDrDoc.TargetEnd();
 };
-CChangesPDFDocumentAddPage.Load = function()
+CChangesPDFDocumentAddPage.prototype.Load = function()
 {
 	let pdfDocument = this.Class;
 	let pageChanges = pdfDocument.pagesContentChanges;
@@ -647,7 +647,7 @@ CChangesPDFDocumentAddPage.Load = function()
 	{
 		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
 		nPos = pageChanges.Check(AscCommon.contentchanges_Add, nPos);
-		pdfDocument.RemovePage(nPos);
+		pdfDocument.AddPage(nPos);
 	}
 };
 CChangesPDFDocumentAddPage.prototype.private_WriteItem = function(Writer, oPage)
