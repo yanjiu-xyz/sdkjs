@@ -1813,18 +1813,22 @@
 		return this.constrClockwise;
 	}
 	BaseAlgorithm.prototype.getChildAlgorithmAlignBounds = function (isCalculateCoefficients, skipRotate) {
-		const childShape = this.parentNode.getShape(isCalculateCoefficients);
+		let childShape = this.parentNode.getShape(isCalculateCoefficients);
+		if (childShape.connectorShape) {
+			childShape = childShape.connectorShape;
+		}
 		return childShape.getBounds(false, skipRotate);
 	};
 	BaseAlgorithm.prototype.getAlgorithmAlignBounds = function (isCalculateCoefficients) {
 		const childs = this.parentNode.childs;
 		let bounds;
+		const isCycleAlgorithm = this instanceof CycleAlgorithm;
 		for (let i = 0; i < childs.length; i += 1) {
 			const node = childs[i];
-			if (node.isSkipShape(isCalculateCoefficients)) {
+			if (node.isSkipShape(isCalculateCoefficients, isCycleAlgorithm)) {
 				continue;
 			}
-			const childBounds = node.algorithm.getChildAlgorithmAlignBounds(isCalculateCoefficients, this instanceof CycleAlgorithm);
+			const childBounds = node.algorithm.getChildAlgorithmAlignBounds(isCalculateCoefficients, isCycleAlgorithm);
 			if (bounds) {
 				checkBounds(bounds, childBounds);
 			} else {
@@ -4253,22 +4257,17 @@ function HierarchyAlgorithm() {
 				angle: angle,
 				isClockwise: this.isClockwise()
 			}
-		} else {
-			const custRadialMoveInfo = shape.getCustomRadialInfo();
-			if (!custRadialMoveInfo) {
-				return null;
-			}
-			radius = custRadialMoveInfo.radius;
-			angle = custRadialMoveInfo.angle;
-			custVector = CVector.getVectorByAngle(angle);
-			custVector.multiply(radius);
-			return {
-				point: new CCoordPoint(shapeCenterPoint.x - custVector.x, shapeCenterPoint.y - custVector.y),
-				radius: radius,
-				angle: angle,
-				isClockwise: this.isClockwise()
-			};
+		} else if (shape.radialVector) {
+				radius = shape.radialVector.getDistance();
+				angle = shape.radialVector.getAngle();
+				return {
+					point: new CCoordPoint(shapeCenterPoint.x - shape.radialVector.x, shapeCenterPoint.y - shape.radialVector.y),
+					radius: radius,
+					angle: angle,
+					isClockwise: this.isClockwise()
+				};
 		}
+		return null;
 	};
 	CycleAlgorithm.prototype.initParams = function (params) {
 		PositionAlgorithm.prototype.initParams.call(this, params);
@@ -4522,15 +4521,33 @@ function HierarchyAlgorithm() {
 		return 1;
 	};
 
+	CycleAlgorithm.prototype.generateCurveShapeConnectors = function (smartartAlgorithm) {
+		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
+			const child = this.parentNode.childs[i];
+			if (child.algorithm instanceof ConnectorAlgorithm && child.algorithm.isCurveShape()) {
+				child.algorithm.connectShapes(smartartAlgorithm);
+			}
+		}
+	};
+	CycleAlgorithm.prototype.resetConnectors = function () {
+		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
+			const child = this.parentNode.childs[i];
+			if (child.algorithm instanceof ConnectorAlgorithm) {
+				child.algorithm.reset();
+			}
+		}
+	};
 	CycleAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
 		this.calculateStartValues();
 		if (isCalculateScaleCoefficients) {
 			this.calcScaleCoefficients(smartartAlgorithm);
 		} else {
 			this._calculateShapePositions();
-			this.applyAlgorithmAligns(isCalculateScaleCoefficients);
-			this.applyPostAlgorithmSettings();
 			this.setConnections();
+			this.generateCurveShapeConnectors(smartartAlgorithm);
+			this.applyAlgorithmAligns(isCalculateScaleCoefficients);
+			this.resetConnectors();
+			this.applyPostAlgorithmSettings();
 			this.createShadowShape(isCalculateScaleCoefficients);
 		}
 	};
@@ -4908,7 +4925,6 @@ function HierarchyAlgorithm() {
 		BaseAlgorithm.call(this);
 		this.startNode = null;
 		this.endNode = null;
-		this.connectorShape = null;
 		this.connectionDistances = {
 			begin: null,
 			end: null
@@ -4924,6 +4940,18 @@ function HierarchyAlgorithm() {
 		}
 	}
 	AscFormat.InitClassWithoutType(ConnectorAlgorithm, BaseAlgorithm);
+	ConnectorAlgorithm.prototype.reset = function () {
+		this.calcValues = {
+			edgePoints: null,
+			radiusCenterPoint: null,
+			connectionPoints: null,
+			pointPositions: null
+		}
+		const connectionDistanceResolver = this.parentAlgorithm.parentNode.connectionDistanceResolver;
+		if (connectionDistanceResolver) {
+			connectionDistanceResolver.connectionDistance = null;
+		}
+	};
 	ConnectorAlgorithm.prototype.isClockwise = function () {
 		if (this.constrClockwise !== null) {
 			return this.constrClockwise;
@@ -5339,6 +5367,10 @@ function HierarchyAlgorithm() {
 	ConnectorAlgorithm.prototype.isCurveConnection = function () {
 		return this.params[AscFormat.Param_type_connRout] === AscFormat.ParameterVal_connectorRouting_curve ||
 		this.params[AscFormat.Param_type_connRout] === AscFormat.ParameterVal_connectorRouting_longCurve;
+	};
+	ConnectorAlgorithm.prototype.isCurveShape = function () {
+		return this.params[AscFormat.Param_type_connRout] === AscFormat.ParameterVal_connectorRouting_curve &&
+			this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_2D;
 	};
 	ConnectorAlgorithm.prototype.getAvailableEdgePoints = function (isStart) {
 		const result = [];
@@ -6670,10 +6702,13 @@ PresNode.prototype.getNamedNode = function (name) {
 			(this.layoutInfo.shape.type === AscFormat.LayoutShapeType_outputShapeType_conn ||
 			this.layoutInfo.shape.type === AscFormat.LayoutShapeType_outputShapeType_none)));
 	}
-	PresNode.prototype.isSkipShape = function (isCalculateScaleCoefficient) {
-		const shape = this.getShape(isCalculateScaleCoefficient);
+	PresNode.prototype.isSkipShape = function (isCalculateScaleCoefficient, isCycleAlgorithm) {
+		let shape = this.getShape(isCalculateScaleCoefficient);
+		if (shape.connectorShape) {
+			shape = shape.connectorShape;
+		}
 		return shape.width <= 0 && shape.height <= 0 ||
-			(this.algorithm instanceof ConnectorAlgorithm) ||
+			(this.algorithm instanceof ConnectorAlgorithm && !(isCycleAlgorithm && this.algorithm.isCurveShape())) ||
 			this.isTxXfrm() ||
 			!this.algorithm ||
 			(this.algorithm instanceof SpaceAlgorithm &&
