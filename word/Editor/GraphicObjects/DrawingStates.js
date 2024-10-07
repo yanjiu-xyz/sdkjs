@@ -1686,7 +1686,7 @@ MoveInGroupState.prototype =
         {
 			!isPdf && this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInGroup);
             var i;
-            if(this instanceof MoveInGroupState && e.CtrlKey && !this.hasObjectInSmartArt)
+            if(this instanceof MoveInGroupState && e.CtrlKey && !this.hasObjectInSmartArt && !isPdf)
             {
                 this.group.resetSelection();
                 for(i = 0; i < tracks.length; ++i)
@@ -1785,6 +1785,10 @@ MoveInGroupState.prototype =
                 }
 
                 let oTrack = tracks[0];
+                if (!oTrack) {
+                    return;
+                }
+
                 if (this.majorObject.getPresetGeom() == "line") { 
                      // если изменяли callout
                     if (this.handleNum == 0) { // x1, y1 точка callout
