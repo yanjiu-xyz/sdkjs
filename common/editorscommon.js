@@ -4514,7 +4514,10 @@
 				if (false !== this.m_aPositions[Index])
 				{
 					if (CurPos <= this.m_aPositions[Index])
-						this.m_aPositions[Index]++;
+					{
+						if (!checkPos)
+							this.m_aPositions[Index]++;
+					}
 					else
 					{
 						if (AscCommon.contentchanges_Add === this.m_nType)
@@ -4533,7 +4536,10 @@
 					continue;
 				
 				if (CurPos < this.m_aPositions[Index])
-					this.m_aPositions[Index]--;
+				{
+					if (!checkPos)
+						this.m_aPositions[Index]--;
+				}
 				else if (CurPos > this.m_aPositions[Index])
 				{
 					if (AscCommon.contentchanges_Add === this.m_nType)
