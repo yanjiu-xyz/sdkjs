@@ -3415,6 +3415,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.spid) {
+                if(!oSp.IsUseInDocument()) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -3480,6 +3486,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if ((oSp.getObjectType && oSp.getObjectType() === AscDFH.historyitem_type_ChartSpace) && oSp.getFormatIdString() === this.spid) {
+                if(!oSp.IsUseInDocument()) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -3967,6 +3979,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.dgmId) {
+                if(!oSp.IsUseInDocument()) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setDgmId(oSp.Id);
                 return;
             }
@@ -6170,7 +6188,8 @@
     };
     CSpTgt.prototype.assignConnection = function (oObjectsMap) {
         if (this.spid !== null) {
-            if (AscCommon.isRealObject(oObjectsMap[this.spid])) {
+            let oSp = oObjectsMap[this.spid];
+            if (AscCommon.isRealObject(oSp) && oSp.IsUseInDocument && oSp.IsUseInDocument()) {
                 this.setSpid(oObjectsMap[this.spid].Id);
             } else {
                 if (this.parent) {
@@ -6192,6 +6211,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.spid) {
+                if(!oSp.IsUseInDocument()) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setSpid(oSp.Id);
                 return;
             }
