@@ -1385,7 +1385,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             {
                 if (this.worksheet) {
                     coordsFrom = this.getDrawingObjects().calculateCoords(_t.from);
-                    if (!window.rightToleft) {
+                    if (!this.worksheet.getRightToLeft()) {
                         metrics.x = this.pxToMm( coordsFrom.x );
                         metrics.y = this.pxToMm( coordsFrom.y );
                         coordsTo = this.getDrawingObjects().calculateCoords(_t.to);
@@ -1454,7 +1454,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 ret.ext.cy = _t.graphicObject.extX;
             }
 
-            if (window.rightToleft) {
+            if (this.worksheet.getRightToLeft()) {
                 let temp = fromX;
                 fromX = toX;
                 toX = temp;
@@ -1529,7 +1529,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 this.ext.cy = _t.graphicObject.extX;
             }
 
-            if (window.rightToleft) {
+            if (this.worksheet.getRightToLeft()) {
                 let temp = fromX;
                 fromX = toX;
                 toX = temp;
@@ -4748,7 +4748,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 			var resultRowOff = cell.rowOff > rowHeight ? rowHeight : cell.rowOff;
 			var resultColOff = cell.colOff > colWidth ? colWidth : cell.colOff;
 			coords.y = ws._getRowTop(cell.row) + ws.objectRender.convertMetric(resultRowOff, 3, 0) - ws._getRowTop(0);
-			coords.x = ws._getColLeft(cell.col) + ws.objectRender.convertMetric(resultColOff, 3, 0) - (ws._getColLeft(0) * (window.rightToleft ? - 1 : 1));
+			coords.x = ws._getColLeft(cell.col) + ws.objectRender.convertMetric(resultColOff, 3, 0) - (ws._getColLeft(0) * (ws.getRightToLeft() ? - 1 : 1));
             coords.x = ws.checkRtl(coords.x);
 		}
 		return coords;

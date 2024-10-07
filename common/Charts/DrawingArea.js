@@ -510,7 +510,7 @@ function FrozenPlace(ws, type) {
 			}
 			break;
 		}
-		return scroll;
+		return _this.worksheet.getRightToLeft() ? -scroll : scroll;
 	};
 	
 	_this.clip = function(canvas, rect) {

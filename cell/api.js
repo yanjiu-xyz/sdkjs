@@ -4492,6 +4492,10 @@ var editor;
 		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowFormulas, value);
 	};
 
+	spreadsheet_api.prototype.asc_setRightToLeft = function (value) {
+		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetRightToLeft, value);
+	};
+
 	spreadsheet_api.prototype.asc_getShowFormulas = function () {
 		let ws = this.wb.getWorksheet();
 		return ws.model && ws.model.getShowFormulas();
@@ -9699,6 +9703,8 @@ var editor;
   prot["asc_setShowZeros"] = prot.asc_setShowZeros;
   prot["asc_setShowFormulas"] = prot.asc_setShowFormulas;
   prot["asc_getShowFormulas"] = prot.asc_getShowFormulas;
+  prot["asc_setRightToLeft"] = prot.asc_setRightToLeft;
+
 
 
   // Defined Names

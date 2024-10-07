@@ -6467,8 +6467,8 @@
 	Worksheet.prototype.getSheetView = function () {
 		return this.sheetViews[0];
 	};
-	Worksheet.prototype.getSheetViewSettings = function () {
-		return this.sheetViews[0].clone();
+	Worksheet.prototype.getSheetViewSettings = function (bNotClone) {
+		return bNotClone ? this.sheetViews[0] : this.sheetViews[0].clone();
 	};
 	Worksheet.prototype.setDisplayGridlines = function (value) {
 		var view = this.sheetViews[0];
@@ -6522,6 +6522,20 @@
 			view.showFormulas = value;
 
 			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetShowFormulas);
+			if (!this.workbook.bCollaborativeChanges) {
+				this.workbook.handlers.trigger("asc_onUpdateFormulasViewSettings");
+			}
+		}
+	};
+	Worksheet.prototype.setRightToLeft = function (value) {
+		var view = this.sheetViews[0];
+		if (value !== view.rightToLeft) {
+			/*AscCommon.History.Create_NewPoint();
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetShowFormulas,
+				this.getId(), new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromTo(view.showFormulas, value));*/
+			view.rightToLeft = value;
+
+			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetRightToLeft);
 			if (!this.workbook.bCollaborativeChanges) {
 				this.workbook.handlers.trigger("asc_onUpdateFormulasViewSettings");
 			}
