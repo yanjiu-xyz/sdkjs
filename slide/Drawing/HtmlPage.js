@@ -4452,11 +4452,9 @@ function CEditorPage(api)
 				arr[i].Index = i;
 
 				let oLt = this.AllLayouts[i];
-				let __type = oLt.type;
-				if (__type !== undefined && __type != null)
-					arr[i].Type = __type;
+				arr[i].Type = oLt.getType();
+				arr[i].Name = oLt.getName();
 
-				arr[i].Name = oLt.cSld.name;
 				oLtDrawer.WidthMM       = this.m_oLogicDocument.GetWidthMM();
 				oLtDrawer.HeightMM      = this.m_oLogicDocument.GetHeightMM();
 				oLt.ImageBase64 = oLtDrawer.GetThumbnail(oLt);
