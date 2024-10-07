@@ -164,7 +164,7 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
         nPos = Math.min(nPos, oDocument.annots.length);
 
         nPage = pageChanges.GetPos(nPage);
-        if (false != nPage) {
+        if (false !== nPage) {
             // Insert into document annots array
             oDocument.annots.splice(nPos, 0, oItem);
 
@@ -206,7 +206,7 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
 
         // Remove from viewer annots array
         nPage = pageChanges.GetPos(nPage);
-        if (false != nPage) {
+        if (false !== nPage) {
             oItem.AddToRedraw();
             // Remove from document annots array
             let indexInAnnots = oDocument.annots.indexOf(oItem);
