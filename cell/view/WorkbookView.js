@@ -5870,8 +5870,15 @@
 	WorkbookView.prototype.setSmoothScrolling = function(val) {
 		if (this.smoothScroll !== val) {
 			this.smoothScroll = val;
+			for (var i in this.wsViews) {
+				var item = this.wsViews[i];
+				item.setScrollCorrect(null);
+				item.setHorizontalScrollCorrect(null);
+				item.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+				item.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+				item._reinitializeScroll();
+			}
 			var ws = this.getWorksheet();
-			ws.setScrollCorrect(null);
 			ws.draw();
 		}
 	};
