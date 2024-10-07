@@ -10679,16 +10679,7 @@
         ctxW - (this._getColLeft(oldEnd) - leftOldStart + this.cellsLeft + diffWidth) : 0;
 
 
-		let drawingTransform = null;
-		if (this.getRightToLeft()) {
-			let drawingTransform = this.drawingGraphicCtx.Transform ? this.drawingGraphicCtx.Transform.clone() : new AscCommon.CMatrix();
-			let transformMatrix = new AscCommon.CMatrix();
-			transformMatrix.sx = -1;
-			transformMatrix.tx = ctx.getWidth();
-			let newTransformMatrix = drawingTransform.Multiply(transformMatrix);
-			this.drawingGraphicCtx.setTransform(newTransformMatrix.sx, newTransformMatrix.shy, newTransformMatrix.shx, newTransformMatrix.sy, newTransformMatrix.tx, newTransformMatrix.ty);
-			this.drawingGraphicCtx.updateTransforms();
-		}
+		this._startRtlRendering();
 
 
         // Перемещаем область
@@ -10766,11 +10757,6 @@
 			ctx.RemoveClipRect();
 		}
 
-		if (drawingTransform) {
-			this.drawingGraphicCtx.setTransform(drawingTransform.sx, drawingTransform.shy, drawingTransform.shx, drawingTransform.sy, drawingTransform.tx, drawingTransform.ty);
-			this.drawingGraphicCtx.updateTransforms();
-		}
-
         // Отрисовывать нужно всегда, вдруг бордеры
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells();
@@ -10803,6 +10789,7 @@
         this.cellCommentator.drawCommentCells();
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
         this.handlers.trigger("toggleAutoCorrectOptions", true);
+		this._endRtlRendering();
 		//this.model.updateTopLeftCell(this.visibleRange);
         return this;
     };
@@ -16269,6 +16256,7 @@
 				fullUpdate = true;
 			} else if (AscCH.historyitem_Worksheet_SetRightToLeft === type) {
 				t.model.setRightToLeft(val);
+				t.workbook.checkScrollRtl(val);
 				fullUpdate = true;
 			} else {
 				t.model.setDisplayGridlines(val);

@@ -1036,9 +1036,6 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		let api = window.Asc.editor;
 		let wb = api && api.wb;
 		let ws = wb && wb.getWorksheet();
-		if (ws && ws.getRightToLeft()) {
-			that.context.setTransform(-1,0,0,1,that.canvasW,0)
-		}
 
 		if (that.settings.isVerticalScroll) {
 			var _y = that.settings.showArrows ? that.arrowPosition : 0,

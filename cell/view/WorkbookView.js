@@ -2444,6 +2444,7 @@
       });
 
     }
+	this.checkScrollRtl(ws.getRightToLeft());
     this._onScrollReinitialize(AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
     // Zoom теперь на каждом листе одинаковый, не отправляем смену
 
@@ -5885,6 +5886,19 @@
 
 	WorkbookView.prototype.getSmoothScrolling = function() {
 		return this.smoothScroll;
+	};
+
+	WorkbookView.prototype.checkScrollRtl = function(val) {
+		let controller = this.controller;
+		let hsbApi = controller && controller.hsbApi;
+		let ctx = hsbApi && hsbApi.context;
+		if (ctx) {
+			if (val) {
+				ctx.setTransform(-1,0,0,1,hsbApi.canvasW,0);
+			} else {
+				ctx.setTransform(1,0,0,1,0,0);
+			}
+		}
 	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
