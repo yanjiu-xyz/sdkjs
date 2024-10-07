@@ -235,7 +235,7 @@ SlideLayout.prototype.getName = function () {
 		29: 'Text and Media', // txAndMedia
 		30: 'Text and Object', // txAndObj
 		31: 'Text and Two Objects', // txAndTwoObj
-		32: 'Text over Objec', // txOverObj
+		32: 'Text over Object', // txOverObj
 		33: 'Vertical Title and Text', // vertTitleAndTx
 		34: 'Vertical Title and Text Over Chart', // vertTitleAndTxOverChart
 		35: 'Vertical Text', // vertTx
@@ -247,7 +247,7 @@ SlideLayout.prototype.getName = function () {
 			return typeNamesMap[type];
 		}
 	}
-	return 'Type not defined';
+	return 'Text';
 };
 SlideLayout.prototype.getType = function () {
 	return AscFormat.isRealNumber(this.type)
