@@ -1373,9 +1373,9 @@
 		if (_left < this.cellsLeft) {
 			_left = this.cellsLeft;
 		}
-		if (checkFrozenOffset && _left < frozenOffset) {
+		/*if (checkFrozenOffset && _left < frozenOffset) {
 			_left = frozenOffset;
-		}
+		}*/
         return _left * asc_getcvt(0/*px*/, u, this._getPPIX());
     };
 
@@ -1399,9 +1399,9 @@
 		if (_top < this.cellsTop) {
 			_top = this.cellsTop;
 		}
-		if (checkFrozenOffset && _top < frozenOffset) {
+		/*if (checkFrozenOffset && _top < frozenOffset) {
 			_top = frozenOffset;
-		}
+		}*/
         return _top * asc_getcvt(0/*px*/, u, this._getPPIY());
     };
 
@@ -10682,6 +10682,7 @@
 
 
 		this._startRtlRendering();
+		this._startRtlDrawingRendering();
 
 
         // Перемещаем область
@@ -10706,6 +10707,7 @@
 
 		this._updateDrawingArea();
 
+		this._endRtlDrawingRendering();
 
 		if (this.workbook.getSmoothScrolling()) {
 			ctx.AddClipRect(this.cellsLeft, this.headersTop - this.groupHeight, ctxW, ctxH);
@@ -11373,8 +11375,7 @@
 					lockRangePosTop: lockRangePosTop
 				};
 			}
-
-			var drawingInfo = this.objectRender.checkCursorDrawingObject(x, y);
+			var drawingInfo = this.objectRender.checkCursorDrawingObject(this.getRightToLeft() ? this.drawingCtx.getWidth() - x : x, y);
 			if ((asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn()) &&
 				AscCommonExcel.CheckIdSatetShapeAdd(this.objectRender.controller.curState)) {
 				return {cursor: asc["editor"].isInkDrawerOn() ? kCurDefault : kCurFillHandle , target: c_oTargetType.Shape, col: -1, row: -1};
@@ -24830,19 +24831,33 @@
     WorksheetView.prototype.rangeToRectAbs = function(oRange, units) {
         var left = this.getCellLeft(0, units);
         var top = this.getCellTop(0, units);
-        var l = this.getCellLeft(oRange.c1, units) - left;
+        var l = this.checkRtl(this.getCellLeft(oRange.c1, units) - left, null, units);
         var t = this.getCellTop(oRange.r1, units) - top;
-        var r = this.getCellLeft(oRange.c2, units) + this.getColumnWidth(oRange.c2, units) - left;
+        var r = this.checkRtl(this.getCellLeft(oRange.c2, units) + this.getColumnWidth(oRange.c2, units) - left, null, units);
         var b = this.getCellTop(oRange.r2, units) + this.getRowHeight(oRange.r2, units) - top;
-        return new AscFormat.CGraphicBounds(l, t, r, b);
+
+		if (this.getRightToLeft()) {
+			let _r = r;
+			r = l;
+			l = _r;
+		}
+
+        return new AscFormat.CGraphicBounds(l - this.getRightToLeftOffset(), t, r, b);
     };
 
     WorksheetView.prototype.rangeToRectRel = function(oRange, units) {
-        var l = this.getCellLeftRelative(oRange.c1, units, true);
+        var l = this.checkRtl(this.getCellLeftRelative(oRange.c1, units, true), null, units);
         var t = this.getCellTopRelative(oRange.r1, units, true);
-        var r = this.getCellLeftRelative(oRange.c2, units) + this.getColumnWidth(oRange.c2, units);
+        var r = this.checkRtl(this.getCellLeftRelative(oRange.c2, units) + this.getColumnWidth(oRange.c2, units), null, units);
         var b = this.getCellTopRelative(oRange.r2, units) + this.getRowHeight(oRange.r2, units);
-        return new AscFormat.CGraphicBounds(l, t, r, b);
+
+		if (this.getRightToLeft()) {
+			let _r = r;
+			r = l;
+			l = _r;
+		}
+
+		return new AscFormat.CGraphicBounds(l - this.getRightToLeftOffset(), t, r, b);
     };
 	//интерфейс
 	/*отдаём массив данных для интерефейса - beforeInsertSlicer
@@ -26388,12 +26403,14 @@
 		this.renderingSettings = new CRenderingSettings();
 	};
 
-	WorksheetView.prototype.checkRtl = function (x, ctx) {
+	WorksheetView.prototype.checkRtl = function (x, ctx, units) {
 		if (this.getRightToLeft()) {
+			let u = units >= 0 && units <= 3 ? units : 0;
+			let kf = asc_getcvt(0/*px*/, u, this._getPPIX());
 			if (!ctx) {
 				ctx = this.drawingCtx;
 			}
-			return ctx.getWidth() - x;
+			return ctx.getWidth() * kf - x;
 		}
 		return x;
 	};
@@ -26417,7 +26434,15 @@
 			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
 			ctx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, ctx.getWidth(), transformMatrix.ty);
 
-			ctx.updateTransforms()
+			ctx.updateTransforms();
+
+
+			/*let ctx2 = this.drawingGraphicCtx;
+			let _transform2 = ctx2.Transform ? ctx2.Transform : new AscCommon.CMatrix();
+			let transformMatrix2 = _transform2.CreateDublicate ? _transform2.CreateDublicate() : _transform2.clone();
+			ctx2.setTransform(-1, transformMatrix2.shy, transformMatrix2.shx, transformMatrix2.sy, ctx2.getWidth(), transformMatrix2.ty);
+
+			ctx2.updateTransforms()*/
 		}
 	};
 
@@ -26426,6 +26451,35 @@
 			ctx = this.drawingCtx;
 		}
 		if (this.getRightToLeft()) {
+			let _transform = ctx.Transform ? ctx.Transform : new AscCommon.CMatrix();
+			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
+			ctx.setTransform(1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, 0, transformMatrix.ty);
+
+			ctx.updateTransforms()
+
+			/*let ctx2 = this.drawingGraphicCtx;
+			let _transform2 = ctx2.Transform ? ctx2.Transform : new AscCommon.CMatrix();
+			let transformMatrix2 = _transform2.CreateDublicate ? _transform2.CreateDublicate() : _transform2.clone();
+			ctx2.setTransform(1, transformMatrix2.shy, transformMatrix2.shx, transformMatrix2.sy, 0, transformMatrix2.ty);
+
+			ctx2.updateTransforms()*/
+		}
+	};
+
+	WorksheetView.prototype._startRtlDrawingRendering = function (ctx) {
+		if (this.getRightToLeft()) {
+			let ctx = this.drawingGraphicCtx;
+			let _transform = ctx.Transform ? ctx.Transform : new AscCommon.CMatrix();
+			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
+			ctx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, ctx.getWidth(), transformMatrix.ty);
+
+			ctx.updateTransforms()
+		}
+	};
+
+	WorksheetView.prototype._endRtlDrawingRendering = function (ctx) {
+		if (this.getRightToLeft()) {
+			let ctx = this.drawingGraphicCtx;
 			let _transform = ctx.Transform ? ctx.Transform : new AscCommon.CMatrix();
 			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
 			ctx.setTransform(1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, 0, transformMatrix.ty);
