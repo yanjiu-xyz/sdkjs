@@ -648,6 +648,8 @@ CFraction.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
+		oMathText.SetGlobalStyle(oNumerator);
+
 		let isOnlyFrac = this.Parent.Content.length === 3
 			&& this.Parent.Content[0].Is_Empty()
 			&& this.Parent.Content[2].Is_Empty()
@@ -674,7 +676,8 @@ CFraction.prototype.GetTextOfElement = function(oMathText)
 				default:				strFracSymbol = '\\sfrac';	break;
 			}
 
-			oFracContent	= new AscMath.MathText(strFracSymbol, oMathText.GetStyleFromFirst());
+			// get style from numerator
+			oFracContent	= new AscMath.MathText(strFracSymbol, oNumerator);
 			oMathText.AddBefore(oPosNumerator, oFracContent);
 		}
 	}

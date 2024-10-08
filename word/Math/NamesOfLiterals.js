@@ -5003,14 +5003,18 @@
 
 			if (this.IsLaTeX())
 			{
+				let oCurrentStyle = this.globalStyle
+					? this.globalStyle
+					: this.GetStyleFromFirst(oContent);
+
 				if (Array.isArray(Wrap))
 					this.WrapExactElement(oPos, Wrap[0], Wrap[1], this.GetFirstStyle());
 				else if (Wrap === 0 || oContent instanceof ParaRun)
 					return oPos;
 				else if (Wrap === 1 && ((oContent.haveMixedContent && oContent.haveMixedContent(this.IsLaTeX())) || (this.IsLaTeX() && str.length > 1 && this.IsNotWrap === false)))
-					this.WrapExactElement(oPos, "{", "}", this.GetStyleFromFirst(oContent));
+					this.WrapExactElement(oPos, "{", "}", oCurrentStyle);
 				else if (Wrap === 2)
-					this.WrapExactElement(oPos, "{", "}", this.GetStyleFromFirst(oContent));
+					this.WrapExactElement(oPos, "{", "}", oCurrentStyle);
 
 				this.IsNotWrap = false;
 			}
