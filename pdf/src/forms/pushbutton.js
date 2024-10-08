@@ -104,6 +104,9 @@
         this._captionRun            = null;
         this._downCaptionRun        = null;
         this._rollOverCaptionRun    = null;
+		
+		this._needUpdateImage = true;
+		this._rasterId        = null;
     }
     CPushButtonField.prototype = Object.create(AscPDF.CBaseField.prototype);
     CPushButtonField.prototype.constructor = CPushButtonField;
@@ -190,7 +193,7 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.AddImage2 = function(sRasterId, nAPType) {
-        this.RemoveImage();
+		this.SetImage(sRasterId);
 
         if (!sRasterId) {
             return;
@@ -198,30 +201,48 @@
 
         this.DoInitialRecalc();
         this.SetImageRasterId(sRasterId, nAPType);
-        this.SetImage(sRasterId);
     };
     /**
      * Sets image without any history changes.
      * @memberof CPushButtonField
-     * @param {string} sRasterId
+     * @param {string} rasterId
      * @typeofeditors ["PDF"]
      */
-    CPushButtonField.prototype.SetImage = function(sRasterId) {
-        let oDoc = this.GetDocument();
+    CPushButtonField.prototype.SetImage = function(rasterId) {
+		if (this._rasterId === rasterId)
+			return;
+		
+		this._needUpdateImage = true;
+		this._rasterId        = rasterId;
+		
+		this._UpdateImage();
+	};
+	CPushButtonField.prototype._UpdateImage = function() {
+		if (!this._needUpdateImage)
+			return;
+		
+		this._needUpdateImage = !this._SetImage();
+	};
+	CPushButtonField.prototype._SetImage = function() {
+		let sRasterId = this._rasterId;
+		
+		if (!sRasterId)
+			return this._RemoveImage();
+		
         let oImgData = null;
 
         if (sRasterId) {
             oImgData = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(sRasterId)];
         }
-
-        if (!oImgData) {
-            return;
-        }
+		
+		if (!oImgData || oImgData.Status === AscFonts.ImageLoadStatus.Loading)
+			return false;
+		
+		this._RemoveImage();
 
         let oHTMLImg = oImgData.Image;
 
         AscCommon.History.StartNoHistoryMode();
-        this.RemoveImage();
         
         const dImgW = Math.max((oHTMLImg.width * g_dKoef_pix_to_mm), 1);
         const dImgH = Math.max((oHTMLImg.height * g_dKoef_pix_to_mm), 1);
@@ -374,8 +395,9 @@
         this.SetIconPosition(oIconPos.X, oIconPos.Y);
 
         AscCommon.History.EndNoHistoryMode();
+		return true;
     };
-    CPushButtonField.prototype.RemoveImage = function() {
+    CPushButtonField.prototype._RemoveImage = function() {
         AscCommon.History.StartNoHistoryMode();
 
         let oExistDrawing = this.GetDrawing();
@@ -393,8 +415,9 @@
         }
 
         AscCommon.History.EndNoHistoryMode();
+		
+		return true;
     };
-    
     /**
      * Defines how a button reacts when a user clicks it. The four highlight modes supported are:
      * none — No visual indication that the button has been clicked.
@@ -598,6 +621,8 @@
     CPushButtonField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
+		
+		this._UpdateImage();
 
         this.CheckImageOnce();
         this.Recalculate();
@@ -761,13 +786,7 @@
                 oCaptionRun.AddText(sTargetCaption);
             }
 
-            if (sTargetImgRasterId) {
-                this.SetImage(sTargetImgRasterId);
-            }
-            else {
-                this.RemoveImage();
-            }
-
+            this.SetImage(sTargetImgRasterId);
             this.SetNeedRecalc(true);
         }
 
@@ -795,13 +814,7 @@
                 oCaptionRun.AddText(sTargetCaption);
             }
 
-            if (sTargetImgRasterId) {
-                this.SetImage(sTargetImgRasterId);
-            }
-            else {
-                this.RemoveImage();
-            }
-
+            this.SetImage(sTargetImgRasterId);
             this.SetNeedRecalc(true);
         }
 
@@ -849,13 +862,7 @@
                 oCaptionRun.AddText(sRolloverCaption);
             }
 
-            if (this._imgData.rollover) {
-                this.SetImage(this._imgData.rollover);
-            }
-            else {
-                this.RemoveImage();
-            }
-
+            this.SetImage(this._imgData.rollover);
             this.SetNeedRecalc(true);
         }
     };
@@ -881,13 +888,7 @@
                 oCaptionRun.AddText(sDefaultCaption);
             }
 
-            if (this._imgData.normal) {
-                this.SetImage(this._imgData.normal);
-            }
-            else {
-                this.RemoveImage();
-            }
-
+            this.SetImage(this._imgData.normal);
             this.SetNeedRecalc(true);
         }
     };
