@@ -4300,7 +4300,7 @@
 					//Set the properties which was already set. It needs for the fast coediting. TODO: check it
 					oChartSpace.setChart(oChartSpace.chart.createDuplicate());
 					oChartSpace.setStyle(oChartSpace.style);
-					oChartSpace.setDisplayTrendlinesEquation(false);
+					oChartSpace.setDisplayTrendlinesEquation(oProps.displayTrendlinesEquation);
 
 					//Apply chart preset TODO: remove this when chartStyle will be implemented
 					var oChart = oChartSpace.chart;
