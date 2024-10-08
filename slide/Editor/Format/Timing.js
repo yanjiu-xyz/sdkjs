@@ -3415,7 +3415,7 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.spid) {
-                if(!oSp.IsUseInDocument()) {
+                if(!isDrawingOnSlide(oSp)) {
                     if (this.parent) {
                         this.parent.onRemoveChild(this);
                     }
@@ -3486,7 +3486,7 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if ((oSp.getObjectType && oSp.getObjectType() === AscDFH.historyitem_type_ChartSpace) && oSp.getFormatIdString() === this.spid) {
-                if(!oSp.IsUseInDocument()) {
+                if(!isDrawingOnSlide(oSp)) {
                     if (this.parent) {
                         this.parent.onRemoveChild(this);
                     }
@@ -3979,7 +3979,7 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.dgmId) {
-                if(!oSp.IsUseInDocument()) {
+                if(!isDrawingOnSlide(oSp)) {
                     if (this.parent) {
                         this.parent.onRemoveChild(this);
                     }
@@ -6073,7 +6073,7 @@
         if(!oSp) {
             return false;
         }
-        if(!oSp.IsUseInDocument()) {
+        if(!isDrawingOnSlide(oSp)) {
             return false;
         }
         return true;
@@ -6155,6 +6155,20 @@
         oClass.txEl = value;
     };
 
+    function isDrawingOnSlide(oDrawing) {
+        if(!oDrawing) return false;
+        let oSlide = oDrawing.parent;
+        if(!oSlide) return false;
+        let aSpTree = oSlide.cSld && oSlide.cSld.spTree;
+        if(!Array.isArray(aSpTree)) return false;
+        for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
+            if(aSpTree[nSp] === oDrawing) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function CSpTgt() {
         CObjectTarget.call(this);
         this.bg = null;
@@ -6189,7 +6203,7 @@
     CSpTgt.prototype.assignConnection = function (oObjectsMap) {
         if (this.spid !== null) {
             let oSp = oObjectsMap[this.spid];
-            if (AscCommon.isRealObject(oSp) && oSp.IsUseInDocument && oSp.IsUseInDocument()) {
+            if (AscCommon.isRealObject(oSp) && isDrawingOnSlide(oSp)) {
                 this.setSpid(oObjectsMap[this.spid].Id);
             } else {
                 if (this.parent) {
@@ -6211,7 +6225,7 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.spid) {
-                if(!oSp.IsUseInDocument()) {
+                if(!isDrawingOnSlide(oSp)) {
                     if (this.parent) {
                         this.parent.onRemoveChild(this);
                     }
