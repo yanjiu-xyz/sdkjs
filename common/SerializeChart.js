@@ -6119,9 +6119,9 @@ BinaryChartWriter.prototype.WriteCT_Series = function (oVal) {
         for (var i = 0, length = oVal.axisId.length; i < length; ++i) {
             var oCurVal = oVal.axisId[i];
             if (null != oCurVal) {
-                this.bs.WriteItem(c_oserct_chartExSeriesAXIS, function () {
-                    oThis.WriteCT_Axis(oCurVal);
-                });
+                this.bs.WriteItem(c_oserct_chartExSeriesAXIS, function() {
+					oThis.memory.WriteLong(oCurVal);
+				});
             }
         }
     }
@@ -13621,11 +13621,7 @@ BinaryChartReader.prototype.ReadCT_Series = function (type, length, val) {
         val.setTx(oNewVal);
     }
     else if (c_oserct_chartExSeriesAXIS === type) {
-        var oNewVal = new AscFormat.CAxis();
-        res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_Axis(t, l, oNewVal);
-        });
-        val.addAxisId(oNewVal);
+        val.addAxisId(this.stream.GetULongLE());
     }
     else if (c_oserct_chartExSeriesDATAID === type)
     {
