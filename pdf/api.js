@@ -221,6 +221,8 @@
 		if (this.DocumentRenderer)
 		{
 			let result = this.DocumentRenderer.Save();
+			if (!result)
+				return null;
 			window["native"]["Save_End"]("", result.length);
 			return result;
 		}
