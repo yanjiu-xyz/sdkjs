@@ -3750,7 +3750,7 @@
 						leftDiff / mmToPx, topDiff / mmToPx);
 				}
 
-				if (this.getRightToLeft()) {
+				if (t.getRightToLeft()) {
 					if (!_transform) {
 						_transform = new AscCommon.CMatrix();
 					}
