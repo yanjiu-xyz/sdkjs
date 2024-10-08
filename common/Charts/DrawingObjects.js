@@ -1572,10 +1572,16 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 toY = 0;
             }
 
-            var fromColCell = this.worksheet.findCellByXY(toX, fromY, true, false, true);
-            var fromRowCell = this.worksheet.findCellByXY(toX, fromY, true, true, false);
-            var toColCell = this.worksheet.findCellByXY(fromX, toY, true, false, true);
-            var toRowCell = this.worksheet.findCellByXY(fromX, toY, true, true, false);
+            if (this.worksheet.getRightToLeft()) {
+                let temp = fromX;
+                fromX = toX;
+                toX = temp;
+            }
+
+            var fromColCell = this.worksheet.findCellByXY(fromX, fromY, true, false, true);
+            var fromRowCell = this.worksheet.findCellByXY(fromX, fromY, true, true, false);
+            var toColCell = this.worksheet.findCellByXY(toX, toY, true, false, true);
+            var toRowCell = this.worksheet.findCellByXY(toX, toY, true, true, false);
 
             _t.boundsFromTo.from.col = fromColCell.col;
             _t.boundsFromTo.from.colOff = this.pxToMm(fromColCell.colOff);
