@@ -5124,7 +5124,7 @@ function(window, undefined) {
 			let nLabelsPos;
 			let bLabelsExtremePosition = false;
 			let bOnTickMark = oCurAxis.grid.bOnTickMark;
-			if(oCurAxis.bDelete) {
+			if(oCurAxis.bDelete || oCurAxis.hidden) {
 				nLabelsPos = c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE;
 			}
 			else {
