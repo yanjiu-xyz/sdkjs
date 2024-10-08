@@ -366,6 +366,28 @@
 
             this.showTarget(bShowHide);
         };
+        this.Collaborative_UpdateTarget = function (_id, _shortId, _x, _y, _size, _page, _transform, is_from_paint) {
+            this.AutoShapesTrack.SetCurrentPage(_page, true);
+            let TextMatrix = this.AutoShapesTrack.transformPageMatrix(_transform);
+
+            if (is_from_paint !== true) {
+                this.CollaborativeTargetsUpdateTasks.push([_id, _shortId, _x, _y, _size, _page, _transform]);
+                return;
+            }
+
+            for (let i = 0; i < this.CollaborativeTargets.length; i++) {
+                if (_id == this.CollaborativeTargets[i].Id) {
+                    this.CollaborativeTargets[i].CheckPosition(_x, _y, _size, _page, TextMatrix);
+                    return;
+                }
+            }
+
+            let _target = new CDrawingCollaborativeTarget(this);
+            _target.Id = _id;
+            _target.ShortId = _shortId;
+            _target.CheckPosition(_x, _y, _size, _page, TextMatrix);
+            this.CollaborativeTargets[this.CollaborativeTargets.length] = _target;
+        };
         this.OnRecalculatePage = function() {};
         this.OnEndRecalculate = function() {};
         this.ConvertCoordsToAnotherPage = function (x, y, pageCoord, pageNeed) {
