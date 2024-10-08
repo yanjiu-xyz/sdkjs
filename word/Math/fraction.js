@@ -907,3 +907,5 @@ CDenominator.prototype.setPosition = function(pos, PosInfo)
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CFraction = CFraction;
+
+AscMath.Fraction = CFraction;

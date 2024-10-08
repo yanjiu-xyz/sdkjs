@@ -1315,3 +1315,6 @@ window['AscCommonWord'].CDegree = CDegree;
 window["CMathMenuScript"] = CMathMenuScript;
 CMathMenuScript.prototype["get_ScriptType"] = CMathMenuScript.prototype.get_ScriptType;
 CMathMenuScript.prototype["put_ScriptType"] = CMathMenuScript.prototype.put_ScriptType;
+
+AscMath.Degree = CDegree;
+AscMath.DegreeSubSup = CDegreeSubSup;

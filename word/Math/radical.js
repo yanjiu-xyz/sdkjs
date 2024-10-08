@@ -885,3 +885,5 @@ window['AscCommonWord'].CRadical = CRadical;
 window["CMathMenuRadical"] = CMathMenuRadical;
 CMathMenuRadical.prototype["get_HideDegree"] = CMathMenuRadical.prototype.get_HideDegree;
 CMathMenuRadical.prototype["put_HideDegree"] = CMathMenuRadical.prototype.put_HideDegree;
+
+AscMath.Radical = CRadical;

@@ -782,3 +782,5 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CAccent = CAccent;
 
 window["CMathMenuAccent"] = CMathMenuAccent;
+
+AscMath.Accent = CAccent;

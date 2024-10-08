@@ -1763,3 +1763,6 @@ CMathMenuEqArray.prototype["get_LineRule"] = CMathMenuEqArray.prototype.get_Line
 CMathMenuEqArray.prototype["put_LineRule"] = CMathMenuEqArray.prototype.put_LineRule;
 CMathMenuEqArray.prototype["get_LineGap"] = CMathMenuEqArray.prototype.get_LineGap;
 CMathMenuEqArray.prototype["put_LineGap"] = CMathMenuEqArray.prototype.put_LineGap;
+
+AscMath.EqArray = CEqArray;
+AscMath.Matrix  = CMathMatrix;

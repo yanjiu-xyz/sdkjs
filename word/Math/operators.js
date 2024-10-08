@@ -4746,3 +4746,6 @@ window["CMathMenuGroupCharacter"] = CMathMenuGroupCharacter;
 CMathMenuGroupCharacter.prototype["get_Pos"]         = CMathMenuGroupCharacter.prototype.get_Pos;
 CMathMenuGroupCharacter.prototype["put_Pos"]         = CMathMenuGroupCharacter.prototype.put_Pos;
 CMathMenuGroupCharacter.prototype["can_ChangePos"]   = CMathMenuGroupCharacter.prototype.can_ChangePos;
+
+AscMath.Delimiter = CDelimiter;
+AscMath.GroupCharacter = CGroupCharacter;

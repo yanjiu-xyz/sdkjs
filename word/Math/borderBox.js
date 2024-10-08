@@ -1362,3 +1362,8 @@ window['AscCommonWord'].CBar = CBar;
 window['AscCommonWord'].CBox = CBox;
 window['AscCommonWord'].CBorderBox = CBorderBox;
 window['AscCommonWord'].CPhantom = CPhantom;
+
+AscMath.Bar = CBar;
+AscMath.Box = CBox;
+AscMath.BorderBox = CBorderBox;
+AscMath.Phantom = CPhantom;

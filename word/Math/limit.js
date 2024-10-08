@@ -537,3 +537,6 @@ CMathFunc.prototype.GetTextOfElement = function(oMathText)
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CMathFunc = CMathFunc;
 window['AscCommonWord'].CLimit = CLimit;
+
+AscMath.Limit = CLimit;
+AscMath.Func  = CMathFunc;
