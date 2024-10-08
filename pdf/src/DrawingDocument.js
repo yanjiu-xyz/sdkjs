@@ -393,7 +393,31 @@
         this.ConvertCoordsToAnotherPage = function (x, y, pageCoord, pageNeed) {
             return AscPDF.ConvertCoordsToAnotherPage(x, y, pageCoord, pageNeed);
         }
-		this.StopRenderingPage = function(pageIndex) {};
+
+        this.CheckRasterImageOnScreen = function(src)
+        {
+            let redrawPages = [];
+            let viewer = this.m_oDocumentRenderer;
+
+            for (let i = viewer.startVisiblePage; i <= viewer.endVisiblePage; i++)
+            {
+                let imgs = viewer.DrawingObjects.getAllRasterImagesOnPage(i);
+                for (let j = 0, len = imgs.length; j < len; j++)
+                {
+                    if (AscCommon.getFullImageSrc2(imgs[j]) === src)
+                    {
+                        redrawPages.push(i);
+                        break;
+                    }
+                }
+            }
+
+            if (redrawPages.length > 0)
+            {
+                viewer.onUpdatePages(redrawPages);
+                viewer.onRepaintForms(redrawPages);
+            }
+        };
     }
 
     CDrawingDocument.prototype.constructor = CDrawingDocument;
