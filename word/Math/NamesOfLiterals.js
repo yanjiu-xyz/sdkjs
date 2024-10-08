@@ -4658,23 +4658,21 @@
 				if (str)
 				{
 					let nCounter = 0;
-					for (let i = oCMathContent.Content.length - 1; i >= 0 && nCounter !== strToken.length; i--)
+
+					let oCurrentElement = oCMathContent.Content[oCMathContent.Content.length - 1];
+					if (!oCurrentElement || !oCurrentElement.Content)
+						return false;
+
+					let oCurrentElementCounter = oCurrentElement.Content.length;
+
+					if (oCurrentElementCounter > strToken.length)
 					{
-						let oCurrentElement = oCMathContent.Content[i];
-						if (!oCurrentElement || !oCurrentElement.Content)
-							return false;
-
-						let oCurrentElementCounter = oCurrentElement.Content.length;
-
-						if (oCurrentElementCounter > strToken.length)
-						{
-							oCurrentElement.RemoveFromContent(oCurrentElementCounter - strToken.length, strToken.length);
-						}
-						else
-						{
-							nCounter += oCurrentElementCounter;
-							oCMathContent.RemoveFromContent(i, 1);
-						}
+						oCurrentElement.RemoveFromContent(oCurrentElementCounter - strToken.length, strToken.length);
+					}
+					else
+					{
+						nCounter += oCurrentElementCounter;
+						oCMathContent.RemoveFromContent(oCMathContent.Content.length - 1, 1);
 					}
 					oCMathContent.Add_TextOnPos(oCMathContent.Content.length, str);
 					return true;
