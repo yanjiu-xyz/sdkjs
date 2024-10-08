@@ -7458,33 +7458,35 @@
 			var row = this.topLeftFrozenCell.getRow0();
 			var col = this.topLeftFrozenCell.getCol0();
 			if (0 < row) {
-				fHorLine.apply(ctx, [0, this._getRowTop(row), ctx.getWidth(), ctx]);
+				fHorLine.apply(ctx, [0, this._getRowTop(row), ctx.getWidth(), this]);
 			} else {
-				fHorLine.apply(ctx, [this.headersLeft, this.headersTop + this.headersHeight, this.headersLeft + this.headersWidth, ctx]);
+				fHorLine.apply(ctx, [this.headersLeft, this.headersTop + this.headersHeight, this.headersLeft + this.headersWidth, this]);
 			}
 
 			if (0 < col) {
-				fVerLine.apply(ctx, [this._getColLeft(col), 0, ctx.getHeight(), ctx]);
+				fVerLine.apply(ctx, [this._getColLeft(col), 0, ctx.getHeight(), this]);
 			} else {
-				fVerLine.apply(ctx, [this.headersLeft + this.headersWidth, this.headersTop, this.headersTop + this.headersHeight, ctx]);
+				fVerLine.apply(ctx, [this.headersLeft + this.headersWidth, this.headersTop, this.headersTop + this.headersHeight, this]);
 
 			}
 			ctx.stroke();
 
 		} else if (this.model.getSheetView().asc_getShowRowColHeaders()) {
-			fHorLine.apply(ctx, [this.headersLeft + this.getRightToLeftOffset(), this.headersTop + this.headersHeight, this.headersLeft + this.headersWidth, ctx]);
-			fVerLine.apply(ctx, [this.headersWidth + this.headersLeft, this.headersTop, this.headersTop + this.headersHeight, ctx]);
+			fHorLine.apply(ctx, [this.headersLeft + this.getRightToLeftOffset(), this.headersTop + this.headersHeight, this.headersLeft + this.headersWidth, this]);
+			fVerLine.apply(ctx, [this.headersWidth + this.headersLeft, this.headersTop, this.headersTop + this.headersHeight, this]);
 			ctx.stroke();
 		}
 	};
 
-	WorksheetView.prototype._dashLineCleverVer = function (x, y1, y2, ctx) {
-		ctx.dashLineCleverVer(this.getRightToLeft() ? (ctx.getWidth() - x) : x, y1, y2)
+	WorksheetView.prototype._dashLineCleverVer = function (x, y1, y2, _this) {
+		let ctx = this;
+		ctx.dashLineCleverVer(_this.getRightToLeft() ? (ctx.getWidth() - x) : x, y1, y2)
 		return ctx;
 	};
 
-	WorksheetView.prototype._dashLineCleverHor = function (x1, y, x2, ctx) {
-		ctx.dashLineCleverHor(this.getRightToLeft() ? (ctx.getWidth() - x2) : x1, y, window.rightToleft ? (ctx.getWidth() - x1) : x2)
+	WorksheetView.prototype._dashLineCleverHor = function (x1, y, x2, _this) {
+		let ctx = this;
+		ctx.dashLineCleverHor(_this.getRightToLeft() ? (ctx.getWidth() - x2) : x1, y, _this.getRightToLeft() ? (ctx.getWidth() - x1) : x2)
 		return ctx;
 	};
 
@@ -7860,16 +7862,16 @@
             ctx.beginPath();
 
             if (drawTopSide && !firstRow) {
-                fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff + this.getRightToLeftOffset()*1, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff + this.getRightToLeftOffset()*1, ctx]);
+                fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff + this.getRightToLeftOffset()*1, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff + this.getRightToLeftOffset()*1, this]);
             }
             if (drawBottomSide) {
-                fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2, ctx]);
+                fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2, this]);
             }
             if (drawLeftSide && !firstCol) {
-                fVerLine.apply(ctx, [x1 - this.getRightToLeftOffset()*1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff, ctx]);
+                fVerLine.apply(ctx, [x1 - this.getRightToLeftOffset()*1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff, this]);
             }
             if (drawRightSide) {
-                fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff -this.getRightToLeftOffset()*1, y1, y2 + !isDashLine * (1 + isRetina * 1), ctx]);
+                fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff -this.getRightToLeftOffset()*1, y1, y2 + !isDashLine * (1 + isRetina * 1), this]);
             }
             ctx.closePath().stroke();
 		}
