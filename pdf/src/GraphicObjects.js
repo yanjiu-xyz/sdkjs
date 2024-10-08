@@ -1332,6 +1332,25 @@
 
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = function() {};
     CGraphicObjects.prototype.saveDocumentState = function(){};
+	
+	CGraphicObjects.prototype.getAllRasterImagesOnPage = function(pageIndex) {
+		if (!this.api)
+			return [];
+		
+		let viewer = this.api.getDocumentRenderer();
+		if (!viewer || !viewer.pagesInfo.pages[pageIndex])
+			return [];
+		
+		let page = viewer.pagesInfo.pages[pageIndex];
+		
+		let result = []
+		
+		page.fields.forEach(function(field){
+			field.getAllRasterImages(result);
+		});
+		
+		return result;
+	};
 
     // import
     CGraphicObjects.prototype.setEquationTrack          = AscFormat.DrawingObjectsController.prototype.setEquationTrack;

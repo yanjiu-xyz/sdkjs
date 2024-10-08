@@ -248,6 +248,7 @@
 	CBaseField.prototype.checkFonts = function() {
 		return this._doc && 1 === this._doc.defaultFontsLoaded;
 	};
+	CBaseField.prototype.getAllRasterImages = function(images) {};
     /**
 	 * Invokes only on open forms.
 	 * @memberof CBaseField

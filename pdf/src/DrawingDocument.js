@@ -393,6 +393,7 @@
         this.ConvertCoordsToAnotherPage = function (x, y, pageCoord, pageNeed) {
             return AscPDF.ConvertCoordsToAnotherPage(x, y, pageCoord, pageNeed);
         }
+		this.StopRenderingPage = function(pageIndex) {};
     }
 
     CDrawingDocument.prototype.constructor = CDrawingDocument;

@@ -418,6 +418,10 @@
 		
 		return true;
     };
+	CPushButtonField.prototype.getAllRasterImages = function(images) {
+		if (this._rasterId)
+			images.push(this._rasterId);
+	};
     /**
      * Defines how a button reacts when a user clicks it. The four highlight modes supported are:
      * none — No visual indication that the button has been clicked.
