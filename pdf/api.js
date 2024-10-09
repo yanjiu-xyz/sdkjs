@@ -984,6 +984,13 @@
 		let oDoc = this.getPDFDoc();
 		return oDoc.GetPageHeightEMU();
 	};
+	PDFEditorApi.prototype.asc_SetFastCollaborative = function(isOn)
+	{
+		if (!AscCommon.CollaborativeEditing)
+			return;
+		
+		AscCommon.CollaborativeEditing.Set_Fast(isOn);
+	};
 	/////////////////////////////////////////////////////////////
 	///////// For annots
 	////////////////////////////////////////////////////////////
@@ -1763,12 +1770,11 @@
 		if (null === this.lastSaveTime) {
 			this.lastSaveTime = _curTime;
 		}
-
-
+		
 		if (AscCommon.CollaborativeEditing.Is_Fast() && !AscCommon.CollaborativeEditing.Is_SingleUser()) {
 			this.WordControl.m_oLogicDocument.Continue_FastCollaborativeEditing();
 		}
-		else if (this.isLiveViewer()) {
+		else if (this.isLiveViewer() || !this.canEdit()) {
 			if (AscCommon.CollaborativeEditing.Have_OtherChanges()) {
 				AscCommon.CollaborativeEditing.Apply_Changes();
 			}
@@ -1808,7 +1814,10 @@
 	};
 	PDFEditorApi.prototype._autoSave = function () {
 
-		if (this.canSave && (!this.isViewMode || this.isLiveViewer()) && (this.canUnlockDocument || 0 !== this.autoSaveGap)) {
+		if (this.canSave
+			&& (!this.isViewMode || this.isLiveViewer())
+			&& (this.canUnlockDocument || 0 !== this.autoSaveGap || AscCommon.CollaborativeEditing.Is_Fast()))
+		{
 			if (this.canUnlockDocument) {
 				this.lastSaveTime = new Date();
 				// Check edit mode after unlock document http://bugzilla.onlyoffice.com/show_bug.cgi?id=35971
@@ -2455,6 +2464,7 @@
 		this.isDocumentEditor = false;
 		AscCommon.PasteElementsId.g_bIsDocumentCopyPaste = false;
 		AscCommon.PasteElementsId.g_bIsPDFCopyPaste = true;
+		
 		if (this.isApplyChangesOnOpenEnabled)
 		{
 			if (AscCommon.EncryptionWorker)
@@ -2469,18 +2479,27 @@
 
 			// TODO: onDocumentContentReady вызываем в конце загрузки всех изменений (и объектов для этих изменений)
 			let oThis = this;
-
-			let perfStart = performance.now();
-			let OtherChanges = AscCommon.CollaborativeEditing.Have_OtherChanges();
-			AscCommon.CollaborativeEditing.Apply_Changes(function()
+			
+			// Принимаем изменения на открытии только если это редактор, либо лайф вьювер (т.е. включена быстрая совместка)
+			if (this.canEdit() || AscCommon.CollaborativeEditing.Is_Fast())
 			{
-				let perfEnd = performance.now();
-				if (OtherChanges) {
-					AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onApplyChanges", perfEnd - perfStart), oThis);
-				}
-				oThis.onDocumentContentReady();
-			});
-			AscCommon.CollaborativeEditing.Release_Locks();
+				let perfStart    = performance.now();
+				let OtherChanges = AscCommon.CollaborativeEditing.Have_OtherChanges();
+				AscCommon.CollaborativeEditing.Apply_Changes(function()
+				{
+					let perfEnd = performance.now();
+					if (OtherChanges)
+					{
+						AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onApplyChanges", perfEnd - perfStart), oThis);
+					}
+					oThis.onDocumentContentReady();
+				});
+				AscCommon.CollaborativeEditing.Release_Locks();
+			}
+			else
+			{
+				this.onDocumentContentReady();
+			}
 
 			this.isApplyChangesOnOpen = true;
 		}
