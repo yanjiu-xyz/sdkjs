@@ -299,6 +299,7 @@
         
         return this._page;
     };
+    
     CPdfDrawingPrototype.prototype.AddToRedraw = function() {
         let oViewer = Asc.editor.getDocumentRenderer();
         let nPage   = this.GetPage();

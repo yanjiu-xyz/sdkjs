@@ -1348,6 +1348,9 @@
 		page.fields.forEach(function(field){
 			field.getAllRasterImages(result);
 		});
+		page.drawings.forEach(function(drawing){
+			drawing.getAllRasterImages(result);
+		});
 		
 		return result;
 	};

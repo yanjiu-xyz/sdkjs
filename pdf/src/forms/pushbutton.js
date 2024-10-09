@@ -209,7 +209,7 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.SetImage = function(rasterId) {
-		if (this._rasterId === rasterId)
+		if (this._rasterId === rasterId && this.GetDrawing())
 			return;
 		
 		this._needUpdateImage = true;
@@ -1779,7 +1779,7 @@
             return;
 
         this._buttonPosition = position["overlay"];
-        
+
         AscCommon.History.StartNoHistoryMode();
 
         let oPara;
@@ -1822,8 +1822,8 @@
 
         if (this._buttonCaption) {
             oCaptionRun = oPara.GetElement(0);
-            this.SetCaptionRun(oTmpRun);
-            oTmpRun.AddText(this._buttonCaption);
+            this.SetCaptionRun(oCaptionRun);
+            oCaptionRun.AddText(this._buttonCaption);
         }
 
         AscCommon.History.EndNoHistoryMode();
