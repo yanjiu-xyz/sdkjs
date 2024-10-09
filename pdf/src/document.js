@@ -5344,7 +5344,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Get_DocumentPositionInfoForCollaborative = function() {
         let oActiveObj = this.GetActiveObject();
         
-        if (!oActiveObj || Asc.editor.isRestrictionView()) {
+        if (!oActiveObj || (Asc.editor.isRestrictionView()) && !this.IsViewerObject(oActiveObj)) {
             return;
         }
         

@@ -624,8 +624,8 @@ CChangesPDFFreeTextRC.prototype.WriteToBinary = function(Writer)
 				Writer.WriteDouble(component);
 			});
 
-			Writer.WriteString2(aRC[i]["name"]);
-			Writer.WriteString2(aRC[i]["text"]);
+			Writer.WriteString2(aRC[i]["name"] || "");
+			Writer.WriteString2(aRC[i]["text"] || "");
 		}
 	}
 	
@@ -685,7 +685,7 @@ CChangesPDFFreeTextAlign.prototype.Type = AscDFH.historyitem_type_Pdf_Annot_Free
 CChangesPDFFreeTextAlign.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetDisplay(Value);
+	oAnnot.SetAlign(Value);
 };
 
 /**

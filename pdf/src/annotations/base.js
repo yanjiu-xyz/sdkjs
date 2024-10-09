@@ -1084,7 +1084,7 @@
         if (nPage == undefined)
             nPage = this.GetPage();
 
-        memory.WriteLong(this.GetOriginPage());
+        memory.WriteLong(nPage);
 
         // rect
         let aOrigRect = this.GetOrigRect();
