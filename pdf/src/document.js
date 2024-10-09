@@ -2441,6 +2441,10 @@ var CPresentation = CPresentation || function(){};
         this.annots.push(oAnnot);
         oPagesInfo.pages[nPageNum].annots.push(oAnnot);
 
+        if (oProps.apIdx != undefined) {
+            oAnnot.SetApIdx(oProps.apIdx);
+        }
+
         this.History.Add(new CChangesPDFDocumentAnnotsContent(this, oPagesInfo.pages[nPageNum].annots.length - 1, [oAnnot], true));
         
         oAnnot.AddToRedraw();
@@ -5539,6 +5543,9 @@ var CPresentation = CPresentation || function(){};
         this.fieldsContentChanges.Clear();
         this.drawingsContentChanges.Clear();
 		this.pagesContentChanges.Clear();
+    };
+    CPDFDoc.prototype.UpdateMaxApIdx = function(nApIdx) {
+        AscCommon.g_oIdCounter.m_nIdCounterEdit = Math.max(nApIdx, AscCommon.g_oIdCounter.m_nIdCounterEdit);
     };
     CPDFDoc.prototype.Add_ContentChanges = function(Changes) {
         let oChange = Changes.m_pData.Data;

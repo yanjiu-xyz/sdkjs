@@ -1451,6 +1451,7 @@
 			}
 			
 			this.IsOpenAnnotsInProgress = false;
+			oDoc.UpdateMaxApIdx(nMaxIdx);
 		};
 		this.setZoom = function(value, isDisablePaint)
 		{
