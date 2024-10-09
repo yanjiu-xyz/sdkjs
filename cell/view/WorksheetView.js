@@ -1299,12 +1299,12 @@
 
 	WorksheetView.prototype._getColLeft = function (i, saveRealRightToLeft, ctx) {
 		ctx = ctx || this.drawingCtx;
+		this._updateColumnPositions();
+
 		let realRightToleft = this.getRightToLeft();
 		if (!saveRealRightToLeft) {
 			this.setRightToLeft(false);
 		}
-
-		this._updateColumnPositions();
 
 		var l = this.cols.length;
 		let defaultWidth = Asc.round(this.defaultColWidthPx * this.getZoom(true) * this.getRetinaPixelRatio());
@@ -26491,6 +26491,13 @@
 	WorksheetView.prototype.getRightToLeftOffset = function () {
 		return this.getRightToLeft() ? 1 : 0;
 	};
+
+	WorksheetView.prototype.checkGraphicObjectsBounds = function () {
+		this.objectRender.updateSizeDrawingObjects({target: c_oTargetType.ColumnResize, col: 100});
+		this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 100});
+		this.objectRender.updateRange(new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxCol0));
+	};
+
 
 	function CRenderingSettings() {
 		this.splitRowBG = null; //number - how much row need skip, every 2,3 and..
