@@ -1762,7 +1762,7 @@ void main() {\n\
     {
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
-            return;
+            return "";
 
         var ret = "";
 
