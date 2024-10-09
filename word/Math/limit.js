@@ -515,10 +515,17 @@ CMathFunc.prototype.GetTextOfElement = function(oMathText)
 		let oArgPos					= oMathText.Add(oArgument, true, 2);
 
 		let oFuncNameContent		= oFuncName.GetTextOfElement(true);
+		let strFunc					= oFuncNameContent.GetText();
+
+		//find content before "_", "^", "below" and "above";
+		strFunc = strFunc.split("_")[0].split('^')[0].split('\\below')[0].split('\\above')[0];
+
 		let oSlashesTextForName		= new AscMath.MathText("\\", oMathText.GetStyleFromFirst());
 		let oFirstPosInNameContent	= oFuncNameContent.GetFirstPos();
 
-		oFuncNameContent.AddBefore(oFirstPosInNameContent, oSlashesTextForName);
+		if (AscMath.functionNames.includes(strFunc) || AscMath.LimitFunctions.includes(strFunc))
+			oFuncNameContent.AddBefore(oFirstPosInNameContent, oSlashesTextForName);
+
 		oMathText.AddBefore(oArgPos, oFuncNameContent);
 	}
 	else

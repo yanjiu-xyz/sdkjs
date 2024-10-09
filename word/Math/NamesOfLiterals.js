@@ -3003,15 +3003,15 @@
 				return strBracket
 			}
 
-			if (MathLiterals.rBrackets.LaTeX[code])
+			if (typeof MathLiterals.rBrackets.LaTeX[code] === 'string')
 			{
 				return MathLiterals.rBrackets.LaTeX[code].charCodeAt(0);
 			}
-			else if (MathLiterals.lrBrackets.LaTeX[code])
+			else if (typeof MathLiterals.lrBrackets.LaTeX[code] === 'string')
 			{
 				return MathLiterals.lrBrackets.LaTeX[code].charCodeAt(0);
 			}
-			else if (MathLiterals.lBrackets.LaTeX[code])
+			else if (typeof MathLiterals.lBrackets.LaTeX[code] === 'string')
 			{
 				return MathLiterals.lBrackets.LaTeX[code].charCodeAt(0);
 			}
