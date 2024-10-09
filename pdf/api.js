@@ -2511,6 +2511,13 @@
 	{
 		return (!this.isViewMode);
 	};
+	PDFEditorApi.prototype.sync_CollaborativeChanges = function()
+	{
+		if (AscCommon.CollaborativeEditing.Is_Fast())
+			return;
+		
+		this.sendEvent("asc_onCollaborativeChanges");
+	};
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));
 	};
