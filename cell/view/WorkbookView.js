@@ -5385,6 +5385,21 @@
 
 										prepared.existedWs = existedWs;
 										t.model.dependencyFormulas.changeExternalLink(prepared);
+
+										//add to history after updated formula
+										for (let listenerId in prepared.listeners) {
+											let f = prepared.listeners[listenerId];
+											let parent = f.parent;
+											if (parent instanceof AscCommonExcel.CCellWithFormula) {
+												let cell = parent.ws && parent.ws.getCell3(parent.nRow, parent.nCol);
+												if (cell) {
+													let sF = prepared.listeners[listenerId].assemble();
+													if (sF) {
+														cell.setValue("=" + sF);
+													}
+												}
+											}
+										}
 									}
 									eR.addDataSetFrom(eRAdded);
 									t.model.removeExternalReferences([eRAdded.getAscLink()]);
