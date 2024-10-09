@@ -4563,10 +4563,12 @@
 					if (oDrawing.IsGraphicFrame()) {
 						let sTableStyleId = oDrawing.graphicObject.GetTableStyle();
 						if (sTableStyleId) {
-							let sStyleGUID = oDoc.globalTableStyles.Get(sTableStyleId).GetStyleId();
-						
-							if (sTableStyleId != undefined) {
-								oMemory.context.tableStylesIdToGuid[sTableStyleId] = sStyleGUID;
+							let oStyle = oDoc.globalTableStyles.Get(sTableStyleId);
+							if (oStyle) {
+								let sStyleGUID = oStyle.GetStyleId();
+								if (sTableStyleId != undefined) {
+									oMemory.context.tableStylesIdToGuid[sTableStyleId] = sStyleGUID;
+								}
 							}
 						}
 					}
