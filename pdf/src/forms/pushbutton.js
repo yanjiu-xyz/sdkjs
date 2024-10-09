@@ -1079,42 +1079,48 @@
 
         return false;
     };
-    CPushButtonField.prototype.CheckTextColor = function() {
-        let oCaptionRun = this.GetCaptionRun();
-        if (oCaptionRun == null)
-            return;
-
-        let aColor = this.GetTextColor();
-        let oRGBColor = this.GetRGBColor(aColor);
-        let oCaptionColor = oCaptionRun.Get_Color();
-        if (oRGBColor.r != oCaptionColor.r || oRGBColor.g != oCaptionColor.g || oRGBColor.b != oCaptionColor.b) {
-            this._textColor = aColor;
-        
-            let oRGB = this.GetRGBColor(aColor);
-            if (this.content) {
-                let oPara       = oCaptionRun.Paragraph;
-                let oApiPara    = editor.private_CreateApiParagraph(oPara);
-
-                oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
-                oPara.RecalcCompiledPr(true);
-            }
-        }
-    };
-    CPushButtonField.prototype.CheckTextFont = function() {
-        let oCaptionRun = this.GetCaptionRun();
-        if (oCaptionRun == null)
-            return;
-
-        let sFont = this.GetTextFontActual();
-        if (oCaptionRun.Pr.GetFontFamily() != sFont) {
-            if (this.content) {
-                this.content.SetFont(sFont);
-                
-                let oStyle = this.GetFontStyle();
-                this.content.SetBold(oStyle.bold);
-                this.content.SetItalic(oStyle.italic);
-            }
-        }
+	CPushButtonField.prototype.CheckTextColor = function() {
+		let oCaptionRun = this.GetCaptionRun();
+		if (oCaptionRun == null)
+			return;
+		
+		AscCommon.ExecuteNoHistory(function(){
+			let aColor = this.GetTextColor();
+			let oRGB = this.GetRGBColor(aColor);
+			let oCaptionColor = oCaptionRun.Get_Color();
+			
+			if (oRGB.r === oCaptionColor.r
+				&& oRGB.g === oCaptionColor.g
+				&& oRGB.b === oCaptionColor.b)
+				return;
+			
+			this._textColor = aColor;
+			
+			if (!this.content)
+				return;
+			
+			let oPara       = oCaptionRun.Paragraph;
+			let oApiPara    = editor.private_CreateApiParagraph(oPara);
+			
+			oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
+			oPara.RecalcCompiledPr(true);
+		}, undefined, this);
+	};
+	CPushButtonField.prototype.CheckTextFont = function() {
+		let oCaptionRun = this.GetCaptionRun();
+		if (oCaptionRun == null)
+			return;
+		
+		AscCommon.ExecuteNoHistory(function(){
+			let sFont = this.GetTextFontActual();
+			if (oCaptionRun.Pr.GetFontFamily() === sFont || !this.content)
+				return;
+			
+			this.content.SetFont(sFont);
+			let oStyle = this.GetFontStyle();
+			this.content.SetBold(oStyle.bold);
+			this.content.SetItalic(oStyle.italic);
+		}, undefined, this);
     };
     CPushButtonField.prototype.GetCaptionRun = function() {
         return this._captionRun;
