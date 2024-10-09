@@ -2481,7 +2481,7 @@
 			let oThis = this;
 			
 			// Принимаем изменения на открытии только если это редактор, либо лайф вьювер (т.е. включена быстрая совместка)
-			if (this.canEdit() || AscCommon.CollaborativeEditing.Is_Fast())
+			if (AscCommon.CollaborativeEditing.Is_Fast())
 			{
 				let perfStart    = performance.now();
 				let OtherChanges = AscCommon.CollaborativeEditing.Have_OtherChanges();
@@ -2498,11 +2498,18 @@
 			}
 			else
 			{
+				if (!this.isViewMode && AscCommon.CollaborativeEditing.Have_OtherChanges())
+					this.sendEvent("asc_onCollaborativeChanges")
+				
 				this.onDocumentContentReady();
 			}
 
 			this.isApplyChangesOnOpen = true;
 		}
+	};
+	PDFEditorApi.prototype._canSyncCollaborativeChanges = function(isFirstLoad)
+	{
+		return (!this.isViewMode);
 	};
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));

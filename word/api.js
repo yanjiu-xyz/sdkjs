@@ -1901,10 +1901,8 @@ background-repeat: no-repeat;\
 			var oColor       = false === bUseColor ? null : oCommonColor;
 			t._coAuthoringSetChange(e, oColor);
 			// т.е. если bSendEvent не задан, то посылаем  сообщение + когда загрузился документ
-			if (!bFirstLoad && t.bInit_word_control)
-			{
+			if (t._canSyncCollaborativeChanges(bFirstLoad))
 				t.sync_CollaborativeChanges();
-			}
 		};
 		this.CoAuthoringApi.onChangesIndex = function(changesIndex)
 		{
@@ -1920,6 +1918,11 @@ background-repeat: no-repeat;\
 				AscCommon.CollaborativeEditing.UpdateForeignCursorByAdditionalInfo(JSON.parse(e));
 			}
 		};
+	};
+	
+	asc_docs_api.prototype._canSyncCollaborativeChanges = function(isFirstLoad)
+	{
+		return (!isFirstLoad && this.bInit_word_control);
 	};
 
 	asc_docs_api.prototype.startCollaborationEditing = function()
