@@ -570,6 +570,7 @@
                 let oCaptionRun;
                 let oPara = this.content.GetElement(0);
 
+                AscCommon.History.StartNoHistoryMode();
                 switch (this._buttonPosition) {
                     case position["textIconV"]:
                     case position["textOnly"]:
@@ -610,6 +611,7 @@
                         this.SetCaptionRun(oCaptionRun);
                         break;
                 }
+                AscCommon.History.EndNoHistoryMode();
                 break;
             case 1:
                 this._downCaption = cCaption;
@@ -784,7 +786,7 @@
         }
 
         if (sTargetImgRasterId || sTargetCaption) {
-
+            AscCommon.History.StartNoHistoryMode();
             if (oCaptionRun && sTargetCaption) {
                 oCaptionRun.ClearContent();
                 oCaptionRun.AddText(sTargetCaption);
@@ -792,6 +794,7 @@
 
             this.SetImage(sTargetImgRasterId);
             this.SetNeedRecalc(true);
+            AscCommon.History.EndNoHistoryMode();
         }
 
         if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
@@ -813,6 +816,7 @@
             let oCaptionRun         = this.GetCaptionRun();
             let sDefaultCaption     = this.GetCaption(CAPTION_TYPES.normal);
 
+            AscCommon.History.StartNoHistoryMode();
             if (oCaptionRun && sDefaultCaption && sTargetCaption) {
                 oCaptionRun.ClearContent();
                 oCaptionRun.AddText(sTargetCaption);
@@ -820,6 +824,7 @@
 
             this.SetImage(sTargetImgRasterId);
             this.SetNeedRecalc(true);
+            AscCommon.History.EndNoHistoryMode();
         }
 
         if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
@@ -859,6 +864,8 @@
         let sRolloverCaption = this.GetCaption(CAPTION_TYPES.rollover);
 
         if (this._imgData.rollover || sRolloverCaption) {
+            AscCommon.History.StartNoHistoryMode();
+
             // сначала добавляем текст, т.к. учитывается его размер при добавлении картинки
             if (sRolloverCaption) {
                 let oCaptionRun = this.GetCaptionRun();
@@ -868,6 +875,7 @@
 
             this.SetImage(this._imgData.rollover);
             this.SetNeedRecalc(true);
+            AscCommon.History.EndNoHistoryMode();
         }
     };
     CPushButtonField.prototype.OnEndRollover = function() {
@@ -884,7 +892,9 @@
         }
         
         if (this._imgData.rollover || this.GetCaption(CAPTION_TYPES.rollover)) {
-            let oCaptionRun             = this.GetCaptionRun();
+            AscCommon.History.StartNoHistoryMode();
+
+            let oCaptionRun         = this.GetCaptionRun();
             let sRolloverCaption    = this.GetCaption(CAPTION_TYPES.rollover);
             let sDefaultCaption     = this.GetCaption(CAPTION_TYPES.normal);
             if (sDefaultCaption && sRolloverCaption) {
@@ -894,6 +904,8 @@
 
             this.SetImage(this._imgData.normal);
             this.SetNeedRecalc(true);
+
+            AscCommon.History.EndNoHistoryMode();
         }
     };
     CPushButtonField.prototype.DrawBackground = function(oGraphicsPDF) {
@@ -1443,6 +1455,8 @@
 
         this._buttonPosition = position["textOnly"];
 
+        AscCommon.History.StartNoHistoryMode();
+
         let oPara;
         if (this.content.Content.length == 2) {
             for (let i = 0; i < this.content.Content.length; i++) {
@@ -1466,6 +1480,8 @@
             }
         }
 
+        AscCommon.History.EndNoHistoryMode();
+
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
     };
@@ -1475,6 +1491,8 @@
 
         this._buttonPosition = position["iconOnly"];
         this._buttonCaption  = undefined;
+
+        AscCommon.History.StartNoHistoryMode();
 
         let oPara;
         if (this.content.Content.length == 2) {
@@ -1515,11 +1533,16 @@
             oPara.CorrectContent();
         }
 
+        AscCommon.History.EndNoHistoryMode();
         this.SetNeedRecalc(true);
     };
     CPushButtonField.prototype.SetIconTextV = function() {
         if (this._buttonPosition == position["iconTextV"])
             return;
+
+        this._buttonPosition = position["iconTextV"];
+
+        AscCommon.History.StartNoHistoryMode();
 
         let oPara1;
         let oPara2;
@@ -1572,12 +1595,16 @@
             }
         }
 
+        AscCommon.History.EndNoHistoryMode();
         this.SetNeedRecalc(true);
-        this._buttonPosition = position["iconTextV"];
     };
     CPushButtonField.prototype.SetTextIconV = function() {
         if (this._buttonPosition == position["textIconV"])
             return;
+
+        this._buttonPosition = position["textIconV"];
+
+        AscCommon.History.StartNoHistoryMode();
 
         let oPara1;
         let oPara2;
@@ -1630,12 +1657,16 @@
             }
         }
 
+        AscCommon.History.EndNoHistoryMode();
         this.SetNeedRecalc(true);
-        this._buttonPosition = position["textIconV"];
     };
     CPushButtonField.prototype.SetIconTextH = function() {
         if (this._buttonPosition == position["iconTextH"])
             return;
+
+        this._buttonPosition = position["iconTextH"];
+
+        AscCommon.History.StartNoHistoryMode();
 
         let oPara;
         if (this.content.Content.length == 2) {
@@ -1683,12 +1714,16 @@
             oPara.Add_ToContent(oPara.Content.length - 1, oTmpRun);
         }
 
+        AscCommon.History.EndNoHistoryMode();
         this.SetNeedRecalc(true);
-        this._buttonPosition = position["iconTextH"];
     };
     CPushButtonField.prototype.SetTextIconH = function() {
         if (this._buttonPosition == position["textIconH"])
             return;
+
+        this._buttonPosition = position["textIconH"];
+
+        AscCommon.History.StartNoHistoryMode();
 
         let oPara;
         if (this.content.Content.length == 2) {
@@ -1736,12 +1771,16 @@
             this.SetCaptionRun(oTmpRun);
         }
         
+        AscCommon.History.EndNoHistoryMode();
         this.SetNeedRecalc(true);
-        this._buttonPosition = position["textIconH"];
     };
     CPushButtonField.prototype.SetOverlay = function() {
         if (this._buttonPosition == position["overlay"])
             return;
+
+        this._buttonPosition = position["overlay"];
+        
+        AscCommon.History.StartNoHistoryMode();
 
         let oPara;
         if (this.content.Content.length == 2) {
@@ -1787,8 +1826,8 @@
             oTmpRun.AddText(this._buttonCaption);
         }
 
+        AscCommon.History.EndNoHistoryMode();
         this.SetNeedRecalc(true);
-        this._buttonPosition = position["overlay"];
     };
 
     /**

@@ -552,13 +552,13 @@ var CPresentation = CPresentation || function(){};
                 let oBtnField = oDoc.GetFieldBySourceIdx(oIconsInfo["MK"][nBtn]["i"]);
 
                 if (oIconsInfo["MK"][nBtn]["I"]) {
-                    oBtnField.SetImageData(oIconsInfo["MK"][nBtn]["I"]);
+                    oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["I"].src, AscPDF.APPEARANCE_TYPE.normal);
                 }
                 if (oIconsInfo["MK"][nBtn]["RI"]) {
-                    oBtnField.SetImageData(oIconsInfo["MK"][nBtn]["RI"], AscPDF.APPEARANCE_TYPE.rollover);
+                    oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["RI"].src, AscPDF.APPEARANCE_TYPE.rollover);
                 }
                 if (oIconsInfo["MK"][nBtn]["IX"]) {
-                    oBtnField.SetImageData(oIconsInfo["MK"][nBtn]["IX"], AscPDF.APPEARANCE_TYPE.mouseDown);
+                    oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["IX"].src, AscPDF.APPEARANCE_TYPE.mouseDown);
                 }
             }
             oViewer.isRepaint = true;
