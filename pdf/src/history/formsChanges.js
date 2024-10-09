@@ -202,11 +202,12 @@ CChangesPDFPushbuttonImage.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Im
 CChangesPDFPushbuttonImage.prototype.private_SetValue = function(Value)
 {
 	let oButtonField = this.Class;
-	oButtonField.AddImage2(Value, this.APType);
-
 	if (this.FromLoad && typeof Value === "string" && Value.length > 0) {
 		AscCommon.CollaborativeEditing.Add_NewImage(Value);
 		AscCommon.CollaborativeEditing.m_aEndLoadCallbacks.push(oButtonField.AddImage2.bind(oButtonField, Value, this.APType));
+	}
+	else {
+		oButtonField.AddImage2(Value, this.APType);
 	}
 };
 

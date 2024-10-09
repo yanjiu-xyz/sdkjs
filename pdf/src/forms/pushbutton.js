@@ -178,12 +178,12 @@
     CPushButtonField.prototype.GetImageRasterId = function(nAPType) {
         switch (nAPType) {
             case AscPDF.APPEARANCE_TYPE.rollover:
-                return this._imgData.rollover ? this._imgData.rollover.src : "";
+                return this._imgData.rollover;
             case AscPDF.APPEARANCE_TYPE.mouseDown:
-                return this._imgData.mouseDown ? this._imgData.mouseDown.src : "";
+                return this._imgData.mouseDown;
             case AscPDF.APPEARANCE_TYPE.normal:
             default:
-                return this._imgData.normal ? this._imgData.normal.src : "";
+                return this._imgData.normal;
         }
     };
     /**
@@ -193,14 +193,8 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.AddImage2 = function(sRasterId, nAPType) {
-		this.SetImage(sRasterId);
-
-        if (!sRasterId) {
-            return;
-        }
-
-        this.DoInitialRecalc();
         this.SetImageRasterId(sRasterId, nAPType);
+		this.SetImage(sRasterId);
     };
     /**
      * Sets image without any history changes.
@@ -226,6 +220,11 @@
 	CPushButtonField.prototype._SetImage = function() {
 		let sRasterId = this._rasterId;
 		
+        if (!this.DoInitialRecalc()) {
+            this.AddToRedraw();
+            return;
+        }
+        
 		if (!sRasterId)
 			return this._RemoveImage();
 		
@@ -740,17 +739,17 @@
 
         switch (nAPType) {
             case AscPDF.APPEARANCE_TYPE.rollover:
-                sPrevRasterId            = this._imgData.rollover;
+                sPrevRasterId           = this._imgData.rollover;
                 this._imgData.rollover  = sRasterId;
                 this._imgData.changedInfo.rollover = true;
                 break;
             case AscPDF.APPEARANCE_TYPE.mouseDown:
-                sPrevRasterId                = this._imgData.mouseDown;
-                this._imgData.mouseDown     = sRasterId;
+                sPrevRasterId           = this._imgData.mouseDown;
+                this._imgData.mouseDown = sRasterId;
                 this._imgData.changedInfo.mouseDown = true;
                 break;
             case AscPDF.APPEARANCE_TYPE.normal:
-                sPrevRasterId            = this._imgData.normal;
+                sPrevRasterId           = this._imgData.normal;
                 this._imgData.normal    = sRasterId;
                 this._imgData.changedInfo.normal = true;
                 break;
@@ -985,9 +984,16 @@
         };
     };
     CPushButtonField.prototype.DoInitialRecalc = function() {
-        if (!this.contentClipRect) {
-            this.Recalculate();
+        if (null == this.contentClipRect) {
+            if (this.GetDocument().checkFieldFont(this)) {
+                this.Recalculate();
+                return true;
+            }
+
+            return false;
         }
+
+        return true;
     };
     CPushButtonField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
