@@ -918,8 +918,8 @@ RotateState.prototype =
                                 }
                             }
                             if (oTrack.originalObject.IsDrawing() && oTrack instanceof AscFormat.MoveShapeImageTrack) {
-                                if (pageIndex != oTrack.originalObject.pageIndex) {
-                                    oTrack.originalObject.SetPage(pageIndex);
+                                if (oTrack.pageIndex != oTrack.originalObject.GetPage()) {
+                                    oTrack.originalObject.SetPage(oTrack.pageIndex);
                                 }
                             }
                             
