@@ -3690,6 +3690,10 @@
 			renderingSettings = this.initRenderingSettings();
 		}
 		renderingSettings && renderingSettings.setCtxWidth(printPagesData.pageWidth / vector_koef);
+		renderingSettings && renderingSettings.setPageLeftOffset(printPagesData.leftFieldInPx);
+		let pageRightField = c_oAscPrintDefaultSettings.PageRightField;
+		renderingSettings && renderingSettings.setPageRightOffset(pageRightField / vector_koef);
+		this.getRightToLeft() && this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 0});
 
 
 		this.stringRender.fontNeedUpdate = true;
@@ -4014,6 +4018,8 @@
 			this.setRenderingSettings(null);
 			this.pageWidth = null;
 			drawingCtx.EndPage && drawingCtx.EndPage();
+
+			this.getRightToLeft() && this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 0});
 		}
 	};
 
@@ -4622,11 +4628,7 @@
 	};
 	WorksheetView.prototype._fillText = function (ctx, text, x, y, maxWidth, charWidths, angle) {
 		if (this.getRightToLeft()) {
-			let charsWidth = 0;
-			for (let i in charWidths) {
-				charsWidth += charWidths[i];
-			}
-			ctx.fillText( text, x + charsWidth, y, maxWidth, charWidths, angle)
+			ctx.fillText( text, x, y, maxWidth, charWidths, angle)
 		} else {
 			ctx.fillText(text, x, y, maxWidth, charWidths);
 		}
@@ -4926,7 +4928,28 @@
 
 		ctx.AddClipRect(x, y, w, h);
 		ctx.setFillStyle(color);
+
+		let _originalMatrix;
+		let charsWidth = 0;
+		if (this.getRightToLeft()) {
+			for (let i in sr.charWidths) {
+				charsWidth += sr.charWidths[i];
+			}
+			textX = textX + charsWidth;
+			if (ctx.Transform) {
+				_originalMatrix = ctx.Transform ? ctx.Transform.CreateDublicate() : ctx._mbt.clone();
+				let _transform = new AscCommon.CMatrix();
+				ctx.DocumentRenderer.transform(1, _transform.shy, _transform.shx, _transform.sy, _transform.tx, _transform.ty);
+				textX = this.getCtxWidth() - textX;
+			}
+		}
+
 		this._fillText(ctx, text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
+
+		if (_originalMatrix) {
+			ctx.setTransform(_originalMatrix.sx, _originalMatrix.shy, _originalMatrix.shx, _originalMatrix.sy, _originalMatrix.tx, _originalMatrix.ty);
+		}
+
 		ctx.RemoveClipRect();
     };
 
@@ -26418,14 +26441,14 @@
 		return this.renderingSettings;
 	};
 
-	WorksheetView.prototype.checkRtl = function (x, ctx, units) {
+	WorksheetView.prototype.checkRtl = function (x, ctx, units, checkOffsets) {
 		if (this.getRightToLeft()) {
 			let u = units >= 0 && units <= 3 ? units : 0;
 			let kf = asc_getcvt(0/*px*/, u, this._getPPIX());
 			if (!ctx) {
 				ctx = this.drawingCtx;
 			}
-			return this.getCtxWidth(ctx) * kf - x;
+			return this.getCtxWidth(ctx, checkOffsets) * kf - x;
 		}
 		return x;
 	};
@@ -26461,12 +26484,19 @@
 		}
 	};
 
-	WorksheetView.prototype.getCtxWidth = function (ctx) {
+	WorksheetView.prototype.getCtxWidth = function (ctx, checkOffsets) {
 		if (!ctx) {
 			ctx = this.drawingCtx;
 		}
+		let res;
 		let renderingSettings = this.getRenderingSettings();
-		return (renderingSettings && renderingSettings.getCtxWidth()) || ctx.getWidth();
+		if (renderingSettings && renderingSettings.getCtxWidth()) {
+			let offset = checkOffsets ? (renderingSettings.getPageLeftOffset() + renderingSettings.getPageLeftOffset()) : 0;
+			res = renderingSettings.getCtxWidth() - offset;
+		} else {
+			res = ctx.getWidth();
+		}
+		return res;
 	};
 
 	WorksheetView.prototype._endRtlRendering = function (ctx) {
@@ -26525,6 +26555,8 @@
 	function CRenderingSettings() {
 		this.splitRowBG = null; //number - how much row need skip, every 2,3 and..
 		this.ctxWidth = null;
+		this.leftOffset = null;
+		this.rightOffset = null;
 	}
 	CRenderingSettings.prototype.setSplitRowBG = function (val) {
 		this.splitRowBG = val;
@@ -26548,6 +26580,18 @@
 	};
 	CRenderingSettings.prototype.setCtxWidth = function (val) {
 		this.ctxWidth = val;
+	};
+	CRenderingSettings.prototype.setPageLeftOffset = function (val) {
+		this.pageLeftOffset = val;
+	};
+	CRenderingSettings.prototype.setPageRightOffset = function (val) {
+		this.pageRightOffset = val;
+	};
+	CRenderingSettings.prototype.getPageLeftOffset = function () {
+		return this.pageLeftOffset;
+	};
+	CRenderingSettings.prototype.getPageRightOffset = function () {
+		return this.pageRightOffset;
 	};
 
 	function cAsyncAction() {
