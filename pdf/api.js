@@ -1774,7 +1774,7 @@
 		if (AscCommon.CollaborativeEditing.Is_Fast() && !AscCommon.CollaborativeEditing.Is_SingleUser()) {
 			this.WordControl.m_oLogicDocument.Continue_FastCollaborativeEditing();
 		}
-		else if (this.isLiveViewer() || !this.canEdit()) {
+		else if (this.isLiveViewer()) {
 			if (AscCommon.CollaborativeEditing.Have_OtherChanges()) {
 				AscCommon.CollaborativeEditing.Apply_Changes();
 			}
