@@ -605,7 +605,7 @@ CChangesPDFFreeTextRC.prototype.WriteToBinary = function(Writer)
 			if (aRC[i]["underlined"]) {
 				nStyle |= (1 << 4);
 			}
-			if (aRC[i]["vertical"]) {
+			if (undefined !== aRC[i]["vertical"]) {
 				nStyle |= (1 << 5);
 				Writer.WriteDouble(aRC[i]["vertical"]);
 			}
