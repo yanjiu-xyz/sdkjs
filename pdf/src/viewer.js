@@ -2934,7 +2934,9 @@
 
 			let yPos = this.scrollY >> 0;
 			let xCenter = this.width >> 1;
-
+			if (this.documentWidth > this.width)
+				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+			
 			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
 				let page = this.drawingPages[i];
