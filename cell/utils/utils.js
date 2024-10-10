@@ -4087,6 +4087,7 @@
 		prot["asc_setShowZeros"] = prot.asc_setShowZeros;
 		prot["asc_setShowFormulas"] = prot.asc_setShowFormulas;
 		prot["asc_setRightToLeft"] = prot.asc_setRightToLeft;
+		prot["asc_getRightToLeft"] = prot.asc_getRightToLeft;
 
 		window["AscCommonExcel"].asc_CPane = asc_CPane;
 		window["AscCommonExcel"].asc_CSheetPr = asc_CSheetPr;
