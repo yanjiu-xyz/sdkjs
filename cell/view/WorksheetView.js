@@ -3749,8 +3749,6 @@
 			let clipLeftShape, clipTopShape, clipWidthShape, clipHeightShape;
 
 			let doDraw = function(range, titleWidth, titleHeight) {
-				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeft, clipTop, clipWidth, clipHeight);
-
 				let transformMatrix;
 				let _transform = drawingCtx.Transform;
 				if (printScale !== 1 && _transform) {
@@ -3767,13 +3765,15 @@
 					if (!_transform) {
 						_transform = new AscCommon.CMatrix();
 					}
-					let transformMatrix = new AscCommon.CMatrix();
+					transformMatrix = new AscCommon.CMatrix();
 					transformMatrix.sx = -1;
-					transformMatrix.tx = t.getCtxWidth();
+					transformMatrix.tx = t.getCtxWidth() * (drawingCtx instanceof AscCommonExcel.CPdfPrinter ? vector_koef : 1);
 					let newTransformMatrix = _transform.Multiply(transformMatrix);
 					drawingCtx.setTransform(newTransformMatrix.sx, newTransformMatrix.shy, newTransformMatrix.shx, newTransformMatrix.sy, newTransformMatrix.tx, newTransformMatrix.ty);
-					//drawingCtx.updateTransforms();
+					drawingCtx.updateTransforms && drawingCtx.updateTransforms();
 				}
+
+				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeft, clipTop, clipWidth, clipHeight);
 
 				let offsetCols = printPagesData.startOffsetPx;
 				//range = printPagesData.pageRange;
