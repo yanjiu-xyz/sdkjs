@@ -51,6 +51,9 @@
 		this.DocumentType     = 1;
 		
 		this.compositeInput = null;
+		this.isPdfViewer    = false; // Было решено, что флаг isViewMode присылается всегда false, т.к. пдф всегда
+		                             // можно редактировать (во вьювере заполнять поля, например)
+		                             // Данный флаг различает в каком режиме загружен документ (edit/view)
 	}
 	
 	PDFEditorApi.prototype = Object.create(AscCommon.DocumentEditorApi.prototype);
@@ -2533,7 +2536,13 @@
 	{
 		return false;
 	};
-
+	PDFEditorApi.prototype.asc_setPdfViewer = function(isPdfViewer) {
+		this.isPdfViewer = isPdfViewer;
+	};
+	PDFEditorApi.prototype.isLiveViewer = function() {
+		return this.isPdfViewer && AscCommon.CollaborativeEditing.Is_Fast() && !this.VersionHistory;
+	};
+	
 	function CPdfContextMenuData(obj) {
 		if (obj) {
 			this.Type  		= ( undefined != obj.Type ) ? obj.Type : Asc.c_oAscPdfContextMenuTypes.Common;

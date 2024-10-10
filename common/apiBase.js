@@ -5183,6 +5183,9 @@
 	baseEditorsApi.prototype.removeCustomProperty = function(idx) {
 	};
 	
+	baseEditorsApi.prototype.asc_setPdfViewer = function(isPdfViewer) {
+	};
+	
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
@@ -5285,5 +5288,7 @@
 	prot["asc_addCustomProperty"] = prot.asc_addCustomProperty;
 	prot["asc_modifyCustomProperty"] = prot.asc_modifyCustomProperty;
 	prot["asc_removeCustomProperty"] = prot.asc_removeCustomProperty;
+	
+	prot["asc_setPdfViewer"] = prot.asc_setPdfViewer;
 
 })(window);
