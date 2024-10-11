@@ -593,11 +593,13 @@
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return false;
 
+			let oThumbnails = this.thumbnails;
 			for (var i = 0, len = pages.length; i < len; i++)
 			{
 				if (pages[i] >= this.startVisiblePage && pages[i] <= this.endVisiblePage)
 				{
 					delete this.drawingPages[pages[i]].Image;
+					oThumbnails && oThumbnails._repaintPage(i);
 				}
 			}
 
