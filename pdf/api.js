@@ -62,8 +62,7 @@
 	PDFEditorApi.prototype.openDocument = function(file) {
 		let perfStart = performance.now();
 		
-		this.isOnlyReaderMode     = false;
-		this.ServerIdWaitComplete = true;
+		this.isOnlyReaderMode = false;
 		
 		window["AscViewer"]["baseUrl"] = (typeof document !== 'undefined' && document.currentScript) ? "" : "./../../../../sdkjs/pdf/src/engine/";
 		window["AscViewer"]["baseEngineUrl"] = "./../../../../sdkjs/pdf/src/engine/";
