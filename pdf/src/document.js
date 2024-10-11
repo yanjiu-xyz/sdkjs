@@ -2676,7 +2676,8 @@ var CPresentation = CPresentation || function(){};
 
 		AscCommon.History.Get_RecalcData();
 		AscCommon.History.Reset_RecalcIndex();
-
+        Asc.editor.checkLastWork();
+        
         if (false /* тут проверяем локи */) {
             AscCommon.History.Undo();
             AscCommon.History.Clear_Redo();

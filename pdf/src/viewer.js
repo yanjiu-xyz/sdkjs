@@ -1978,6 +1978,8 @@
 
 		this.onMouseDown = function(e)
 		{
+			Asc.editor.checkLastWork();
+
 			if (oThis.touchManager && oThis.touchManager.checkTouchEvent(e))
 			{
 				oThis.touchManager.startTouchingInProcess();
@@ -2095,6 +2097,8 @@
 
 		this.onMouseUp = function(e)
 		{
+			Asc.editor.checkLastWork();
+
 			if (oThis.touchManager && oThis.touchManager.checkTouchEvent(e))
 			{
 				oThis.touchManager.startTouchingInProcess();
@@ -2169,6 +2173,8 @@
 
 		this.onMouseMove = function(e)
 		{
+			Asc.editor.checkLastWork();
+
 			if (oThis.touchManager && oThis.touchManager.checkTouchEvent(e))
 			{
 				oThis.touchManager.startTouchingInProcess();
@@ -2552,6 +2558,8 @@
 
 		this.onUpdateOverlay = function()
 		{
+			Asc.editor.checkLastWork();
+			
 			if (!this.overlay || this.scheduledRepaintTimer != null)
 				return;
 
@@ -2751,7 +2759,8 @@
 		this._paint = function()
 		{
 			let oDoc = this.getPDFDoc();
-
+			Asc.editor.checkLastWork();
+			
 			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress) {
 				this.paint();
 				return;
