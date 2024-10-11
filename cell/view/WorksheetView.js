@@ -10195,7 +10195,12 @@
 
 		let isReverse = delta < 0;
 		let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
-		let defaultScrollPxStep = Math.floor(unitDeltaStep * Math.abs(delta));
+
+		let defaultScrollPxStep = unitDeltaStep * Math.abs(delta);
+		if (defaultScrollPxStep < 1) {
+			return;
+		}
+		defaultScrollPxStep = Math.floor(defaultScrollPxStep)
 
 		let deltaRows = 0, deltaCorrect = 0;
 		let currentScrollCorrect = this.getScrollCorrect();
@@ -10558,7 +10563,12 @@
 
 		let isReverse = delta < 0;
 		let unitDeltaStep = Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
-		let defaultScrollPxStep = Math.ceil(unitDeltaStep * Math.abs(delta));
+
+		let defaultScrollPxStep = unitDeltaStep * Math.abs(delta);
+		if (defaultScrollPxStep < 1) {
+			return;
+		}
+		defaultScrollPxStep = Math.ceil(defaultScrollPxStep)
 
 		let deltaCols = 0, deltaCorrect = 0;
 		let currentScrollCorrect = this.getHorizontalScrollCorrect();
