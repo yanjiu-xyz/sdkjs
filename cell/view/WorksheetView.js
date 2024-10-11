@@ -4937,18 +4937,12 @@
 			}
 			textX = textX + charsWidth;
 			if (ctx.Transform) {
-				_originalMatrix = ctx.Transform ? ctx.Transform.CreateDublicate() : ctx._mbt.clone();
-				let _transform = new AscCommon.CMatrix();
-				ctx.DocumentRenderer.transform(1, _transform.shy, _transform.shx, _transform.sy, _transform.tx, _transform.ty);
+				ctx.DocumentRenderer.transform(1, 0, 0, 1, 0, 0);
 				textX = this.getCtxWidth() - textX;
 			}
 		}
 
 		this._fillText(ctx, text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
-
-		if (_originalMatrix) {
-			ctx.setTransform(_originalMatrix.sx, _originalMatrix.shy, _originalMatrix.shx, _originalMatrix.sy, _originalMatrix.tx, _originalMatrix.ty);
-		}
 
 		ctx.RemoveClipRect();
     };
@@ -26473,14 +26467,6 @@
 			ctx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, this.getCtxWidth(ctx), transformMatrix.ty);
 
 			ctx.updateTransforms();
-
-
-			/*let ctx2 = this.drawingGraphicCtx;
-			let _transform2 = ctx2.Transform ? ctx2.Transform : new AscCommon.CMatrix();
-			let transformMatrix2 = _transform2.CreateDublicate ? _transform2.CreateDublicate() : _transform2.clone();
-			ctx2.setTransform(-1, transformMatrix2.shy, transformMatrix2.shx, transformMatrix2.sy, ctx2.getWidth(), transformMatrix2.ty);
-
-			ctx2.updateTransforms()*/
 		}
 	};
 
@@ -26509,35 +26495,28 @@
 			ctx.setTransform(1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, 0, transformMatrix.ty);
 
 			ctx.updateTransforms()
-
-			/*let ctx2 = this.drawingGraphicCtx;
-			let _transform2 = ctx2.Transform ? ctx2.Transform : new AscCommon.CMatrix();
-			let transformMatrix2 = _transform2.CreateDublicate ? _transform2.CreateDublicate() : _transform2.clone();
-			ctx2.setTransform(1, transformMatrix2.shy, transformMatrix2.shx, transformMatrix2.sy, 0, transformMatrix2.ty);
-
-			ctx2.updateTransforms()*/
 		}
 	};
 
-	WorksheetView.prototype._startRtlDrawingRendering = function (ctx) {
+	WorksheetView.prototype._startRtlDrawingRendering = function () {
 		if (this.getRightToLeft()) {
 			let ctx = this.drawingGraphicCtx;
 			let _transform = ctx.Transform ? ctx.Transform : new AscCommon.CMatrix();
 			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
 			ctx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, this.getCtxWidth(ctx), transformMatrix.ty);
 
-			ctx.updateTransforms()
+			ctx.updateTransforms && ctx.updateTransforms();
 		}
 	};
 
-	WorksheetView.prototype._endRtlDrawingRendering = function (ctx) {
+	WorksheetView.prototype._endRtlDrawingRendering = function () {
 		if (this.getRightToLeft()) {
 			let ctx = this.drawingGraphicCtx;
 			let _transform = ctx.Transform ? ctx.Transform : new AscCommon.CMatrix();
 			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
 			ctx.setTransform(1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, 0, transformMatrix.ty);
 
-			ctx.updateTransforms()
+			ctx.updateTransforms && ctx.updateTransforms();
 		}
 	};
 
