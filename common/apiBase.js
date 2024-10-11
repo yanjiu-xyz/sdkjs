@@ -3866,7 +3866,7 @@
 		this.currentPasswordOld = this.currentPassword;
 		this.currentPassword = password;
 		this.asc_Save(false, undefined, true);
-		if (!(this.DocInfo && this.DocInfo.get_OfflineApp())) {
+		if (!(this.DocInfo && this.DocInfo.get_OfflineApp()) && !this.isViewMode && !this.isRestrictionView()) {
 			var rData = {
 				"c": 'setpassword',
 				"id": this.documentId,
