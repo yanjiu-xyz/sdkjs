@@ -249,14 +249,15 @@
 	{
 		return this.m_oLogicDocument;
 	};
-		CCollaborativeEditingBase.prototype.getCoHistory = function()
+	CCollaborativeEditingBase.prototype.getCoHistory = function()
 	{
 		return this.CoHistory;
 	};
 	CCollaborativeEditingBase.prototype.SetLogicDocument = function(doc)
 	{
 		this.m_oLogicDocument = doc;
-	};    CCollaborativeEditingBase.prototype.Clear = function()
+	};
+	CCollaborativeEditingBase.prototype.Clear = function()
     {
         this.m_nUseType = 1;
 

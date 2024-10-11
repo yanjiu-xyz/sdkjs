@@ -2485,8 +2485,8 @@
 			// TODO: onDocumentContentReady вызываем в конце загрузки всех изменений (и объектов для этих изменений)
 			let oThis = this;
 			
-			// Принимаем изменения на открытии только если это редактор, либо лайф вьювер (т.е. включена быстрая совместка)
-			if (AscCommon.CollaborativeEditing.Is_Fast())
+			// Принимаем изменения на открытии только если это редактор, либо LiveViewer (т.е. включена быстрая совместка)
+			if (this.isLiveViewer() || !this.isPdfViewer)
 			{
 				let perfStart    = performance.now();
 				let OtherChanges = AscCommon.CollaborativeEditing.Have_OtherChanges();
@@ -2503,9 +2503,6 @@
 			}
 			else
 			{
-				if (!this.isViewMode && AscCommon.CollaborativeEditing.Have_OtherChanges())
-					this.sendEvent("asc_onCollaborativeChanges")
-				
 				this.onDocumentContentReady();
 			}
 
@@ -2514,7 +2511,7 @@
 	};
 	PDFEditorApi.prototype._canSyncCollaborativeChanges = function(isFirstLoad)
 	{
-		return (!this.isViewMode);
+		return (!this.isPdfViewer && (!isFirstLoad || this.isApplyChangesOnOpen));
 	};
 	PDFEditorApi.prototype.sync_CollaborativeChanges = function()
 	{
