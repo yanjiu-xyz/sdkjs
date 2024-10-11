@@ -1299,12 +1299,12 @@
 
 	WorksheetView.prototype._getColLeft = function (i, saveRealRightToLeft, ctx) {
 		ctx = ctx || this.drawingCtx;
+		this._updateColumnPositions();
+
 		let realRightToleft = this.getRightToLeft();
 		if (!saveRealRightToLeft) {
 			this.setRightToLeft(false);
 		}
-
-		this._updateColumnPositions();
 
 		var l = this.cols.length;
 		let defaultWidth = Asc.round(this.defaultColWidthPx * this.getZoom(true) * this.getRetinaPixelRatio());
@@ -1312,7 +1312,7 @@
 				this.cols[l - 1].left + this.cols[l - 1].width) + (!this.model.isDefaultWidthHidden()) * defaultWidth * (i - l)));
 
 		if (this.getRightToLeft()) {
-			posReal = ctx.getWidth() - posReal - (i < l ? this.cols[i].width : defaultWidth);
+			posReal = (this.getCtxWidth(ctx)) - posReal - (i < l ? this.cols[i].width : defaultWidth);
 		}
 
 		this.setRightToLeft(realRightToleft);
@@ -1632,7 +1632,7 @@
 			return;
 		}
 		if (this.getRightToLeft()) {
-			x2 = this.drawingCtx.getWidth() - x2;
+			x2 = this.getCtxWidth() - x2;
 		}
     	var viewMode = this.handlers.trigger('getViewMode');
 		var t = this;
@@ -3681,6 +3681,21 @@
 		indexPrintPage = recalcIndexPrintPage(indexPrintPage);
 
 
+		let vector_koef = AscCommonExcel.vector_koef / t.getZoom();
+		if (AscCommon.AscBrowser.isCustomScaling()) {
+			vector_koef /= t.getRetinaPixelRatio();
+		}
+		let renderingSettings = this.getRenderingSettings();
+		if (!renderingSettings) {
+			renderingSettings = this.initRenderingSettings();
+		}
+		renderingSettings && renderingSettings.setCtxWidth(printPagesData.pageWidth / vector_koef);
+		renderingSettings && renderingSettings.setPageLeftOffset(printPagesData.leftFieldInPx);
+		let pageRightField = c_oAscPrintDefaultSettings.PageRightField;
+		renderingSettings && renderingSettings.setPageRightOffset(pageRightField / vector_koef);
+		this.getRightToLeft() && this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 0});
+
+
 		this.stringRender.fontNeedUpdate = true;
 		if (null === printPagesData) {
 			// Напечатаем пустую страницу
@@ -3709,8 +3724,10 @@
 				let thumbnailMaxRowCount = 100;
 				let currentRowCount = (printPagesData.pageRange.r2 - printPagesData.pageRange.r1) + (printPagesData.titleRowRange ? (printPagesData.titleRowRange.r2 - printPagesData.titleRowRange.r1) : 0);
 				if (currentRowCount > thumbnailMaxRowCount) {
-					this.initRenderingSettings();
 					let renderingSettings = this.getRenderingSettings();
+					if (!this.getRenderingSettings()) {
+						renderingSettings = this.initRenderingSettings();
+					}
 					let splitNumber = 2;
 					renderingSettings && renderingSettings.setSplitRowBG(splitNumber);
 				}
@@ -3736,8 +3753,6 @@
 			let clipLeftShape, clipTopShape, clipWidthShape, clipHeightShape;
 
 			let doDraw = function(range, titleWidth, titleHeight) {
-				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeft, clipTop, clipWidth, clipHeight);
-
 				let transformMatrix;
 				let _transform = drawingCtx.Transform;
 				if (printScale !== 1 && _transform) {
@@ -3754,13 +3769,15 @@
 					if (!_transform) {
 						_transform = new AscCommon.CMatrix();
 					}
-					let transformMatrix = new AscCommon.CMatrix();
+					transformMatrix = new AscCommon.CMatrix();
 					transformMatrix.sx = -1;
-					transformMatrix.tx = drawingCtx.getWidth();
+					transformMatrix.tx = t.getCtxWidth() * (drawingCtx instanceof AscCommonExcel.CPdfPrinter ? vector_koef : 1);
 					let newTransformMatrix = _transform.Multiply(transformMatrix);
 					drawingCtx.setTransform(newTransformMatrix.sx, newTransformMatrix.shy, newTransformMatrix.shx, newTransformMatrix.sy, newTransformMatrix.tx, newTransformMatrix.ty);
-					drawingCtx.updateTransforms();
+					drawingCtx.updateTransforms && drawingCtx.updateTransforms();
 				}
+
+				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeft, clipTop, clipWidth, clipHeight);
 
 				let offsetCols = printPagesData.startOffsetPx;
 				//range = printPagesData.pageRange;
@@ -3999,7 +4016,10 @@
 			}
 			this.stringRender.resetTransform(drawingCtx);
 			this.setRenderingSettings(null);
+			this.pageWidth = null;
 			drawingCtx.EndPage && drawingCtx.EndPage();
+
+			this.getRightToLeft() && this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 0});
 		}
 	};
 
@@ -4608,11 +4628,7 @@
 	};
 	WorksheetView.prototype._fillText = function (ctx, text, x, y, maxWidth, charWidths, angle) {
 		if (this.getRightToLeft()) {
-			let charsWidth = 0;
-			for (let i in charWidths) {
-				charsWidth += charWidths[i];
-			}
-			ctx.fillText( text, x + charsWidth, y, maxWidth, charWidths, angle)
+			ctx.fillText( text, x, y, maxWidth, charWidths, angle)
 		} else {
 			ctx.fillText(text, x, y, maxWidth, charWidths);
 		}
@@ -4912,7 +4928,22 @@
 
 		ctx.AddClipRect(x, y, w, h);
 		ctx.setFillStyle(color);
+
+		let _originalMatrix;
+		let charsWidth = 0;
+		if (this.getRightToLeft()) {
+			for (let i in sr.charWidths) {
+				charsWidth += sr.charWidths[i];
+			}
+			textX = textX + charsWidth;
+			if (ctx.Transform) {
+				ctx.DocumentRenderer.transform(1, 0, 0, 1, 0, 0);
+				textX = this.getCtxWidth() - textX;
+			}
+		}
+
 		this._fillText(ctx, text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
+
 		ctx.RemoveClipRect();
     };
 
@@ -5841,7 +5872,7 @@
 			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
 
 			_ctx.setTransform(1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, transformMatrix.tx, transformMatrix.ty);
-			_ctx.updateTransforms();
+			_ctx.updateTransforms && _ctx.updateTransforms();
 		}
 		
 		// draw text
@@ -5852,7 +5883,7 @@
 		if (_originalMatrix) {
 			_ctx.setTransform(_originalMatrix.sx, _originalMatrix.shy, _originalMatrix.shx,
 				_originalMatrix.sy, _originalMatrix.tx, _originalMatrix.ty);
-			_ctx.updateTransforms();
+			_ctx.updateTransforms && _ctx.updateTransforms();
 		}
     };
 
@@ -6052,7 +6083,7 @@
 				//TODO rtl!!! print + offset left side
 				if (this.getRightToLeft()) {
 					oMatrix.sx = -1;
-					oMatrix.tx = (ctx.getWidth() * dScale) - oMatrix.tx;
+					oMatrix.tx = (this.getCtxWidth(ctx) * dScale) - oMatrix.tx;
 				}
 
 				graphics.transform3(oMatrix);
@@ -7480,13 +7511,13 @@
 
 	WorksheetView.prototype._dashLineCleverVer = function (x, y1, y2, _this) {
 		let ctx = this;
-		ctx.dashLineCleverVer(_this.getRightToLeft() ? (ctx.getWidth() - x) : x, y1, y2)
+		ctx.dashLineCleverVer(_this.getRightToLeft() ? (_this.getCtxWidth(ctx) - x) : x, y1, y2)
 		return ctx;
 	};
 
 	WorksheetView.prototype._dashLineCleverHor = function (x1, y, x2, _this) {
 		let ctx = this;
-		ctx.dashLineCleverHor(_this.getRightToLeft() ? (ctx.getWidth() - x2) : x1, y, _this.getRightToLeft() ? (ctx.getWidth() - x1) : x2)
+		ctx.dashLineCleverHor(_this.getRightToLeft() ? (_this.getCtxWidth(ctx) - x2) : x1, y, _this.getRightToLeft() ? (_this.getCtxWidth(ctx) - x1) : x2)
 		return ctx;
 	};
 
@@ -8775,7 +8806,7 @@
 
         var x1 = this._getColLeft(col) - offsetX - gridlineSize;
         var h = ctx.getHeight();
-        var width = Asc.round((this.getRightToLeft() ? (this.drawingCtx.getWidth() - x1) - x : (x - x1)) / (this.getZoom(true) * this.getRetinaPixelRatio()));
+        var width = Asc.round((this.getRightToLeft() ? (this.getCtxWidth() - x1) - x : (x - x1)) / (this.getZoom(true) * this.getRetinaPixelRatio()));
         if ( 0 > width ) {
             width = 0;
         }
@@ -8794,7 +8825,7 @@
             type      : Asc.c_oAscMouseMoveType.ResizeColumn,
             sizeCCOrPt: this.model.colWidthToCharCount(width),
             sizePx    : width,
-            x         : AscCommon.AscBrowser.convertToRetinaValue(this.getRightToLeft() ? (this.drawingCtx.getWidth() - (x1 + this._getColumnWidth(col))) : x1 + this._getColumnWidth(col)),
+            x         : AscCommon.AscBrowser.convertToRetinaValue(this.getRightToLeft() ? (this.getCtxWidth() - (x1 + this._getColumnWidth(col))) : x1 + this._getColumnWidth(col)),
             y         : AscCommon.AscBrowser.convertToRetinaValue(this.cellsTop)
         } );
     };
@@ -8826,7 +8857,7 @@
             type      : Asc.c_oAscMouseMoveType.ResizeRow,
             sizeCCOrPt: AscCommonExcel.convertPxToPt(height),
             sizePx    : height,
-            x         : AscCommon.AscBrowser.convertToRetinaValue(this.getRightToLeft() ? (this.drawingCtx.getWidth() - this.cellsLeft) : this.cellsLeft),
+            x         : AscCommon.AscBrowser.convertToRetinaValue(this.getRightToLeft() ? (this.getCtxWidth() - this.cellsLeft) : this.cellsLeft),
             y         : AscCommon.AscBrowser.convertToRetinaValue(y1 + this._getRowHeight(row))
         } );
     };
@@ -10811,7 +10842,7 @@
         y += this.cellsTop;
 
 		if (this.getRightToLeft()) {
-			x = this.drawingCtx.getWidth() - x;
+			x = this.getCtxWidth() - x;
 		}
 
         if (!skipCol) {
@@ -10884,7 +10915,7 @@
 		var c2, x1, x2, cFrozen, widthDiff = -this.getHorizontalScrollCorrect();
 
 		if (!ignoreRtl && this.getRightToLeft()) {
-			x = this.drawingCtx.getWidth() - x;
+			x = this.getCtxWidth() - x;
 		}
 
 		if (x >= this.cellsLeft) {
@@ -11316,7 +11347,7 @@
 
 	WorksheetView.prototype.getCursorTypeFromXY = function (x, y) {
 		if (this.getRightToLeft()) {
-			x = this.drawingCtx.getWidth() - x;
+			x = this.getCtxWidth() - x;
 		}
 		var canEdit = this.workbook.canEdit();
 		var viewMode = this.handlers.trigger('getViewMode');
@@ -11375,7 +11406,7 @@
 					lockRangePosTop: lockRangePosTop
 				};
 			}
-			var drawingInfo = this.objectRender.checkCursorDrawingObject(this.getRightToLeft() ? this.drawingCtx.getWidth() - x : x, y);
+			var drawingInfo = this.objectRender.checkCursorDrawingObject(this.getRightToLeft() ? this.getCtxWidth() - x : x, y);
 			if ((asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn()) &&
 				AscCommonExcel.CheckIdSatetShapeAdd(this.objectRender.controller.curState)) {
 				return {cursor: asc["editor"].isInkDrawerOn() ? kCurDefault : kCurFillHandle , target: c_oTargetType.Shape, col: -1, row: -1};
@@ -13048,7 +13079,7 @@
         yL += offsetY;
 
 		if (this.getRightToLeft()) {
-			xL = this.drawingCtx.getWidth() - xL;
+			xL = this.getCtxWidth() - xL;
 		}
 
         var width = this._getColumnWidth(col);
@@ -26401,16 +26432,17 @@
 
 	WorksheetView.prototype.initRenderingSettings = function () {
 		this.renderingSettings = new CRenderingSettings();
+		return this.renderingSettings;
 	};
 
-	WorksheetView.prototype.checkRtl = function (x, ctx, units) {
+	WorksheetView.prototype.checkRtl = function (x, ctx, units, checkOffsets) {
 		if (this.getRightToLeft()) {
 			let u = units >= 0 && units <= 3 ? units : 0;
 			let kf = asc_getcvt(0/*px*/, u, this._getPPIX());
 			if (!ctx) {
 				ctx = this.drawingCtx;
 			}
-			return ctx.getWidth() * kf - x;
+			return this.getCtxWidth(ctx, checkOffsets) * kf - x;
 		}
 		return x;
 	};
@@ -26432,18 +26464,25 @@
 		if (this.getRightToLeft()) {
 			let _transform = ctx.Transform ? ctx.Transform : new AscCommon.CMatrix();
 			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
-			ctx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, ctx.getWidth(), transformMatrix.ty);
+			ctx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, this.getCtxWidth(ctx), transformMatrix.ty);
 
 			ctx.updateTransforms();
-
-
-			/*let ctx2 = this.drawingGraphicCtx;
-			let _transform2 = ctx2.Transform ? ctx2.Transform : new AscCommon.CMatrix();
-			let transformMatrix2 = _transform2.CreateDublicate ? _transform2.CreateDublicate() : _transform2.clone();
-			ctx2.setTransform(-1, transformMatrix2.shy, transformMatrix2.shx, transformMatrix2.sy, ctx2.getWidth(), transformMatrix2.ty);
-
-			ctx2.updateTransforms()*/
 		}
+	};
+
+	WorksheetView.prototype.getCtxWidth = function (ctx, checkOffsets) {
+		if (!ctx) {
+			ctx = this.drawingCtx;
+		}
+		let res;
+		let renderingSettings = this.getRenderingSettings();
+		if (renderingSettings && renderingSettings.getCtxWidth()) {
+			let offset = checkOffsets ? (renderingSettings.getPageLeftOffset() + renderingSettings.getPageLeftOffset()) : 0;
+			res = renderingSettings.getCtxWidth() - offset;
+		} else {
+			res = ctx.getWidth();
+		}
+		return res;
 	};
 
 	WorksheetView.prototype._endRtlRendering = function (ctx) {
@@ -26456,35 +26495,28 @@
 			ctx.setTransform(1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, 0, transformMatrix.ty);
 
 			ctx.updateTransforms()
-
-			/*let ctx2 = this.drawingGraphicCtx;
-			let _transform2 = ctx2.Transform ? ctx2.Transform : new AscCommon.CMatrix();
-			let transformMatrix2 = _transform2.CreateDublicate ? _transform2.CreateDublicate() : _transform2.clone();
-			ctx2.setTransform(1, transformMatrix2.shy, transformMatrix2.shx, transformMatrix2.sy, 0, transformMatrix2.ty);
-
-			ctx2.updateTransforms()*/
 		}
 	};
 
-	WorksheetView.prototype._startRtlDrawingRendering = function (ctx) {
+	WorksheetView.prototype._startRtlDrawingRendering = function () {
 		if (this.getRightToLeft()) {
 			let ctx = this.drawingGraphicCtx;
 			let _transform = ctx.Transform ? ctx.Transform : new AscCommon.CMatrix();
 			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
-			ctx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, ctx.getWidth(), transformMatrix.ty);
+			ctx.setTransform(-1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, this.getCtxWidth(ctx), transformMatrix.ty);
 
-			ctx.updateTransforms()
+			ctx.updateTransforms && ctx.updateTransforms();
 		}
 	};
 
-	WorksheetView.prototype._endRtlDrawingRendering = function (ctx) {
+	WorksheetView.prototype._endRtlDrawingRendering = function () {
 		if (this.getRightToLeft()) {
 			let ctx = this.drawingGraphicCtx;
 			let _transform = ctx.Transform ? ctx.Transform : new AscCommon.CMatrix();
 			let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
 			ctx.setTransform(1, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, 0, transformMatrix.ty);
 
-			ctx.updateTransforms()
+			ctx.updateTransforms && ctx.updateTransforms();
 		}
 	};
 
@@ -26492,8 +26524,18 @@
 		return this.getRightToLeft() ? 1 : 0;
 	};
 
+	WorksheetView.prototype.checkGraphicObjectsBounds = function () {
+		this.objectRender.updateSizeDrawingObjects({target: c_oTargetType.ColumnResize, col: 100});
+		this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 100});
+		this.objectRender.updateRange(new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxCol0));
+	};
+
+
 	function CRenderingSettings() {
 		this.splitRowBG = null; //number - how much row need skip, every 2,3 and..
+		this.ctxWidth = null;
+		this.leftOffset = null;
+		this.rightOffset = null;
 	}
 	CRenderingSettings.prototype.setSplitRowBG = function (val) {
 		this.splitRowBG = val;
@@ -26511,6 +26553,24 @@
 		}
 
 		return res;
+	};
+	CRenderingSettings.prototype.getCtxWidth = function () {
+		return this.ctxWidth;
+	};
+	CRenderingSettings.prototype.setCtxWidth = function (val) {
+		this.ctxWidth = val;
+	};
+	CRenderingSettings.prototype.setPageLeftOffset = function (val) {
+		this.pageLeftOffset = val;
+	};
+	CRenderingSettings.prototype.setPageRightOffset = function (val) {
+		this.pageRightOffset = val;
+	};
+	CRenderingSettings.prototype.getPageLeftOffset = function () {
+		return this.pageLeftOffset;
+	};
+	CRenderingSettings.prototype.getPageRightOffset = function () {
+		return this.pageRightOffset;
 	};
 
 	function cAsyncAction() {

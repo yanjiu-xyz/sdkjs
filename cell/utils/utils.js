@@ -2391,7 +2391,7 @@
 					let ws = wb.getWorksheet();
 					if (ws && ws.getRightToLeft()) {
 						oMatrix.sx = -1;
-						oMatrix.tx = (ctx.getWidth() * vector_koef) - oMatrix.tx;
+						oMatrix.tx = (ws.getCtxWidth() * vector_koef) - oMatrix.tx;
 					}
 					graphics.transform3(oMatrix);
 					var shapeDrawer = new AscCommon.CShapeDrawer();
