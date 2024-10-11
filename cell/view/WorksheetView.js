@@ -5228,7 +5228,7 @@
 			}
         }
         if (0 !== cFrozen) {
-            offsetX = this._getOffsetX(0);
+            offsetX = this._getOffsetX(0, true);
             // Почистим для pane
             colStart = Math.max(0, colStart);
             colEnd = Math.min(cFrozen, colEnd);
@@ -5276,7 +5276,7 @@
             }
         }
         if (0 !== rFrozen) {
-            offsetY = this._getOffsetY(0);
+            offsetY = this._getOffsetY(0, true);
             // Почистим для pane
             rowStart = Math.max(0, rowStart);
             rowEnd = Math.min(rFrozen, rowEnd);
@@ -10393,7 +10393,7 @@
         var clearTop = this.cellsTop + diffHeight + (scrollDown && moveHeight > 0 ? moveHeight : 0);
         var clearHeight = (moveHeight > 0) ? Math.abs(dy) + lastRowHeight : ctxH - (this.cellsTop + diffHeight);
         let clearOffset = 0;
-        if (this.workbook.getSmoothScrolling()) {
+        if (this.workbook.getSmoothScrolling() && (diffHeight + this._getRowTop(0)) !== clearTop) {
 			//need clear full row height
 			let firstDrawRow = vr.r1;
 			if (moveHeight > 0 && scrollDown) {
