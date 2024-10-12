@@ -5279,7 +5279,8 @@
 		loader.map_font_index = AscFonts.g_map_font_index;
 
 		window["InitNativeObject"]();
-		window["InitNativeTextMeasurer"]();
+		if (window["InitNativeTextMeasurer"]) // fonts_ie.js
+			window["InitNativeTextMeasurer"]();
 		window["InitNativeZLib"]();
 	};
 
