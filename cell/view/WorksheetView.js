@@ -8007,7 +8007,7 @@
             rFrozen -= 1;
             if (0 <= cFrozen && 0 <= rFrozen) {
                 oFrozenRange = new asc_Range(0, 0, cFrozen, rFrozen);
-                res = drawFunction.call(this, oFrozenRange, this._getColLeft(0) - this.cellsLeft, this._getOffsetY(0), args);
+                res = drawFunction.call(this, oFrozenRange, this._getColLeft(0) - this.cellsLeft, this._getOffsetY(0, true), args);
                 if (!res) {
                     return;
                 }
