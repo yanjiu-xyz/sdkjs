@@ -3685,15 +3685,6 @@
 		if (AscCommon.AscBrowser.isCustomScaling()) {
 			vector_koef /= t.getRetinaPixelRatio();
 		}
-		let renderingSettings = this.getRenderingSettings();
-		if (!renderingSettings) {
-			renderingSettings = this.initRenderingSettings();
-		}
-		renderingSettings && renderingSettings.setCtxWidth(printPagesData.pageWidth / vector_koef);
-		renderingSettings && renderingSettings.setPageLeftOffset(printPagesData.leftFieldInPx);
-		let pageRightField = c_oAscPrintDefaultSettings.PageRightField;
-		renderingSettings && renderingSettings.setPageRightOffset(pageRightField / vector_koef);
-		this.getRightToLeft() && this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 0});
 
 
 		this.stringRender.fontNeedUpdate = true;
@@ -3714,6 +3705,18 @@
 			}
 			drawingCtx.EndPage && drawingCtx.EndPage();
 		} else {
+			if (this.getRightToLeft()) {
+				let renderingSettings = this.getRenderingSettings();
+				if (!renderingSettings) {
+					renderingSettings = this.initRenderingSettings();
+				}
+				renderingSettings && renderingSettings.setCtxWidth(printPagesData.pageWidth / vector_koef);
+				renderingSettings && renderingSettings.setPageLeftOffset(printPagesData.leftFieldInPx);
+				let pageRightField = c_oAscPrintDefaultSettings.PageRightField;
+				renderingSettings && renderingSettings.setPageRightOffset(pageRightField / vector_koef);
+				this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 0});
+			}
+
 			drawingCtx.BeginPage && drawingCtx.BeginPage(printPagesData.pageWidth, printPagesData.pageHeight);
 
 			//special thumbnail split
@@ -3725,7 +3728,7 @@
 				let currentRowCount = (printPagesData.pageRange.r2 - printPagesData.pageRange.r1) + (printPagesData.titleRowRange ? (printPagesData.titleRowRange.r2 - printPagesData.titleRowRange.r1) : 0);
 				if (currentRowCount > thumbnailMaxRowCount) {
 					let renderingSettings = this.getRenderingSettings();
-					if (!this.getRenderingSettings()) {
+					if (!renderingSettings) {
 						renderingSettings = this.initRenderingSettings();
 					}
 					let splitNumber = 2;
