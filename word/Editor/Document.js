@@ -16886,7 +16886,7 @@ CDocument.prototype.AddContentControlCheckBox = function(oPr)
  * Добавляем специальный контейнер для картинок
  * @returns {CInlineLevelSdt | CBlockLevelSdt}
  */
-CDocument.prototype.AddContentControlPicture = function()
+CDocument.prototype.AddContentControlPicture = function(nW, nH)
 {
 	this.RemoveTextSelection();
 
@@ -16895,7 +16895,7 @@ CDocument.prototype.AddContentControlPicture = function()
 		return null;
 
 	oCC.SetPlaceholderText(AscCommon.translateManager.getValue("Click to load image"));
-	oCC.ApplyPicturePr(true);
+	oCC.ApplyPicturePr(true, nW, nH);
 	return oCC;
 };
 /**

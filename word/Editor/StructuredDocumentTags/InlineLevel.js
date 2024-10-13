@@ -2212,6 +2212,10 @@ CInlineLevelSdt.prototype.GetPictureFormPr = function()
 {
 	return this.Pr.PictureFormPr;
 };
+CInlineLevelSdt.prototype.IsSignatureForm = function()
+{
+	return (this.IsForm() && this.IsPicture() && undefined !== this.Pr.PictureFormPr && this.Pr.PictureFormPr.IsSignature());
+};
 /**
  * Проверяем является ли данный контейнер специальным для поля со списком
  * @returns {boolean}
