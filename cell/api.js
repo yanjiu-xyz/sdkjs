@@ -3261,20 +3261,20 @@ var editor;
 			if (_container) {
 				_container.style.overflow = "hidden";
 			}
-			this.wb.MobileTouchManager = new AscCommonExcel.CMobileTouchManager({eventsElement: "cell_mobile_element"});
-			this.wb.MobileTouchManager.Init(this);
 
 			// input context must be created!!!
 			var _areaId = AscCommon.g_inputContext.HtmlArea.id;
 			var _element = document.getElementById(_areaId);
 			_element.parentNode.parentNode.style.zIndex = 10;
-
-			this.wb.MobileTouchManager.initEvents(AscCommon.g_inputContext.HtmlArea.id);
 		}
-		else
+
+		if ((typeof AscCommonExcel.CMobileTouchManager) !== "undefined")
 		{
-			this.wb.MobileTouchManager = new AscCommonExcel.CMobileTouchManager({eventsElement: "cell_mobile_element", desktopMode : true});
+			this.wb.MobileTouchManager = new AscCommonExcel.CMobileTouchManager({eventsElement: "cell_mobile_element", desktopMode : !this.isMobileVersion});
 			this.wb.MobileTouchManager.Init(this);
+
+			if (this.isMobileVersion)
+				this.wb.MobileTouchManager.initEvents(AscCommon.g_inputContext.HtmlArea.id);
 		}
 
 		this.asc_CheckGuiControlColors();
