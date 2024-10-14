@@ -716,7 +716,26 @@
 				return false;
 
 			if (e.pointerType === "touch")
+			{
 				this.desktopTouchState = true;
+
+				switch (this.Api.editorId)
+				{
+					case AscCommon.c_oEditorId.Word:
+					{
+						if (this.Api.isDrawTableErase ||
+							this.Api.isDrawTablePen ||
+							this.Api.addShapePreset ||
+							this.Api.isInkDrawerOn())
+						{
+							this.desktopTouchState = false;
+						}
+						break;
+					}
+					default:
+						break;
+				}
+			}
 			else
 				this.desktopTouchState = false;
 
@@ -1616,8 +1635,31 @@
 		let srcW = srcR - srcX;
 		let srcH = srcB - srcY;
 
-		ctx.drawImage(mainLayer, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
-		ctx.drawImage(ctx.canvas, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+		if (AscCommon.AscBrowser.isAppleDevices)
+		{
+			if (!this.glassCanvas)
+				this.glassCanvas = document.createElement("canvas");
+
+			if (glassSize !== this.glassCanvas.width || glassSize !== this.glassCanvas.height)
+			{
+				this.glassCanvas.width = glassSize;
+				this.glassCanvas.width = glassSize;
+			}
+			let ctxTmp = this.glassCanvas.getContext("2d");
+
+			let data1 = mainLayer.getContext("2d").getImageData(srcX, srcY, srcW, srcH);
+			ctxTmp.putImageData(data1, 0, 0);
+			ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+
+			let data2 = ctx.getImageData(srcX, srcY, srcW, srcH);
+			ctxTmp.putImageData(data2, 0, 0);
+			ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+		}
+		else
+		{
+			ctx.drawImage(mainLayer, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+			ctx.drawImage(ctx.canvas, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+		}
 
 		if (targetElement)
 		{

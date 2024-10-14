@@ -130,15 +130,30 @@
 		if (_matrix && global_MatrixTransformer.IsIdentity(_matrix))
 			_matrix = null;
 
-		if (!this.CheckSelectTrack())
+		let touchesCount = e.touches ? e.touches.length : this.getPointerCount();
+		let isLockedTouch = false;
+
+		if (touchesCount > 1)
 		{
-			if (!this.CheckTableTrack())
+			if (AscCommon.MobileTouchMode.None !== this.Mode &&
+				AscCommon.MobileTouchMode.Scroll !== this.Mode)
 			{
-				bIsKoefPixToMM = this.CheckObjectTrack();
+				isLockedTouch = true;
 			}
 		}
 
-		if ((e.touches && 2 == e.touches.length) || (2 == this.getPointerCount()))
+		if (!isLockedTouch)
+		{
+			if (!this.CheckSelectTrack())
+			{
+				if (!this.CheckTableTrack())
+				{
+					bIsKoefPixToMM = this.CheckObjectTrack();
+				}
+			}
+		}
+
+		if (!isLockedTouch && (2 === touchesCount))
 		{
 			this.Mode = AscCommon.MobileTouchMode.Zoom;
 		}
