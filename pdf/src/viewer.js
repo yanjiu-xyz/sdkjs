@@ -4456,6 +4456,8 @@
 
 		// по информации аннотаций определим какие были удалены
 		let oDoc		= this.getPDFDoc();
+		oDoc.BlurActiveObject();
+		
 		let aAnnotsInfo	= oFile.nativeFile["getAnnotationsInfo"]();
 		let aDeleted	= [];
 		aAnnotsInfo.forEach(function(oInfo) {
