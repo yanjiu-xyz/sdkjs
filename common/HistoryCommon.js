@@ -1832,8 +1832,8 @@
 	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2229 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Page				= 2230 << 16;
 	
-	window['AscDFH'].historyitem_type_CustomProperties      = 2300 << 16;
-	
+	window['AscDFH'].historyitem_type_CustomProperties      = 2301 << 16;
+
 	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4257,55 +4257,55 @@
 	AscDFH.historyitem_Series_SetUniqueId   = AscDFH.historyitem_type_Series | 11;
 	AscDFH.historyitem_Series_SetFormatIdx  = AscDFH.historyitem_type_Series | 12;
 
-	AscDFH.historyitem_SeriesElementVisibilities_SetConnectorLines = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_SeriesElementVisibilities_SetMeanLine       = AscDFH.historyitem_type_ViewPrScale | 2;
-	AscDFH.historyitem_SeriesElementVisibilities_SetMeanMarker     = AscDFH.historyitem_type_ViewPrScale | 3;
-	AscDFH.historyitem_SeriesElementVisibilities_SetNonoutliers    = AscDFH.historyitem_type_ViewPrScale | 4;
-	AscDFH.historyitem_SeriesElementVisibilities_SetOutliers       = AscDFH.historyitem_type_ViewPrScale | 5;
+	AscDFH.historyitem_SeriesElementVisibilities_SetConnectorLines = AscDFH.historyitem_type_SeriesElementVisibilities | 1;
+	AscDFH.historyitem_SeriesElementVisibilities_SetMeanLine       = AscDFH.historyitem_type_SeriesElementVisibilities | 2;
+	AscDFH.historyitem_SeriesElementVisibilities_SetMeanMarker     = AscDFH.historyitem_type_SeriesElementVisibilities | 3;
+	AscDFH.historyitem_SeriesElementVisibilities_SetNonoutliers    = AscDFH.historyitem_type_SeriesElementVisibilities | 4;
+	AscDFH.historyitem_SeriesElementVisibilities_SetOutliers       = AscDFH.historyitem_type_SeriesElementVisibilities | 5;
 
-	AscDFH.historyitem_SeriesLayoutProperties_SetParentLabelLayout = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_SeriesLayoutProperties_SetRegionLabelLayout = AscDFH.historyitem_type_ViewPrScale | 2;
-	AscDFH.historyitem_SeriesLayoutProperties_SetVisibility        = AscDFH.historyitem_type_ViewPrScale | 3;
-	AscDFH.historyitem_SeriesLayoutProperties_SetAggregation       = AscDFH.historyitem_type_ViewPrScale | 4;
-	AscDFH.historyitem_SeriesLayoutProperties_SetBinning           = AscDFH.historyitem_type_ViewPrScale | 5;
-	AscDFH.historyitem_SeriesLayoutProperties_SetGeography         = AscDFH.historyitem_type_ViewPrScale | 6;
-	AscDFH.historyitem_SeriesLayoutProperties_SetStatistics        = AscDFH.historyitem_type_ViewPrScale | 7;
-	AscDFH.historyitem_SeriesLayoutProperties_SetSubtotals         = AscDFH.historyitem_type_ViewPrScale | 8;
+	AscDFH.historyitem_SeriesLayoutProperties_SetParentLabelLayout = AscDFH.historyitem_type_SeriesLayoutProperties | 1;
+	AscDFH.historyitem_SeriesLayoutProperties_SetRegionLabelLayout = AscDFH.historyitem_type_SeriesLayoutProperties | 2;
+	AscDFH.historyitem_SeriesLayoutProperties_SetVisibility        = AscDFH.historyitem_type_SeriesLayoutProperties | 3;
+	AscDFH.historyitem_SeriesLayoutProperties_SetAggregation       = AscDFH.historyitem_type_SeriesLayoutProperties | 4;
+	AscDFH.historyitem_SeriesLayoutProperties_SetBinning           = AscDFH.historyitem_type_SeriesLayoutProperties | 5;
+	AscDFH.historyitem_SeriesLayoutProperties_SetGeography         = AscDFH.historyitem_type_SeriesLayoutProperties | 6;
+	AscDFH.historyitem_SeriesLayoutProperties_SetStatistics        = AscDFH.historyitem_type_SeriesLayoutProperties | 7;
+	AscDFH.historyitem_SeriesLayoutProperties_SetSubtotals         = AscDFH.historyitem_type_SeriesLayoutProperties | 8;
 
-	AscDFH.historyitem_Statistics_SetQuartileMethod    = AscDFH.historyitem_type_ViewPrScale | 1;
+	AscDFH.historyitem_Statistics_SetQuartileMethod    = AscDFH.historyitem_type_Statistics | 1;
 
-	AscDFH.historyitem_StringDimension_AddLevelData    = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_StringDimension_RemoveLevelData = AscDFH.historyitem_type_ViewPrScale | 2;
+	AscDFH.historyitem_StringDimension_AddLevelData    = AscDFH.historyitem_type_StringDimension | 1;
+	AscDFH.historyitem_StringDimension_RemoveLevelData = AscDFH.historyitem_type_StringDimension | 2;
 
-	AscDFH.historyitem_Subtotals_AddIdx    = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_Subtotals_RemoveIdx = AscDFH.historyitem_type_ViewPrScale | 2;
+	AscDFH.historyitem_Subtotals_AddIdx    = AscDFH.historyitem_type_Subtotals | 1;
+	AscDFH.historyitem_Subtotals_RemoveIdx = AscDFH.historyitem_type_Subtotals | 2;
 
-	AscDFH.historyitem_TextData_SetF = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_TextData_SetV = AscDFH.historyitem_type_ViewPrScale | 2;
+	AscDFH.historyitem_TextData_SetF = AscDFH.historyitem_type_TextData | 1;
+	AscDFH.historyitem_TextData_SetV = AscDFH.historyitem_type_TextData | 2;
 
-	AscDFH.historyitem_TickMarks_SetType = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_TickMarks_SetName = AscDFH.historyitem_type_ViewPrScale | 2;
+	AscDFH.historyitem_TickMarks_SetType = AscDFH.historyitem_type_TickMarks | 1;
+	AscDFH.historyitem_TickMarks_SetName = AscDFH.historyitem_type_TickMarks | 2;
 
-	AscDFH.historyitem_ValueAxisScaling_SetMax         = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_ValueAxisScaling_SetMin         = AscDFH.historyitem_type_ViewPrScale | 2;
-	AscDFH.historyitem_ValueAxisScaling_SetMajorUnit   = AscDFH.historyitem_type_ViewPrScale | 3;
-	AscDFH.historyitem_ValueAxisScaling_SetMinorUnit   = AscDFH.historyitem_type_ViewPrScale | 4;
+	AscDFH.historyitem_ValueAxisScaling_SetMax         = AscDFH.historyitem_type_ValueAxisScaling | 1;
+	AscDFH.historyitem_ValueAxisScaling_SetMin         = AscDFH.historyitem_type_ValueAxisScaling | 2;
+	AscDFH.historyitem_ValueAxisScaling_SetMajorUnit   = AscDFH.historyitem_type_ValueAxisScaling | 3;
+	AscDFH.historyitem_ValueAxisScaling_SetMinorUnit   = AscDFH.historyitem_type_ValueAxisScaling | 4;
 
-	AscDFH.historyitem_ValueColorEndPosition_SetExtremeValue = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_ValueColorEndPosition_SetNumber       = AscDFH.historyitem_type_ViewPrScale | 2;
-	AscDFH.historyitem_ValueColorEndPosition_SetPercent      = AscDFH.historyitem_type_ViewPrScale | 3;
+	AscDFH.historyitem_ValueColorEndPosition_SetExtremeValue = AscDFH.historyitem_type_ValueColorEndPosition | 1;
+	AscDFH.historyitem_ValueColorEndPosition_SetNumber       = AscDFH.historyitem_type_ValueColorEndPosition | 2;
+	AscDFH.historyitem_ValueColorEndPosition_SetPercent      = AscDFH.historyitem_type_ValueColorEndPosition | 3;
 
-	AscDFH.historyitem_ValueColorMiddlePosition_SetNumber  = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_ValueColorMiddlePosition_SetPercent = AscDFH.historyitem_type_ViewPrScale | 2;
+	AscDFH.historyitem_ValueColorMiddlePosition_SetNumber  = AscDFH.historyitem_type_ValueColorMiddlePosition | 1;
+	AscDFH.historyitem_ValueColorMiddlePosition_SetPercent = AscDFH.historyitem_type_ValueColorMiddlePosition | 2;
 
-	AscDFH.historyitem_ValueColorPositions_SetMin   = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_ValueColorPositions_SetMid   = AscDFH.historyitem_type_ViewPrScale | 2;
-	AscDFH.historyitem_ValueColorPositions_SetMax   = AscDFH.historyitem_type_ViewPrScale | 3;
-	AscDFH.historyitem_ValueColorPositions_SetCount = AscDFH.historyitem_type_ViewPrScale | 4;
+	AscDFH.historyitem_ValueColorPositions_SetMin   = AscDFH.historyitem_type_ValueColorPositions | 1;
+	AscDFH.historyitem_ValueColorPositions_SetMid   = AscDFH.historyitem_type_ValueColorPositions | 2;
+	AscDFH.historyitem_ValueColorPositions_SetMax   = AscDFH.historyitem_type_ValueColorPositions | 3;
+	AscDFH.historyitem_ValueColorPositions_SetCount = AscDFH.historyitem_type_ValueColorPositions | 4;
 
-	AscDFH.historyitem_ValueColors_SetMinColor = AscDFH.historyitem_type_ViewPrScale | 1;
-	AscDFH.historyitem_ValueColors_SetMidColor = AscDFH.historyitem_type_ViewPrScale | 2;
-	AscDFH.historyitem_ValueColors_SetMaxColor = AscDFH.historyitem_type_ViewPrScale | 3;
+	AscDFH.historyitem_ValueColors_SetMinColor = AscDFH.historyitem_type_ValueColors | 1;
+	AscDFH.historyitem_ValueColors_SetMidColor = AscDFH.historyitem_type_ValueColors | 2;
+	AscDFH.historyitem_ValueColors_SetMaxColor = AscDFH.historyitem_type_ValueColors | 3;
 	
 
 	//------------------------------------------------------------------------------------------------------------------
