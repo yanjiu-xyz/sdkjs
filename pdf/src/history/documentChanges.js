@@ -775,24 +775,42 @@ CChangesPDFDocumentRemovePage.prototype.private_ReadItem = function(Reader)
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
  */
-function CChangesPDFDocumentRotatePage(Class, nPage, Old, New)
+function CChangesPDFDocumentRotatePage(Class, PageId, Old, New)
 {
 	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
-	this.Page = nPage;
+	this.PageId = PageId;
 }
 CChangesPDFDocumentRotatePage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesPDFDocumentRotatePage.prototype.constructor = CChangesPDFDocumentRotatePage;
 CChangesPDFDocumentRotatePage.prototype.Type = AscDFH.historyitem_PDF_Document_RotatePage;
 CChangesPDFDocumentRotatePage.prototype.private_SetValue = function(Value)
 {
-	let oDoc = this.Class;
-	oDoc.SetPageRotate(this.Page, Value);
+	let oDoc        = this.Class;
+    let oFile       = oDoc.Viewer.file;
+	let sPageId     = this.PageId;
+    let nPageIdx    = oDoc.Viewer.pagesInfo.pages.findIndex(function(pageInfo) {
+        return pageInfo.Id == sPageId;
+    });
+
+    if (-1 !== nPageIdx) {
+        oFile.pages[nPageIdx].Rotate = Value;
+
+        // sticky note всегда неповернуты
+        oDoc.Viewer.pagesInfo.pages[nPageIdx].annots.forEach(function(annot) {
+            if (annot.IsComment()) {
+                annot.AddToRedraw();
+            }
+        });
+        
+		oDoc.Viewer.resize(true);
+        oDoc.Viewer.paint();
+    }
 };
 CChangesPDFDocumentRotatePage.prototype.WriteToBinary = function(Writer)
 {
 	let nFlags = 0;
 
-	if (undefined === this.Page)
+	if (undefined === this.PageId)
 		nFlags |= 1;
 
 	if (undefined === this.New)
@@ -803,8 +821,8 @@ CChangesPDFDocumentRotatePage.prototype.WriteToBinary = function(Writer)
 
 	Writer.WriteLong(nFlags);
 
-	if (undefined !== this.Page)
-		Writer.WriteLong(this.Page);
+	if (undefined !== this.PageId)
+		Writer.WriteString2(this.PageId);
 
 	if (undefined !== this.New)
 		Writer.WriteLong(this.New);
@@ -817,9 +835,9 @@ CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
 	let nFlags = Reader.GetLong();
 	
 	if (nFlags & 1)
-		this.Page = undefined;
+		this.PageId = undefined;
 	else
-		this.Page = Reader.GetLong();
+		this.PageId = Reader.GetString2();
 	
 	if (nFlags & 2)
 		this.New = undefined;
@@ -836,10 +854,10 @@ CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
  */
-function CChangesPDFDocumentRecognizePage(Class, nPage, Old, New)
+function CChangesPDFDocumentRecognizePage(Class, PageId, Old, New)
 {
 	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
-	this.Page = nPage;
+	this.PageId = PageId;
 }
 CChangesPDFDocumentRecognizePage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesPDFDocumentRecognizePage.prototype.constructor = CChangesPDFDocumentRecognizePage;
@@ -848,7 +866,7 @@ CChangesPDFDocumentRecognizePage.prototype.WriteToBinary = function(Writer)
 {
 	let nFlags = 0;
 
-	if (undefined !== this.Page)
+	if (undefined !== this.PageId)
 		nFlags |= 1;
 	
 	if (true === this.New)
@@ -858,17 +876,17 @@ CChangesPDFDocumentRecognizePage.prototype.WriteToBinary = function(Writer)
 		nFlags |= 4;
 	
 	Writer.WriteLong(nFlags);
-	if (undefined !== this.Page)
-		Writer.WriteLong(this.Page);
+	if (undefined !== this.PageId)
+		Writer.WriteString2(this.PageId);
 };
 CChangesPDFDocumentRecognizePage.prototype.ReadFromBinary = function(Reader)
 {
 	let nFlags = Reader.GetLong();
 	
 	if (nFlags & 1)
-		this.Page = Reader.GetLong();
+		this.PageId = Reader.GetString2();
 	else
-		this.Page = undefined;
+		this.PageId = undefined;
 	
 	this.New = !!(nFlags & 2);
 	this.Old = !!(nFlags & 4);
@@ -877,17 +895,23 @@ CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecogniz
 {
 	let oDoc = this.Class;
 	let oFile = oDoc.Viewer.file;
-	let nPage = this.Page;
+	
+    let sPageId = this.PageId;
+    let nPageIdx = oDoc.Viewer.pagesInfo.pages.findIndex(function(pageInfo) {
+        return pageInfo.Id == sPageId;
+    });
 
-	oFile.pages[nPage].isConvertedToShapes = bRecognize;
-    if (oDoc.Viewer.drawingPages[nPage]) {
-        delete oDoc.Viewer.drawingPages[nPage].Image;
+    if (-1 !== nPageIdx) {
+        oFile.pages[nPageIdx].isConvertedToShapes = bRecognize;
+        if (oDoc.Viewer.drawingPages[nPageIdx]) {
+            delete oDoc.Viewer.drawingPages[nPageIdx].Image;
+        }
+
+        oDoc.Viewer.paint(function() {
+            let oThumbnails = oDoc.Viewer.thumbnails;
+            oThumbnails && oThumbnails._repaintPage(nPageIdx);
+        });
     }
-
-	oDoc.Viewer.paint(function() {
-        let oThumbnails = oDoc.Viewer.thumbnails;
-        oThumbnails && oThumbnails._repaintPage(nPage);
-	});
 };
 
 /**

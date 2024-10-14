@@ -2336,8 +2336,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetPageRotate = function(nPage, nAngle) {
 		let oViewer     = this.Viewer;
 		let oFile       = oViewer.file;
+        let oPageInfo   = oViewer.pagesInfo.pages[nPage]
 
-        this.History.Add(new CChangesPDFDocumentRotatePage(this, nPage, oFile.pages[nPage].Rotate, nAngle));
+        this.History.Add(new CChangesPDFDocumentRotatePage(this, oPageInfo.Id, oFile.pages[nPage].Rotate, nAngle));
 		oFile.pages[nPage].Rotate = nAngle;
 
         // sticky note всегда неповернуты
@@ -4251,7 +4252,7 @@ var CPresentation = CPresentation || function(){};
         oFile.pages[nPage].isConvertedToShapes = true;
         delete this.Viewer.drawingPages[nPage].Image;
 
-        this.History.Add(new CChangesPDFDocumentRecognizePage(this, nPage, false, true));
+        this.History.Add(new CChangesPDFDocumentRecognizePage(this, this.Viewer.pagesInfo.pages[nPage].Id, false, true));
 
         let aSpsXmls        = oFile.nativeFile["scanPage"](nOriginIndex, 1);
         let oParserContext  = new AscCommon.XmlParserContext();
