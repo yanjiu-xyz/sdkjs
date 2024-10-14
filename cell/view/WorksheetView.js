@@ -1373,9 +1373,9 @@
 		if (_left < this.cellsLeft) {
 			_left = this.cellsLeft;
 		}
-		/*if (checkFrozenOffset && _left < frozenOffset) {
+		if (checkFrozenOffset && frozenOffset && _left < frozenOffset) {
 			_left = frozenOffset;
-		}*/
+		}
         return _left * asc_getcvt(0/*px*/, u, this._getPPIX());
     };
 
@@ -1399,9 +1399,9 @@
 		if (_top < this.cellsTop) {
 			_top = this.cellsTop;
 		}
-		/*if (checkFrozenOffset && _top < frozenOffset) {
+		if (checkFrozenOffset && frozenOffset && _top < frozenOffset) {
 			_top = frozenOffset;
-		}*/
+		}
         return _top * asc_getcvt(0/*px*/, u, this._getPPIY());
     };
 
@@ -24892,9 +24892,9 @@
         return new AscFormat.CGraphicBounds(l - this.getRightToLeftOffset(), t, r, b);
     };
 
-    WorksheetView.prototype.rangeToRectRel = function(oRange, units) {
-        var l = this.checkRtl(this.getCellLeftRelative(oRange.c1, units, true), null, units);
-        var t = this.getCellTopRelative(oRange.r1, units, true);
+    WorksheetView.prototype.rangeToRectRel = function(oRange, units, checkFrozenArea) {
+        var l = this.checkRtl(this.getCellLeftRelative(oRange.c1, units, checkFrozenArea), null, units);
+        var t = this.getCellTopRelative(oRange.r1, units, checkFrozenArea);
         var r = this.checkRtl(this.getCellLeftRelative(oRange.c2, units) + this.getColumnWidth(oRange.c2, units), null, units);
         var b = this.getCellTopRelative(oRange.r2, units) + this.getRowHeight(oRange.r2, units);
 

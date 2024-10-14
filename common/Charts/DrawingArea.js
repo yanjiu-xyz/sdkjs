@@ -542,7 +542,7 @@ function FrozenPlace(ws, type) {
 
 		var oClipRect;
 		if(!oRect) {
-			oClipRect = _this.worksheet.rangeToRectRel(_this.range, 0);
+			oClipRect = _this.worksheet.rangeToRectRel(_this.range, 0, true);
 		}
 		else {
 			var oT = canvas.shapeCtx.m_oCoordTransform;
@@ -580,7 +580,7 @@ function FrozenPlace(ws, type) {
 		}
 		var canvas = _this.worksheet.objectRender.getDrawingCanvas();
 		_this.setTransform(canvas.shapeCtx, canvas.shapeOverlayCtx, canvas.autoShapeTrack);
-		_this.clip(canvas.shapeCtx, _this.worksheet.rangeToRectRel(oClipRange, 0));
+		_this.clip(canvas.shapeCtx, _this.worksheet.rangeToRectRel(oClipRange, 0, true));
 		canvas.shapeCtx.updatedRect = _this.worksheet.rangeToRectAbs(oClipRange, 3);
 		//For debug
 		// canvas.shapeCtx.p_color(0, 0, 0, 255);
@@ -640,7 +640,7 @@ function FrozenPlace(ws, type) {
 		var ctx = trackOverlay.m_oContext;
 		_this.setTransform(shapeCtx, shapeOverlayCtx, autoShapeTrack, trackOverlay);
 		// Clip
-		_this.clip(shapeOverlayCtx, _this.worksheet.rangeToRectRel(_this.range, 0));
+		_this.clip(shapeOverlayCtx, _this.worksheet.rangeToRectRel(_this.range, 0, true));
 		if (drawingDocument.m_bIsSelection) {
 			if (!window["IS_NATIVE_EDITOR"]) {
 				drawingDocument.SelectionMatrix = null;
