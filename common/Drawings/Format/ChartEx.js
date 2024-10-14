@@ -2598,7 +2598,9 @@ function (window, undefined) {
 		}
 	};
 	CDimension.prototype.updateCache = function() {
-		this.updateReferences();
+		AscFormat.ExecuteNoHistory(function () {
+			this.updateReferences();
+		}, this, []);
 	};
 	// NumericDimension
 	drawingContentChanges[AscDFH.historyitem_NumericDimension_AddLevelData] =
