@@ -75,7 +75,7 @@
 			if (filterStreams.length === streamInfos.length) {
 				oThis.insertDocuments(streamInfos);
 			} else {
-				api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.NoCritical);
+				api.sendEvent("asc_onError", Asc.c_oAscError.ID.UplDocumentExt, Asc.c_oAscError.Level.NoCritical);
 				oThis.endLongAction();
 			}
 		});
