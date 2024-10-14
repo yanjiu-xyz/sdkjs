@@ -3855,7 +3855,7 @@ var editor;
       if (arrBooks.length) {
         this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
         this.asc_deleteWorksheet(arrSheets.slice());
-      } else if (window["AscDesktopEditor"]) {
+      } else if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
 		  this.copyToNewWorkbook(arrSheets);
       }
 	  this.removeDocumentInfoEvent();
@@ -3924,7 +3924,7 @@ var editor;
     if (arrBooks) {
 		if (arrBooks.length) {
 			this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
-		} else if (window["AscDesktopEditor"]) {
+		} else if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
 			this.copyToNewWorkbook(arrSheets);
 		}
 		this.removeDocumentInfoEvent();
