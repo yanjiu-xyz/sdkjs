@@ -2677,7 +2677,7 @@ CDocument.prototype.UpdateSelection = function(isRemoveEmptySelection)
 		this.private_UpdateSelection();
 		this.RemoveEmptySelection = true;
 	}
-	else if (this.Action.Start)
+	else if (this.Action.Start || this.Action.UndoRedo)
 	{
 		this.Action.UpdateSelection = true;
 	}
@@ -2688,7 +2688,7 @@ CDocument.prototype.UpdateSelection = function(isRemoveEmptySelection)
 };
 CDocument.prototype.UpdatePlaceholders = function ()
 {
-	if (this.Action.Start)
+	if (this.Action.Start || this.Action.UndoRedo)
 	{
 		this.Action.UpdatePlaceholders = true;
     }
@@ -2706,7 +2706,7 @@ CDocument.prototype.UpdateInterface = function(bSaveCurRevisionChange, isExterna
 {
 	if (undefined !== bSaveCurRevisionChange || true === isExternalTrigger)
 		this.private_UpdateInterface(bSaveCurRevisionChange, isExternalTrigger);
-	else if (this.Action.Start)
+	else if (this.Action.Start || this.Action.UndoRedo)
 		this.Action.UpdateInterface = true;
 	else
 		this.private_UpdateInterface();
@@ -2716,7 +2716,7 @@ CDocument.prototype.UpdateInterface = function(bSaveCurRevisionChange, isExterna
  */
 CDocument.prototype.UpdateRulers = function()
 {
-	if (this.Action.Start)
+	if (this.Action.Start || this.Action.UndoRedo)
 		this.Action.UpdateRulers = true;
 	else
 		this.private_UpdateRulers();
@@ -2726,7 +2726,7 @@ CDocument.prototype.UpdateRulers = function()
  */
 CDocument.prototype.UpdateUndoRedo = function()
 {
-	if (this.Action.Start)
+	if (this.Action.Start || this.Action.UndoRedo)
 		this.Action.UpdateUndoRedo = true;
 	else
 		this.private_UpdateUndoRedo();
@@ -2736,7 +2736,7 @@ CDocument.prototype.UpdateUndoRedo = function()
  */
 CDocument.prototype.UpdateTracks = function()
 {
-	if (this.Action.Start)
+	if (this.Action.Start || this.Action.UndoRedo)
 		this.Action.UpdateTracks = true;
 	else
 		this.private_UpdateDocumentTracks();
@@ -2939,6 +2939,37 @@ CDocument.prototype.FinalizeUndoRedoAction = function()
 	
 	this.Action.UndoRedo   = false;
 	this.Action.Additional = {};
+	
+	// TODO: Перенести в общий метод
+	this.Action.UpdateStates = true;
+	
+	if (this.Action.UpdateInterface)
+		this.private_UpdateInterface();
+	
+	if (this.Action.UpdateSelection)
+		this.private_UpdateSelection();
+	
+	if (this.Action.UpdateRulers)
+		this.private_UpdateRulers();
+	
+	if (this.Action.UpdateUndoRedo)
+		this.private_UpdateUndoRedo();
+	
+	if (this.Action.UpdateTracks)
+		this.private_UpdateDocumentTracks();
+	
+	if (this.Action.UpdatePlaceholders)
+		this.private_UpdatePlaceholders();
+	
+	this.Action.UpdateSelection    = false;
+	this.Action.UpdateInterface    = false;
+	this.Action.UpdateRulers       = false;
+	this.Action.UpdateUndoRedo     = false;
+	this.Action.UpdateTracks       = false;
+	this.Action.UpdatePlaceholders = false;
+	this.Action.ScrollToTarget     = true;
+	
+	this.Action.UpdateStates = false;
 };
 CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 {
