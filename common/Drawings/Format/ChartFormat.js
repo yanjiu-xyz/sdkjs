@@ -17605,14 +17605,17 @@
                     if(oNumDim && oNumDim.f) {
                         sFormula = oNumDim.f.content;
                         oSeriesDataRefs.val = new CDataRefs(AscFormat.fParseChartFormula(sFormula));
+                        oSeriesDataRefs.val.ref = oNumDim;
                     }
                     if(oStrDim && oStrDim.f) {
                         sFormula = oStrDim.f.content;
                         oSeriesDataRefs.cat = new CDataRefs(AscFormat.fParseChartFormula(sFormula));
+                        oSeriesDataRefs.cat.ref = oStrDim;
                     }
                     if(oTxDim && oTxDim.f) {
                         sFormula = oTxDim.f.content;
                         oSeriesDataRefs.tx = new CDataRefs(AscFormat.fParseChartFormula(sFormula));
+                        oSeriesDataRefs.tx.ref = oTxDim;
                     }
                     this.tx = new CDataRefs([]);
                     this.seriesRefs.push(oSeriesDataRefs);
@@ -19144,6 +19147,7 @@
     window['AscFormat'].CHeaderFooterChart = CHeaderFooterChart;
     window['AscFormat'].CPageMarginsChart = CPageMarginsChart;
     window['AscFormat'].CPageSetup = CPageSetup;
+    window['AscFormat'].CChartRefBase = CChartRefBase;
     window['AscFormat'].CreateTextBodyFromString = CreateTextBodyFromString;
     window['AscFormat'].CreateDocContentFromString = CreateDocContentFromString;
     window['AscFormat'].AddToContentFromString = AddToContentFromString;

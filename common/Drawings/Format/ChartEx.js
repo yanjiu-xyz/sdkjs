@@ -2462,14 +2462,14 @@ function (window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_Dimension_SetType] = window['AscDFH'].CChangesDrawingsLong;
 
 	function CDimension() {
-		CBaseChartObject.call(this);
+		AscFormat.CChartRefBase.call(this);
 		this.f = null;
 		this.nf = null;
 		this.type = null;
 		this.levelData = [];
 	}
 
-	InitClass(CDimension, CBaseChartObject, AscDFH.historyitem_type_Dimension);
+	InitClass(CDimension, AscFormat.CChartRefBase, AscDFH.historyitem_type_Dimension);
 
 	CDimension.prototype.fillObject = function (oCopy) {
 		CBaseChartObject.prototype.fillObject.call(this, oCopy);
@@ -2648,6 +2648,8 @@ function (window, undefined) {
 			oPt.setVal(dVal);
 			oLvl.addPt(oPt);
 		}
+	};
+	CNumericDimension.prototype.updateCache = function() {
 	};
 
 
