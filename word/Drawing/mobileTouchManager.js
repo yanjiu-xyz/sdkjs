@@ -574,7 +574,11 @@
 				// здесь нужно запускать отрисовку, если есть анимация зума
 				this.delegate.HtmlPage.NoneRepaintPages = false;
 				this.delegate.HtmlPage.m_bIsFullRepaint = true;
-				this.delegate.HtmlPage.OnScroll();
+
+				if (!this.Api.isPdfEditor())
+					this.delegate.HtmlPage.OnScroll();
+				else
+					this.Api.getDocumentRenderer().scheduleRepaint();
 
 				this.Mode = AscCommon.MobileTouchMode.None;
 				isCheckContextMenuMode = false;
