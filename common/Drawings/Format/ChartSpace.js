@@ -9273,6 +9273,9 @@ function(window, undefined) {
 		if (!Array.isArray(aRefs)) {
 			return Asc.c_oAscError.ID.No;
 		}
+		if(this.isChartEx()) {
+			return Asc.c_oAscError.ID.CannotFillRange;
+		}
 		if (aRefs.length > MAX_SERIES_COUNT) {
 			return Asc.c_oAscError.ID.MaxDataSeriesError;
 		}

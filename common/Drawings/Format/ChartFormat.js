@@ -5938,6 +5938,18 @@
         if(!this.parent) {
             return;
         }
+        if(this.isChartEx()) {
+            let oChartSpace = this.getChartSpace();
+            if(!oChartSpace) return;
+            let settings = AscFormat.DrawingObjectsController.prototype.getPropsFromChart(oChartSpace);
+            settings.type = nType;
+            let aSeries = AscFormat.getChartSeries(settings);
+            let oNewChartSpace =  AscFormat.DrawingObjectsController.prototype._getChartSpace.call(this, aSeries, settings, true);
+            if(oNewChartSpace) {
+                oChartSpace.setChart(oNewChartSpace.chart.createDuplicate());
+            }
+            return;
+        }
         if(this.charts.length < 1) {
             return;
         }
