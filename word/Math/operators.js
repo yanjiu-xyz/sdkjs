@@ -4075,8 +4075,8 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 	}
 	else
 	{
-		strStartSymbol		= this.Pr.begChr === -1 ? "〖" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
-		strEndSymbol		= this.Pr.endChr === -1 ? "〗" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
+		strStartSymbol		= this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
+		strEndSymbol		= this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
 	}
 
 	if (oMathText.IsLaTeX())

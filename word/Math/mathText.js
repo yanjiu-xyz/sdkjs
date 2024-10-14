@@ -1287,8 +1287,12 @@ CMathAmp.prototype.Read_FromBinary = function(Reader)
 };
 CMathAmp.prototype.GetTextOfElement = function(oMathText)
 {
-	oMathText = new AscMath.MathTextAndStyles(oMathText);
-	oMathText.AddText(new AscMath.MathText("&", this.Parent ? this.Parent : oMathText.GetFirstStyle()));
+	oMathText		= new AscMath.MathTextAndStyles(oMathText);
+
+	let strAmp		= this.bAlignPoint ? "" : "&";
+	let oAmpText	= new AscMath.MathText(strAmp, this.Parent ? this.Parent : oMathText.GetFirstStyle());
+
+	oMathText.AddText(oAmpText);
 
 	return oMathText;
 };

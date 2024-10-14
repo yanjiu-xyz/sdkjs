@@ -1094,6 +1094,34 @@ $(function () {
 				assert.strictEqual(strBinomial, '(1→∞)', 'Check \\infty');
 			})
 
+			QUnit.test('Check eqarray', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(0);
+				AddText('{█(a,  n odd@(a),  n even)┤');
+				assert.ok(true, "Add text '{█(a,  n odd@(a),  n even)┤'");
+
+				MathContent.ConvertView(false, Asc.c_oAscMathInputType.Unicode);
+				assert.ok(true, "Convert to linear view");
+
+				let strBinomial = MathContent.GetTextOfElement(0).GetText();
+				assert.strictEqual(strBinomial, '{█(a,  n odd@(a),  n even)┤', 'Check');
+			})
+
+			QUnit.test('Check eqarray frac', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(0);
+				AddText('█(1@█(@█(@█(@))))/2');
+				assert.ok(true, "Add text '█(1@█(@█(@█(@))))/2'");
+
+				MathContent.ConvertView(false, Asc.c_oAscMathInputType.Unicode);
+				assert.ok(true, "Convert to linear view");
+
+				let strBinomial = MathContent.GetTextOfElement(0).GetText();
+				assert.strictEqual(strBinomial, '█(1@█(@█(@█(@))))/2', 'Check');
+			})
+
 			QUnit.test('Check review info convert math; bug #67505', function (assert)
 			{
 				Clear();
@@ -1655,6 +1683,20 @@ $(function () {
 
 				let strFunc = MathContent.GetTextOfElement(0).GetText();
 				assert.strictEqual(strFunc, '\\lim\\below{\\left(n\\to\\infty\\right){\\left(1+\\frac{1}{n}\\right)^n}}', 'Check complex math func content');
+			})
+
+			QUnit.test('Check eqarray frac', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(1);
+				AddText('\\frac{\\substack{1\\\\\\substack{\\\\\\substack{\\\\\\substack{\\\\}}}}}{2}');
+				assert.ok(true, "Add text '\\frac{\\substack{1\\\\\\substack{\\\\\\substack{\\\\\\substack{\\\\}}}}}{2}'");
+
+				MathContent.ConvertView(false, Asc.c_oAscMathInputType.LaTeX);
+				assert.ok(true, "Convert to linear view");
+
+				let strBinomial = MathContent.GetTextOfElement(true).GetText();
+				assert.strictEqual(strBinomial, '\\frac{\\substack{1\\\\\\substack{\\\\\\substack{\\\\\\substack{\\\\}}}}}{2}', 'Check');
 			})
 
 			QUnit.module( "Check bug #61007", function ()

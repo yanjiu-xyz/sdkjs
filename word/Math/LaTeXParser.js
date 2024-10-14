@@ -1190,17 +1190,16 @@
 	};
 	CLaTeXParser.prototype.IsMatrixLiteral = function ()
 	{
-		return (
-			this.oLookahead.class === Literals.matrix.id && !this.IsEndMatrixLiteral() ||
-			this.oLookahead.data === "█" ||
-			this.oLookahead.data === "■" ||
-			this.oLookahead.data === "\\substack"
-		)
+		return this.oLookahead.class === Literals.matrix.id
+			|| this.oLookahead.data === "\\substack"
+			&& !this.IsEndMatrixLiteral()
 	};
 	CLaTeXParser.prototype.IsEndMatrixLiteral = function ()
 	{
-		return this.oLookahead.class === Literals.matrix.id && Literals.matrix.LaTeX[this.oLookahead.data] === 2 || this.oLookahead.data === "}";
-	}
+		return this.oLookahead.class === Literals.matrix.id
+			&& Literals.matrix.LaTeX[this.oLookahead.data] === 2
+			|| this.oLookahead.data === "}";
+	};
 	CLaTeXParser.prototype.IsAlignBlockForArray = function ()
 	{
 		if (this.oLookahead.data !== "{")
@@ -1236,10 +1235,11 @@
 		{
 			this.RestoreState();
 		}
-	}
+	};
 	CLaTeXParser.prototype.GetMatrixLiteral = function ()
 	{
 		let strMatrixType;
+		let isArray = this.oLookahead.data === "\\substack";
 
 		switch (this.oLookahead.data)
 		{
@@ -1312,10 +1312,16 @@
 		while (this.oLookahead.data !== "}" && !this.IsEndMatrixLiteral())
 		{
 			let oContent = this.GetRayOfMatrixLiteral(styles.cols, styles.rows, nRow)
+
 			if (oContent)
 				arrMatrixContent.push(oContent);
+			else if (oContent === false)
+				arrMatrixContent.push({}, {});
+			else if (oContent === undefined)
+				arrMatrixContent.push({});
 			else if (this.IsEndMatrixLiteral())
 				arrMatrixContent.push({}, {});
+
 			nRow++;
 		}
 
@@ -1349,7 +1355,7 @@
 		this.isNowMatrix = false;
 
 		return {
-			type: Struc.matrix,
+			type: isArray ? Struc.array : Struc.matrix,
 			value: arrMatrixContent,
 			style: styles,
 			strMatrixType: strMatrixType,
@@ -1361,15 +1367,18 @@
 
 		while (this.oLookahead.class !== Literals.arrayMatrix.id && !this.IsEndMatrixLiteral())
 		{
-			rows[nRow] = {}
-			arrRayContent = this.GetElementOfMatrix(rows[nRow]);
+			rows[nRow]		= {}
+			arrRayContent	= this.GetElementOfMatrix(rows[nRow]);
 			nRow++;
 		}
 
 		if (this.oLookahead.class === Literals.arrayMatrix.id)
 		{
-			cols[nRow] = this.oLookahead.style;
+			cols[nRow]		= this.oLookahead.style;
 			this.EatToken(this.oLookahead.class)
+
+			if (!arrRayContent && this.IsEndMatrixLiteral())
+				return false;
 		}
 
 		this.SkipFreeSpace();
@@ -1423,6 +1432,10 @@
 			{
 				arrRow.push({});
 			}
+		}
+		else if (arrRow.length === 1 && arrRow[0].length === 0)
+		{
+			arrRow.push([]);
 		}
 
 		return arrRow;

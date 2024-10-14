@@ -1658,7 +1658,7 @@ CEqArray.prototype.GetTextOfElement = function (oMathText)
 	}
 	else
 	{
-		let oMatrix = new AscMath.MathText("■(", this.Content[0]);
+		let oMatrix = new AscMath.MathText("█(", this.Content[0]);
 		oMathText.AddText(oMatrix, true);
 	}
 

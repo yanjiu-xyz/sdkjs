@@ -34,26 +34,25 @@
 
 (function (window)
 {
-	const Literals = AscMath.MathLiterals;
-	const Struc = AscMath.MathStructures;
-
-	const oLiteralNames = AscMath.oNamesOfLiterals;
-	const UnicodeSpecialScript = AscMath.UnicodeSpecialScript;
-	const ConvertTokens = AscMath.ConvertTokens;
-	const Tokenizer = AscMath.Tokenizer;
-	const FunctionNames = AscMath.functionNames;
-	const LimitNames = AscMath.LimitFunctions;
+	const Literals				= AscMath.MathLiterals;
+	const Struc					= AscMath.MathStructures;
+	const oLiteralNames			= AscMath.oNamesOfLiterals;
+	const UnicodeSpecialScript	= AscMath.UnicodeSpecialScript;
+	const ConvertTokens			= AscMath.ConvertTokens;
+	const Tokenizer				= AscMath.Tokenizer;
+	const FunctionNames			= AscMath.functionNames;
+	const LimitNames			= AscMath.LimitFunctions;
 
 	function CUnicodeParser() {
-		this.oTokenizer = new Tokenizer(false);
-		this.isOneSubSup = false;
-		this.isTextLiteral = false;
-		this.arrSavedTokens = [];
-		this.isSaveTokens = false;
-		this.isSpaceExit = false;
+		this.oTokenizer			= new Tokenizer(false);
+		this.isOneSubSup		= false;
+		this.isTextLiteral		= false;
+		this.arrSavedTokens		= [];
+		this.isSaveTokens		= false;
+		this.isSpaceExit		= false;
 
 		//need for group like "|1+2|"
-		this.strBreakSymbol = [];
+		this.strBreakSymbol		= [];
 	}
 	CUnicodeParser.prototype.GetSpaceExitFunction = function (oFunc, oArg)
 	{
@@ -1979,7 +1978,9 @@
 			else if (!isNoSubSup && this.oLookahead.class === Literals.space.id && !this.isSpaceExit) {
 				let oTemp = this.GetContentOfLiteral(arrFactorList);
 				oTemp = this.GetContentOfLiteral(oTemp);
-				if (oTemp && oTemp.type !== Literals.char.id)
+				if (Array.isArray(oTemp) && oTemp.length > 0 && oTemp[oTemp.length - 1].type !== Literals.char.id)
+					this.EatToken(this.oLookahead.class);
+				else if (!Array.isArray(oTemp) && oTemp && oTemp.type !== Literals.char.id)
 					this.EatToken(this.oLookahead.class);
 			}
 		}
@@ -2142,6 +2143,11 @@
 				arrRows.push([]);
 			}
 		}
+		else if (arrRows.length === 1 && arrRows[0].length === 0)
+		{
+			arrRows.push([]);
+		}
+
 		return arrRows
 	};
 	CUnicodeParser.prototype.GetMatrixLiteral = function ()
@@ -2151,6 +2157,8 @@
 			cols: {},
 			rows: {},
 		};
+
+		let isArray = this.oLookahead.data === "█";
 
 		let strType = this.EatToken(this.oLookahead.class).data;
 
@@ -2173,9 +2181,9 @@
 
 		for (let i = 0; i < arrMatrixContent.length; i++)
 		{
-			let arrContent = arrMatrixContent[i];
-			intMaxLengthOfMatrixRow = arrContent.length;
-			intIndexOfMaxMatrixRow = i;
+			let arrContent			= arrMatrixContent[i];
+			intMaxLengthOfMatrixRow	= arrContent.length;
+			intIndexOfMaxMatrixRow	= i;
 		}
 
 		for (let i = 0; i < arrMatrixContent.length; i++)
@@ -2194,7 +2202,7 @@
 		{
 			this.EatToken(Literals.rBrackets.id);
 			return {
-				type:	Struc.matrix,
+				type:	isArray ? Struc.array : Struc.matrix,
 				value:	arrMatrixContent,
 				style:	oStyles,
 			};
@@ -2249,7 +2257,7 @@
 				if (oElement !== null)
 					oExpLiteral.push(oElement);
 
-				//if (oElement.length > 0 && oElement[oElement.length - 1].type !== Literals.char.id)
+				if (oElement.length > 0 && oElement[oElement.length - 1].type !== Literals.char.id)
 					this.EatOneSpace();
 			}
 			else if (arrCorrectSymbols.includes(this.oLookahead.data))
