@@ -293,7 +293,10 @@ var c_oserct_chartspaceCOLORS = 18;
 var c_oserct_chartspaceXLSXEXTERNAL = 19;
 var c_oserct_chartspaceXLSXZIP = 20;
 
-
+const sideLeft		=  0;
+const sideRight		=  1;
+const sideTop		=  2;
+const sideBottom	=  3;
 
 var c_oserct_usershapes_COUNT = 0;
 var c_oserct_usershapes_SHAPE_REL = 1;
@@ -6501,7 +6504,20 @@ BinaryChartWriter.prototype.WriteCT_ChartExLegend = function (oVal) {
     }
     if(oVal.legendPos !== null) {
         this.bs.WriteItem(c_oserct_chartExLegendPOS, function() {
-            oThis.memory.WriteByte(oVal.legendPos);
+			let nVal = st_legendposT;
+			switch (oVal.legendPos) {
+				case c_oAscChartLegendShowSettings.bottom: nVal = sideBottom; break;
+				case c_oAscChartLegendShowSettings.topRight: nVal = sideRight; break;
+				case c_oAscChartLegendShowSettings.left:
+				case c_oAscChartLegendShowSettings.leftOverlay:
+					nVal = sideLeft; break;
+				case c_oAscChartLegendShowSettings.right:
+				case c_oAscChartLegendShowSettings.rightOverlay:
+					nVal = sideRight; break;
+				case c_oAscChartLegendShowSettings.top: nVal = sideTop; break;
+			}
+
+            oThis.memory.WriteByte(nVal);
         });
     }
     if(oVal.align !== null) {
@@ -14045,7 +14061,14 @@ BinaryChartReader.prototype.ReadCT_ChartExLegend = function (type, length, val) 
     }
     else if (c_oserct_chartExLegendPOS === type)
     {
-        val.setLegendPos(this.stream.GetUChar());
+		let nPos = c_oAscChartLegendShowSettings.top;
+		switch (this.stream.GetUChar()) {
+			case sideBottom: nPos = c_oAscChartLegendShowSettings.bottom; break;
+			case sideLeft: nPos = c_oAscChartLegendShowSettings.left; break;
+			case sideRight: nPos = c_oAscChartLegendShowSettings.right; break;
+			case sideTop: nPos = c_oAscChartLegendShowSettings.top; break;
+		}
+        val.setLegendPos(nPos);
     }
     else if (c_oserct_chartExLegendALIGN === type)
     {

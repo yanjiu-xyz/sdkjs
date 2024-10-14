@@ -9338,6 +9338,7 @@ function(window, undefined) {
 		}
 	};
 	CChartSpace.prototype.switchRowCol = function () {
+		if(this.isChartEx()) return;
 		var oDataRange = this.getDataRefs();
 		var aRefs = oDataRange.getSwitchedRefs(this.isScatterChartType());
 		if (!aRefs) {
@@ -9351,6 +9352,7 @@ function(window, undefined) {
 		return nResult;
 	};
 	CChartSpace.prototype.fillDataFromTrack = function (oSelectedRange) {
+		if(this.isChartEx()) return;
 		let oSelectedSeries = this.getSelectedSeries();
 		if (oSelectedSeries) {
 			oSelectedSeries.fillFromSelectedRange(oSelectedRange);

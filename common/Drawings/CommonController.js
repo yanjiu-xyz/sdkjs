@@ -4271,6 +4271,65 @@
 						return;
 					}
 					if(oChartSpace.isChartEx()) {
+
+						var oChart = oChartSpace.chart;
+						var oPlotArea = oChart.plotArea;
+						var nTitle = oProps.getTitle(), oTitle, bOverlay;
+						if (nTitle === c_oAscChartTitleShowSettings.none) {
+							if (oChart.title) {
+								oChart.setTitle(null);
+							}
+						} else if (nTitle === c_oAscChartTitleShowSettings.noOverlay
+							|| nTitle === c_oAscChartTitleShowSettings.overlay) {
+							oTitle = oChart.title;
+							if (!oTitle) {
+								oTitle = new AscFormat.CTitle();
+								oChart.setTitle(oTitle);
+							}
+							bOverlay = (nTitle === c_oAscChartTitleShowSettings.overlay);
+							if (oTitle.overlay !== bOverlay) {
+								oTitle.setOverlay(bOverlay);
+							}
+						}
+
+
+						var nLegend = oProps.getLegendPos(), oLegend;
+						bOverlay = (c_oAscChartLegendShowSettings.leftOverlay === nLegend || nLegend === c_oAscChartLegendShowSettings.rightOverlay);
+						if (bOverlay) {
+							if (c_oAscChartLegendShowSettings.leftOverlay === nLegend) {
+								nLegend = c_oAscChartLegendShowSettings.left;
+							}
+							if (c_oAscChartLegendShowSettings.rightOverlay === nLegend) {
+								nLegend = c_oAscChartLegendShowSettings.right;
+							}
+						}
+						if (nLegend !== null) {
+							if (nLegend === c_oAscChartLegendShowSettings.none) {
+								if (oChart.legend) {
+									oChart.setLegend(null);
+								}
+							} else {
+								oLegend = oChart.legend;
+								var bChange = false;
+								if (!oLegend) {
+									oLegend = new AscFormat.CLegend();
+									oChart.setLegend(oLegend);
+									bChange = true;
+								}
+								if (oLegend.legendPos !== nLegend && nLegend !== c_oAscChartLegendShowSettings.layout) {
+									oLegend.setLegendPos(nLegend);
+									bChange = true;
+								}
+								if (oLegend.overlay !== bOverlay) {
+									oLegend.setOverlay(bOverlay);
+									bChange = true;
+								}
+								if (bChange) {
+									oLegend.setLayout(new AscFormat.CLayout());
+								}
+								oChartSpace.checkElementChartStyle(oLegend);
+							}
+						}
 						return;
 					}
 					var oApi = this.getEditorApi();
