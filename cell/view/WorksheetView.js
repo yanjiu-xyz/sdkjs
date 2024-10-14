@@ -16299,6 +16299,9 @@
 			} else if (AscCH.historyitem_Worksheet_SetRightToLeft === type) {
 				t.model.setRightToLeft(val);
 				t.workbook.checkScrollRtl(val);
+				if (t.objectRender) {
+					t.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 0});
+				}
 				fullUpdate = true;
 			} else {
 				t.model.setDisplayGridlines(val);

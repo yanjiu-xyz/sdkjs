@@ -1383,6 +1383,9 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                     metrics.y = this.pxToMm( coordsFrom.y );
                     metrics.extX = this.ext.cx;
                     metrics.extY = this.ext.cy;
+                    if (this.worksheet.getRightToLeft()) {
+                        metrics.x -= metrics.extX;
+                    }
                 }
                 break;
             }
