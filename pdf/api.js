@@ -377,6 +377,7 @@
 		// пока что копирование бинарником только внутри drawings или самих drawings
 		if ([AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.HtmlElement, AscCommon.c_oAscClipboardDataFormat.Text].includes(_format) && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
 			if (this.isRestrictionView()) {
+				oDoc.FinalizeAction(true)
 				return;
 			}
 
