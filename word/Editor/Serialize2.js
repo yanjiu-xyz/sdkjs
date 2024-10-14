@@ -1122,6 +1122,7 @@ var c_oSerSdt = {
 	PictureFormPrRespectBorders  : 63,
 	PictureFormPrShiftX          : 64,
 	PictureFormPrShiftY          : 65,
+	PictureFormPrSignature       : 66,
 
 	FormPrBorder : 70,
 	FormPrShd    : 71,
@@ -6859,6 +6860,9 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		}
 		if (null != val.ShiftY) {
 			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftY, function (){oThis.memory.WriteDouble2(val.ShiftY);});
+		}
+		if (null != val.Signature && false !== val.Signature) {
+			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrSignature, function (){oThis.memory.WriteBool(val.Signature);});
 		}
 	};
 	this.WriteSdtComplexFormPr = function(complexFormPr)
@@ -13253,6 +13257,8 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			val.ShiftX = this.stream.GetDoubleLE();
 		} else if (c_oSerSdt.PictureFormPrShiftY === type) {
 			val.ShiftY = this.stream.GetDoubleLE();
+		} else if (c_oSerSdt.PictureFormPrSignature === type) {
+			val.Signature = this.stream.GetBool();
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
