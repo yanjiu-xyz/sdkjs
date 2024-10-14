@@ -2501,9 +2501,16 @@ function (window, undefined) {
 	CDimension.prototype.fillCellVal = function (oCell, oLvl, nPtIdx) {
 		return null;
 	};
+	CDimension.prototype.clearLevelData = function () {
+		for(let nIdx = this.levelData.length; nIdx > -1; --nIdx) {
+			this.removeLevelDataByPos(nIdx)
+		}
+	};
+	CDimension.prototype.removeLevelDataByPos = function (nIdx) {
+	};
 	CDimension.prototype.updateReferences = function (bDisplayEmptyCellsAs, bDisplayHidden) {
 
-
+		this.clearLevelData();
 		if (!this.f) {
 			return;
 		}
@@ -2590,7 +2597,9 @@ function (window, undefined) {
 			}
 		}
 	};
-
+	CDimension.prototype.updateCache = function() {
+		this.updateReferences();
+	};
 	// NumericDimension
 	drawingContentChanges[AscDFH.historyitem_NumericDimension_AddLevelData] =
 		drawingContentChanges[AscDFH.historyitem_NumericDimension_RemoveLevelData] = function (oClass) {
@@ -2649,9 +2658,6 @@ function (window, undefined) {
 			oLvl.addPt(oPt);
 		}
 	};
-	CNumericDimension.prototype.updateCache = function() {
-	};
-
 
 
 	// // PageMargins (CPageMarginsChart contains in ChartFormat.js)
@@ -3572,6 +3578,7 @@ function (window, undefined) {
 			oLvl.addPt(oPt);
 		}
 	};
+
 
 
 
