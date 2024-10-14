@@ -3756,6 +3756,8 @@
 			let clipLeftShape, clipTopShape, clipWidthShape, clipHeightShape;
 
 			let doDraw = function(range, titleWidth, titleHeight) {
+				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeft, clipTop, clipWidth, clipHeight);
+
 				let transformMatrix;
 				let _transform = drawingCtx.Transform;
 				if (printScale !== 1 && _transform) {
@@ -3780,7 +3782,6 @@
 					drawingCtx.updateTransforms && drawingCtx.updateTransforms();
 				}
 
-				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeft, clipTop, clipWidth, clipHeight);
 
 				let offsetCols = printPagesData.startOffsetPx;
 				//range = printPagesData.pageRange;
