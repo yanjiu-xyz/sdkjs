@@ -5302,6 +5302,10 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
+        if (Asc.editor.FontLoader.isWorking()) {
+            return;
+        }
+        
         if (true !== this.CollaborativeEditing.Is_Fast() || true === this.CollaborativeEditing.Is_SingleUser()) {
             return;
         }
