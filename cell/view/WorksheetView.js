@@ -18475,9 +18475,10 @@
 			},
 			getSides: function () {
 				var _c1, _r1, _c2, _r2, ri = 0, bi = 0;
+				let isRtl = t.getRightToLeft();
 				if (isMerged) {
-					_c1 = mc.c1;
-					_c2 = mc.c2;
+					_c1 = isRtl ? mc.c2 : mc.c1;
+					_c2 = isRtl ? mc.c1 : mc.c2;
 					_r1 = mc.r1;
 					_r2 = mc.r2;
 				} else {
@@ -18487,32 +18488,55 @@
 				var vro = getVisibleRangeObject();
 				var i, w, h, arrLeftS = [], arrRightS = [], arrBottomS = [];
 				var offsX = t._getColLeft(vro.vr.c1) - t._getColLeft(0) - vro.offsetX;
-				if (t.getRightToLeft()) {
+				if (isRtl) {
 					offsX = -offsX;
 				}
 				var offsY = t._getRowTop(vro.vr.r1) - t._getRowTop(0) - vro.offsetY;
 				var cellX = t._getColLeft(_c1, true) - offsX, cellY = t._getRowTop(_r1) - offsY;
 				var _left = cellX;
-				for (i = _c1; i >= vro.vr.c1; --i) {
-					w = t._getColumnWidth(i);
-					if (0 < w) {
-						arrLeftS.push(_left);
+				if (isRtl) {
+					for (i = _c1; i >= vro.vr.c1; --i) {
+						w = t._getColumnWidth(i);
+						if (0 < w) {
+							arrLeftS.push(_left);
+						}
+						_left -= w;
 					}
-					_left -= w;
+				} else {
+					for (i = _c1; i <= vro.vr.c2; ++i) {
+						w = t._getColumnWidth(i);
+						if (0 < w) {
+							arrLeftS.push(_left);
+						}
+						_left -= w;
+					}
 				}
 
 				if (_c2 > vro.vr.c2) {
 					_c2 = vro.vr.c2;
 				}
 				_left = cellX;
-				for (i = _c1; i <= vro.vr.c2; ++i) {
-					w = t._getColumnWidth(i);
-					_left += w;
-					if (0 < w) {
-						arrRightS.push(_left);
+				if (isRtl) {
+					for (i = _c1; i >= vro.vr.c1; --i) {
+						w = t._getColumnWidth(i);
+						_left += w;
+						if (0 < w) {
+							arrRightS.push(_left);
+						}
+						if (_c2 === i) {
+							ri = arrRightS.length - 1;
+						}
 					}
-					if (_c2 === i) {
-						ri = arrRightS.length - 1;
+				} else {
+					for (i = _c1; i <= vro.vr.c2; ++i) {
+						w = t._getColumnWidth(i);
+						_left += w;
+						if (0 < w) {
+							arrRightS.push(_left);
+						}
+						if (_c2 === i) {
+							ri = arrRightS.length - 1;
+						}
 					}
 				}
 				w = t.drawingCtx.getWidth();
