@@ -1095,6 +1095,8 @@ CSparklineView.prototype.draw = function(graphics, offX, offY)
     var x = this.ws.getCellLeft(this.col, 3) - offX;
     var y = this.ws.getCellTop(this.row, 3) - offY;
 
+    x = this.ws.checkRtl(x, undefined, 3);
+
     var i;
 
     var extX;
@@ -1103,7 +1105,7 @@ CSparklineView.prototype.draw = function(graphics, offX, offY)
     if(oMergeInfo){
         extX = 0;
         for(i = oMergeInfo.c1; i <= oMergeInfo.c2; ++i){
-            extX += this.ws.getColumnWidth(i, 3)
+            extX += this.ws.getColumnWidth(i, 3);
         }
         extY = 0;
         for(i = oMergeInfo.r1; i <= oMergeInfo.r2; ++i){
@@ -1115,6 +1117,9 @@ CSparklineView.prototype.draw = function(graphics, offX, offY)
         extY = this.ws.getRowHeight(this.row, 3);
     }
 
+    if (this.ws.getRightToLeft()) {
+        x -= extX;
+    }
 
     var bExtent = Math.abs(this.extX - extX) > 0.01 || Math.abs(this.extY - extY) > 0.01;
     var bPosition = Math.abs(this.x - x) > 0.01 || Math.abs(this.y - y) > 0.01;
