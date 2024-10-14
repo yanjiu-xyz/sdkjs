@@ -2910,13 +2910,42 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
                             function fillTableFromRef(ref)
                             {
-                                var cache = ref.numCache ? ref.numCache : (ref.strCache ? ref.strCache : null);
+                                var cache;
+                                if(ref.numCache) {
+                                    cache =ref.numCache;
+                                }
+                                else if(ref.strCache) {
+                                    cache = ref.strCache;
+                                }
+                                else {
+                                    if(Array.isArray(ref.levelData)) {
+                                        cache = ref.levelData[0];
+                                    }
+                                    else if(typeof ref.v === "string") {
+                                        cache = AscFormat.ExecuteNoHistory(
+                                            function() {
+                                                let oStrCache = new AscFormat.CStrCache();
+                                                let oPt = new AscFormat.CStringPoint();
+                                                oPt.idx = 0;
+                                                oPt.val = ref.v;
+                                                oStrCache.addPt(oPt);
+                                                return oStrCache;
+                                            }, this, []
+                                        );
+                                    }
+                                }
+                                var sFormula = "";
+                                if(typeof ref.f === "string") {
+                                    sFormula = ref.f;
+                                }
+                                else if(ref.f && ref.f.content) {
+                                    sFormula = ref.f.content;
+                                }
                                 var lit_format_code;
                                 if(cache)
                                 {
                                     lit_format_code = (typeof cache.formatCode === "string" && cache.formatCode.length > 0) ? cache.formatCode : "General";
 
-                                    var sFormula = ref.f + "";
                                     if(sFormula[0] === '(')
                                         sFormula = sFormula.slice(1);
                                     if(sFormula[sFormula.length-1] === ')')
@@ -3063,6 +3092,27 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                                         if(ser.tx && ser.tx.strRef)
                                         {
                                             fillTableFromRef(ser.tx.strRef);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if(oNewChartSpace.isChartEx()) {
+                                    let aSeries = oNewChartSpace.getAllSeries();
+
+                                    for(let nS = 0; nS < aSeries.length; ++nS) {
+                                        let oSeries = aSeries[nS];
+                                        let oData = oSeries.getData();
+                                        if(oData) {
+                                            let aDims = oData.dimension;
+                                            for(let nDim = 0; nDim < aDims.length; ++nDim) {
+                                                let oDim = aDims[nDim];
+                                                fillTableFromRef(oDim);
+                                            }
+                                        }
+                                        if(oSeries.tx && oSeries.tx.txData) {
+                                            fillTableFromRef(oSeries.tx.txData);
                                         }
                                     }
                                 }
