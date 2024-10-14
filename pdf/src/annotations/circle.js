@@ -71,8 +71,9 @@
 
         this.fillObject(oCircle);
 
-        let aStrokeColor = this.GetStrokeColor();
-        let aFillColor = this.GetFillColor();
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aRD             = this.GetRectangleDiff();
 
         oCircle._apIdx = this._apIdx;
         oCircle._originView = this._originView;
@@ -80,12 +81,12 @@
         oCircle.SetAuthor(this.GetAuthor());
         oCircle.SetModDate(this.GetModDate());
         oCircle.SetCreationDate(this.GetCreationDate());
-        oCircle.SetStrokeColor(aStrokeColor.slice());
-        oCircle.SetFillColor(aFillColor.slice());
+        aStrokeColor && oCircle.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oCircle.SetFillColor(aFillColor.slice());
         oCircle.SetWidth(this.GetWidth());
         oCircle.SetOpacity(this.GetOpacity());
         oCircle.recalcGeometry()
-        oCircle.SetRectangleDiff(this.GetRectangleDiff().slice(), true);
+        aRD && oCircle.SetRectangleDiff(aRD.slice(), true);
         oCircle.SetDash(this.GetDash());
         oCircle.Recalculate(true);
 

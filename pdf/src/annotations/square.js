@@ -68,8 +68,9 @@
 
         this.fillObject(oSquare);
 
-        let aStrokeColor = this.GetStrokeColor();
-        let aFillColor = this.GetFillColor();
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aRD             = this.GetRectangleDiff();
 
         oSquare._apIdx = this._apIdx;
         oSquare._originView = this._originView;
@@ -77,12 +78,12 @@
         oSquare.SetAuthor(this.GetAuthor());
         oSquare.SetModDate(this.GetModDate());
         oSquare.SetCreationDate(this.GetCreationDate());
-        oSquare.SetStrokeColor(aStrokeColor.slice());
-        oSquare.SetFillColor(aFillColor.slice());
+        aStrokeColor && oSquare.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oSquare.SetFillColor(aFillColor.slice());
         oSquare.SetWidth(this.GetWidth());
         oSquare.SetOpacity(this.GetOpacity());
         oSquare.recalcGeometry()
-        oSquare.SetRectangleDiff(this.GetRectangleDiff().slice(), true);
+        aRD && oSquare.SetRectangleDiff(aRD.slice(), true);
         oSquare.Recalculate(true);
 
         oDoc.EndNoHistoryMode();

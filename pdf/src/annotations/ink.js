@@ -322,7 +322,7 @@
         oNewInk.SetAuthor(this.GetAuthor());
         oNewInk.SetModDate(this.GetModDate());
         oNewInk.SetCreationDate(this.GetCreationDate());
-        oNewInk.SetStrokeColor(aStrokeColor.slice());
+        aStrokeColor && oNewInk.SetStrokeColor(aStrokeColor.slice());
         oNewInk.SetWidth(this.GetWidth());
         oNewInk.SetOpacity(this.GetOpacity());
         oNewInk._relativePaths = this.GetRelativePaths().slice();

@@ -289,7 +289,7 @@
 
 		AscCommon.ExecuteNoHistory(function() {
 			let aStrokeColor = this.GetStrokeColor();
-			if (aStrokeColor.length == 0) {
+			if (!aStrokeColor || aStrokeColor.length == 0) {
 				aStrokeColor = [0, 0, 0];
 			}
 			
@@ -314,7 +314,7 @@
 			}
 			
 			let aFillColor = this.GetFillColor();
-			if (aFillColor.length == 0) {
+			if (!aFillColor || aFillColor.length == 0) {
 				aFillColor = [1, 1, 1];
 			}
 	
@@ -393,7 +393,7 @@
 		}, undefined, this);
 	};
 	CAnnotationFreeText.prototype.SetStrokeColor = function(aColor) {
-		AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor() || [], aColor));
+		AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor(), aColor));
 		
 		this._strokeColor = aColor;
 		
@@ -433,7 +433,7 @@
 		}, undefined, this);
 	};
 	CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
-		AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor() || [], aColor));
+		AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
 		
 		this._fillColor = aColor;
 		
@@ -485,8 +485,10 @@
 
         oFreeText.lazyCopy = true;
 
-        let aStrokeColor = this.GetStrokeColor();
-        let aFillColor = this.GetFillColor();
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aCallout        = this.GetCallout();
+        let aRD             = this.GetRectangleDiff();
 
         oFreeText._apIdx = this._apIdx;
         oFreeText._originView = this._originView;
@@ -495,13 +497,13 @@
         oFreeText.SetModDate(this.GetModDate());
         oFreeText.SetCreationDate(this.GetCreationDate());
         oFreeText.SetContents(this.GetContents());
-        oFreeText.SetStrokeColor(aStrokeColor.slice());
-        oFreeText.SetFillColor(aFillColor.slice());
+        aStrokeColor && oFreeText.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oFreeText.SetFillColor(aFillColor.slice());
         oFreeText.SetWidth(this.GetWidth());
         oFreeText.SetLineEnd(this.GetLineEnd());
         oFreeText.SetOpacity(this.GetOpacity());
-        oFreeText.SetCallout(this.GetCallout().slice());
-        oFreeText.SetRectangleDiff(this.GetRectangleDiff());
+        aCallout && oFreeText.SetCallout(aCallout.slice());
+        aRD && oFreeText.SetRectangleDiff(aRD.slice());
         oFreeText.SetWasChanged(oFreeText.IsChanged());
         oFreeText.recalcGeometry();
         

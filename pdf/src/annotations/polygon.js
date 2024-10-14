@@ -153,8 +153,9 @@
 
         this.fillObject(oPolygon);
 
-        let aStrokeColor = this.GetStrokeColor();
-        let aFillColor = this.GetFillColor();
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aVertices       = this.GetVertices();
 
         oPolygon._apIdx = this._apIdx;
         oPolygon._originView = this._originView;
@@ -163,11 +164,11 @@
         oPolygon.SetModDate(this.GetModDate());
         oPolygon.SetCreationDate(this.GetCreationDate());
         oPolygon.SetContents(this.GetContents());
-        oPolygon.SetStrokeColor(aStrokeColor.slice());
-        oPolygon.SetFillColor(aFillColor.slice());
+        aStrokeColor && oPolygon.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oPolygon.SetFillColor(aFillColor.slice());
         oPolygon.SetWidth(this.GetWidth());
         oPolygon.SetOpacity(this.GetOpacity());
-        oPolygon.SetVertices(this.GetVertices().slice());
+        aVertices && oPolygon.SetVertices(aVertices.slice());
         oPolygon.SetWasChanged(oPolygon.IsChanged());
         oPolygon.recalcInfo.recalculateGeometry = true;
         oPolygon.recalculate();

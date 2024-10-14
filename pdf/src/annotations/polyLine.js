@@ -144,8 +144,9 @@
 
         this.fillObject(oPolyline);
 
-        let aStrokeColor = this.GetStrokeColor();
-        let aFillColor = this.GetFillColor();
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aVertices       = this.GetVertices();
 
         oPolyline._apIdx = this._apIdx;
         oPolyline._originView = this._originView;
@@ -154,13 +155,13 @@
         oPolyline.SetModDate(this.GetModDate());
         oPolyline.SetCreationDate(this.GetCreationDate());
         oPolyline.SetContents(this.GetContents());
-        oPolyline.SetStrokeColor(aStrokeColor.slice());
-        oPolyline.SetFillColor(aFillColor.slice());
+        aStrokeColor && oPolyline.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oPolyline.SetFillColor(aFillColor.slice());
         oPolyline.SetWidth(this.GetWidth());
         oPolyline.SetLineStart(this.GetLineStart());
         oPolyline.SetLineEnd(this.GetLineEnd());
         oPolyline.SetOpacity(this.GetOpacity());
-        oPolyline.SetVertices(this.GetVertices().slice());
+        aVertices && oPolyline.SetVertices(aVertices.slice());
         oPolyline.SetWasChanged(oPolyline.IsChanged());
         oPolyline.recalcInfo.recalculateGeometry = true;
         

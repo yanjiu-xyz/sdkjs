@@ -67,7 +67,7 @@
         this._origRect              = [];
         this._refType               = undefined;
         this._seqNum                = undefined;
-        this._strokeColor           = [];
+        this._strokeColor           = undefined;
         this._style                 = undefined;
         this._subject               = undefined;
         this._toggleNoView          = undefined;
@@ -75,7 +75,7 @@
         this._display               = undefined;
         this._noRotate              = undefined;
         this._noZoom                = undefined;
-        this._fillColor             = [];
+        this._fillColor             = undefined;
         this._dash                  = undefined;
         this._rectDiff              = undefined;
         this._popupIdx              = undefined;
@@ -133,7 +133,7 @@
         return this._dash;
     };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor() || [], aColor));
+        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
 
         this._fillColor = aColor;
 
@@ -1020,7 +1020,7 @@
     };
 
     CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor() || [], aColor));
+        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor(), aColor));
 
         this._strokeColor = aColor;
         this.SetWasChanged(true);
