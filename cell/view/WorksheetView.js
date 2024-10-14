@@ -6178,6 +6178,12 @@
 		var y2 = y1 + h;
 		var bl = y2 - Asc.round(
 				(isMerged ? (ct.metrics.height - ct.metrics.baseline) : this._getRowDescender(rowB)) * this.getZoom());
+		if (this.getRightToLeft()) {
+			let temp = x1;
+			x1 = x2;
+			x2 = temp;
+			w = -w;
+		}
 		var x1ct = isMerged ? x1 : this._getColLeft(col, true, ctx) - offsetX;
 		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
 		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, ct.cellHA);
@@ -6201,7 +6207,11 @@
 			txtRotW = ct.textBound.width + xb1 - ct.textBound.offsetX;
 
 			if (isMerged) {
-				wb = this._getColLeft(colR + 1, true, ctx) - this._getColLeft(colL, true, ctx);
+				wb = this._getColLeft(colR + 1, null, ctx) - this._getColLeft(colL, null, ctx);
+				if (this.getRightToLeft()) {
+					xb1 += this._getColumnWidth(col) - wb;
+				}
+
 				hb = this._getRowTop(rowB + 1) - this._getRowTop(rowT);
 				ctx.AddClipRect(xb1, yb1, wb, hb);
 				clipUse = true;
