@@ -4631,12 +4631,7 @@
 		return stringRender;
 	};
 	WorksheetView.prototype._fillText = function (ctx, text, x, y, maxWidth, charWidths, angle) {
-		if (this.getRightToLeft()) {
-			ctx.fillText( text, x, y, maxWidth, charWidths, angle)
-		} else {
-			ctx.fillText(text, x, y, maxWidth, charWidths);
-		}
-
+		ctx.fillText(text, x, y, maxWidth, charWidths, angle);
 		return ctx;
 
 	};
@@ -4933,7 +4928,6 @@
 		ctx.AddClipRect(x, y, w, h);
 		ctx.setFillStyle(color);
 
-		let _originalMatrix;
 		let charsWidth = 0;
 		if (this.getRightToLeft()) {
 			for (let i in sr.charWidths) {
@@ -22790,13 +22784,13 @@
 							var collasedEndCol = this._getGroupCollapsed(arrayLines[i][j].end + 1);
 							//var collasedEndCol = rowLevelMap[arrayLines[i][j].end + 1] && rowLevelMap[arrayLines[i][j].end + 1].collapsed;
 							if(!collasedEndCol) {
-								ctx.lineVerPrevPx(posX, startPos, endPos + paddingTop);
+								ctx.lineVerPrevPx(posX - this.getRightToLeftOffset(), startPos, endPos + paddingTop);
 							}
 
 							// _
 							//|
 							if(!collasedEndCol && startY === arrayLines[i][j].start) {
-								ctx.lineHorPrevPx(posX - lineWidthDiff + thickLineDiff, startPos, posX + 4*padding);
+								ctx.lineHorPrevPx(posX - lineWidthDiff + thickLineDiff  + this.getRightToLeftOffset(), startPos, posX + 4*padding + this.getRightToLeftOffset());
 							}
 						} else {
 							if(endPosArr[arrayLines[i][j].start]) {
@@ -22935,14 +22929,14 @@
 			x = x - offsetX;
 			y = y - offsetY;
 
-			ctx.AddClipRect(bCol ? pos.pos - borderSize - offsetX : x - borderSize, bCol ? y - borderSize : pos.pos - borderSize - offsetY, bCol ? pos.size + borderSize : w + borderSize, bCol ? h + borderSize : pos.size + borderSize);
+			ctx.AddClipRect(bCol ? pos.pos - borderSize - offsetX : x - borderSize, bCol ? y - borderSize : pos.pos - borderSize - offsetY, bCol ? pos.size + borderSize : w + borderSize + this.getRightToLeftOffset(), bCol ? h + borderSize : pos.size + borderSize);
 			ctx.beginPath();
 
 			if(buttons[i].clean) {
 				ctx.clearRect(x, y, w, h);
 			}
 
-			ctx.lineHorPrevPx(x, y, x + w);
+			ctx.lineHorPrevPx(x, y, x + w + this.getRightToLeftOffset());
 			ctx.lineHorPrevPx(x + w, y + h, x);
 			ctx.lineVerPrevPx(x + w, y, y + h);
 			ctx.lineVerPrevPx(x, y + h, y - borderSize);
@@ -22980,9 +22974,10 @@
 
 			if(w > sizeLine + 2) {
 				if(this._getGroupCollapsed(val, bCol)/*rowLevelMap[val] && rowLevelMap[val].collapsed*/) {
-					ctx.lineHorPrevPx(x + paddingLine, y + h / 2 + 1, x + sizeLine + paddingLine);
-					ctx.lineVerPrevPx(x + paddingLine + sizeLine / 2 + 1, y + h / 2 - sizeLine / 2,  y + h / 2 + sizeLine / 2);
+					ctx.lineHorPrevPx(x + paddingLine + this.getRightToLeftOffset(), y + h / 2 + 1, x + sizeLine + paddingLine + this.getRightToLeftOffset());
+					ctx.lineVerPrevPx(x + paddingLine + sizeLine / 2 + 1 - this.getRightToLeftOffset(), y + h / 2 - sizeLine / 2,  y + h / 2 + sizeLine / 2);
 				} else {
+					x += this.getRightToLeftOffset();
 					ctx.lineHorPrevPx(x + paddingLine, y + h / 2 + diff, x + sizeLine + paddingLine);
 				}
 			}
@@ -23162,7 +23157,8 @@
 		if(w > tm.width + 3) {
 			var diff = bActive ? 1 : 0;
 			ctx.setFillStyle(st.color);
-			this._fillText(ctx, text, x + w / 2 - tm.width / 2 + diff, y + Asc.round(tm.baseline) + h / 2 -  tm.height / 2 + diff, undefined, sr.charWidths);
+
+			this._fillText(ctx, text, x + (this.getRightToLeft() ? w : w/2) - tm.width / 2 + diff, y + Asc.round(tm.baseline) + h / 2 -  tm.height / 2 + diff, undefined, sr.charWidths);
 		}
 
 		ctx.stroke();
@@ -23392,6 +23388,7 @@
 							if((arrayLines[i][j].end + 1 === target.row && !bCol) || (arrayLines[i][j].end + 1 === target.col && bCol)) {
 								props = t._getGroupDataButtonPos(arrayLines[i][j].end + 1, i, bCol);
 								collapsed = t._getGroupCollapsed(arrayLines[i][j].end + 1, bCol);/*levelMap[arrayLines[i][j].end + 1] && levelMap[arrayLines[i][j].end + 1].collapsed*/
+								x = t.checkRtl(x);
 								if(props) {
 									if(x >= props.x - offsetX && x <= props.x + props.w - offsetX && y >= props.y - offsetY && y <= props.y - offsetY + props.h) {
 										if(AscCommon.getPtrEvtName("up") === type) {
@@ -23466,6 +23463,8 @@
 			}
 		}
 
+		x = this.checkRtl(x);
+
 		//TODO для группировки колонок - y должен быть больше поля колонок
 		var bButtonClick = !bCol && x <= this.cellsLeft && this.groupWidth && x < this.groupWidth && y < this.cellsTop;
 		if(!bButtonClick) {
@@ -23487,10 +23486,10 @@
 			for(var i = 0; i <= groupArr.length; i++) {
 				props = this.getGroupDataMenuButPos(i, bCol);
 				if(x >= props.x && y >= props.y && x <= props.x + props.w && y <= props.y + props.h) {
-					if("mouseup" === type) {
+					if("mouseup" === type || "pointerup" === type) {
 						this.hideGroupLevel(i + 1, bCol);
 						this.clickedGroupButton = null;
-					} else if("mousedown" === type){
+					} else if("mousedown" === type || "pointerdown" === type){
 						this._drawGroupDataMenuButton(null, i, true, true, bCol);
 						this.clickedGroupButton = {level: i, bCol: bCol};
 						return true;
