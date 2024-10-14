@@ -18262,7 +18262,9 @@
 			fl = this._getCellFlags(c);
 		}
 
-		fl.wrapText = col === 0 && this.getRightToLeft();
+		if (this.getRightToLeft() && col === 0) {
+			fl.wrapText = true;
+		}
 
 		var align = c.getAlign();
 		var indent = align && align.indent;
