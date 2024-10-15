@@ -3129,12 +3129,14 @@ CTable.prototype.private_CheckRangeOnReset = function()
 {
 	let X      = this.X;
 	let XLimit = this.XLimit;
-
+	
+	let compatibilityMode = this.LogicDocument && this.LogicDocument.GetCompatibilityMode ? this.LogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
 	if (this.LogicDocument
 		&& this.LogicDocument.IsDocumentEditor()
 		&& this.IsInline()
 		&& this.Parent
-		&& this.Parent.CheckRange)
+		&& this.Parent.CheckRange
+		&& compatibilityMode <= AscCommon.document_compatibility_mode_Word14)
 	{
 		var arrRanges = this.Parent.CheckRange(X, this.Y, XLimit, this.Y + 0.001, this.Y, this.Y + 0.001, X, XLimit, this.private_GetRelativePageIndex(0));
 		if (arrRanges.length > 0)
