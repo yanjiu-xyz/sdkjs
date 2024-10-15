@@ -3108,6 +3108,12 @@
         }
         return "";
     };
+    CDLbl.prototype.getCategoryName = function() {
+        if(this.series && this.pt) {
+            return this.series.getCatName(this.pt.idx);
+        }
+        return "";
+    };
     CDLbl.prototype.getDefaultTextForTxBody = function() {
         var compiled_string = "";
         var separator;
