@@ -2792,7 +2792,7 @@ background-repeat: no-repeat;\
 				this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
 
 				window["AscDesktopEditor"]["localSaveToDrawingFormat2"](this.documentTitle, this.DocumentUrl || "", "",
-					AscCommon.Base64.encode(changes), AscCommon.Base64.encode(this.DocumentRenderer.getFileNativeBinary()), this.currentPassword || "");
+					AscCommon.Base64.encode(changes), AscCommon.Base64.encode(this.DocumentRenderer.getFileNativeBinary()), this.currentPassword || "", Asc.c_oAscFileType.PDF);
 
 				return true;
 			}
@@ -9027,7 +9027,16 @@ background-repeat: no-repeat;\
 
 		if (this.WordControl.m_oLogicDocument && this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType))
 		{
-			this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, options.isPdfPrint || ((fileType & 0x0400) === 0x0400)), fileType);
+			if (this.isUseNativeViewer && this.isDocumentRenderer())
+			{
+				let changes = this.getDocumentRenderer().Save();
+				window["AscDesktopEditor"]["localSaveToDrawingFormat2"](this.documentTitle, this.DocumentUrl || "", "",
+					AscCommon.Base64.encode(changes), AscCommon.Base64.encode(this.getDocumentRenderer().getFileNativeBinary()), this.currentPassword || "", fileType);
+			}
+			else
+			{
+				this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, options.isPdfPrint || ((fileType & 0x0400) === 0x0400)), fileType);
+			}
 			return true;
 		}
 
