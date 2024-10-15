@@ -1922,6 +1922,7 @@ function CEditorPage(api)
 
 					oWordControl.m_oLogicDocument && oWordControl.m_oLogicDocument.UpdateCursorType();
 					oWordControl.StartUpdateOverlay();
+					oWordControl.m_oDrawingDocument.contentControls.onPointerLeave();
 					oWordControl.OnUpdateOverlay();
 					oWordControl.EndUpdateOverlay();
 					return;
