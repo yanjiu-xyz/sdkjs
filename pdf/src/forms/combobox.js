@@ -701,14 +701,8 @@
             }
         }
 
-        // форматируемое значение
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
-        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
-        if (oActionRunScript) {
-            memory.widgetFlags |= (1 << 12);
-            let sFormatValue = this.contentFormat.getAllText();
-            memory.WriteString(sFormatValue);
-        }
+        memory.fieldDataFlags |= (1 << 12);
+        this.WriteRenderToBinary(memory);
         
         if (value != null && Array.isArray(value) == true) {
             // флаг что значение - это массив

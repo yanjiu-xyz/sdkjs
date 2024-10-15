@@ -2302,6 +2302,25 @@
         memory.WriteLong(nFlags);
         memory.Seek(nEndPos);
     };
+    CBaseField.prototype.WriteRenderToBinary = function(memory) {
+        // пока только для text, combobox
+        if (false == [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
+            return;
+        }
+
+        // тут будет длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
+        oContentToDraw.Draw(0, memory.docRenderer);
+
+        // запись длины комманд
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
 
     // for format
 
