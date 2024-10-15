@@ -17689,10 +17689,10 @@ CColorObj.prototype =
 					}
 					storageElement.setBoundary(lineBuilder.getBoundary());
 
-					if (attributes.dispEq) {
+					if (attributes.dispEq || attributes.dispEq === null) {
 						storageElement.setCoefficients(coefficients);
 					}
-					if (attributes.dispRSqr) {
+					if (attributes.dispRSqr || attributes.dispRSqr === null) {
 						const rSquared = this._dispRSquared(coords.catVals, coords.valVals, coefficients, type);
 						storageElement.setRSquared(rSquared);
 					}

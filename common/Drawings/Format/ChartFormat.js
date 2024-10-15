@@ -14514,11 +14514,13 @@
         if(bShow) {
             if(!this.trendlineLbl) {
                 this.setTrendlineLbl(this.createLabel());
+                this.setDispEq(null);
             }
         }
         else {
             if(this.trendlineLbl) {
                 this.setTrendlineLbl(null);
+                this.setDispEq(false);
             }
         }
     };
