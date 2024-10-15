@@ -1056,26 +1056,26 @@
 			}
 		};
 	};
-
+	
 	asc_docs_api.prototype.startCollaborationEditing = function()
+	{
+		AscCommon.CollaborativeEditing.Start_CollaborationEditing();
+		this.asc_setDrawCollaborationMarks(true);
+		if (this.WordControl && this.WordControl.m_oDrawingDocument)
 		{
-			AscCommon.CollaborativeEditing.Start_CollaborationEditing();
-			this.asc_setDrawCollaborationMarks(true);
-			if (this.WordControl && this.WordControl.m_oDrawingDocument)
-			{
-				this.WordControl.m_oDrawingDocument.Start_CollaborationEditing();
-			}
-		};
+			this.WordControl.m_oDrawingDocument.Start_CollaborationEditing();
+		}
+	};
 	asc_docs_api.prototype.endCollaborationEditing = function()
-		{
-			AscCommon.CollaborativeEditing.End_CollaborationEditing();
+	{
+		AscCommon.CollaborativeEditing.End_CollaborationEditing();
 		if (this.WordControl && this.WordControl.m_oLogicDocument &&
 			false !== this.WordControl.m_oLogicDocument.DrawingDocument.IsLockObjectsEnable)
-			{
+		{
 			this.WordControl.m_oLogicDocument.DrawingDocument.IsLockObjectsEnable = false;
 			this.WordControl.m_oLogicDocument.DrawingDocument.FirePaint();
-			}
-		};
+		}
+	};
 
 	asc_docs_api.prototype.isMasterMode = function() {
 		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide && !this.isSlideShow();
@@ -8409,6 +8409,9 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.initCollaborativeEditing = function()
 	{
+		if (AscCommon.CollaborativeEditing)
+			return;
+		
 		AscCommon.CollaborativeEditing = new AscCommon.SlideCollaborativeEditing();
 	};
 	

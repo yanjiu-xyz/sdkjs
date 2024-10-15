@@ -1844,6 +1844,9 @@
 	};
 	
 	PDFEditorApi.prototype.initCollaborativeEditing = function() {
+		if (AscCommon.CollaborativeEditing)
+			return;
+		
 		AscCommon.CollaborativeEditing = new AscPDF.CPDFCollaborativeEditing();
 	};
 	PDFEditorApi.prototype.ChangeReaderMode = function() {};

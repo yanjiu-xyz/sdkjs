@@ -9841,6 +9841,9 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.initCollaborativeEditing = function()
 	{
+		if (AscCommon.CollaborativeEditing)
+			return;
+		
 		AscCommon.CollaborativeEditing = new AscCommon.CWordCollaborativeEditing();
 	};
 
