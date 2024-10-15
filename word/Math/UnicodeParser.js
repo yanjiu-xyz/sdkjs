@@ -2257,7 +2257,7 @@
 				if (oElement !== null)
 					oExpLiteral.push(oElement);
 
-				if (oElement.length > 0 && oElement[oElement.length - 1].type !== Literals.char.id)
+				if (oElement && oElement.length > 0 && oElement[oElement.length - 1].type !== Literals.char.id)
 					this.EatOneSpace();
 			}
 			else if (arrCorrectSymbols.includes(this.oLookahead.data))
