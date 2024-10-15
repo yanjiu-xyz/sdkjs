@@ -293,6 +293,16 @@ function (window, undefined) {
 		return !this.isVertical();
 	};
 	CAxis.prototype.isVertical = function() {
+		if(this.isChartExCat()) {
+			let oChartSpace = this.getChartSpace();
+			if(oChartSpace) {
+				let aSeries = oChartSpace.getAllSeries();
+				let oFirstSeries = aSeries[0];
+				if(oFirstSeries && oFirstSeries.layoutId === AscFormat.SERIES_LAYOUT_FUNNEL) {
+					return true;
+				}
+			}
+		}
 		return this.isValuesAxis();
 	};
 
