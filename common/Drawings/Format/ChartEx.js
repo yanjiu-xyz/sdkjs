@@ -3686,12 +3686,12 @@ function (window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_TextData_SetV] = window['AscDFH'].CChangesDrawingsString;
 
 	function CTextData() {
-		CBaseChartObject.call(this);
+		AscFormat.CChartRefBase.call(this);
 		this.f = null;
 		this.v = null;
 	}
 
-	InitClass(CTextData, CBaseChartObject, AscDFH.historyitem_type_TextData);
+	InitClass(CTextData, AscFormat.CChartRefBase, AscDFH.historyitem_type_TextData);
 
 	CTextData.prototype.fillObject = function (oCopy) {
 		CBaseChartObject.prototype.fillObject.call(this, oCopy);
@@ -3711,6 +3711,30 @@ function (window, undefined) {
 		this.v = pr;
 	};
 
+	CTextData.prototype.updateCache = function() {
+		AscFormat.ExecuteNoHistory(function () {
+			if(this.f) {
+				let sContent = this.f.content;
+
+				let aParsedRef = AscFormat.fParseChartFormula(sContent);
+				if (!Array.isArray(aParsedRef) || aParsedRef.length === 0) {
+					return false;
+				}
+				if (aParsedRef.length > 0) {
+					let oRef = aParsedRef[0];
+					let oBBox = oRef.bbox;
+					let oWS = oRef.worksheet;
+					let oCell = oWS.getCell3(oBBox.r1, oBBox.c1);
+					if(oCell) {
+						let sVal = oCell.getValueWithFormat();
+						if (typeof sVal === "string" && sVal.length > 0) {
+							this.setV(sVal);
+						}
+					}
+				}
+			}
+		}, this, []);
+	};
 
 	// // TickLabels (unused, bool instead this class)
 	// function CTickLabels() {
