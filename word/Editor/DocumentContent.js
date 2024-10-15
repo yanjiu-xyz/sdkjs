@@ -442,7 +442,7 @@ CDocumentContent.prototype.Get_Numbering = function()
 };
 CDocumentContent.prototype.GetNumbering = function()
 {
-	if (this.LogicDocument)
+	if (this.LogicDocument && this.LogicDocument.GetNumbering)
 		return this.LogicDocument.GetNumbering();
 
 	return AscCommonWord.DEFAULT_NUMBERING;
@@ -456,7 +456,7 @@ CDocumentContent.prototype.GetStyles = function(nLvl)
 	if (this.bPresentation && this.Parent)
 		return this.Parent.Get_Styles(nLvl);
 
-	if (this.LogicDocument)
+	if (this.LogicDocument && this.LogicDocument.GetStyles)
 		return this.LogicDocument.GetStyles();
 
 	return AscWord.DEFAULT_STYLES;

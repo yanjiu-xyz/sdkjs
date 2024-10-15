@@ -105,15 +105,14 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
 		this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 		AscCommon.CollaborativeEditing.Add_Unlock2(this);
 	}
-
-    this.DrawingDocument = null;
-    this.LogicDocument   = null;
-
-    if ( undefined !== DrawingDocument && null !== DrawingDocument )
-    {
-        this.DrawingDocument = DrawingDocument;
-        this.LogicDocument   = this.DrawingDocument.m_oLogicDocument;
-    }
+	
+	this.DrawingDocument = DrawingDocument ? DrawingDocument : null;
+	this.LogicDocument   = null;
+	
+	if (Parent && Parent.GetLogicDocument)
+		this.LogicDocument = Parent.GetLogicDocument();
+	else if (this.DrawingDocument)
+		this.LogicDocument = this.DrawingDocument.m_oLogicDocument;
 
     this.CompiledPr =
     {
