@@ -3362,7 +3362,12 @@
             this.txBody = this.tx.rich;
             this.txBody.parent = this;
         }
+        else if(this.txPr && this.txPr.content && !this.txPr.content.IsEmpty()) {
+            this.txBody = this.txPr.createDuplicate();
+            this.txBody.parent = this;
+        }
         else {
+
             if(this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_TrendLine) {
                 this.txBody = AscFormat.CreateTextBodyFromString("", this.getDrawingDocument(), this);
                 this.parent.fillEquationContent( this.txBody.content);
