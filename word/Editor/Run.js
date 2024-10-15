@@ -4688,8 +4688,30 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 					PRS.ComplexFields.processFieldChar(Item);
 
 					isHiddenCFPart = PRS.ComplexFields.isComplexFieldCode();
-
-					if (Item.IsEnd() && !isHiddenCFPart)
+					
+					if (Item.IsSeparate())
+					{
+						var oComplexField = Item.GetComplexField();
+						var oHdrFtr       = Para.Parent.IsHdrFtr(true);
+						if (oHdrFtr && !oComplexField && this.Paragraph)
+						{
+							// Т.к. Recalculate_Width запускается после Recalculate_Range, то возможен случай, когда у нас
+							// поля еще не собраны, но в колонтитулах они нам нужны уже собранные
+							this.Paragraph.ProcessComplexFields();
+							oComplexField = Item.GetComplexField();
+						}
+						
+						var oInstruction = oComplexField ? oComplexField.GetInstruction() : null;
+						
+						let isHiddenValue = !!(oHdrFtr
+							&& oInstruction
+							&& (AscWord.fieldtype_NUMPAGES === oInstruction.GetType()
+								|| AscWord.fieldtype_PAGE === oInstruction.GetType()
+								|| AscWord.fieldtype_FORMULA === oInstruction.GetType()));
+						
+						Item.SetHiddenValue(isHiddenValue);
+					}
+					else if (Item.IsEnd() && !isHiddenCFPart)
 					{
 						// Специальная ветка, для полей PAGE и NUMPAGES, находящихся в колонтитуле
 						var oComplexField = Item.GetComplexField();
