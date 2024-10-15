@@ -848,12 +848,20 @@ CInlineLevelSdt.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, 
 };
 CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 {
+	let logicDocument  = this.GetLogicDocument();
+	let isRemoveOnDrag = logicDocument ? logicDocument.DragAndDropAction : false;
+	
 	if (this.IsPlaceHolder())
 	{
+		if (isRemoveOnDrag && this.CanBeDeleted())
+		{
+			this.RemoveThisFromParent(true);
+			return true;
+		}
+		
 		if (!this.CanBeDeleted() && !bOnAddText)
 			return true;
 
-		let logicDocument = this.GetLogicDocument();
 		if (!bOnAddText && !this.IsSelectionUse())
 		{
 			this.SelectAll(1);
@@ -878,8 +886,14 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 
 	let result = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
 	
-	let logicDocument = this.GetLogicDocument();
-	if (!result
+	if (isRemoveOnDrag
+		&& this.IsEmpty()
+		&& this.CanBeDeleted())
+	{
+		this.RemoveThisFromParent(true);
+		result = true;
+	}
+	else if (!result
 		&& this.IsEmpty()
 		&& !this.IsPlaceHolder()
 		&& logicDocument
