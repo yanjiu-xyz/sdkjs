@@ -1890,6 +1890,9 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._getContentPosition = function () {
+		if (!this.textFlags) {
+			return this.defaults.padding;
+		}
 		switch (this.textFlags.textAlign) {
 			case AscCommon.align_Right:
 				return this.right - this.left - this.defaults.padding - 1;
