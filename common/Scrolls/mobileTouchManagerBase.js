@@ -723,10 +723,26 @@
 				{
 					case AscCommon.c_oEditorId.Word:
 					{
-						if (this.Api.isDrawTableErase ||
-							this.Api.isDrawTablePen ||
-							this.Api.addShapePreset ||
+						if (this.Api.isDrawTableErase === true ||
+							this.Api.isDrawTablePen === true   ||
+							this.Api.isStartAddShape === true  ||
 							this.Api.isInkDrawerOn())
+						{
+							this.desktopTouchState = false;
+						}
+						break;
+					}
+					case AscCommon.c_oEditorId.Spreadsheet:
+					{
+						if (this.Api.isStartAddShape === true)
+						{
+							this.desktopTouchState = false;
+						}
+						break;
+					}
+					case AscCommon.c_oEditorId.Presentation:
+					{
+						if (this.Api.isStartAddShape === true)
 						{
 							this.desktopTouchState = false;
 						}
