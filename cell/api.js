@@ -6894,6 +6894,14 @@ var editor;
 		   _adjustPrint.asc_setIgnorePrintArea(true);
        }
 
+	   if (_options["adjustOptions"])
+	   {
+		   if (_options["adjustOptions"]["startPageIndex"])
+			   _adjustPrint.asc_setStartPageIndex(_options["adjustOptions"]["startPageIndex"]);
+		   if (_options["adjustOptions"]["endPageIndex"])
+			   _adjustPrint.asc_setEndPageIndex(_options["adjustOptions"]["endPageIndex"]);
+	   }
+
 	   _adjustPrint.asc_setPrintType(Asc.c_oAscPrintType.EntireWorkbook);
 
        var ws, newPrintOptions;

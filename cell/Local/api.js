@@ -276,6 +276,13 @@ var c_oAscError = Asc.c_oAscError;
 					let nativeOptions = options.advancedOptions.asc_getNativeOptions();
 					if (nativeOptions)
 						printOptionsObj["nativeOptions"] = nativeOptions;
+
+					// adjustPrint
+					printOptionsObj["adjustOptions"] = {};
+					if (null != options.advancedOptions.asc_getStartPageIndex())
+						printOptionsObj["adjustOptions"]["startPageIndex"] =  options.advancedOptions.asc_getStartPageIndex();
+					if (null != options.advancedOptions.asc_getEndPageIndex())
+						printOptionsObj["adjustOptions"]["endPageIndex"] =  options.advancedOptions.asc_getEndPageIndex();
 				}
 
 				printOptions = JSON.stringify(printOptionsObj);
