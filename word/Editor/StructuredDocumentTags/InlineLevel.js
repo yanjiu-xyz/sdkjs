@@ -2993,7 +2993,7 @@ CInlineLevelSdt.prototype.IsFormFilled = function()
 			return (sText !== "");
 		}
 	}
-	else if (this.IsComboBox())
+	else if (this.IsComboBox() || this.IsDatePicker())
 	{
 		var sText = this.GetSelectedText(true);
 		return (sText !== "");
