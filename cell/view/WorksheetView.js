@@ -519,6 +519,9 @@
 
 		this.cellPasteHelper = new CCellPasteHelper(this);
 
+		this.vScrollPxStep = null;
+		this.hScrollPxStep = null;
+
 		this._init();
 
 		return this;
@@ -537,6 +540,18 @@
 		this.model.updatePivotTablesStyle(null);
 		this._cleanCellsTextMetricsCache();
 		this._prepareCellTextMetricsCache();
+		
+		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
+		if (isMobileVersion) {
+			let oView = this.workbook && this.workbook.controller && this.workbook.controller.settings;
+			let defaultStep = 10;
+			this.vScrollPxStep = oView ? oView.vscrollStep : defaultStep;
+			this.hScrollPxStep = oView ? oView.hscrollStep : defaultStep;
+		} else {
+			this.vScrollPxStep = this.defaultRowHeightPx;
+			this.hScrollPxStep = this.defaultColWidthPx;
+		}
+
 		// initializing is completed
 		this.handlers.trigger("initialized");
 	};
@@ -1144,7 +1159,7 @@
 
 
 		beforeVisibleRangeHeight += this.getScrollCorrect();
-		let defaultScrollPxStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
+		let defaultScrollPxStep = Asc.round(this.getVScrollStep());
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep);
 	};
 
@@ -1171,7 +1186,7 @@
 			tmp -= 1;
 		}*/
 		let row = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
-		let defaultScrollPxStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
+		let defaultScrollPxStep = Asc.round(this.getVScrollStep());
 		let beforeVisibleRangeHeight = this._getRowTop(row) - this.cellsTop;
 		beforeVisibleRangeHeight += this.getScrollCorrect();
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep);
@@ -1189,7 +1204,7 @@
 
 
 		beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
-		let defaultScrollPxStep = Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
+		let defaultScrollPxStep = Asc.round(this.getHScrollStep());
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
 	};
 
@@ -1216,7 +1231,7 @@
 			tmp -= 1;
 		}*/
 		let col = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
-		let defaultScrollPxStep = Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
+		let defaultScrollPxStep = Asc.round(this.getHScrollStep());
 		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft;
 		beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
@@ -10202,7 +10217,7 @@
         var fixStartRow = new asc_Range(vr.c1, vr.r1, vr.c2, vr.r1);
 
 		let isReverse = delta < 0;
-		let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
+		let unitDeltaStep = Asc.round(this.getVScrollStep());
 
 		let defaultScrollPxStep = unitDeltaStep * Math.abs(delta);
 		if (defaultScrollPxStep < 1) {
@@ -10570,7 +10585,7 @@
         var fixStartCol = new asc_Range(vr.c1, vr.r1, vr.c1, vr.r2);
 
 		let isReverse = delta < 0;
-		let unitDeltaStep = Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
+		let unitDeltaStep = Asc.round(this.getHScrollStep());
 
 		let defaultScrollPxStep = unitDeltaStep * Math.abs(delta);
 		if (defaultScrollPxStep < 1) {
@@ -26485,6 +26500,14 @@
 	WorksheetView.prototype.initRenderingSettings = function () {
 		this.renderingSettings = new CRenderingSettings();
 		return this.renderingSettings;
+	};
+
+	WorksheetView.prototype.getVScrollStep = function () {
+		return this.vScrollPxStep * this.getZoom() * this.getRetinaPixelRatio();
+	};
+
+	WorksheetView.prototype.getHScrollStep = function () {
+		return this.hScrollPxStep * this.getZoom() * this.getRetinaPixelRatio();
 	};
 
 	WorksheetView.prototype.checkRtl = function (x, ctx, units, checkOffsets) {
