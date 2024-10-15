@@ -4821,7 +4821,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 			var resultColOff = cell.colOff > colWidth ? colWidth : cell.colOff;
 			coords.y = ws._getRowTop(cell.row) + ws.objectRender.convertMetric(resultRowOff, 3, 0) - ws._getRowTop(0);
 			coords.x = ws._getColLeft(cell.col) + ws.objectRender.convertMetric(resultColOff, 3, 0) - ws._getColLeft(0);
-            coords.x = ws.checkRtl(coords.x, undefined, undefined, true) - ws._getColLeft(0);
+            coords.x = ws.checkRtl(coords.x, undefined, undefined, true) - (ws.getRightToLeft() ? ws._getColLeft(0) : 0);
 		}
 		return coords;
 	};
