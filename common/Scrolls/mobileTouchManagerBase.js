@@ -1600,6 +1600,10 @@
 		let srcSize = (glassSize / glassScale) >> 0;
 		let srcX = posMouseX - (srcSize >> 1);
 		let srcY = posMouseY - (srcSize >> 1);
+
+		if (0 > srcX || 0 > srcY)
+			return;
+
 		let srcR = srcX + srcSize;
 		let srcB = srcY + srcSize;
 
