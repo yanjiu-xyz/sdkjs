@@ -9031,7 +9031,7 @@ background-repeat: no-repeat;\
 			{
 				let changes = this.getDocumentRenderer().Save();
 				window["AscDesktopEditor"]["localSaveToDrawingFormat2"](this.documentTitle, this.DocumentUrl || "", "",
-					AscCommon.Base64.encode(changes), AscCommon.Base64.encode(this.getDocumentRenderer().getFileNativeBinary()), this.currentPassword || "", fileType);
+					changes ? AscCommon.Base64.encode(changes) : "", AscCommon.Base64.encode(this.getDocumentRenderer().getFileNativeBinary()), this.currentPassword || "", fileType);
 			}
 			else
 			{
