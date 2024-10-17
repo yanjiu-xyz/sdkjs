@@ -5117,6 +5117,8 @@
 				if (types && types[i] && types[i].prototype && types[i].prototype.fromCValue)
 					arguments[i] = types[i].prototype.fromCValue(arguments[i]);
 			}
+			if (!this[name])
+				console.log("Wrap unexisted function: " + name);
 			let result = this[name].apply(this, arguments);
 			if (result && result.toCValue)
 				result = result.toCValue();
