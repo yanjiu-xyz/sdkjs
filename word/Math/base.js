@@ -1893,6 +1893,7 @@ CMathBase.prototype.Draw_Lines = function(PDSL)
 	var LineW		= (CtrPrp.FontSize / 18) * g_dKoef_pt_to_mm;
 	var Para		= PDSL.Paragraph;
 
+	// set aStrikeout && aDStrikeout
 	if (true === bRemReview || true === CtrPrp.Strikeout)
 		aStrikeout.set(Y, LineW);
 	else if (true === CtrPrp.DStrikeout)
