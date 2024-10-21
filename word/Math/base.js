@@ -1871,70 +1871,79 @@ CMathBase.prototype.Draw_HighLights = function(drawState, bAll)
 };
 CMathBase.prototype.Draw_Lines = function(PDSL)
 {
-    var CtrPrp = this.Get_CompiledCtrPrp(false);
+	var CtrPrp		= this.Get_CompiledCtrPrp(false);
 
-    var aStrikeout  = PDSL.Strikeout;
-    var aDStrikeout = PDSL.DStrikeout;
+	var aStrikeout	= PDSL.Strikeout;
+	var aDStrikeout	= PDSL.DStrikeout;
 
-    var ReviewType = this.GetReviewType();
-    var bAddReview = reviewtype_Add === ReviewType ? true : false;
-    var bRemReview = reviewtype_Remove === ReviewType ? true : false;
-    var ReviewColor = null;
-    if (bAddReview || bRemReview)
-        ReviewColor = this.ReviewInfo.Get_Color();
+	var ReviewType	= this.GetReviewType();
+	var bAddReview	= reviewtype_Add === ReviewType ? true : false;
+	var bRemReview	= reviewtype_Remove === ReviewType ? true : false;
+	var ReviewColor	= null;
 
-    var ArgSize     = this.Get_CompiledArgSize();
-    var fontCoeff   = MatGetKoeffArgSize(CtrPrp.FontSize, ArgSize.value);
+	if (bAddReview || bRemReview)
+		ReviewColor	= this.ReviewInfo.Get_Color();
 
-    // вычисляем координату Y и LineW также как в Run
-    var X          = PDSL.X;
-    var Y          = PDSL.Baseline - CtrPrp.FontSize * fontCoeff * g_dKoef_pt_to_mm * 0.27;
+	var ArgSize		= this.Get_CompiledArgSize();
+	var fontCoeff	= MatGetKoeffArgSize(CtrPrp.FontSize, ArgSize.value);
 
-    var LineW      = (CtrPrp.FontSize / 18) * g_dKoef_pt_to_mm;
+	// вычисляем координату Y и LineW также как в Run
+	var X			= PDSL.X;
+	var Y			= PDSL.Baseline - CtrPrp.FontSize * fontCoeff * g_dKoef_pt_to_mm * 0.27;
+	var LineW		= (CtrPrp.FontSize / 18) * g_dKoef_pt_to_mm;
+	var Para		= PDSL.Paragraph;
 
-    var Para       = PDSL.Paragraph;
+	if (true === bRemReview || true === CtrPrp.Strikeout)
+		aStrikeout.set(Y, LineW);
+	else if (true === CtrPrp.DStrikeout)
+		aDStrikeout.set(Y, LineW);
 
-    var BgColor = PDSL.BgColor;
-    if (CtrPrp.Shd && !CtrPrp.Shd.IsNil())
-        BgColor = CtrPrp.Shd.GetSimpleColor(Para.GetTheme(), Para.GetColorMap());
+	var BgColor = PDSL.BgColor;
+	if (CtrPrp.Shd && !CtrPrp.Shd.IsNil())
+		BgColor = CtrPrp.Shd.GetSimpleColor(Para.GetTheme(), Para.GetColorMap());
 
-    var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
-    var CurColor, RGBA, Theme = this.Paragraph.Get_Theme(), ColorMap = this.Paragraph.Get_ColorMap();
+	var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() )
+		? new CDocumentColor( 255, 255, 255, false)
+		: new CDocumentColor( 0, 0, 0, false );
 
-    // Выставляем цвет обводки
-    if ( true === PDSL.VisitedHyperlink && ( undefined === this.Pr.Color && undefined === this.Pr.Unifill ) )
-        CurColor = new CDocumentColor( 128, 0, 151 );
-    else if ( true === CtrPrp.Color.Auto && !CtrPrp.Unifill)
-        CurColor = new CDocumentColor( AutoColor.r, AutoColor.g, AutoColor.b );
-    else
-    {
-        if(CtrPrp.Unifill)
-        {
-            CtrPrp.Unifill.check(Theme, ColorMap);
-            RGBA = CtrPrp.Unifill.getRGBAColor();
-            CurColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B );
-        }
-        else
-        {
-            CurColor = new CDocumentColor( CtrPrp.Color.r, CtrPrp.Color.g, CtrPrp.Color.b );
-        }
-    }
+	var CurColor,
+		RGBA,
+		Theme		= this.Paragraph.Get_Theme(),
+		ColorMap	= this.Paragraph.Get_ColorMap();
 
-    var CurLine  = PDSL.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSL.Range - this.StartRange : PDSL.Range );
+	// Выставляем цвет обводки
+	if ( true === PDSL.VisitedHyperlink && ( undefined === this.Pr.Color && undefined === this.Pr.Unifill ) )
+		CurColor = new CDocumentColor( 128, 0, 151 );
+	else if ( true === CtrPrp.Color.Auto && !CtrPrp.Unifill)
+		CurColor = new CDocumentColor( AutoColor.r, AutoColor.g, AutoColor.b );
+	else
+	{
+		if(CtrPrp.Unifill)
+		{
+			CtrPrp.Unifill.check(Theme, ColorMap);
+			RGBA = CtrPrp.Unifill.getRGBAColor();
+			CurColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B );
+		}
+		else
+		{
+			CurColor = new CDocumentColor( CtrPrp.Color.r, CtrPrp.Color.g, CtrPrp.Color.b );
+		}
+	}
 
-    var Bound = this.Bounds.Get_LineBound(CurLine, CurRange);
+	var CurLine		= PDSL.Line - this.StartLine;
+	var CurRange	= ( 0 === CurLine ? PDSL.Range - this.StartRange : PDSL.Range );
+	var Bound		= this.Bounds.Get_LineBound(CurLine, CurRange);
 
-    if (true === bRemReview)
-        aStrikeout.Add(Y, Y, X, X + Bound.W, LineW, ReviewColor.r, ReviewColor.g, ReviewColor.b);
-    else if ( true === CtrPrp.DStrikeout )
-        aDStrikeout.Add( Y, Y, X, X + Bound.W, LineW, CurColor.r, CurColor.g, CurColor.b );
-    else if ( true === CtrPrp.Strikeout )
-        aStrikeout.Add( Y, Y, X, X + Bound.W, LineW, CurColor.r, CurColor.g, CurColor.b );
+	if ( true === bRemReview )
+		aStrikeout.Add( X, X + Bound.W, CurColor );
+	else if ( true === CtrPrp.DStrikeout )
+		aDStrikeout.Add( X, X + Bound.W, CurColor );
+	else if ( true === CtrPrp.Strikeout )
+		aStrikeout.Add( X, X + Bound.W, CurColor );
 
-    this.Draw_LinesForContent(PDSL);
+	this.Draw_LinesForContent(PDSL);
 
-    PDSL.X = Bound.X + Bound.W;
+	PDSL.X = Bound.X + Bound.W;
 };
 CMathBase.prototype.Draw_LinesForContent = function(PDSL)
 {
