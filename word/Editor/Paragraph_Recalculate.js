@@ -2486,20 +2486,22 @@ Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, P
 		&& this.LogicDocument.GetCompatibilityMode() <= AscCommon.document_compatibility_mode_Word14
 		&& true === ParaPr.PageBreakBefore)
 		return true;
-
-	if (!(Parent instanceof CDocument))
+	
+	let topDocument = this.GetTopDocumentContent();
+	if (!(topDocument instanceof AscWord.Document) || this.IsTableCellContent())
 	{
 		if (Parent instanceof AscFormat.CDrawingDocContent && 0 !== CurPage)
 			return false;
-
+		
 		return true;
 	}
 
-	// Если дошли до этого места, то тут все зависит от того на какой мы странице. Если на первой странице данной секции
+	// Если сюда дошли, значит мы либо на верхнем уровне, либо в блочном контроле, который лежит на верхнем уровне.
+	// Дальше все зависит от того на какой мы странице. Если на первой странице данной секции,
 	// тогда добавляем расстояние, а если нет - нет. Но подсчет первой страницы здесь не совпадает с тем, как она
 	// считается для нумерации. Если разрыв секции идет на текущей странице, то первой считается сразу данная страница.
 
-	var LogicDocument = Parent;
+	var LogicDocument = topDocument;
 	var SectionIndex  = LogicDocument.GetSectionIndexByElementIndex(this.Get_Index());
 	var FirstElement  = LogicDocument.GetFirstElementInSection(SectionIndex);
 
