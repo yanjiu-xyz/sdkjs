@@ -162,15 +162,9 @@
     };
     CPdfGraphicFrame.prototype.MoveCursorToCell = function(bNext) {
         this.graphicObject.MoveCursorToCell(bNext);
-        this.checkExtentsByDocContent();
     };
     CPdfGraphicFrame.prototype.checkExtentsByDocContent = function() {
-        if (false == AscCommon.History.CanAddChanges()) {
-            return;
-        }
-
         this.Recalculate();
-
         let oXfrm = this.getXfrm();
         if (Math.abs(oXfrm.extY - this.extY) > 0.001) {
             let nRot = this.GetRot();

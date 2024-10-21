@@ -7320,7 +7320,10 @@ CTable.prototype.MoveCursorToCell = function(bNext)
 
 						oCheckAutoCorrectPara = null;
 					}
-
+					if(this.Parent && this.Parent.checkExtentsByDocContent)
+					{
+						this.Parent.checkExtentsByDocContent();
+					}
 					this.LogicDocument.Recalculate();
 					this.LogicDocument.FinalizeAction();
 				}
