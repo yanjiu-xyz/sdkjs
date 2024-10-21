@@ -2798,7 +2798,7 @@ function (window, undefined) {
 			case 186: // ctrl + (shift) + ;
 				if (ctrlKey) {
 					var oDate = new Asc.cDate();
-					t._addChars(event.shiftKey ? oDate.getTimeString(api) : oDate.getDateString(api));
+					t._addChars(event.shiftKey ? oDate.getTimeString(api) : oDate.getDateString(api, true));
 					event.stopPropagation();
 					event.preventDefault();
 				}

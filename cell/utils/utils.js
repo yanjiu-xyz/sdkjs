@@ -3908,8 +3908,8 @@
 			}
 		};
 
-		cDate.prototype.getDateString = function (api) {
-			return api.asc_getLocaleExample(AscCommon.getShortDateFormat(), this.getExcelDate());
+		cDate.prototype.getDateString = function (api, bLocal) {
+			return api.asc_getLocaleExample(AscCommon.getShortDateFormat(), this.getExcelDate(bLocal));
 		};
 		cDate.prototype.getTimeString = function (api) {
 			return api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), this.getExcelDateWithTime() - this.getTimezoneOffset() / (60 * 24));
