@@ -13425,6 +13425,63 @@
 		}
 	};
 
+	Worksheet.prototype.findEOT = function (bCheckStyles) {
+		var maxCols = this.getColsCount();
+		var maxRows = this.getRowsCount();
+		var lastC = -1, lastR = -1;
+
+		let t = this;
+		let _cell = null;
+		let _getCell = function (_col, _row) {
+			if (_col < 0 || _col > gc_nMaxCol0 || _row < 0 || _row > gc_nMaxRow0) {
+				return null;
+			}
+
+			return t.getCell3(_row, _col);
+		};
+		let _isCellNullText = function (_col, _row) {
+			let c = _col;
+			_cell = null;
+			if (row !== undefined) {
+				c = _getCell(_col, _row);
+				_cell = c;
+			}
+			return null === c || c.isNullText();
+		};
+
+		let isEmptyCell = function () {
+			if (_cell) {
+				if (_cell.hasMerged()) {
+					return false;
+				} else {
+					var ws = _cell.worksheet;
+					var nRow = _cell.bbox.r1;
+					var nCol = _cell.bbox.c1;
+					var xfs;
+					ws._getCellNoEmpty(nRow, nCol, function (oCell) {
+						xfs = ws.getCompiledStyle(nRow, nCol, oCell);
+					});
+					if (xfs) {
+						return false;
+					}
+				}
+			}
+			return true;
+		};
+
+		for (var col = 0; col < maxCols; ++col) {
+			for (var row = 0; row < maxRows; ++row) {
+				if (!_isCellNullText(col, row) || (bCheckStyles && !isEmptyCell())) {
+					lastC = Math.max(lastC, col);
+					lastR = Math.max(lastR, row);
+				}
+			}
+		}
+
+		return new AscCommon.CellBase(lastR, lastC);
+	};
+
+
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
