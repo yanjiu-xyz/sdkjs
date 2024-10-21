@@ -18834,6 +18834,7 @@
 			}
 		}
 
+		let isTable = !!styleName;
 		var checkFilterRange = filterInfo ? filterInfo.rangeWithoutDiff : filterRange;
 		if (t._checkAddAutoFilter(checkFilterRange, styleName, addFormatTableOptionsObj) === true) {
 
@@ -18846,7 +18847,7 @@
 			};
 
 			var oRange = this.model.getRange3(checkFilterRange.r1, checkFilterRange.c1, checkFilterRange.r1, checkFilterRange.c2);
-			if (!addNameColumn && oRange.isFormulaContains()) {
+			if (!addNameColumn && isTable && oRange.isFormulaContains()) {
 				this.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceFormulaInTable,
 					function (can) {
 						if (can) {
