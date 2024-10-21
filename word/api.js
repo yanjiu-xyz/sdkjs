@@ -971,11 +971,6 @@
 		}
 		return false;
 	};
-	// Просмотр PDF
-	asc_docs_api.prototype.isPdfViewer         = function()
-	{
-		return (null === this.WordControl.m_oLogicDocument);
-	};
 
 	asc_docs_api.prototype.getEditorErrorInfo = function()
 	{
