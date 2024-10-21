@@ -1059,20 +1059,6 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 		if (undefined !== TextPr.Shd)
 			this.Set_Shd(null === TextPr.Shd ? undefined : TextPr.Shd);
 
-		if (undefined !== TextPr.Unifill)
-		{
-			this.Set_Unifill(null === TextPr.Unifill ? undefined : TextPr.Unifill.createDuplicate());
-
-			if (null !== TextPr.Unifill)
-			{
-				if (this.CtrPrp.Color)
-					this.Set_Color(undefined);
-
-				if (this.CtrPrp.TextFill)
-					this.Set_TextFill(undefined);
-			}
-		}
-
 		if (undefined !== TextPr.Color)
 		{
 			this.Set_Color(TextPr.Color);
@@ -1081,6 +1067,20 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 			{
 				if (this.CtrPrp.Unifill)
 					this.Set_Unifill(undefined);
+
+				if (this.CtrPrp.TextFill)
+					this.Set_TextFill(undefined);
+			}
+		}
+
+		if (undefined !== TextPr.Unifill)
+		{
+			this.Set_Unifill(null === TextPr.Unifill ? undefined : TextPr.Unifill.createDuplicate());
+
+			if (null !== TextPr.Unifill)
+			{
+				if (this.CtrPrp.Color)
+					this.Set_Color(undefined);
 
 				if (this.CtrPrp.TextFill)
 					this.Set_TextFill(undefined);
