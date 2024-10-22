@@ -3574,7 +3574,6 @@
 			}
 			else if ( e.KeyCode == 83 && true === e.CtrlKey ) // Ctrl + S + ...
 			{
-				oDoc.BlurActiveObject();
 				this.Api.asc_Save(false);
 				bRetValue = true;
 			}

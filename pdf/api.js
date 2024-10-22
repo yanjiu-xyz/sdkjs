@@ -1759,9 +1759,7 @@
 		}
 	};
 	PDFEditorApi.prototype.CheckChangedDocument = function() {
-		let oDoc = this.getPDFDoc();
-
-		if (true === oDoc.History.Have_Changes()) {
+		if (true === AscCommon.History.Have_Changes()) {
 			this.SetDocumentModified(true);
 		}
 		else {
@@ -1772,6 +1770,9 @@
 	};
 	PDFEditorApi.prototype._autoSaveInner = function() {
 		let _curTime = new Date();
+		let oDoc = this.getPDFDoc();
+		let oHistory = oDoc.History;
+
 		if (null === this.lastSaveTime) {
 			this.lastSaveTime = _curTime;
 		}
@@ -1786,8 +1787,8 @@
 		}
 		else {
 			let _bIsWaitScheme = false;
-			if (AscCommon.History.Points && AscCommon.History.Index >= 0 && AscCommon.History.Index < AscCommon.History.Points.length) {
-				if ((_curTime - AscCommon.History.Points[AscCommon.History.Index].Time) < this.intervalWaitAutoSave) {
+			if (oHistory.Points && oHistory.Index >= 0 && oHistory.Index < oHistory.Points.length) {
+				if ((_curTime - oHistory.Points[oHistory.Index].Time) < this.intervalWaitAutoSave) {
 					_bIsWaitScheme = true;
 				}
 			}
@@ -1797,13 +1798,19 @@
 					this.autoSaveGapFast;
 
 				if ((_curTime - this.lastSaveTime) > _interval) {
-					if (AscCommon.History.Have_Changes(true) == true) {
+					if (oHistory.Have_Changes(true) == true) {
 						this.asc_Save(true);
 					}
 					this.lastSaveTime = _curTime;
 				}
 			}
 		}
+	};
+	PDFEditorApi.prototype.asc_Save = function (isAutoSave, isIdle) {
+		let oDoc = this.getPDFDoc();
+		oDoc.BlurActiveObject();
+
+		AscCommon.baseEditorsApi.prototype.asc_Save.call(this, isAutoSave, isIdle);
 	};
 	PDFEditorApi.prototype._coAuthoringInitEnd = function() {
 		AscCommon.DocumentEditorApi.prototype._coAuthoringInitEnd.call(this);
