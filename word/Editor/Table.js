@@ -10109,7 +10109,7 @@ CTable.prototype.RemoveTableRow = function(Ind)
 		Rows_to_delete[0] = Ind;
 
 	if (Rows_to_delete.length <= 0)
-		return;
+		return true;
 
 	// Строки мы удаляем либо по 1, либо непрервным блоком. При удалении мы
 	// смотрим на следующую строку после удаляемого блока и проверяем, если
@@ -10148,7 +10148,6 @@ CTable.prototype.RemoveTableRow = function(Ind)
 
 	if (isTrackRevisions)
 	{
-		// Удаляем строки
 		for (var nIndex = Rows_to_delete.length - 1; nIndex >= 0; --nIndex)
 		{
 			var oRow = this.GetRow(Rows_to_delete[nIndex]);
@@ -10175,42 +10174,37 @@ CTable.prototype.RemoveTableRow = function(Ind)
 	}
 	else
 	{
-		// Удаляем строки
 		for (var Index = Rows_to_delete.length - 1; Index >= 0; Index--)
 		{
 			this.private_RemoveRow(Rows_to_delete[Index]);
 		}
 	}
-
-	// Возвращаем курсор
-	this.DrawingDocument.TargetStart();
-	this.DrawingDocument.TargetShow();
-
-	this.DrawingDocument.SelectEnabled(false);
-
+	
 	// При удалении последней строки, надо сообщить об этом родительскому классу
 	if (this.Content.length <= 0)
 		return false;
-
-	// Перемещаем курсор в начало следующей строки
-	var CurRow   = Math.min(Rows_to_delete[0], this.Content.length - 1);
-	var Row      = this.Content[CurRow];
-	this.CurCell = Row.Get_Cell(0);
-	this.CurCell.Content.MoveCursorToStartPos();
-
-	var PageNum = 0;
-	for (PageNum = 0; PageNum < this.Pages.length - 1; PageNum++)
-	{
-		if (CurRow <= this.Pages[PageNum + 1].FirstRow)
-			break;
-	}
-
-	this.Markup.Internal.RowIndex  = CurRow;
-	this.Markup.Internal.CellIndex = 0;
-	this.Markup.Internal.PageNum   = PageNum;
-
+	
 	this.Recalc_CompiledPr2();
-
+	
+	// Перемещаем курсор в начало следующей строки, либо в следующий параграф
+	let curRow = Rows_to_delete[0];
+	if (curRow >= this.Content.length)
+	{
+		let nextPara = this.GetNextParagraph();
+		if (nextPara)
+		{
+			nextPara.MoveCursorToStartPos();
+			nextPara.Document_SetThisElementCurrent(true);
+			return;
+		}
+		
+		curRow = this.Content.length - 1;
+	}
+	
+	this.CurCell = this.GetRow(curRow).GetCell(0);
+	this.CurCell.Content.MoveCursorToStartPos();
+	this.Document_SetThisElementCurrent(true);
+	
 	return true;
 };
 /**
