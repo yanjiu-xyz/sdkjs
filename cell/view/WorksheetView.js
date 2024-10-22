@@ -10476,7 +10476,7 @@
                     }
                     if (0 < rFrozen) {
                         r_ = new asc_Range(vr.c2, 0, vr.c2, rFrozen - 1);
-                        offsetY = this._getOffsetY(0);
+                        offsetY = this._getOffsetY(0, true);
                         this._drawGrid(null, r_, /*offsetXForDraw*/undefined, offsetY);
 						this._drawGroupData(null, r_, /*offsetXForDraw*/undefined, offsetY);
                         this._drawCellsAndBorders(null, r_, /*offsetXForDraw*/undefined, offsetY);
