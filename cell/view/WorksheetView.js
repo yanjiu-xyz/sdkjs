@@ -10759,10 +10759,24 @@
             }
         }
         // Очищаем область
-        var clearLeft = this.cellsLeft + diffWidth + (scrollRight && moveWidth > 0 ? moveWidth : 0) + this.getRightToLeftOffset();
+        var clearLeft = this.cellsLeft + diffWidth + (scrollRight && moveWidth > 0 ? moveWidth : 0);
         var clearWidth = (moveWidth > 0) ? Math.abs(dx) + lastColWidth : ctxW - (this.cellsLeft + diffWidth);
+		let clearOffset = 0;
+		if (this.workbook.getSmoothScrolling() && (diffWidth + this._getColLeft(0)) !== clearLeft) {
+			//need clear full row height
+			let firstDrawCol = vr.c1;
+			if (moveWidth > 0 && scrollRight) {
+				firstDrawCol = oldEnd + ((oldVCE_isPartial || (delta === 0)) ? 0 : 1);
+			}
+
+			let firstDrawColPos = this.getCellLeftRelative(firstDrawCol, undefined, true);
+			if (firstDrawColPos && clearLeft > firstDrawColPos) {
+				clearOffset = clearLeft - firstDrawColPos;
+			}
+		}
+
         ctx.setFillStyle(this.settings.cells.defaultState.background)
-          .fillRect(clearLeft, y, clearWidth, ctxH);
+          .fillRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
         this.drawingGraphicCtx.clearRect(clearLeft, y, clearWidth, ctxH);
 
 		this._updateDrawingArea();
