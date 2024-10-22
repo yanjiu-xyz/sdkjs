@@ -1228,7 +1228,7 @@
             oDrawing.txBody = null;
         }
         let sId = oDrawing.GetId();
-        let sFormatId = sId; GetDrawingFormatId(oDrawing);
+        let sFormatId = sId;
         let oAnimParams = oAnimPlayer.getDrawingParams(sFormatId, true);
         let oTexture, oBounds, dOpacity;
         if(!oAnimParams) {

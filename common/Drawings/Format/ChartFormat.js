@@ -11753,7 +11753,15 @@
             }
         }
     };
-
+    CStrRef.prototype.onUpdateCache = function() {
+        CChartRefBase.prototype.onUpdateCache.call(this);
+        if(this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_ChartText) {
+            let oParentObject = this.parent.parent;
+            if(oParentObject && oParentObject.recalcInfo && oParentObject.recalcInfo.recalculateTxBody === false) {
+                oParentObject.recalcInfo.recalculateTxBody = true;
+            }
+        }
+    };
     function CNumericPoint() {
         CBaseChartObject.call(this);
         this.formatCode = null;
