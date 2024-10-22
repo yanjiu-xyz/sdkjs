@@ -634,6 +634,11 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 			return;
 		}
 
+		let isClip = false;
+		if (this.worksheet._clipDrawingRect(this.drawingCtx)) {
+			isClip = true;
+		}
+
 		this.drawingCtx.setFillStyle(this.commentIconColor);
 		var commentCell, mergedRange, nCol, nRow, x, y, metrics;
 		var aComments = this.model.aComments;
@@ -662,6 +667,10 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 				this.drawingCtx.lineTo(x - borderW, y + size);
 				this.drawingCtx.fill();
 			}
+		}
+
+		if (isClip) {
+			this.drawingCtx.RemoveClipRect();
 		}
 	};
 

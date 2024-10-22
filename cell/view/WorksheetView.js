@@ -1103,8 +1103,8 @@
         	if (opt_check_merge && (mc = this.model.getMergedByCell(row, col))) {
         		col = mc.c1;
         		row = mc.r1;
-				_width = (this._getColLeft(mc.c2 + 1) - this._getColLeft(mc.c1)) - vr.offsetX;
-				_height = (this._getRowTop(mc.r2 + 1) - this._getRowTop(mc.r1)) - vr.offsetY;
+				_width = (this._getColLeft(mc.c2 + 1) - this._getColLeft(mc.c1));
+				_height = (this._getRowTop(mc.r2 + 1) - this._getRowTop(mc.r1));
 			} else {
 				_width = this._getColumnWidth(col);
 				_height = this._getRowHeight(row);
@@ -5434,6 +5434,13 @@
 	WorksheetView.prototype._clipDrawingRect = function (drawingCtx, range, type) {
 		let ctxW = drawingCtx.getWidth();
 		let ctxH = drawingCtx.getHeight();
+
+		if (range === undefined) {
+			range = this.visibleRange;
+		}
+		if (type === undefined) {
+			type = clipType.range;
+		}
 
 		let frozenOffsetX = 0;
 		let frozenOffsetY = 0;
