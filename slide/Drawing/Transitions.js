@@ -463,9 +463,7 @@ function CTransitionAnimation(htmlpage)
             _ctx2.clearRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
         }
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+        let _part = oThis._getPart();
 
         if (oThis.Param == c_oAscSlideTransitionParams.Fade_Smoothly)
         {
@@ -648,9 +646,8 @@ function CTransitionAnimation(htmlpage)
         var _xSrcO = 0;
         var _ySrcO = 0;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _offX = (_wDst * (1 - _part)) >> 0;
         var _offY = (_hDst * (1 - _part)) >> 0;
@@ -791,9 +788,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _ctx2 = null;
         if (oThis.DemonstrationObject == null)
@@ -1315,9 +1311,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _ctx2 = null;
         if (oThis.DemonstrationObject == null)
@@ -1703,9 +1698,8 @@ function CTransitionAnimation(htmlpage)
         var _xSrc = 0;
         var _ySrc = 0;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _offX = (_wDst * _part) >> 0;
         var _offY = (_hDst * _part) >> 0;
@@ -1855,9 +1849,8 @@ function CTransitionAnimation(htmlpage)
         var _xSrc = 0;
         var _ySrc = 0;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _offX = (_wDst * (1 - _part)) >> 0;
         var _offY = (_hDst * (1 - _part)) >> 0;
@@ -2004,9 +1997,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _anglePart1 = Math.atan(_wDst / _hDst);
         var _anglePart2 = Math.PI / 2 - _anglePart1;
@@ -2437,9 +2429,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         switch (oThis.Param)
         {
@@ -2680,9 +2671,8 @@ function CTransitionAnimation(htmlpage)
 
 
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
 
 		if(!oThis.Morph)
@@ -2714,6 +2704,21 @@ function CTransitionAnimation(htmlpage)
 	    oThis.Morph.draw(oCanvas, oThis.Rect, _part)
 
         oThis.TimerId = __nextFrame(oThis._startMorph);
+    };
+
+    this._easeFunction = function(t)
+    {
+        let dT = (1 - t);
+        return 1 - dT*dT*dT;
+    };
+
+    this._getPart = function()
+    {
+        let _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
+        _part = oThis._easeFunction(_part);
+        if (oThis.IsBackward)
+            _part = 1 - _part;
+        return _part;
     };
 }
 
