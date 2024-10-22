@@ -857,7 +857,16 @@ DrawingArea.prototype.drawSelection = function(drawingDocument) {
 	if(oWatermark) {
 		oWatermark.zoom = 1.0;
 		oWatermark.Generate();
-		oWatermark.Draw(ctx, ctx.canvas.width, ctx.canvas.height);
+
+		let nOffsetY = oWS.cellsTop;
+		while (nOffsetY < ctx.canvas.height) {
+			let nOffsetX = oWS.cellsLeft;
+			while (nOffsetX < ctx.canvas.width) {
+				oWatermark.Draw(ctx, nOffsetX, nOffsetY, oWatermark.width, oWatermark.height);
+				nOffsetX += oWatermark.width;
+			}
+			nOffsetY += oWatermark.height;
+		}
 	}
 
 	if (this.api) {
