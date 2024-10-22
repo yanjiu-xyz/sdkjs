@@ -26493,7 +26493,8 @@
 	};
 
 	WorksheetView.prototype.getVScrollStep = function () {
-		return this.vScrollPxStep * this.getZoom() * this.getRetinaPixelRatio();
+		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
+		return this.vScrollPxStep * this.getZoom() * (isMobileVersion ? this.getRetinaPixelRatio() : 1);
 	};
 
 	WorksheetView.prototype.getHScrollStep = function () {
