@@ -10293,33 +10293,31 @@
         if(this.canvas.width === 0 || this.canvas.height === 0) {
             return;
         }
-        var bNoTransform = false;
-        if (!oTransform) {
-            bNoTransform = true;
-        } else {
-            // if(oTransform.IsIdentity2()) {
-            //     var fDelta = 2;
-            //     if(AscFormat.fApproxEqual(oTransform.tx*this.scale, this.x, fDelta) &&
-            //         AscFormat.fApproxEqual(oTransform.ty*this.scale, this.y, fDelta)) {
-            //         bNoTransform = true;
-            //     }
-            // }
+        oGraphics.SaveGrState();
+        this.drawWithoutSaveState(oGraphics, oTransform);
+        oGraphics.RestoreGrState();
+        oGraphics.FreeFont && oGraphics.FreeFont();
+    };
+    CBaseAnimTexture.prototype.drawWithIntegerGrid = function (oGraphics) {
+        oGraphics.SetIntegerGrid(true);
+        let nDx = oGraphics.m_oCoordTransform.tx;
+        let nDy = oGraphics.m_oCoordTransform.ty;
+        oGraphics.m_oContext.drawImage(this.canvas, (nDx + this.x + 0.5) >> 0, (nDy + this.y + 0.5) >> 0, this.canvas.width, this.canvas.height);
+    };
+    CBaseAnimTexture.prototype.drawWithoutIntegerGrid = function (oGraphics, oTransform) {
+        oGraphics.SetIntegerGrid(false);
+        oGraphics.transform3(oTransform, false);
+        oGraphics.drawImage2(this.canvas, 0, 0, this.canvas.width / this.scale, this.canvas.height / this.scale);
+    };
+    CBaseAnimTexture.prototype.drawWithoutSaveState = function(oGraphics, oTransform) {
+        if(this.canvas.width === 0 || this.canvas.height === 0) {
+            return;
         }
-        if (bNoTransform) {
-            oGraphics.SaveGrState();
-            oGraphics.SetIntegerGrid(true);
-            var nDx = oGraphics.m_oCoordTransform.tx;
-            var nDy = oGraphics.m_oCoordTransform.ty;
-            oGraphics.m_oContext.drawImage(this.canvas, (nDx + this.x + 0.5) >> 0, (nDy + this.y + 0.5) >> 0, this.canvas.width, this.canvas.height);
-            oGraphics.RestoreGrState();
-            oGraphics.FreeFont && oGraphics.FreeFont();
-        } else {
-            oGraphics.SaveGrState();
-            oGraphics.SetIntegerGrid(false);
-            oGraphics.transform3(oTransform, false);
-            oGraphics.drawImage2(this.canvas, 0, 0, this.canvas.width / this.scale, this.canvas.height / this.scale);
-            oGraphics.RestoreGrState();
-            oGraphics.FreeFont && oGraphics.FreeFont();
+        if (!oTransform) {
+            this.drawWithIntegerGrid(oGraphics);
+        }
+        else {
+            this.drawWithoutIntegerGrid(oGraphics, oTransform);
         }
     };
 	CBaseAnimTexture.prototype.beforeRelease = function() {

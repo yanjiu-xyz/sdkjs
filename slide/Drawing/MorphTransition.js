@@ -1168,7 +1168,7 @@
         if(!oFadeTexture) {
             return;
         }
-        oFadeTexture.draw(oGraphics, null);
+        oFadeTexture.drawWithoutSaveState(oGraphics, null);
     };
 
     function CMorphedAppearObject(oTexturesCache, oDrawing, nRelH, bNoText) {
@@ -1281,7 +1281,10 @@
             this.texture = oTexture1.createTexture(nTextureWidth, nTextureHeight);
         }
         const oDrawCanvas = this.texture.canvas;
-        let oCtx = oDrawCanvas.getContext("2d");
+        if(!this.texture.context) {
+            this.texture.context = oDrawCanvas.getContext("2d");
+        }
+        let oCtx = this.texture.context;
         oCtx.clearRect(0, 0, oDrawCanvas.width, oDrawCanvas.height);
         let sOldOperation = oCtx.globalCompositeOperation;
         oCtx.globalCompositeOperation = "lighter";
