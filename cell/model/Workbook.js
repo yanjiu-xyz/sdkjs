@@ -7695,9 +7695,10 @@
 		it.release();
 	};
 	Worksheet.prototype.getCellForValidation=function(row, col, array, formula, callback, isCopyPaste, byRef){
-		var cell = new Cell(this);
-		cell.setRowCol(row, col);
-		//todo cell.xf
+		let cell;
+		this._getCell(row, col, function (_cell) {
+			cell = _cell.clone();
+		});
 		cell.setValueForValidation(array, formula, callback, isCopyPaste, byRef);
 		return cell;
 	};
