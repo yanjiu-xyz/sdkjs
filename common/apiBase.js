@@ -3806,11 +3806,8 @@
 		if (!this.canSave || !this._saveCheck())
 			return 0;
 
-		if (this.isPdfEditor())
-			return 0;
-
 		//viewer
-		if (this.isViewMode)
+		if (this.isViewMode || this.isPdfViewer)
 			return 0;
 
 		return new Date().getTime() - this.lastWorkTime;
