@@ -4498,9 +4498,9 @@
 		this._drawFrozenPaneLines();
 		this._fixSelectionOfMergedCells();
 		this._drawElements(this.af_drawButtons);
+		this._endRtlRendering();
 		this.cellCommentator.drawCommentCells();
 		this.objectRender.showDrawingObjects();
-		this._endRtlRendering();
 		if (this.overlayCtx) {
 			this._drawSelection();
 		}
@@ -10538,12 +10538,13 @@
 			editor.move();
 		}
 
+		this._endRtlRendering();
+
         //ToDo this.drawDepCells();
         this.cellCommentator.updateActiveComment();
         this.cellCommentator.drawCommentCells();
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
         this.handlers.trigger("toggleAutoCorrectOptions", true);
-		this._endRtlRendering();
         //this.model.updateTopLeftCell(this.visibleRange);
         return this;
     };
@@ -10866,12 +10867,14 @@
 			editor.move();
 		}
 
+		this._endRtlRendering();
+
         //ToDo this.drawDepCells();
         this.cellCommentator.updateActiveComment();
         this.cellCommentator.drawCommentCells();
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
         this.handlers.trigger("toggleAutoCorrectOptions", true);
-		this._endRtlRendering();
+
 		//this.model.updateTopLeftCell(this.visibleRange);
         return this;
     };

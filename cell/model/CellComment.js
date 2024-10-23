@@ -639,6 +639,8 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 			isClip = true;
 		}
 
+		this.worksheet._startRtlRendering(this.drawingCtx);
+
 		this.drawingCtx.setFillStyle(this.commentIconColor);
 		var commentCell, mergedRange, nCol, nRow, x, y, metrics;
 		var aComments = this.model.aComments;
@@ -672,6 +674,7 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 		if (isClip) {
 			this.drawingCtx.RemoveClipRect();
 		}
+		this.worksheet._endRtlRendering();
 	};
 
 	CCellCommentator.prototype.updateActiveComment = function () {
