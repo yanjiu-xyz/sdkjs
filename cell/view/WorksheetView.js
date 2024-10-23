@@ -8846,7 +8846,7 @@
         }
 
 		if (this.getRightToLeft()) {
-			x = this.drawingCtx.getWidth() - x;
+			x1 = this.drawingCtx.getWidth() - x1;
 		}
 
         ctx.clear();
@@ -8859,7 +8859,7 @@
             type      : Asc.c_oAscMouseMoveType.ResizeColumn,
             sizeCCOrPt: this.model.colWidthToCharCount(width),
             sizePx    : width,
-            x         : AscCommon.AscBrowser.convertToRetinaValue(this.getRightToLeft() ? (this.getCtxWidth() - (x1 + this._getColumnWidth(col))) : x1 + this._getColumnWidth(col)),
+            x         : AscCommon.AscBrowser.convertToRetinaValue( this.getRightToLeft() ? x1 : x1 + this._getColumnWidth(col)),
             y         : AscCommon.AscBrowser.convertToRetinaValue(this.cellsTop)
         } );
     };
