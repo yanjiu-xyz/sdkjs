@@ -1453,7 +1453,7 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 			{
 				let oBullet = this.Get_CompiledPr2(false).ParaPr.Bullet;
 
-				if (oBullet && oBullet.isBullet() && oBullet.get_Type() !== AscFormat.BULLET_TYPE_TYPEFACE_NONE)
+				if (oBullet && oBullet.isBullet() && oBullet["get_Type"]() !== AscFormat.BULLET_TYPE_TYPEFACE_NONE)
 				{
 					return false;
 				}
