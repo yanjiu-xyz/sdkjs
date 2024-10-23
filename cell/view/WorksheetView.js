@@ -1163,15 +1163,15 @@
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep);
 	};
 
-	WorksheetView.prototype.getVerticalSmoothScrollRange = function (/*bCheckEqual*/) {
+	WorksheetView.prototype.getVerticalSmoothScrollRange = function (bCheckEqual) {
 		var offsetFrozen = this.getFrozenPaneOffset(true, false);
 		var ctxH = this.drawingCtx.getHeight() - offsetFrozen.offsetY - this.cellsTop;
 		for (var h = 0, i = this.nRowsCount - 1; i >= 0; --i) {
 			h += this._getRowHeight(i);
 			if (h >= ctxH) {
-				/*if (bCheckEqual && h > ctxH) {
+				if (bCheckEqual && h > ctxH) {
 					i++;
-				}*/
+				}
 				break;
 			}
 		}
@@ -12706,7 +12706,7 @@
 				let x1 = this.getCellLeft(vr.c1);
 				let x2 = this.getCellLeft(Math.max(vr.c1 + offset.col, 0));
 				let rowsWidth = x1 - x2;
-				let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom() * this.getRetinaPixelRatio());
+				let unitDeltaStep = this.getHScrollStep();
 				offset.col = -rowsWidth / unitDeltaStep;
 				offset.col -= this.getHorizontalScrollCorrect() / unitDeltaStep;
 			} else {
@@ -12726,7 +12726,7 @@
 				let y1 = this.getCellTop(vr.r1);
 				let y2 = this.getCellTop(Math.max(vr.r1 + offset.row, 0));
 				let rowsHeight = y1 - y2;
-				let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
+				let unitDeltaStep = this.getVScrollStep();
 				offset.row = -rowsHeight / unitDeltaStep;
 				offset.row -= this.getScrollCorrect() / unitDeltaStep;
 			} else {
