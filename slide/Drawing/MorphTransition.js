@@ -1747,9 +1747,8 @@
         return aRet;
     };
     CSlideMorphEffect.prototype.morph = function(t) {
-        let dTime_ = t*t*t - 2*t*t + 2*t;
         for(let nIdx = 0; nIdx < this.morphObjects.length; ++nIdx) {
-            this.morphObjects[nIdx].morph(dTime_);
+            this.morphObjects[nIdx].morph(t);
         }
         this.morphObjects.sort(function (a, b) {
             return a.relHeight - b.relHeight;
