@@ -1212,7 +1212,7 @@
 			this.EndPos = End;
 		}
 		else
-			this.private_UpdateDocPos(Start, End);
+			this.private_UpdateDocPos(Start, End, oElement);
 
 		if (this.StartPos === null || this.EndPos === null)
 		{
@@ -1230,7 +1230,7 @@
 
 	ApiRange.prototype.constructor = ApiRange;
 	
-	ApiRange.prototype.private_UpdateDocPos = function(nStartPos, nEndPos)
+	ApiRange.prototype.private_UpdateDocPos = function(nStartPos, nEndPos, oElement)
 	{
 		function correctPositions(oElement) {
 			let nPosCount = 0;
@@ -1271,7 +1271,7 @@
 				nEndPos = nPosCount;
 			}
 		}
-		correctPositions(this.Element);
+		correctPositions(oElement);
 
 		let isStartDocPosFinded = false;
 		let isEndDocPosFinded	= false;
@@ -1338,28 +1338,9 @@
 			checkDone(nPosInRun);
 		}
 
-		if (this.Element instanceof CDocument || this.Element instanceof CDocumentContent || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
-		{
-			let allParagraphs	= this.Element.GetAllParagraphs({OnlyMainDocument : true, All : true});
-
-			for (let paraItem = 0; paraItem < allParagraphs.length; paraItem++)
-			{
-				if (isStartDocPosFinded && isEndDocPosFinded)
-					break;
-				else 
-					allParagraphs[paraItem].CheckRunContent(callback);
-
-					this.StartPos	= aStartDocPos;
-					this.EndPos		= aEndDocPos;
-			}
-		}
-		else if (this.Element instanceof Paragraph || this.Element instanceof ParaHyperlink || this.Element instanceof CInlineLevelSdt || this.Element instanceof ParaRun)
-		{
-			this.Element.CheckRunContent(callback);
-			
-			this.StartPos	= aStartDocPos;
-			this.EndPos		= aEndDocPos;
-		}
+		oElement.CheckRunContent(callback);
+		this.StartPos	= aStartDocPos;
+		this.EndPos		= aEndDocPos;
 	};
 	ApiRange.prototype.private_CheckController = function()
 	{
@@ -2910,8 +2891,8 @@
 	/**
      * Returns a Range object that represents the document part contained in the specified range.
      * @typeofeditors ["CDE"]
-     * @param {Number} [Start=0] - Start character index in the current range.
-     * @param {Number} [End=-1] - End character index in the current range (if <= 0, then the range is taken to the end).
+     * @param {Number} [Start=0] - Start position index in the current range.
+     * @param {Number} [End=-1] - End position index in the current range (if <= 0, then the range is taken to the end).
      * @returns {ApiRange}
      * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRange.js
 	 */
@@ -3089,7 +3070,7 @@
 	ApiRange.prototype.SetStartPos = function(nPos)
 	{
 		let nEndPos = this.GetEndPos();
-		this.private_UpdateDocPos(nPos, nEndPos);
+		this.private_UpdateDocPos(nPos, nEndPos, this.StartPos[0].Class);
 		return true;
 	};
 
@@ -3103,7 +3084,7 @@
 	ApiRange.prototype.SetEndPos = function(nPos)
 	{
 		let nStartPos = this.GetStartPos();
-		this.private_UpdateDocPos(nStartPos, nPos);
+		this.private_UpdateDocPos(nStartPos, nPos, this.EndPos[0].Class);
 		return true;
 	};
 
@@ -3117,39 +3098,40 @@
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
-		let isFirstRun	= true;
-		let oRunEnd		= this.StartPos[this.StartPos.length - 1].Class;
-		let oRunEndPos	= this.StartPos[this.StartPos.length - 1].Position;
+		let isFirstRun		= true;
+		let oRunStart		= this.StartPos[this.StartPos.length - 1].Class;
+		let oRunStartPos	= this.StartPos[this.StartPos.length - 1].Position;
 
-		let isEndPosFounded = false;
-		let nEndCharPos = 0;
+		let isStartPosFounded = false;
+		let nStartCharPos = 0;
 
-		function calcEndPos(oRun)
+		function calcStartPos(oRun)
 		{
-			if (isEndPosFounded)
+			if (isStartPosFounded)
 				return;
 
 			if (false == isFirstRun) {
-				nEndCharPos++;
+				nStartCharPos++;
 			}
 			if (isFirstRun) {
 				isFirstRun = false;
 			}
 
-			if (oRun == oRunEnd) {
-				isEndPosFounded = true;
+			if (oRun == oRunStart) {
+				isStartPosFounded = true;
 			}
 				
-			let nEndPos = oRun.Content.length;
-			if (oRun == oRunEnd)
-				nEndPos = oRunEndPos;
+			let nStartPos = oRun.Content.length;
+			if (oRun == oRunStart)
+				nStartPos = oRunStartPos;
 
-			for (let nPos = 0; nPos < nEndPos; ++nPos)
-				nEndCharPos++;
+			for (let nPos = 0; nPos < nStartPos; ++nPos)
+				nStartCharPos++;
 		}
 
-		this.Element.CheckRunContent(calcEndPos);
-		return nEndCharPos;
+		let oDoc = private_GetLogicDocument();
+		oDoc.CheckRunContent(calcStartPos);
+		return nStartCharPos;
 	};
 
 	Object.defineProperty(ApiRange.prototype, "Start", {
@@ -3202,7 +3184,8 @@
 				nEndCharPos++;
 		}
 
-		this.Element.CheckRunContent(calcEndPos);
+		let oDoc = private_GetLogicDocument();
+		oDoc.CheckRunContent(calcEndPos);
 		return nEndCharPos;
 	};
 	
@@ -3635,8 +3618,8 @@
 	/**
 	 * Returns a Range object that represents the document part contained in the specified hyperlink.
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character index in the current element.
-	 * @param {Number} End - End character index in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetRange.js
 	 */
@@ -5628,8 +5611,8 @@
 	 * Returns a Range object that represents the part of the document contained in the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position in the current element.
+	 * @param {Number} End - End position in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetRange.js
 	 */
@@ -6510,8 +6493,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position in the current element.
+	 * @param {Number} End - End position in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetRange.js
 	 */
@@ -8420,8 +8403,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position in the current element.
+	 * @param {Number} End - End position in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetRange.js
 	 */
@@ -10096,8 +10079,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position in the current element.
+	 * @param {Number} End - End position in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetRange.js
 	 */
@@ -11465,8 +11448,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position in the current element.
+	 * @param {Number} End - End position in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRange.js
 	 */
@@ -17910,8 +17893,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position in the current element.
+	 * @param {Number} End - End position in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetRange.js
 	 */
@@ -18878,8 +18861,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position in the current element.
+	 * @param {Number} End - End position in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetRange.js
 	 */
