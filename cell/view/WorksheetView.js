@@ -540,17 +540,6 @@
 		this.model.updatePivotTablesStyle(null);
 		this._cleanCellsTextMetricsCache();
 		this._prepareCellTextMetricsCache();
-		
-		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
-		if (isMobileVersion) {
-			let oView = this.workbook && this.workbook.controller && this.workbook.controller.settings;
-			let defaultStep = 10;
-			this.vScrollPxStep = oView ? oView.vscrollStep : defaultStep;
-			this.hScrollPxStep = oView ? oView.hscrollStep : defaultStep;
-		} else {
-			this.vScrollPxStep = this.defaultRowHeightPx;
-			this.hScrollPxStep = this.defaultColWidthPx;
-		}
 
 		// initializing is completed
 		this.handlers.trigger("initialized");
@@ -602,6 +591,8 @@
 		this._initColsCount();
 
 		this.model.initColumns();
+
+		this._initScrollStep();
 	};
 
 	WorksheetView.prototype.createImageFromMaxRange = function () {
@@ -1050,6 +1041,19 @@
 		var old = this.nColsCount;
 		this.setColsCount(Math.min(Math.max(this.model.getColsCount(), this.visibleRange.c2) + 1, gc_nMaxCol));
 		return old !== this.nColsCount;
+	};
+
+	WorksheetView.prototype._initScrollStep = function () {
+		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
+		if (isMobileVersion) {
+			let oView = this.workbook && this.workbook.controller && this.workbook.controller.settings;
+			let defaultStep = 10;
+			this.vScrollPxStep = oView ? oView.vscrollStep : defaultStep;
+			this.hScrollPxStep = oView ? oView.hscrollStep : defaultStep;
+		} else {
+			this.vScrollPxStep = this.defaultRowHeightPx;
+			this.hScrollPxStep = this.defaultColWidthPx;
+		}
 	};
 
 	WorksheetView.prototype.getCellEditMode = function () {
