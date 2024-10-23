@@ -181,7 +181,6 @@ var CPresentation = CPresentation || function(){};
 		
 		this.fontLoader             = AscCommon.g_font_loader;
 		this.defaultFontsLoaded     = -1; // -1 не загружены и не грузим, 0 - грузим, 1 - загружены
-		this.fontLoaderCallbacks    = [];
         this.loadedFonts            = [];
         this.Action                 = {};
     }
@@ -5857,24 +5856,17 @@ var CPresentation = CPresentation || function(){};
 		if (1 === this.defaultFontsLoaded)
 			return true;
 		
-		if (callback)
-			this.fontLoaderCallbacks.push(callback);
-
 		if (0 === this.defaultFontsLoaded)
 			return false;
 		
 		this.defaultFontsLoaded = 0;
 		let _t = this;
-		this.fontLoader.LoadDocumentFonts2([{name : AscPDF.DEFAULT_FIELD_FONT}],
-			Asc.c_oAscAsyncActionType.Empty,
+		this.fontLoader.LoadFonts([AscPDF.DEFAULT_FIELD_FONT],
 			function()
 			{
 				_t.defaultFontsLoaded = 1;
-				_t.fontLoaderCallbacks.forEach(function(callback) {
+				if (callback)
 					callback();
-				});
-				
-				_t.fontLoaderCallbacks = [];
 			}
 		);
 
@@ -5899,61 +5891,44 @@ var CPresentation = CPresentation || function(){};
 		if (this.loadedFonts.includes(sFontName))
             return true;
 		
-		if (callback)
-			this.fontLoaderCallbacks.push(callback);
-
 		let _t = this;
-		this.fontLoader.LoadDocumentFonts2([{name : sFontName}],
-			Asc.c_oAscAsyncActionType.Empty,
+		this.fontLoader.LoadFonts([sFontName],
 			function()
 			{
 				_t.loadedFonts.push(sFontName);
-				_t.fontLoaderCallbacks.forEach(function(callback) {
+				if (callback)
 					callback();
-				});
-				
-				_t.fontLoaderCallbacks = [];
 			}
 		);
-
+	
 		return false;
 	};
-    CPDFDoc.prototype.checkFonts = function(aFontsNames, callback) {
-        let aFontsToLoad    = [];
-        let aMap            = [];
+	CPDFDoc.prototype.checkFonts = function(aFontsNames, callback) {
+		let fontsToLoad = [];
+		let fontMap     = {};
+		for (let i = 0; i < aFontsNames.length; i++) {
+			if (this.loadedFonts.includes(aFontsNames[i]) || fontsToLoad.includes(aFontsNames[i]))
+				continue;
+			
+			fontsToLoad.push(aFontsNames[i]);
+			fontMap[aFontsNames[i]] = true;
+		}
 		
-        for (let i = 0; i < aFontsNames.length; i++) {
-            if (this.loadedFonts.includes(aFontsNames[i]) == false && aFontsToLoad.includes(aFontsNames[i]) == false) {
-                aFontsToLoad.push(aFontsNames[i]);
-                aMap.push({name: aFontsNames[i]});
-            }
-        }
-	
-		AscFonts.FontPickerByCharacter.extendFonts(aMap);
-
-        if (aMap.length == 0) {
-            return true;
-        }
-
-        if (callback)
-			this.fontLoaderCallbacks.push(callback);
-
-        let _t = this;
-        this.fontLoader.LoadDocumentFonts2(aMap,
-			Asc.c_oAscAsyncActionType.Empty,
+		if (!fontsToLoad.length)
+			return true;
+		
+		let _t = this;
+		this.fontLoader.LoadFonts(fontMap,
 			function()
 			{
-				_t.loadedFonts = _t.loadedFonts.concat(aFontsToLoad);
-				_t.fontLoaderCallbacks.forEach(function(callback) {
+				_t.loadedFonts = _t.loadedFonts.concat(fontsToLoad);
+				if (callback)
 					callback();
-				});
-				
-				_t.fontLoaderCallbacks = [];
 			}
 		);
-
-        return false;
-    };
+		
+		return false;
+	};
     CPDFDoc.prototype.GetAllSignatures = function() {
         return [];
     };

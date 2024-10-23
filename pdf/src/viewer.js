@@ -3794,11 +3794,9 @@
 		}
 
 		let oThis = this;
-		oDoc.checkFonts(Object.keys(fontMap), function() {
+		return oDoc.checkFonts(Object.keys(fontMap), function() {
 			oThis.scheduleRepaint();
 		});
-
-		return !oDoc.fontLoader.isWorking();
 	};
 	CHtmlPage.prototype._paintAnnots = function()
 	{
