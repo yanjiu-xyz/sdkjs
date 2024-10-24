@@ -1525,6 +1525,4 @@ window["asc_desktop_copypaste"] = function(_api, _method)
 	if (!bIsFocus)
 		_api.asc_enableKeyEvents(true);
 	window["AscDesktopEditor"][_method]();
-	if (!bIsFocus)
-		_api.asc_enableKeyEvents(false);
 };
