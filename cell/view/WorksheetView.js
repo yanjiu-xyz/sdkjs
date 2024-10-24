@@ -10888,7 +10888,7 @@
             result.col = result.row = null;
         }
 
-        x += this.cellsLeft;
+        x += this.getRightToLeft() ? 0 : this.cellsLeft;
         y += this.cellsTop;
 
 		if (this.getRightToLeft()) {
@@ -10905,7 +10905,7 @@
                     sum +=  (result.col - this.nColsCount) * (this.defaultColWidthPx * this.getZoom(true) * this.getRetinaPixelRatio());
 				}
 			} else {
-				sum = this.cellsLeft;
+				sum = this.getRightToLeft() ? 0 : this.cellsLeft;
 				for (i = 0; i < this.nColsCount; ++i) {
 					size = this._getColumnWidth(i);
 					if (sum + size > x) {
