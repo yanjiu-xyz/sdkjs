@@ -1668,67 +1668,35 @@
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
+		let oDoc			= private_GetLogicDocument();
+		let oldSelectionInfo	= oDoc.SaveDocumentState();
+
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
-			return [];
-
-		var done = false;
-
-		var AllParagraphsListOfElement = [];
-		var RangeParagraphsList = [];
-
-		var startPara = this.StartPos[this.StartPos.length - 1].Class.GetParagraph();
-		var endPara   = this.EndPos[this.EndPos.length - 1].Class.GetParagraph();
-
-		if (startPara instanceof ParaHyperlink)
 		{
-			startPara = startPara.Paragraph;
+			oDoc.LoadDocumentState(oldSelectionInfo);
+			return null;
 		}
 
-		if (endPara instanceof ParaHyperlink)
+		private_TrackRangesPositions();
+
+		let SelectedContent = oDoc.GetSelectedElementsInfo({CheckAllSelection : true});
+		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
 		{
-			endPara = endPara.Paragraph;
+			oDoc.LoadDocumentState(oldSelectionInfo);
+			oDoc.UpdateSelection();
+
+			return null;
 		}
 
-		if (startPara.Id === endPara.Id)
-		{
-			RangeParagraphsList.push(new ApiParagraph(startPara));
-			this.Paragraphs = RangeParagraphsList;
-			return RangeParagraphsList;
-		}
+		let aPargraphs = oDoc.GetSelectedParagraphs().map(function(para) {
+			return new ApiParagraph(para);
+		});
 
-		if (this.Element instanceof CDocument || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
-		{
-			AllParagraphsListOfElement = this.Element.GetAllParagraphs({All : true});
+		oDoc.LoadDocumentState(oldSelectionInfo);
+		oDoc.UpdateSelection();
 
-			for (var Index1 = 0; Index1 < AllParagraphsListOfElement.length; Index1++)
-			{
-				if (done)
-					break;
-
-				if (AllParagraphsListOfElement[Index1].Id === startPara.Id)
-				{
-					RangeParagraphsList.push(new ApiParagraph(AllParagraphsListOfElement[Index1]));
-
-					for (var Index2 = Index1 + 1; Index2 < AllParagraphsListOfElement.length; Index2++)
-					{
-						if (AllParagraphsListOfElement[Index2].Id !== endPara.Id)
-						{
-							RangeParagraphsList.push(new ApiParagraph(AllParagraphsListOfElement[Index2]));
-						}
-						else 
-						{
-							RangeParagraphsList.push(new ApiParagraph(endPara));
-
-							done = true;
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		this.Paragraphs = RangeParagraphsList;
-		return RangeParagraphsList;
+		return aPargraphs;
 	};
 
 	/**
@@ -1779,7 +1747,7 @@
 	};
 
 	/**
-	 * Returns a new range that goes beyond the specified range in any direction and spans a different range. The current range has not changed. Throws an error if two ranges do not have a union.
+	 * Returns a new range that goes beyond the specified range in any direction and spans a different range. The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be expanded.
@@ -1794,48 +1762,15 @@
 		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
 			return null;
 
-		var firstStartPos 		= this.StartPos;
-		var firstEndPos			= this.EndPos;
-		var secondStartPos		= oRange.StartPos;
-		var secondEndPos		= oRange.EndPos;
-
-		if (this.Controller !== oRange.Controller)
+		if (this.StartPos[0].Class !== oRange.StartPos[0].Class) {
 			return null;
-
-		function check_pos(firstPos, secondPos)
-		{
-			for (var nPos = 0, nLen = Math.min(firstPos.length, secondPos.length); nPos < nLen; ++nPos)
-			{
-				if (!secondPos[nPos] || !firstPos[nPos] || firstPos[nPos].Class !== secondPos[nPos].Class)
-					return 1;
-
-				if (firstPos[nPos].Position < secondPos[nPos].Position)
-					return 1;
-				else if (firstPos[nPos].Position > secondPos[nPos].Position)
-					return -1;
-			}
-
-			return 1;
 		}
-		
-		var newRangeStartPos;
-		var newRangeEndPos;
 
-		if (check_pos(firstStartPos, secondStartPos) === 1)
-			newRangeStartPos = firstStartPos;
-		else 
-			newRangeStartPos = secondStartPos;
-
-		if (check_pos(firstEndPos, secondEndPos) === 1)
-			newRangeEndPos = secondEndPos;
-		else 
-			newRangeEndPos = firstEndPos;
-
-		return new ApiRange(newRangeStartPos[0].Class, newRangeStartPos, newRangeEndPos);
+		return new ApiRange(this.StartPos[0].Class, Math.min(this.GetStartPos(), oRange.GetStartPos()), Math.max(this.GetEndPos(), oRange.GetEndPos()));
 	};
 
 	/**
-	 * Returns a new range as the intersection of the current range with another range. The current range has not changed. Throws an error if two ranges do not overlap or are not adjacent.
+	 * Returns a new range as the intersection of the current range with another range. The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be intersected with the current range.
@@ -1850,69 +1785,118 @@
 		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
 			return null;
 
-		var firstStartPos 		= this.StartPos;
-		var firstEndPos			= this.EndPos;
-		var secondStartPos		= oRange.StartPos;
-		var secondEndPos		= oRange.EndPos;
-
-		if (this.Controller !== oRange.Controller)
+		if (this.StartPos[0].Class !== oRange.StartPos[0].Class)
 			return null;
 
-		function check_direction(firstPos, secondPos)
+		let oDocument			= private_GetLogicDocument();
+		let oldSelectionInfo	= oDocument.SaveDocumentState();
+		private_TrackRangesPositions();
+
+		function findFirstTable(aDocPos)
 		{
-			for (var nPos = 0, nLen = Math.min(firstPos.length, secondPos.length); nPos < nLen; ++nPos)
+			for (let i = aDocPos.length - 1; i >= 1; i--)
 			{
-				if (!secondPos[nPos] || !firstPos[nPos] || firstPos[nPos].Class !== secondPos[nPos].Class)
-					return 1;
-
-				if (firstPos[nPos].Position < secondPos[nPos].Position)
-					return 1;
-				else if (firstPos[nPos].Position > secondPos[nPos].Position)
-					return -1;
+				if (aDocPos[i].Class instanceof CTable)
+				{
+					return aDocPos[i].Class;
+				}
 			}
-
-			return 1;
 		}
+
+		function findFirstPara(aDocPos) {
+			for (let i = aDocPos.length - 1; i >= 1; i--)
+			{
+				if (aDocPos[i].Class instanceof Paragraph)
+				{
+					return aDocPos[i].Class;
+				}
+			}
+		}
+
+		function findCommonCells(array1, array2)
+		{
+			const commonElements = [];
 		
-		var newRangeStartPos	= null;
-		var newRangeEndPos		= null;
-
-		// Взаимное расположение диапазонов относительно друг друга. A и B - начало и конец первого диапазона, C и D - начало и конец второго диапазона.
-		var AC	= check_direction(firstStartPos, secondStartPos);
-		var AD	= check_direction(firstStartPos, secondEndPos);
-		var BC	= check_direction(firstEndPos, secondStartPos);
-		var BD	= check_direction(firstEndPos, secondEndPos);
-
-		if (AC === AD && AC === BC && AC === BD)
-			return null;
-		else if (AC === BD && AD !== BC)
-		{
-			if (AC === 1)
+			for (let i = 0; i < array1.length; i++)
 			{
-				newRangeStartPos	= secondStartPos;
-				newRangeEndPos		= firstEndPos;
+				for (let j = 0; j < array2.length; j++)
+				{
+					if (array1[i].Row === array2[j].Row && array1[i].Cell === array2[j].Cell)
+					{
+						commonElements.push(array1[i]);
+						break;
+					}
+				}
 			}
-			else if (AC === - 1)
-			{
-				newRangeStartPos	= firstStartPos;
-				newRangeEndPos		= secondEndPos;
-			}
-		}
-		else if (AC !== BD && AD !== BC)
-		{
-			if (AC === 1)
-			{
-				newRangeStartPos	= secondStartPos;
-				newRangeEndPos		= secondEndPos;
-			}
-			else if (AC === - 1)
-			{
-				newRangeStartPos	= firstStartPos;
-				newRangeEndPos		= firstEndPos;
-			}
+		
+			return commonElements;
 		}
 
-		return new ApiRange(newRangeStartPos[0].Class, newRangeStartPos, newRangeEndPos);
+		function restoreDocState() {
+			oDocument.LoadDocumentState(oldSelectionInfo);
+			oDocument.UpdateSelection();
+		}
+
+		let oThisStartParentTable	= findFirstTable(this.StartPos);
+		let oThisEndParentTable		= findFirstTable(this.EndPos);
+		let oRangeStartParentTable	= findFirstTable(oRange.StartPos);
+		let oRangeEndParentTable	= findFirstTable(oRange.EndPos);
+
+		let nIntersectStartPos, nIntersectEndPos;
+
+		// if start and end pos of ranges in table
+		if (oThisStartParentTable === oRangeStartParentTable && oThisEndParentTable === oRangeEndParentTable)
+		{
+			const aStartEndParas = [
+				findFirstPara(this.StartPos),
+				findFirstPara(oRange.StartPos),
+				findFirstPara(this.EndPos),
+				findFirstPara(oRange.EndPos)
+			];
+
+			// should be different paragraphs
+			if (new Set(aStartEndParas).size !== 1) {
+				this.Select(false);
+				let aThisSelectedCells = oThisStartParentTable.GetSelectionArray(); 
+				
+				oRange.Select(false);
+				let aRangeSelectedCells = oRangeStartParentTable.GetSelectionArray();
+
+				let aCommon = findCommonCells(aThisSelectedCells, aRangeSelectedCells);
+				if (aCommon.length == 0)
+				{
+					restoreDocState();
+					return null;
+				}
+
+				let oApiTable		= new ApiTable(oThisStartParentTable);
+				let oApiCellStart	= oApiTable.GetCell(aCommon[0].Row, aCommon[0].Cell);
+				let oApiCellEnd		= oApiTable.GetCell(aCommon[aCommon.length - 1].Row, aCommon[aCommon.length - 1].Cell);
+				
+				nIntersectStartPos	= oApiCellStart.GetContent().GetRange().GetStartPos();
+				nIntersectEndPos	= oApiCellEnd.GetContent().GetRange().GetEndPos();
+			}
+		}
+
+		if (undefined === nIntersectStartPos && undefined === nIntersectEndPos)
+		{
+			nIntersectStartPos = Math.max(this.GetStartPos(), oRange.GetStartPos());
+			nIntersectEndPos = Math.min(this.GetEndPos(), oRange.GetEndPos());
+
+			if (nIntersectStartPos >= nIntersectEndPos)
+			{
+				restoreDocState();
+				return null;
+			}
+		}
+		else if (undefined !== nIntersectStartPos && undefined === nIntersectEndPos)
+			nIntersectEndPos = Math.min(this.GetEndPos(), oRange.GetEndPos());
+		else if (undefined !== nIntersectEndPos && undefined === nIntersectStartPos)
+			nIntersectStartPos = Math.max(this.GetStartPos(), oRange.GetStartPos());
+
+		restoreDocState();
+
+		return new ApiRange(this.StartPos[0].Class, nIntersectStartPos, nIntersectEndPos);
 	};
 
 	/**
