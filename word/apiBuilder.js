@@ -3067,6 +3067,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetStartPos.js
 	 */
 	ApiRange.prototype.SetStartPos = function(nPos)
 	{
@@ -3082,6 +3083,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetEndPos.js
 	 */
 	ApiRange.prototype.SetEndPos = function(nPos)
 	{
@@ -3096,6 +3098,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
 	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetStartPos.js
 	 */
 	ApiRange.prototype.GetStartPos = function() {
 		private_RefreshRangesPosition();
@@ -3152,6 +3155,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
 	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetEndPos.js
 	 */
 	ApiRange.prototype.GetEndPos = function() {
 		private_RefreshRangesPosition();
@@ -14301,6 +14305,7 @@
 	 * @param {Number?} [nLvl=undefined] - The outline level. Possible values: 0-8. The 0 value means the basic outline level.
 	 * To set no outline level, use this method without a parameter.
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetOutlineLvl.js
 	 */
 	ApiParaPr.prototype.SetOutlineLvl = function(nLvl)
@@ -14324,6 +14329,7 @@
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {Number?}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetOutlineLvl.js
 	 */
 	ApiParaPr.prototype.GetOutlineLvl = function()
