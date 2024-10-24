@@ -525,7 +525,8 @@ var c_oSerRunType = {
 	delInstrText: 31,
 	linebreakClearAll: 32,
 	linebreakClearLeft: 33,
-	linebreakClearRight: 34
+	linebreakClearRight: 34,
+	pptxDrawingAlternative: 0x99
 };
 var c_oSerImageType = {
     MediaId:0,
@@ -12137,6 +12138,17 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 
 				if (GraphicObj.getObjectType() === AscDFH.historyitem_type_SmartArt)
 					GraphicObj.setXfrmByParent();
+			}
+		}
+		if(GraphicObj && !GraphicObj.isSupported())
+		{
+			let nPos = this.stream.cur;
+			var type = this.bcr.stream.GetUChar();
+			this.stream.Seek2(nPos);
+			if(type === c_oSerRunType.pptxDrawingAlternative)
+			{
+				oParaDrawing.GraphicObj = null;
+				GraphicObj = null;
 			}
 		}
 		oDrawing.content = oParaDrawing;

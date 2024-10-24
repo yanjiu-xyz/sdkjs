@@ -1798,6 +1798,22 @@ function(window, undefined) {
 		}
 		return true;
 	};
+	CChartSpace.prototype.isSupported = function () {
+		if(this.isChartEx()) {
+			const aSeries = this.getAllSeries();
+			if(aSeries.length === 0) {
+				return true;
+			}
+			for (let nSer = 0; nSer < aSeries.length; nSer++) {
+				let oSeries = aSeries[nSer];
+				if(oSeries.isSupported()) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return true;
+	};
 	CChartSpace.prototype.getSortedChartsId = function () {
 		if (this.chartObj) {
 			return this.chartObj._sortChartsForDrawing(this);
