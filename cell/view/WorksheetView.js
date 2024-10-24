@@ -18680,6 +18680,12 @@
 			}
 
 			this.handlers.trigger("onDocumentPlaceChanged");
+		} else {
+			//for example, after change size we must recalculate drawings offset(right-to-left mode)
+			//todo need review
+			if (this.getRightToLeft() && this.objectRender) {
+				this.objectRender.updateDrawingsTransform({target: c_oTargetType.RowResize, row: 0});
+			}
 		}
 
 		this._updateColumnPositions();
