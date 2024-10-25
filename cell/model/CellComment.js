@@ -860,7 +860,14 @@ CCellCommentator.prototype.cleanLastSelection = function() {
 		var lastComment = this.findComment(this.lastSelectedId);
 		if (lastComment && (metrics = this.worksheet.getCellMetrics(lastComment.nCol, lastComment.nRow, true))) {
 			var extraOffset = 1;
-			this.overlayCtx.clearRect(metrics.left, metrics.top, metrics.width - extraOffset, metrics.height - extraOffset);
+			let x = this.worksheet.checkRtl(metrics.left);
+			let y = metrics.top;
+			let width = metrics.width - extraOffset;
+			if (this.worksheet.getRightToLeft()) {
+				x -= width;
+			}
+			let height = metrics.height - extraOffset;
+			this.overlayCtx.clearRect(x, y, width, height);
 		}
 	}
 };
@@ -962,7 +969,14 @@ CCellCommentator.prototype.cleanLastSelection = function() {
 			var comment = this.findComment(this.lastSelectedId);
 			if (comment && !this._checkHidden(comment) &&
 				(metrics = this.worksheet.getCellMetrics(comment.asc_getCol(), comment.asc_getRow(), true))) {
-				this.overlayCtx.clearRect(metrics.left, metrics.top, metrics.width, metrics.height);
+				let x = this.worksheet.checkRtl(metrics.left);
+				let y = metrics.top;
+				let width = metrics.width;
+				if (this.worksheet.getRightToLeft()) {
+					x -= width;
+				}
+				let height = metrics.height;
+				this.overlayCtx.clearRect(x, y, width, height);
 			}
 		}
 	};
@@ -1020,9 +1034,16 @@ CCellCommentator.prototype.selectComment = function(id) {
 			var extraOffset = 1;
 			this.overlayCtx.ctx.globalAlpha = 0.2;
 			this.overlayCtx.beginPath();
-			this.overlayCtx.clearRect(metrics.left, metrics.top, metrics.width - extraOffset, metrics.height - extraOffset);
+			let x = this.worksheet.checkRtl(metrics.left);
+			let y = metrics.top;
+			let width = metrics.width - extraOffset;
+			if (this.worksheet.getRightToLeft()) {
+				x -= width;
+			}
+			let height = metrics.height - extraOffset;
+			this.overlayCtx.clearRect(x, y, width, height);
 			this.overlayCtx.setFillStyle(this.commentFillColor);
-			this.overlayCtx.fillRect(metrics.left, metrics.top, metrics.width - extraOffset, metrics.height - extraOffset);
+			this.overlayCtx.fillRect(x, y, width, height);
 			this.overlayCtx.ctx.globalAlpha = 1;
 		}
 	}
