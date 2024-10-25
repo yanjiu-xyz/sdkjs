@@ -10328,6 +10328,7 @@
         }
 
 		if (!this.notUpdateRowHeight) {
+			this.cleanHighlightedHeaders();
 			this.cleanSelection();
 			this.cellCommentator.cleanSelectedComment();
 		}
@@ -10702,6 +10703,7 @@
         }
 
         if (!this.notUpdateRowHeight) {
+			this.cleanHighlightedHeaders();
 			this.cleanSelection();
 			this.cellCommentator.cleanSelectedComment();
 		}
