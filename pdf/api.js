@@ -1808,7 +1808,11 @@
 	};
 	PDFEditorApi.prototype.asc_Save = function (isAutoSave, isIdle) {
 		let oDoc = this.getPDFDoc();
-		oDoc.BlurActiveObject();
+		let oActiveObj = oDoc.GetActiveObject();
+
+		if (oActiveObj && (oActiveObj.IsAnnot() && oActiveObj.IsFreeText() || oActiveObj.IsForm()) && false == oDoc.History.Have_Changes(true)) {
+			oDoc.BlurActiveObject();
+		}
 
 		AscCommon.baseEditorsApi.prototype.asc_Save.call(this, isAutoSave, isIdle);
 	};
