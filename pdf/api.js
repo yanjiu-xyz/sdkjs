@@ -1798,7 +1798,7 @@
 					this.autoSaveGapFast;
 
 				if ((_curTime - this.lastSaveTime) > _interval) {
-					if (oHistory.Have_Changes(true) == true) {
+					if (oHistory.Have_Changes(true) == true && oDoc.LocalHistory !== AscCommon.History) {
 						this.asc_Save(true);
 					}
 					this.lastSaveTime = _curTime;
@@ -1810,7 +1810,8 @@
 		let oDoc = this.getPDFDoc();
 		let oActiveObj = oDoc.GetActiveObject();
 
-		if (oActiveObj && (oActiveObj.IsAnnot() && oActiveObj.IsFreeText() || oActiveObj.IsForm()) && false == oDoc.History.Have_Changes(true)) {
+		let bHaveLocalChanges = oDoc.LocalHistory.Have_Changes(true);
+		if (oActiveObj && (oActiveObj.IsAnnot() && oActiveObj.IsFreeText() || oActiveObj.IsForm()) && bHaveLocalChanges) {
 			oDoc.BlurActiveObject();
 		}
 
