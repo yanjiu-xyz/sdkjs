@@ -5619,8 +5619,8 @@
 	 * Returns a Range object that represents the part of the document contained in the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetRange.js
 	 */
@@ -6501,8 +6501,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetRange.js
 	 */
@@ -8422,8 +8422,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetRange.js
 	 */
@@ -10098,8 +10098,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetRange.js
 	 */
@@ -11474,8 +11474,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRange.js
 	 */
@@ -17921,8 +17921,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetRange.js
 	 */
@@ -18889,8 +18889,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetRange.js
 	 */
