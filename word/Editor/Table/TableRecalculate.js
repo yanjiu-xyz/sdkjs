@@ -2560,7 +2560,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 		if (Asc.linerule_Exact === RowH.HRule)
 			RowHValue -= nMaxTopBorder;
 
-		if (oFootnotes && (Asc.linerule_AtLeast === RowH.HRule || Asc.linerule_Exact == RowH.HRule))
+		if (oFootnotes && (Asc.linerule_AtLeast === RowH.HRule || Asc.linerule_Exact === RowH.HRule))
 		{
 			oFootnotes.PushCellLimit(Y + RowHValue);
 		}
@@ -2699,8 +2699,17 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             // Какие-то ячейки в строке могут быть не разбиты на строки, а какие то разбиты.
             // Здесь контролируем этот момент, чтобы у тех, которые не разбиты не вызывать
             // Recalculate_Page от несуществующих страниц.
+			
+			let clipTop    = undefined;
+			let clipBottom = undefined;
+			if (Asc.linerule_Exact === RowH.HRule)
+			{
+				clipTop    = Y;
+				clipBottom = Y + RowHValue;
+			}
+			
             var CellPageIndex = CurPage - Cell.Content.Get_StartPage_Relative();
-            Cell.Content.Set_ClipInfo(CellPageIndex, Page.X + CellMetrics.X_cell_start, Page.X + CellMetrics.X_cell_end);
+            Cell.Content.Set_ClipInfo(CellPageIndex, Page.X + CellMetrics.X_cell_start, Page.X + CellMetrics.X_cell_end, clipTop, clipBottom);
             if ( CellPageIndex < Cell.PagesCount )
             {
                 if ( true === bCanShift )
@@ -3137,6 +3146,9 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 			CurRow--;
 			continue;
 		}
+		
+		if (Asc.linerule_Exact === RowH.HRule)
+			CellHeight = RowHValue;
 
         if ( null != CellSpacing )
             this.RowsInfo[CurRow].H[CurPage] = CellHeight;

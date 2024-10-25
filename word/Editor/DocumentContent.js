@@ -1435,14 +1435,19 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
     pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
 
 	var nPixelError = this.DrawingDocument && this.DrawingDocument.GetMMPerDot(1);
-
-	var ClipInfo = this.ClipInfo[CurPage];
-    if (ClipInfo)
-    {
-        var Bounds = this.Pages[CurPage].Bounds;
-        pGraphics.SaveGrState();
-        pGraphics.AddClipRect(ClipInfo.X0, Bounds.Top - nPixelError, Math.abs(ClipInfo.X1 - ClipInfo.X0), Bounds.Bottom - Bounds.Top + nPixelError);
-    }
+	
+	let clipInfo = this.ClipInfo[CurPage];
+	if (clipInfo)
+	{
+		let pageBounds = this.Pages[CurPage].Bounds;
+		pGraphics.SaveGrState();
+		
+		let clipX0 = undefined !== clipInfo.X0 ? clipInfo.X0 : pageBounds.Left - nPixelError;
+		let clipX1 = undefined !== clipInfo.X1 ? clipInfo.X1 : pageBounds.Right;
+		let clipY0 = undefined !== clipInfo.Y0 ? clipInfo.Y0 : pageBounds.Top - nPixelError;
+		let clipY1 = undefined !== clipInfo.Y1 ? clipInfo.Y1 : pageBounds.Bottom;
+		pGraphics.AddClipRect(clipX0, clipY0, Math.abs(clipX1 - clipX0), Math.abs(clipY1 - clipY0));
+	}
 
     var oPage = this.Pages[CurPage];
     for (var nIndex = oPage.Pos; nIndex <= oPage.EndPos; ++nIndex)
@@ -1484,11 +1489,9 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
 
 		pGraphics.RestoreGrState();
 	}
-
-    if (ClipInfo)
-    {
-        pGraphics.RestoreGrState();
-    }
+	
+	if (clipInfo)
+		pGraphics.RestoreGrState();
 
     pGraphics.End_Command();
 };
@@ -2616,9 +2619,14 @@ CDocumentContent.prototype.MoveCursorToCell = function(bNext)
 		}
 	}
 };
-CDocumentContent.prototype.Set_ClipInfo = function(CurPage, X0, X1)
+CDocumentContent.prototype.Set_ClipInfo = function(CurPage, X0, X1, Y0, Y1)
 {
-	this.ClipInfo[CurPage] = {X0 : X0, X1 : X1};
+	this.ClipInfo[CurPage] = {
+		X0 : X0,
+		X1 : X1,
+		Y0 : Y0,
+		Y1 : Y1
+	};
 };
 CDocumentContent.prototype.IsApplyToAll = function()
 {
