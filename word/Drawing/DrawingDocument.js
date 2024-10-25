@@ -3443,22 +3443,36 @@ function CDrawingDocument()
 		let pixW_natural = AscCommon.AscBrowser.convertToRetinaValue(pixW, true);
 		let pixH_natural = AscCommon.AscBrowser.convertToRetinaValue(pixH, true);
 
-		canvas.style.width = pixW + "px";
-		canvas.style.height = pixH + "px";
+		let graphics = null;
+		if (canvas.style !== undefined)
+		{
+			canvas.style.width = pixW + "px";
+			canvas.style.height = pixH + "px";
 
-		canvas.width = pixW_natural;
-		canvas.height = pixH_natural;
+			canvas.width = pixW_natural;
+			canvas.height = pixH_natural;
 
-		var ctx = canvas.getContext('2d');
+			let ctx = canvas.getContext('2d');
 
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, pixW_natural, pixH_natural);
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, pixW_natural, pixH_natural);
 
-		var graphics = new AscCommon.CGraphics();
-		graphics.init(ctx, pixW_natural, pixH_natural, mmW, mmH);
-		graphics.m_oFontManager = AscCommon.g_fontManager;
-		graphics.m_oCoordTransform.tx = graphics.m_oCoordTransform.ty = wPxOffset;
-		graphics.transform(1, 0, 0, 1, 0, 0);
+			graphics = new AscCommon.CGraphics();
+			graphics.init(ctx, pixW_natural, pixH_natural, mmW, mmH);
+			graphics.m_oFontManager = AscCommon.g_fontManager;
+			graphics.m_oCoordTransform.tx = graphics.m_oCoordTransform.ty = wPxOffset;
+			graphics.transform(1, 0, 0, 1, 0, 0);
+		}
+		else
+		{
+			graphics = new CNativeGraphics(canvas);
+			ctx.width  = pixW_natural;
+			ctx.height = pixH_natural;
+			ctx.create(null, pixW_natural, pixH_natural, mmW, mmH);
+			ctx.CoordTransformOffset(wPxOffset, wPxOffset);
+			ctx.transform(1, 0, 0, 1, 0, 0);
+		}
+
 		oDocumentContent.Draw(0, graphics);
 	};
 
