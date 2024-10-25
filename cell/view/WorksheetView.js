@@ -10454,8 +10454,14 @@
                 r2 = vr.r2;
             }
 
-			if (this.workbook.getSmoothScrolling()) {
+			if (this.workbook.getSmoothScrolling() && r2 < AscCommon.gc_nMaxRow0) {
 				r2++;
+			}
+			if (r1 > AscCommon.gc_nMaxRow0) {
+				r1 = AscCommon.gc_nMaxRow0;
+			}
+			if (r2 > AscCommon.gc_nMaxRow0) {
+				r2 = AscCommon.gc_nMaxRow0;
 			}
             if (this.workbook.getSmoothScrolling() && r2 < r1) {
                 r2 = r1;
@@ -10527,7 +10533,7 @@
 
 
 		if ((reinitScrollY && !this.workbook.getSmoothScrolling()) || (reinitScrollY && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
-			(0 > delta && initRowsCount && this._initRowsCount()) || (this.workbook.getSmoothScrolling() && initRowsCount)) {
+			(0 > delta && initRowsCount && this._initRowsCount()) || (this.workbook.getSmoothScrolling() && initRowsCount && this.nRowsCount !== gc_nMaxRow)) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
 		}
 		this._reinitializeScroll();
@@ -10808,8 +10814,14 @@
                 c2 = vr.c2;
             }
 
-			if (this.workbook.getSmoothScrolling()) {
+			if (this.workbook.getSmoothScrolling() && c2 < AscCommon.gc_nMaxCol0) {
 				c2++;
+			}
+			if (c1 > AscCommon.gc_nMaxCol0) {
+				c1 = AscCommon.gc_nMaxCol0;
+			}
+			if (c2 > AscCommon.gc_nMaxCol0) {
+				c2 = AscCommon.gc_nMaxCol0;
 			}
 			if (this.workbook.getSmoothScrolling() && c2 < c1) {
 				c2 = c1;
@@ -10851,7 +10863,7 @@
 		}
 		
 		if ((reinitScrollX && !this.workbook.getSmoothScrolling()) || (reinitScrollX && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
-			(0 > delta && initColsCount && this._initColsCount()) || (this.workbook.getSmoothScrolling() && initColsCount)) {
+			(0 > delta && initColsCount && this._initColsCount()) || (this.workbook.getSmoothScrolling() && initColsCount && this.nColsCount !== gc_nMaxCol)) {
 			if (reinitScrollX && (start - cFrozen) === 0 && 0 > delta && initColsCount) {
 				this._initColsCount();
 			}
@@ -10888,7 +10900,7 @@
             result.col = result.row = null;
         }
 
-        x += this.getRightToLeft() ? 0 : this.cellsLeft;
+        x += 0 ? 0 : this.cellsLeft;
         y += this.cellsTop;
 
 		if (this.getRightToLeft()) {
@@ -10905,7 +10917,7 @@
                     sum +=  (result.col - this.nColsCount) * (this.defaultColWidthPx * this.getZoom(true) * this.getRetinaPixelRatio());
 				}
 			} else {
-				sum = this.getRightToLeft() ? 0 : this.cellsLeft;
+				sum = 0 ? 0 : this.cellsLeft;
 				for (i = 0; i < this.nColsCount; ++i) {
 					size = this._getColumnWidth(i);
 					if (sum + size > x) {
