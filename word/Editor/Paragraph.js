@@ -8587,7 +8587,33 @@ Paragraph.prototype.RemoveSelection = function()
 	this.Selection.StartPos = 0;
 	this.Selection.EndPos   = 0;
 };
-Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
+(function()
+{
+	function drawSelectionOnPage(drawingDocument, clipInfo, page, x, y, w, h, draw2)
+	{
+		if (clipInfo)
+		{
+			let x0 = clipInfo.correctX0(x);
+			let x1 = clipInfo.correctX1(x + w)
+			let y0 = clipInfo.correctY0(y);
+			let y1 = clipInfo.correctY1(y + h);
+			x      = x0;
+			w      = Math.max(0, x1 - x0)
+			y      = y0;
+			h      = Math.max(0, y1 - y0);
+		}
+		
+		if (w < 0.001 || h < 0.001)
+			return;
+		
+		if (draw2)
+			drawingDocument.AddPageSelection2(page, x, y, w, h);
+		else
+			drawingDocument.AddPageSelection(page, x, y, w, h);
+	}
+	AscWord.drawSelectionOnPage = drawSelectionOnPage;
+})();
+Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
 	if (!this.IsRecalculated())
 		return;
@@ -8709,14 +8735,12 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 							{
 								var oRect = arrRects[nIndex];
 								
-								if (oRect.W > 0.001 && oRect.H > 0.001)
-									drawingDocument.AddPageSelection(PageAbs, oRect.X, oRect.Y, oRect.W, oRect.H);
+								AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, oRect.X, oRect.Y, oRect.W, oRect.H);
 							}
 						}
 						else
 						{
-							if (_w > 0.001)
-								drawingDocument.AddPageSelection(PageAbs, _x, _y, _w, _h);
+							AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, _x, _y, _w, _h);
 						}
 					}
 				}
@@ -8774,11 +8798,11 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 				}
 			}
 			
-			drawingDocument.AddPageSelection(PageAbs, SelectX, SelectY, SelectW, SelectH);
-
+			AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, SelectX, SelectY, SelectW, SelectH);
+			
 			if (selectionflag_NumberingCur === this.Selection.Flag && drawingDocument.AddPageSelection2)
-				drawingDocument.AddPageSelection2(PageAbs, SelectX, SelectY, SelectW2, SelectH);
-
+				AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, SelectX, SelectY, SelectW2, SelectH, true);
+			
 			break;
 		}
 	}

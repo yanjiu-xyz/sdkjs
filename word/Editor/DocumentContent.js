@@ -2621,12 +2621,7 @@ CDocumentContent.prototype.MoveCursorToCell = function(bNext)
 };
 CDocumentContent.prototype.Set_ClipInfo = function(CurPage, X0, X1, Y0, Y1)
 {
-	this.ClipInfo[CurPage] = {
-		X0 : X0,
-		X1 : X1,
-		Y0 : Y0,
-		Y1 : Y1
-	};
+	this.ClipInfo[CurPage] = new AscWord.ClipRect(X0, X1, Y0, Y1);
 };
 CDocumentContent.prototype.IsApplyToAll = function()
 {
@@ -6187,17 +6182,23 @@ CDocumentContent.prototype.RemoveSelection = function(bNoCheckDrawing)
 		this.Selection.Flag  = selectionflag_Common;
 	}
 };
-CDocumentContent.prototype.DrawSelectionOnPage = function(PageIndex)
+CDocumentContent.prototype.DrawSelectionOnPage = function(PageIndex, clipInfo)
 {
     var CurPage = PageIndex;
     if (CurPage < 0 || CurPage >= this.Pages.length)
         return;
+	
+	let pageClip = this.ClipInfo[CurPage];
+	if (!clipInfo && pageClip)
+		clipInfo = pageClip.clone();
+	else if (clipInfo)
+		clipInfo.intersect(pageClip);
 
     if (docpostype_DrawingObjects === this.CurPos.Type)
     {
         this.DrawingDocument.SetTextSelectionOutline(true);
         var PageAbs = CurPage + this.Get_StartPage_Absolute();
-        this.LogicDocument.DrawingObjects.drawSelectionPage(PageAbs);
+        this.LogicDocument.DrawingObjects.drawSelectionPage(PageAbs, clipInfo);
     }
     else
     {
@@ -6225,7 +6226,7 @@ CDocumentContent.prototype.DrawSelectionOnPage = function(PageIndex)
                     for (var Index = Start; Index <= End; Index++)
                     {
                         var ElementPageIndex = this.private_GetElementPageIndex(Index, CurPage, 0, 1);
-                        this.Content[Index].DrawSelectionOnPage(ElementPageIndex);
+                        this.Content[Index].DrawSelectionOnPage(ElementPageIndex, clipInfo);
                     }
 
                     break;
@@ -6241,7 +6242,7 @@ CDocumentContent.prototype.DrawSelectionOnPage = function(PageIndex)
 						var oParagraph = this.Selection.Data.Paragraphs[nIndex];
 						var nParaPageAbs = oParagraph.GetNumberingPage(true);
 						if (nParaPageAbs === nPageAbs)
-							oParagraph.DrawSelectionOnPage(oParagraph.GetNumberingPage(false));
+							oParagraph.DrawSelectionOnPage(oParagraph.GetNumberingPage(false), clipInfo);
 					}
 
                     break;
@@ -9243,6 +9244,72 @@ CDocumentRecalculateObject.prototype =
     }
 
 };
+
+(function()
+{
+	/**
+	 * Class for holding clipping rectangle
+	 * @param x0
+	 * @param x1
+	 * @param y0
+	 * @param y1
+	 * @constructor
+	 */
+	function ClipRect(x0, x1, y0, y1)
+	{
+		this.X0 = x0;
+		this.X1 = x1;
+		this.Y0 = y0;
+		this.Y1 = y1;
+	}
+	ClipRect.prototype.intersect = function(clipRect)
+	{
+		if (!clipRect)
+			return;
+		
+		if (undefined === this.X0 || null === this.X0)
+			this.X0 = clipRect.X0;
+		else if (undefined !== clipRect.X0 && null !== clipRect.X0)
+			this.X0 = Math.max(this.X0, clipRect.X0);
+		
+		if (undefined === this.X1 || null === this.X1)
+			this.X1 = clipRect.X1;
+		else if (undefined !== clipRect.X1 && null !== clipRect.X1)
+			this.X1 = Math.min(this.X1, clipRect.X1);
+		
+		if (undefined === this.Y0 || null === this.Y0)
+			this.Y0 = clipRect.Y0;
+		else if (undefined !== clipRect.Y0 && null !== clipRect.Y0)
+			this.Y0 = Math.max(this.Y0, clipRect.Y0);
+		
+		if (undefined === this.Y1 || null === this.Y1)
+			this.Y1 = clipRect.Y1;
+		else if (undefined !== clipRect.Y1 && null !== clipRect.Y1)
+			this.Y1 = Math.min(this.Y1, clipRect.Y1);
+	};
+	ClipRect.prototype.clone = function()
+	{
+		return new ClipRect(this.X0, this.X1, this.Y0, this.Y1);
+	};
+	ClipRect.prototype.correctX0 = function(x)
+	{
+		return (undefined !== this.X0 && null !== this.X0 ? Math.max(this.X0, x) : x);
+	};
+	ClipRect.prototype.correctX1 = function(x)
+	{
+		return (undefined !== this.X1 && null !== this.X1 ? Math.min(this.X1, x) : x);
+	};
+	ClipRect.prototype.correctY0 = function(y)
+	{
+		return (undefined !== this.Y0 && null !== this.Y0 ? Math.max(this.Y0, y) : y);
+	};
+	ClipRect.prototype.correctY1 = function(y)
+	{
+		return (undefined !== this.Y1 && null !== this.Y1 ? Math.min(this.Y1, y) : y);
+	};
+	//--------------------------------------------------------export----------------------------------------------------
+	AscWord.ClipRect = ClipRect;
+})();
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

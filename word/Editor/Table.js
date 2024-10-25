@@ -5765,7 +5765,7 @@ CTable.prototype.Selection_Stop = function()
 	var Cell             = this.Content[this.Selection.StartPos.Pos.Row].Get_Cell(this.Selection.StartPos.Pos.Cell);
 	Cell.Content_Selection_Stop();
 };
-CTable.prototype.DrawSelectionOnPage = function(CurPage)
+CTable.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
 	if (false === this.Selection.Use)
 		return;
@@ -5836,7 +5836,7 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage)
 		{
 			var Cell         = this.Content[this.Selection.StartPos.Pos.Row].Get_Cell(this.Selection.StartPos.Pos.Cell);
 			var Cell_PageRel = CurPage - Cell.Content.Get_StartPage_Relative();
-			Cell.Content_DrawSelectionOnPage(Cell_PageRel);
+			Cell.Content_DrawSelectionOnPage(Cell_PageRel, clipInfo);
 			break;
 		}
 	}

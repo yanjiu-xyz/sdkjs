@@ -828,14 +828,14 @@ CTableCell.prototype =
         return this.Content.UpdateCursorType(_X, _Y, CurPage);
     },
 
-	Content_DrawSelectionOnPage : function(CurPage)
+	Content_DrawSelectionOnPage : function(CurPage, clipInfo)
 	{
 		var Transform       = this.private_GetTextDirectionTransform();
 		var DrawingDocument = this.Row.Table.DrawingDocument;
 		if (null !== Transform && DrawingDocument)
 			DrawingDocument.MultiplyTargetTransform(Transform);
 
-		this.Content.DrawSelectionOnPage(CurPage);
+		this.Content.DrawSelectionOnPage(CurPage, clipInfo);
 	},
 
     Content_RecalculateCurPos : function(bUpdateX, bUpdateY, isUpdateTarget)
