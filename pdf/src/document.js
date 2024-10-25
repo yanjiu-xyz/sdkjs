@@ -5906,6 +5906,13 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.checkFonts = function(aFontsNames, callback) {
 		let fontsToLoad = [];
 		let fontMap     = {};
+
+        let aExtended = [];
+        AscFonts.FontPickerByCharacter.extendFonts(aExtended);
+        aExtended.forEach(function(font) {
+            aFontsNames.push(font.name);
+        });
+        
 		for (let i = 0; i < aFontsNames.length; i++) {
 			if (this.loadedFonts.includes(aFontsNames[i]) || fontsToLoad.includes(aFontsNames[i]))
 				continue;
