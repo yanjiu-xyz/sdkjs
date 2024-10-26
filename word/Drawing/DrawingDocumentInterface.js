@@ -395,7 +395,7 @@ function DrawCustomTocPreview(api, canvas, props, widthPx, heightPx, scale)
 	{
 		graphics = new CNativeGraphics(canvas);
 		graphics.width  = wPx;
-		graphics.height = pixH_natural;
+		graphics.height = hPx;
 		graphics.create(null, wPx, hPx, wMm, hMm);
 		graphics.CoordTransformOffset(wPxOffset, wPxOffset);
 		graphics.transform(1, 0, 0, 1, 0, 0);
