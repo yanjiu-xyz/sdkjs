@@ -16358,6 +16358,8 @@
 				if (t.objectRender) {
 					t.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 0});
 				}
+				t.model.workbook.handlers.trigger("asc_onHideMathTrack");
+				t.model.workbook.handlers.trigger("asc_onHideSpecialPasteOptions");
 				fullUpdate = true;
 			} else {
 				t.model.setDisplayGridlines(val);
