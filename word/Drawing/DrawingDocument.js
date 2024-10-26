@@ -3095,17 +3095,7 @@ function CDrawingDocument()
 			drawingCanvas = this.GuiCanvasFillTOC;
 		}
 
-		// draw!
-		var wPx = AscBrowser.convertToRetinaValue(widthPx, true);
-		var hPx = AscBrowser.convertToRetinaValue(heightPx, true);
-		var wMm = wPx * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-		var hMm = hPx * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-
-		var wPxOffset = AscBrowser.convertToRetinaValue(8, true);
-		var wMmOffset = wPxOffset * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-
-		drawingCanvas.style.width = widthPx + "px";
-		drawingCanvas.width = wPx;
+		let api = this.m_oWordControl.m_oApi;
 
 		History.TurnOff();
 
@@ -3118,206 +3108,21 @@ function CDrawingDocument()
 			oLogicDocument.SetLocalTrackRevisions(false);
 		}
 
-		var _oldTurn = editor.isViewMode;
-		editor.isViewMode = true;
+		var _oldTurn = api.isViewMode;
+		api.isViewMode = true;
 
-		var ctx = drawingCanvas.getContext('2d');
+		var old_marks = api.ShowParaMarks;
+		api.ShowParaMarks = false;
 
-		var old_marks = this.m_oWordControl.m_oApi.ShowParaMarks;
-		this.m_oWordControl.m_oApi.ShowParaMarks = false;
+		DrawCustomTocPreview(api, drawingCanvas, props, widthPx, heightPx);
 
-		// content
-		var oStyles        = oLogicDocument.GetStyles();
-
-		var oHeader          = new CHeaderFooter(oLogicDocument.HdrFtr, oLogicDocument, this, AscCommon.hdrftr_Header);
-		var oDocumentContent = oHeader.GetContent();
-
-		var nOutlineStart = props.get_OutlineStart();
-		var nOutlineEnd   = props.get_OutlineEnd();
-		var nStylesType   = props.get_StylesType();
-		var isShowPageNum = props.get_ShowPageNumbers();
-		var isRightTab    = props.get_RightAlignTab();
-		var nTabLeader    = props.get_TabLeader();
-
-		if (undefined === nTabLeader || null === nTabLeader)
-			nTabLeader = Asc.c_oAscTabLeader.Dot;
-
-
-		var arrLevels         = [];
-		var arrStylesToDelete = [];
-
-		var nStyle, nStylesCount, nAddStyle, nAddStyleCount;
-		var nLvl, sName, sStyleId, oStyle, isAddStyle;
-		for (nStyle = 0, nStylesCount = props.get_StylesCount(); nStyle < nStylesCount; ++nStyle)
-		{
-			nLvl  = props.get_StyleLevel(nStyle) - 1;
-			sName = props.get_StyleName(nStyle);
-
-			if (!arrLevels[nLvl])
-			{
-				sStyleId = null;
-				if (Asc.c_oAscTOCStylesType.Current === nStylesType)
-				{
-					sStyleId = oStyles.GetDefaultTOC(nLvl);
-				}
-				else
-				{
-					oStyle = new CStyle("", null, null, styletype_Paragraph, true);
-					oStyle.CreateTOC(nLvl, nStylesType);
-					sStyleId = oStyle.GetId();
-					oStyles.Add(oStyle);
-					arrStylesToDelete.push(oStyle.GetId());
-				}
-				arrLevels[nLvl] = {
-					Styles  : [],
-					StyleId : sStyleId
-				};
-			}
-
-			isAddStyle = true;
-			for (nAddStyle = 0, nAddStyleCount = arrLevels[nLvl].Styles.length; nAddStyle < nAddStyleCount; ++nAddStyle)
-			{
-				if (arrLevels[nLvl].Styles[nAddStyle] === sName)
-				{
-					isAddStyle = false;
-					break;
-				}
-			}
-
-			if (isAddStyle)
-				arrLevels[nLvl].Styles.push(sName);
-		}
-
-		if (-1 !== nOutlineEnd && -1 !== nOutlineStart)
-		{
-			for (var _nLvl = nOutlineStart; _nLvl <= nOutlineEnd; ++_nLvl)
-			{
-				sName = "Heading " + _nLvl;
-				nLvl  = _nLvl - 1;
-
-				if (!arrLevels[nLvl])
-				{
-					sStyleId = null;
-					if (Asc.c_oAscTOCStylesType.Current === nStylesType)
-					{
-						sStyleId = oStyles.GetDefaultTOC(nLvl);
-					}
-					else
-					{
-						oStyle = new CStyle("", null, null, styletype_Paragraph, true);
-						oStyle.CreateTOC(nLvl, nStylesType);
-						sStyleId = oStyle.GetId();
-						oStyles.Add(oStyle);
-						arrStylesToDelete.push(oStyle.GetId());
-					}
-
-					arrLevels[nLvl] = {
-						Styles  : [],
-						StyleId : sStyleId
-					};
-				}
-
-				isAddStyle = true;
-				for (nAddStyle = 0, nAddStyleCount = arrLevels[nLvl].Styles.length; nAddStyle < nAddStyleCount; ++nAddStyle)
-				{
-					if (arrLevels[nLvl].Styles[nAddStyle] === sName)
-					{
-						isAddStyle = false;
-						break;
-					}
-				}
-
-				if (isAddStyle)
-					arrLevels[nLvl].Styles.push(sName);
-			}
-		}
-
-
-
-		var oParaIndex = 0;
-		var nPageIndex = 1;
-
-
-		for (nLvl = 0; nLvl <= 8; ++nLvl)
-		{
-			if (!arrLevels[nLvl])
-				continue;
-
-			sStyleId = arrLevels[nLvl].StyleId;
-			for (nStyle = 0, nStylesCount = arrLevels[nLvl].Styles.length; nStyle < nStylesCount; ++nStyle)
-			{
-				var sStyleName = AscCommon.translateManager.getValue(arrLevels[nLvl].Styles[nStyle]);
-
-				var oParagraph = new AscWord.Paragraph(oDocumentContent, false);
-				oDocumentContent.AddToContent(oParaIndex++, oParagraph);
-				oParagraph.SetParagraphStyleById(sStyleId);
-
-				var oRun = new ParaRun(oParagraph, false);
-				oParagraph.AddToContent(0, oRun);
-				oRun.AddText(sStyleName);
-
-				if (isShowPageNum)
-				{
-					if (isRightTab)
-					{
-						var oParaTabs = new CParaTabs();
-						oParaTabs.Add(new CParaTab(tab_Right, wMm - 2 - wMmOffset, nTabLeader));
-						oParagraph.SetParagraphTabs(oParaTabs);
-
-						oRun.AddToContent(-1, new AscWord.CRunTab());
-					}
-					else
-					{
-						oRun.AddToContent(-1, new AscWord.CRunSpace());
-					}
-
-					oRun.AddText("" + nPageIndex);
-
-					nPageIndex += 2;
-				}
-			}
-		}
-
-		oDocumentContent.Reset(1, 0, 1000, 10000);
-		oDocumentContent.Recalculate_Page(0, true);
-
-		for (nStyle = 0, nStylesCount = arrStylesToDelete.length; nStyle < nStylesCount; ++nStyle)
-		{
-			oStyles.Remove(arrStylesToDelete[nStyle]);
-		}
-
-		var nContentHeight = oDocumentContent.GetSummaryHeight();
-		var nContentHeightPx = (AscCommon.AscBrowser.retinaPixelRatio * nContentHeight / g_dKoef_pix_to_mm) >> 0;
-
-		if (nContentHeightPx > hPx)
-		{
-			hPx = nContentHeightPx;
-			hMm = nContentHeight;
-		}
-
-		drawingCanvas.style.height = AscBrowser.convertToRetinaValue(hPx, false) + "px";
-		drawingCanvas.height = hPx;
-
-		var ctx = drawingCanvas.getContext('2d');
-
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, wPx, hPx);
-
-		var graphics = new AscCommon.CGraphics();
-		graphics.init(ctx, wPx, hPx, wMm, hMm);
-		graphics.m_oFontManager = AscCommon.g_fontManager;
-		graphics.m_oCoordTransform.tx = graphics.m_oCoordTransform.ty = wPxOffset;
-		graphics.transform(1, 0, 0, 1, 0, 0);
-		oDocumentContent.Draw(0, graphics);
-
-		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
+		api.ShowParaMarks = old_marks;
+		api.isViewMode = _oldTurn;
 
 		History.TurnOn();
 
 		if (false !== bTrackRevisions)
 			oLogicDocument.SetLocalTrackRevisions(bTrackRevisions);
-
-		editor.isViewMode = _oldTurn;
 	};
 
 	this.GetTOC_Buttons = function(idDiv1, idDiv2, styleWidth)
