@@ -13433,7 +13433,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	window["asc_docs_api"].prototype["asc_getButtonsTOC"] = function(id1, id2, styleWidth)
+	asc_docs_api.prototype["asc_getButtonsTOC"] = function(id1, id2, styleWidth)
 	{
 		if (this.WordControl && this.WordControl.m_oDrawingDocument)
 		{
