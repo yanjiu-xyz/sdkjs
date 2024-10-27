@@ -15409,7 +15409,7 @@ function RangeDataManagerElem(bbox, data)
 			this.referenceData = {};
 		}
 		this.referenceData["instanceId"] = portalName;
-		this.referenceData["fileKey"] = fileId;
+		this.referenceData["fileKey"] = fileId + "";
 	};
 
 	ExternalReference.prototype.setId = function (id) {

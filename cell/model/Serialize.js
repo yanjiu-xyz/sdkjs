@@ -4009,7 +4009,7 @@
             if (externalReference.referenceData) {
                  if (externalReference.referenceData["fileKey"]) {
                      oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalFileId);
-                     var fileKey = externalReference.referenceData["fileKey"];
+                     var fileKey = externalReference.referenceData["fileKey"] + "";
                      oThis.memory.WriteString2(encodeXmlPath(fileKey, true, true));
                  }
                  if (externalReference.referenceData["instanceId"]) {
