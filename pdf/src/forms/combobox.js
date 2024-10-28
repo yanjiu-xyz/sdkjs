@@ -701,9 +701,6 @@
             }
         }
 
-        memory.fieldDataFlags |= (1 << 12);
-        this.WriteRenderToBinary(memory);
-        
         if (value != null && Array.isArray(value) == true) {
             // флаг что значение - это массив
             memory.fieldDataFlags |= (1 << 13);
@@ -726,6 +723,9 @@
             }
         }
 
+        memory.fieldDataFlags |= (1 << 15);
+        this.WriteRenderToBinary(memory);
+        
         // top index
         
         if (this.IsEditable()) {
