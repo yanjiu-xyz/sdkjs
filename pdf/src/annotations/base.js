@@ -1276,7 +1276,7 @@
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
-        this.draw(memory.AnnotsRenderer); // для каждой страницы инициализируется свой renderer
+        this.draw(memory.docRenderer); // для каждой страницы инициализируется свой renderer
 
         // запись длины комманд
         let nEndPos = memory.GetCurPosition();
