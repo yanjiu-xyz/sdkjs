@@ -2691,6 +2691,9 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 						}
                     }
                 }
+				
+				if (Asc.linerule_Exact === RowH.HRule)
+					Y_content_end = Asc.NoYLimit;
 
                 Cell.PagesCount = 1;
                 Cell.Content.Reset(X_content_start, Y_content_start, X_content_end, Y_content_end);
@@ -2791,6 +2794,9 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         // Если в строке все ячейки с вертикальным выравниванием
         if (bAllCellsVertical && Asc.linerule_Auto === RowH.HRule)
             this.TableRowsBottom[CurRow][CurPage] = Y + 4.5 + this.MaxBotMargin[CurRow] + MaxTopMargin;
+		
+		if (Asc.linerule_Exact === RowH.HRule)
+			this.TableRowsBottom[CurRow][CurPage] = Y + RowHValue;
 		
 		if ((Asc.linerule_AtLeast === RowH.HRule || Asc.linerule_Exact === RowH.HRule)
 			&& AscCommon.MMToTwips(Y + RowHValue + rowMaxBotBorder, 1) >= AscCommon.MMToTwips(Y_content_end, -1)
@@ -2968,7 +2974,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                             this.RowsInfo[CurRow - 1].H[CurPage] += Diff;
                         }
                     }
-                    else
+                    else if (Asc.linerule_Exact !== RowH.HRule)
                     {
                         if (undefined === this.TableRowsBottom[CurRow][CurPage] || this.TableRowsBottom[CurRow][CurPage] < CellContentBounds_Bottom)
                             this.TableRowsBottom[CurRow][CurPage] = CellContentBounds_Bottom;
@@ -3147,8 +3153,6 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 			continue;
 		}
 		
-		if (Asc.linerule_Exact === RowH.HRule)
-			CellHeight = RowHValue;
 
         if ( null != CellSpacing )
             this.RowsInfo[CurRow].H[CurPage] = CellHeight;

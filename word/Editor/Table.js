@@ -5827,7 +5827,16 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 				}
 				else
 				{
-					this.DrawingDocument.AddPageSelection(PageAbs, X_start, this.RowsInfo[RowIndex].Y[CurPage] + this.RowsInfo[RowIndex].TopDy[CurPage] + CellMar.Top.W + Y_offset, X_end - X_start, Bounds.Bottom - Bounds.Top);
+					let rectY = this.RowsInfo[RowIndex].Y[CurPage] + this.RowsInfo[RowIndex].TopDy[CurPage] + CellMar.Top.W + Y_offset;
+					let rectH = Bounds.Bottom - Bounds.Top;
+					if (Row.Get_Height().HRule === Asc.linerule_Exact)
+					{
+						let yLimit = this.RowsInfo[RowIndex].Y[CurPage] + this.RowsInfo[RowIndex].H[CurPage];
+						if (rectY + rectH > yLimit)
+							rectH = Math.max(0, yLimit - rectY);
+					}
+					
+					this.DrawingDocument.AddPageSelection(PageAbs, X_start, rectY, X_end - X_start, rectH);
 				}
 			}
 			break;
