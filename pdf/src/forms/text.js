@@ -1612,7 +1612,7 @@
             memory.WriteLong(nCharLimit);
         }
 
-        memory.fieldDataFlags |= (1 << 12);
+        memory.fieldDataFlags |= (1 << 13);
         this.WriteRenderToBinary(memory);
 
         //
