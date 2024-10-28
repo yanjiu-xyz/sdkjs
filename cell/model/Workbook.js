@@ -2519,7 +2519,11 @@
 		this.nActive = 0;
 		this.App = null;
 		this.Core = null;
-		this.CustomProperties = new AscCommon.CCustomProperties();
+
+		AscFormat.ExecuteNoHistory(function () {
+			this.CustomProperties = new AscCommon.CCustomProperties();
+		}, this, []);
+
 		this.theme = null;
 		this.clrSchemeMap = null;
 
