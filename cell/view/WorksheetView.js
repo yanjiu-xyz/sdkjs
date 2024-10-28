@@ -1381,8 +1381,12 @@
 		let frozenOffset = null;
         if (this.topLeftFrozenCell) {
             var cFrozen = this.topLeftFrozenCell.getCol0();
-			frozenOffset = this._getColLeft(cFrozen);
-            offsetX = (col < cFrozen) ? 0 : this._getColLeft(this.visibleRange.c1) - frozenOffset + this.getHorizontalScrollCorrect();
+			if (col < cFrozen) {
+				offsetX = 0;
+			} else {
+				frozenOffset = this._getColLeft(cFrozen);
+				offsetX = this._getColLeft(this.visibleRange.c1) - frozenOffset + this.getHorizontalScrollCorrect();
+			}
         } else {
             offsetX = this._getOffsetX();
         }
@@ -1407,8 +1411,12 @@
 		let frozenOffset = null;
         if (this.topLeftFrozenCell) {
             var rFrozen = this.topLeftFrozenCell.getRow0();
-			frozenOffset = this._getRowTop(rFrozen);
-            offsetY = (row < rFrozen) ? 0 : this._getRowTop(this.visibleRange.r1) - frozenOffset + this.getScrollCorrect();
+			if (row < rFrozen) {
+				offsetY = 0;
+			} else {
+				frozenOffset = this._getRowTop(rFrozen);
+				offsetY = this._getRowTop(this.visibleRange.r1) - frozenOffset + this.getScrollCorrect();
+			}
         } else {
             offsetY = this._getOffsetY();
         }
