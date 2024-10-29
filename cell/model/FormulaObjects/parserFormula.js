@@ -7383,7 +7383,7 @@ function parserFormula( formula, parent, _ws ) {
 						}
 					}
 
-					wsF = t.wb.getExternalWorksheet(externalLink, sheetName /*_3DRefTmp[1]*/);
+					wsF = sheetName ? t.wb.getExternalWorksheet(externalLink, sheetName /*_3DRefTmp[1]*/) : null;
 					wsT = wsF;
 				} else {
 					wsF = t.wb.getWorksheetByName(sheetName/*_3DRefTmp[1]*/);
