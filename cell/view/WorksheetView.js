@@ -4703,7 +4703,11 @@
 		var ctx = this.drawingCtx;
 		var ctxW = ctx.getWidth();
 		var ctxH = ctx.getHeight();
-		ctx.AddClipRect(clipRectX, this.headersTop - this.groupHeight, ctxW, ctxH);
+
+		let isUseMainClip = (window["IS_NATIVE_EDITOR"] !== true);
+
+		if (isUseMainClip)
+			ctx.AddClipRect(clipRectX, this.headersTop - this.groupHeight, ctxW, ctxH);
 
           // draw column headers
 		  var l = this._getColLeft(start) - offsetX, w;
@@ -4713,7 +4717,8 @@
               l += w;
           }
 
-		ctx.RemoveClipRect();
+        if (isUseMainClip)
+            ctx.RemoveClipRect();
       };
 
     /** Рисует заголовки видимых строк */
@@ -4750,7 +4755,11 @@
         var ctx = this.drawingCtx;
         var ctxW = ctx.getWidth();
         var ctxH = ctx.getHeight();
-        ctx.AddClipRect(this.headersLeft - this.groupWidth, clipRectY, ctxW, ctxH);
+
+        let isUseMainClip = (window["IS_NATIVE_EDITOR"] !== true);
+
+        if (isUseMainClip)
+            ctx.AddClipRect(this.headersLeft - this.groupWidth, clipRectY, ctxW, ctxH);
         // draw row headers
         var t = this._getRowTop(start) - offsetY, h;
         for (var i = start; i <= end; ++i) {
@@ -4758,7 +4767,8 @@
             this._drawHeader(drawingCtx, offsetX, t, this.headersWidth, h, style, false, i);
 			t += h;
         }
-        ctx.RemoveClipRect();
+        if (isUseMainClip)
+            ctx.RemoveClipRect();
     };
 
     /**

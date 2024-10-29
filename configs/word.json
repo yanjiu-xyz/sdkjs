@@ -328,6 +328,7 @@
 
 			"word/Drawing/cachemanager.js",
 			"word/Drawing/stylespainter.js",
+			"word/Drawing/DrawingDocumentInterface.js",
 			"word/Drawing/DrawingDocument.js",
 			"word/Drawing/GraphicsEvents.js",
 			"word/Drawing/Rulers.js",
