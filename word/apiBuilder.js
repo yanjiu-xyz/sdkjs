@@ -2891,7 +2891,7 @@
 			[nStart, nEnd] = [nEnd, nStart];
 
 		let nNewStartPos = this.GetStartPos() + nStart;
-		let nNewEndPos = nEnd < 0 ? this.GetEndPos() : nNewStartPos + nEnd;
+		let nNewEndPos = nEnd < 0 ? this.GetEndPos() : nNewStartPos + (nEnd - nStart);
 
 		let oRange = new ApiRange(this.StartPos[0].Class, nNewStartPos, nNewEndPos);
 		if (oRange.isEmpty)
