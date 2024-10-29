@@ -5733,6 +5733,7 @@
 				wsChangingCell = this.model.getWorksheetByName(sSheetName);
 			}
 		}
+		sExpectedValue = sExpectedValue.replace(/,/g, ".");
 
 		let t = this;
 		let callback = function (isSuccess) {
