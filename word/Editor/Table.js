@@ -5648,7 +5648,13 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 							var _Y_old = this.Markup.Rows[this.Selection.Data2.Index - 1].Y + this.Markup.Rows[this.Selection.Data2.Index - 1].H;
 							var Dy     = _Y - _Y_old;
 							var NewH   = this.Markup.Rows[this.Selection.Data2.Index - 1].H + Dy;
-							this.Content[RowIndex - 1].Set_Height(NewH, linerule_AtLeast);
+							
+							let row   = this.GetRow(RowIndex - 1);
+							let hRule = row.GetHeight().HRule;
+							if (Asc.linerule_Auto === hRule)
+								hRule = Asc.linerule_AtLeast;
+							
+							row.SetHeight(NewH, hRule);
 						}
 					}
 				}
