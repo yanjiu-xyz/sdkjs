@@ -1675,6 +1675,7 @@
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			oDoc.LoadDocumentState(oldSelectionInfo);
+			this.Paragraphs = [];
 			return null;
 		}
 
@@ -1689,14 +1690,14 @@
 			return null;
 		}
 
-		let aPargraphs = oDoc.GetSelectedParagraphs().map(function(para) {
+		this.Paragraphs = oDoc.GetSelectedParagraphs().map(function(para) {
 			return new ApiParagraph(para);
 		});
 
 		oDoc.LoadDocumentState(oldSelectionInfo);
 		oDoc.UpdateSelection();
 
-		return aPargraphs;
+		return this.Paragraphs;
 	};
 
 	/**
