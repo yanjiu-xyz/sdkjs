@@ -2576,6 +2576,16 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         var VerticallCells = [];
         var bAllCellsVertical = true;
         var bFootnoteBreak = false;
+		
+		let Y_content_end_row = this.Pages[CurPage].YLimit - nFootnotesHeight;
+		if (null != CellSpacing)
+		{
+			if (this.Content.length - 1 === CurRow)
+				Y_content_end_row -= CellSpacing;
+			else
+				Y_content_end_row -= CellSpacing / 2;
+		}
+		
         for ( var CurCell = 0; CurCell < CellsCount; CurCell++ )
         {
             var Cell     = Row.Get_Cell( CurCell );
@@ -2597,17 +2607,10 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             var X_content_end   = Page.X + CellMetrics.X_content_end;
 
             var Y_content_start = Y + CellMar.Top.W;
-            var Y_content_end   = this.Pages[CurPage].YLimit - nFootnotesHeight;
+            var Y_content_end   = Y_content_end_row;
 
             // TODO: При расчете YLimit для ячейки сделать учет толщины нижних
             //       границ ячейки и таблицы
-            if ( null != CellSpacing )
-            {
-                if ( this.Content.length - 1 === CurRow )
-                    Y_content_end -= CellSpacing;
-                else
-                    Y_content_end -= CellSpacing / 2;
-            }
 
             var VMergeCount = this.Internal_GetVertMergeCount( CurRow, CurGridCol, GridSpan );
             var BottomMargin = this.MaxBotMargin[CurRow + VMergeCount - 1];
@@ -2799,7 +2802,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 			this.TableRowsBottom[CurRow][CurPage] = Y + RowHValue;
 		
 		if ((Asc.linerule_AtLeast === RowH.HRule || Asc.linerule_Exact === RowH.HRule)
-			&& AscCommon.MMToTwips(Y + RowHValue + rowMaxBotBorder, 1) >= AscCommon.MMToTwips(Y_content_end, -1)
+			&& AscCommon.MMToTwips(Y + RowHValue + rowMaxBotBorder, 1) >= AscCommon.MMToTwips(Y_content_end_row, -1)
 			&& ((0 === CurRow && 0 === CurPage && null !== this.Get_DocumentPrev() && !this.Parent.IsFirstElementOnPage(this.private_GetRelativePageIndex(CurPage), this.GetIndex()))
 				|| CurRow !== FirstRow))
 		{
