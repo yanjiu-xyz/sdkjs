@@ -1808,14 +1808,9 @@
 	};
 	PDFEditorApi.prototype.asc_Save = function (isAutoSave, isIdle) {
 		let oDoc = this.getPDFDoc();
-		let oActiveObj = oDoc.GetActiveObject();
-
-		let bHaveLocalChanges = oDoc.LocalHistory.Have_Changes(true);
-		if (oActiveObj && (oActiveObj.IsAnnot() && oActiveObj.IsFreeText() || oActiveObj.IsForm()) && bHaveLocalChanges) {
+		if (!isAutoSave)
 			oDoc.BlurActiveObject();
-		}
-
-		AscCommon.baseEditorsApi.prototype.asc_Save.call(this, isAutoSave, isIdle);
+		AscCommon.DocumentEditorApi.prototype.asc_Save.call(this, isAutoSave, isIdle);
 	};
 	PDFEditorApi.prototype._coAuthoringInitEnd = function() {
 		AscCommon.DocumentEditorApi.prototype._coAuthoringInitEnd.call(this);
