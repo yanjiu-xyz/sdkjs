@@ -18740,7 +18740,25 @@
 	{
 		return new ApiRange(this.Sdt, Start, End);
 	};
-
+	
+	/**
+	 * Creates a copy of a block content control. Ignores comments, footnote references, complex fields.
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiBlockLvlSdt}
+	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/Copy.js
+	 */
+	ApiBlockLvlSdt.prototype.Copy = function()
+	{
+		let oBlockSdt = this.Sdt.Copy(null, null, {
+			SkipComments          : true,
+			SkipAnchors           : true,
+			SkipFootnoteReference : true,
+			SkipComplexFields     : true
+		});
+		
+		return new ApiBlockLvlSdt(oBlockSdt);
+	};
 	/**
 	 * Searches for a scope of a content control object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiBlockLvlSdt
@@ -22238,6 +22256,7 @@
 	ApiBlockLvlSdt.prototype["AddElement"]              = ApiBlockLvlSdt.prototype.AddElement;
 	ApiBlockLvlSdt.prototype["AddText"]                 = ApiBlockLvlSdt.prototype.AddText;
 	ApiBlockLvlSdt.prototype["GetRange"]                = ApiBlockLvlSdt.prototype.GetRange;
+	ApiBlockLvlSdt.prototype["Copy"]                    = ApiBlockLvlSdt.prototype.Copy;
 	ApiBlockLvlSdt.prototype["Search"]                  = ApiBlockLvlSdt.prototype.Search;
 	ApiBlockLvlSdt.prototype["Select"]                  = ApiBlockLvlSdt.prototype.Select;
 	ApiBlockLvlSdt.prototype["ToJSON"]                  = ApiBlockLvlSdt.prototype.ToJSON;
