@@ -332,7 +332,10 @@
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {
-            this.SelectOption(aIdxs[0]);
+            if (undefined !== aIdxs[0]) {
+                this.SelectOption(aIdxs[0]);
+            }
+
             if (editor.getDocumentRenderer().IsOpenFormsInProgress)
                 this.SetApiCurIdxs(aIdxs);
         }
@@ -473,8 +476,19 @@
         }
         oDoc.EndNoHistoryMode();
         
-        if (this.GetApiValue() != this.GetValue()) {
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
+        let aCurIdxs = this.GetCurIdxs();
+        let aApiIdxs = this.GetApiCurIdxs();
+
+        let isChanged = false;
+        for (let i = 0; i < aCurIdxs.length; i++) {
+            if (aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
+                isChanged = true;
+                break;
+            }
+        }
+
+        if (isChanged) {
+            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
             this.SetApiValue(this.GetValue());
             this.SetApiCurIdxs(this.GetCurIdxs());
         }

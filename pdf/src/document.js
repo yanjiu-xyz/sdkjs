@@ -899,10 +899,6 @@ var CPresentation = CPresentation || function(){};
         return this.DoAction(function() {
             let isValid = true;
 
-            if (oField.IsNeedRevertShiftView()) {
-                oField.RevertContentViewToOriginal();
-            }
-
             if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oField.GetType())) {
                 isValid = oField.DoValidateAction(oField.GetValue(true));
             }
@@ -953,7 +949,7 @@ var CPresentation = CPresentation || function(){};
             oForm.UpdateScroll && oForm.UpdateScroll(false); // убираем скролл
 
             if (oForm.IsNeedRevertShiftView()) {
-                oForm.RevertContentViewToOriginal();
+                oForm.RevertContentView();
             }
 
             if (oForm.IsNeedCommit()) {
@@ -1141,7 +1137,7 @@ var CPresentation = CPresentation || function(){};
                     }
     
                     if (oActiveObj.IsNeedRevertShiftView()) {
-                        oActiveObj.RevertContentViewToOriginal();
+                        oActiveObj.RevertContentView();
                     }
                 }
             }

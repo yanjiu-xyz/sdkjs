@@ -715,19 +715,6 @@
         this._scrollInfo.scrollCoeff    = nScrollCoeff;
         this.AddToRedraw();
     };
-    CTextField.prototype.ScrollVerticalEnd = function() {
-        let nHeightPerPara  = this.content.GetElement(1).Y - this.content.GetElement(0).Y;
-        let nShiftCount     = this._curShiftView.y / nHeightPerPara; // количество смещений в длинах параграфов
-        if (Math.abs(Math.round(nShiftCount) - nShiftCount) <= 0.001)
-            return;
-
-        let nMaxShiftY                  = this._scrollInfo.scroll.maxScrollY;
-        this._curShiftView.y            = Math.round(nShiftCount) * nHeightPerPara;
-        this._bAutoShiftContentView     = false;
-        this._scrollInfo.scrollCoeff    = Math.abs(this._curShiftView.y / nMaxShiftY);
-        
-        this.AddToRedraw();
-    };
     CTextField.prototype.GetScrollInfo = function() {
         return this._scrollInfo;
     };
@@ -865,11 +852,6 @@
                 oScroll.scrollVCurrentY = false == bInvertScroll ? oScroll.maxScrollY * nScrollCoeff : oScroll.maxScrollY - (oScroll.maxScrollY * nScrollCoeff);
             }
             
-            oScroll.bind("mouseup", function(evt) {
-                if (oThis.GetType() == AscPDF.FIELD_TYPES.listbox)
-                    oThis.ScrollVerticalEnd();
-            });
-
             if (oScrollInfo == null) {
                 this.SetScrollInfo({
                     scroll:         oScroll,
@@ -1116,7 +1098,7 @@
     CTextField.prototype.Commit = function() {
         let oDoc        = this.GetDocument();
         let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
-        
+
         oDoc.StartNoHistoryMode();
         if (this.DoFormatAction() == false) {
             this.UndoNotAppliedChanges();
@@ -1130,6 +1112,7 @@
         
         if (this.GetApiValue() != this.GetValue()) {
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
+            this.RevertContentView();
             this.SetApiValue(this.GetValue());
         }
 
@@ -1204,7 +1187,7 @@
         let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         
-        let isCanFormat = oDoc.isUndoRedoInProgress != true ? this.DoKeystrokeAction(null, false, true) : true;
+        let isCanFormat = AscCommon.History.UndoRedoInProgress != true ? this.DoKeystrokeAction(null, false, true) : true;
         if (!isCanFormat) {
             let oWarningInfo = oDoc.GetWarningInfo();
             if (!oWarningInfo) {

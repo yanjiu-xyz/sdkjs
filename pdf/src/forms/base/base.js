@@ -168,7 +168,7 @@
             x: 0,
             y: 0
         }
-        this._originShiftView = { // смещение, когда значение формы применено (т.е. форма не активна)
+        this._oldShiftView = { // смещение, когда значение формы применено (т.е. форма не активна)
             x: 0,
             y: 0
         }
@@ -1511,13 +1511,13 @@
 	 * @typedef {"MouseUp" | "MouseDown" | "MouseEnter" | "MouseExit" | "OnFocus" | "OnBlur" | "Keystroke" | "Validate" | "Calculate" | "Format"} cTrigger
 	 * For a list box, use the Keystroke trigger for the Selection Change event.
      */
-    CBaseField.prototype.RevertContentViewToOriginal = function() {
+    CBaseField.prototype.RevertContentView = function() {
         this.content.ResetShiftView();
-        this._curShiftView.x = this._originShiftView.x;
-        this._curShiftView.y = this._originShiftView.y;
+        this._curShiftView.x = this._oldShiftView.x;
+        this._curShiftView.y = this._oldShiftView.y;
 
         this._bAutoShiftContentView = false;
-        this.content.ShiftView(this._originShiftView.x, this._originShiftView.y);
+        this.content.ShiftView(this._oldShiftView.x, this._oldShiftView.y);
 
         if (this._scrollInfo) {
             let nMaxShiftY                  = this._scrollInfo.scroll.maxScrollY;
@@ -1530,8 +1530,8 @@
         return this._isWidget;
     };
     CBaseField.prototype.IsNeedRevertShiftView = function() {
-        if (this._curShiftView.y != this._originShiftView.y ||
-            this._curShiftView.x != this._originShiftView.x)
+        if (this._curShiftView.y != this._oldShiftView.y ||
+            this._curShiftView.x != this._oldShiftView.x)
             return true;
     };
     CBaseField.prototype.GetBordersWidth = function() {
