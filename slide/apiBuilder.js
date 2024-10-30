@@ -357,7 +357,7 @@
      */
 
     /**
-     * Any valid drawing element
+     * Any valid drawing element.
      * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiTable )} Drawing
 	 */
 
@@ -1805,11 +1805,12 @@
     };
 
     /**
-	 * Gets drawings by placeholder type.
+	 * Returns an array of drawings by the specified placeholder type.
 	 * @memberof ApiMaster
      * @typeofeditors ["CPE"]
-     * @param {PlaceholderType} sType - placeholders type
+     * @param {PlaceholderType} sType - The placeholder type.
 	 * @returns {Drawing[]}
+     * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetDrawingsByPlaceholderType.js
 	 */
     ApiMaster.prototype.GetDrawingsByPlaceholderType = function(sType) {
@@ -2145,11 +2146,12 @@
     };
 
     /**
-	 * Gets drawings by placeholder type.
+	 * Returns an array of drawings by the specified placeholder type.
 	 * @memberof ApiLayout
      * @typeofeditors ["CPE"]
-     * @param {PlaceholderType} sType - placeholders type
+     * @param {PlaceholderType} sType - The placeholder type.
 	 * @returns {Drawing[]}
+     * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetDrawingsByPlaceholderType.js
 	 */
     ApiLayout.prototype.GetDrawingsByPlaceholderType = function(sType) {
@@ -2191,9 +2193,10 @@
     };
 
     /**
-     * Gets the placeholder type.
+     * Returns the placeholder type.
      * @typeofeditors ["CPE"]
-     * @returns {PlaceholderType} - returns placeholder type
+     * @returns {PlaceholderType} - Returns the placeholder type.
+     * @since 8.2.0
      * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/GetType.js
 	 */
     ApiPlaceholder.prototype.GetType = function()
@@ -2213,8 +2216,9 @@
     /**
      * Sets the placeholder index.
      * @typeofeditors ["CPE"]
-     * @param {number} nIdx - placeholder index
-     * @returns {boolean} - returns false if placeholder index wasn't set.
+     * @param {number} nIdx - The placeholder index.
+     * @returns {boolean} - Returns false if the placeholder index wasn't set.
+     * @since 8.2.0
      * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/SetIndex.js
 	 */
     ApiPlaceholder.prototype.SetIndex = function(nIdx)
@@ -2228,9 +2232,10 @@
     };
 
     /**
-     * Gets the placeholder index.
+     * Retuns the placeholder index.
      * @typeofeditors ["CPE"]
-     * @returns {number | undefined} - returns placeholder index
+     * @returns {number | undefined} - Returns the placeholder index.
+     * @since 8.2.0
      * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/GetIndex.js
 	 */
     ApiPlaceholder.prototype.GetIndex = function()
@@ -3275,11 +3280,12 @@
     };
 
     /**
-	 * Gets drawings by placeholder type.
+	 * Returns an array of drawings by the specified placeholder type.
 	 * @memberof ApiSlide
      * @typeofeditors ["CPE"]
-     * @param {PlaceholderType} sType - placeholders type
+     * @param {PlaceholderType} sType - The placeholder type.
 	 * @returns {Drawing[]}
+     * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetDrawingsByPlaceholderType.js
 	 */
     ApiSlide.prototype.GetDrawingsByPlaceholderType = function(sType) {
@@ -3636,6 +3642,7 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
+     * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */	
 	ApiDrawing.prototype.Select = function() {

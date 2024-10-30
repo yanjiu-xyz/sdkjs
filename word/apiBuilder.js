@@ -2716,7 +2716,7 @@
 	};
 
 	/**
-	 * Returns the merged text properties of entire range.
+	 * Returns the merged text properties of the entire range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiTextPr}
@@ -2906,7 +2906,7 @@
 	};
 	
 	/**
-	 * Returns the start page number of current range.
+	 * Returns the start page number of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @return {Number}
@@ -2922,7 +2922,7 @@
 	};
 
 	/**
-	 * Returns the end page number of current range.
+	 * Returns the end page number of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @return {Number}
@@ -2938,11 +2938,13 @@
 	};
 
 	/**
-	 * Sets the start position of a current range object.
+	 * Sets the start position of the current range object.
 	 * @memberof ApiRange
-	 * @param {Number} nPos - start position
+	 * @param {Number} nPos - Start position.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetStartPos.js
 	 */
 	ApiRange.prototype.SetStartPos = function(nPos)
 	{
@@ -2952,11 +2954,13 @@
 	};
 
 	/**
-	 * Sets the start position of a current range object.
+	 * Sets the end position of the current range object.
 	 * @memberof ApiRange
-	 * @param {Number} nPos - end position
+	 * @param {Number} nPos - End position.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetEndPos.js
 	 */
 	ApiRange.prototype.SetEndPos = function(nPos)
 	{
@@ -2966,10 +2970,12 @@
 	};
 
 	/**
-	 * Returns the start position of a current range.
+	 * Returns the start position of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetStartPos.js
 	 */
 	ApiRange.prototype.GetStartPos = function() {
 		private_RefreshRangesPosition();
@@ -3020,10 +3026,12 @@
 	});
 
 	/**
-	 * Returns the end position of a current range.
+	 * Returns the end position of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetEndPos.js
 	 */
 	ApiRange.prototype.GetEndPos = function() {
 		private_RefreshRangesPosition();
@@ -5486,8 +5494,8 @@
 	 * Returns a Range object that represents the part of the document contained in the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetRange.js
 	 */
@@ -6023,7 +6031,7 @@
 	 * @property {ReviewReportRecordType} Type - Review record type.
 	 * @property {string} [Value=undefined] - Review change value that is set for the "TextAdd" and "TextRem" types only.
 	 * @property {number} Date - The time when this change was made.
-	 * @property {ApiParagraph | ApiTable} ReviewedElement - Element that has been reviewed
+	 * @property {ApiParagraph | ApiTable} ReviewedElement - Element that has been reviewed.
 	 * @see office-js-api/Examples/Enumerations/ReviewReportRecord.js
 	 */
 	
@@ -6368,8 +6376,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetRange.js
 	 */
@@ -6858,10 +6866,11 @@
 		}
 	};
 	/**
-	 * Updates all fields in the document
+	 * Updates all fields in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {boolean} [bBySelection=false] - update all fields within selection
+	 * @param {boolean} [bBySelection=false] - Specifies whether all fields will be updated within the selection.
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/UpdateAllFields.js
 	 */
 	ApiDocument.prototype.UpdateAllFields = function(bBySelection)
@@ -7570,20 +7579,21 @@
 	};
 	/**
 	 * Returns the document information:
-	 * <b>Application</b> - the application the document has been created with.
+	 * <b>Application</b> - the application the document was created with.
 	 * <b>CreatedRaw</b> - the date and time when the file was created.
 	 * <b>Created</b> - the parsed date and time when the file was created.
 	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
 	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * <b>Authors</b> - the persons who has created the file.
-	 * <b>Title</b> - this property allows you to simplify your documents classification.
-	 * <b>Tags</b> - this property allows you to simplify your documents classification.
-	 * <b>Subject</b> - this property allows you to simplify your documents classification.
-	 * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * <b>LastModifiedBy</b> - the name of the user who made the latest change to the document.
+	 * <b>Authors</b> - the persons who created the file.
+	 * <b>Title</b> - the document title (this property allows you to simplify your documents classification).
+	 * <b>Tags</b> - the document tags (this property allows you to simplify your documents classification).
+	 * <b>Subject</b> - the document subject (this property allows you to simplify your documents classification).
+	 * <b>Comment</b> - the comment to the document (this property allows you to simplify your documents classification).
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
+	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetDocumentInfo.js
 	 */
 	ApiDocument.prototype.GetDocumentInfo = function()
@@ -7654,11 +7664,12 @@
 		return oDocInfo;
 	};
 	/**
-	 * Returns the current word or part of the current word
-	 * @param {undefined | "before" | "after"} sWordPart - Specifies the desired part of the current word
+	 * Returns the current word or part of the current word.
+	 * @param {undefined | "before" | "after"} sWordPart - The desired part of the current word to be returned.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentWord.js
 	 */
 	ApiDocument.prototype.GetCurrentWord = function(sWordPart)
@@ -7673,12 +7684,13 @@
 		return this.Document.GetCurrentWord(dir);
 	};
 	/**
-	 * Replace the current word or part of the current word with the specified text
-	 * @param sReplace {string} String to replace
-	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current word
+	 * Replaces the current word or part of the current word with the specified text.
+	 * @param sReplace {string} - The string to replace the current word with.
+	 * @param {undefined | "before" | "after"} sPart - The desired part of the current word to be replaced.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ReplaceCurrentWord.js
 	 */
 	ApiDocument.prototype.ReplaceCurrentWord = function(sReplace, sPart)
@@ -7695,10 +7707,11 @@
 		return this.Document.ReplaceCurrentWord(dir, replace);
 	};
 	/**
-	 * Selects the current word if it possible
+	 * Selects the current word if it is possible.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SelectCurrentWord.js
 	 */
 	ApiDocument.prototype.SelectCurrentWord = function()
@@ -7706,7 +7719,7 @@
 		return this.Document.SelectCurrentWord();
 	};
 	/**
-	 * Adds a comment to the current selection of the document, or to the current word if there is no text selection
+	 * Adds a comment to the current document selection, or to the current word if no text is selected.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
@@ -7734,11 +7747,12 @@
 		return comment ? new ApiComment(comment) : null;
 	};
 	/**
-	 * Returns the current sentence or part of the current sentence
-	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current sentence
+	 * Returns the current sentence or part of the current sentence.
+	 * @param {undefined | "before" | "after"} sPart - The desired part of the current sentence to be returned.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentSentence.js
 	 */
 	ApiDocument.prototype.GetCurrentSentence = function(sPart)
@@ -7753,12 +7767,13 @@
 		return this.Document.GetCurrentSentence(dir);
 	};
 	/**
-	 * Replace the current sentence or part of the current sentence with the specified text
-	 * @param sReplace {string} String to replace
-	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current sentence
+	 * Replaces the current sentence or part of the current sentence with the specified text.
+	 * @param sReplace {string} - The string to replace the current sentence with.
+	 * @param {undefined | "before" | "after"} sPart - The desired part of the current sentence to be replaced.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ReplaceCurrentSentence.js
 	 */
 	ApiDocument.prototype.ReplaceCurrentSentence = function(sReplace, sPart)
@@ -7775,9 +7790,13 @@
 		return this.Document.ReplaceCurrentSentence(dir, replace);
 	};
 	/**
-	 * Add a math equation
-	 * @param sText {string} An equation written as a linear text string
-	 * @param [sFormat="unicode"] {"unicode" | "latex"} The format of the specified linear representation
+	 * Adds a math equation to the current document.
+	 * @param sText {string} - An equation written as a linear text string.
+	 * @param {"unicode" | "latex"} [sFormat="unicode"] - The format of the specified linear representation.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddMathEquation.js
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddMathEquation.js
@@ -8278,8 +8297,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetRange.js
 	 */
@@ -9954,8 +9973,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetRange.js
 	 */
@@ -10460,13 +10479,14 @@
 	};
 	
 	/**
-	 * Move cursor to a specified position of the current text run.
-	 * If the current run is not assigned to any part of the document then returns false otherwise returns true.
-	 * If there was any selection in the document, it will be removed.
+	 * Moves a cursor to a specified position of the current text run.
+	 * If the current run is not assigned to any document part, then <b>false</b> is returned. Otherwise, this method returns <b>true</b>.
+	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiRun
 	 * @param {number} [nPos=0] - Desired cursor position.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/MoveCursorToPos.js
 	 */
 	ApiRun.prototype.MoveCursorToPos = function(nPos)
@@ -10508,22 +10528,28 @@
 	{
 		return "section";
 	};
+
+	/**
+	 * The section break type which defines how the contents of the current section are placed relative to the previous section.
+	 * WordprocessingML supports five distinct types of section breaks:
+	 * <b>Next page</b> ("nextPage") - starts a new section on the next page (the default value).
+	 * <b>Odd</b> ("oddPage") - starts a new section on the next odd-numbered page.
+	 * <b>Even</b> ("evenPage") - starts a new section on the next even-numbered page.
+	 * <b>Continuous</b> ("continuous") - starts a new section in the next paragraph.
+	 * This means that continuous section breaks might not specify certain page-level section properties,
+	 * since they shall be inherited from the following section.
+	 * However, these breaks can specify other section properties, such as line numbering and footnote/endnote settings.
+	 * <b>Column</b> ("nextColumn") - starts a new section in the next column on the page.
+	 * @typedef {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} SectionBreakType
+	* @see office-js-api/Examples/Enumerations/SectionBreakType.js
+	*/
+
 	/**
 	 * Specifies a type of the current section. The section type defines how the contents of the current 
-	 * section are placed relative to the previous section.<br/>
-	 * WordprocessingML supports five distinct types of section breaks:
-	 *   * <b>Next page</b> section breaks (the default if type is not specified), which begin the new section on the
-	 *   following page.
-	 *   * <b>Odd</b> page section breaks, which begin the new section on the next odd-numbered page.
-	 *   * <b>Even</b> page section breaks, which begin the new section on the next even-numbered page.
-	 *   * <b>Continuous</b> section breaks, which begin the new section on the following paragraph. This means that
-	 *   continuous section breaks might not specify certain page-level section properties, since they shall be
-	 *   inherited from the following section. These breaks, however, can specify other section properties, such
-	 *   as line numbering and footnote/endnote settings.
-	 *   * <b>Column</b> section breaks, which begin the new section on the next column on the page.
+	 * section are placed relative to the previous section.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
-	 * @param {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} sType - The section break type.
+	 * @param {SectionBreakType} sType - The section break type.
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetType.js
 	 */
 	ApiSection.prototype.SetType = function(sType)
@@ -10541,10 +10567,10 @@
 	};
 
 	/**
-	 * Returns the section type.
+	 * Returns the section break type.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
-	 * @returns {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} - The section break type.
+	 * @returns {SectionBreakType} - The section break type.
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/GetType.js
 	 */
@@ -11323,8 +11349,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRange.js
 	 */
@@ -11509,7 +11535,7 @@
         return null;
 	};
 	/**
-	 * Returns a Tables array that represents all the tables nested within the specified table.
+	 * Returns an array of tables that represents all the tables nested within the specified table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiTable[]}
@@ -14151,9 +14177,10 @@
 	 * Sets the outline level for the specified properties.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Number?} [nLvl=undefined] - 0 - based outline level. Possible values are: 0-8.
-	 * Note: to set no outline level use this method without parameter.
+	 * @param {Number?} [nLvl=undefined] - The outline level. Possible values: 0-8. The 0 value means the basic outline level.
+	 * To set no outline level, use this method without a parameter.
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetOutlineLvl.js
 	 */
 	ApiParaPr.prototype.SetOutlineLvl = function(nLvl)
@@ -14173,10 +14200,11 @@
 	};
 
 	/**
-	 * Gets the outline level of the specified properties.
+	 * Returns the outline level of the specified properties.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {Number?}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetOutlineLvl.js
 	 */
 	ApiParaPr.prototype.GetOutlineLvl = function()
@@ -17007,7 +17035,7 @@
 	};
 	
 	/**
-	 * Returns the series with specific index.
+	 * Returns the series with a specific index.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {number} nIdx - Series index.
@@ -17047,7 +17075,7 @@
 	};
 
 	/**
-	 * Tries to change the type of the series. Returns true in case of success.
+	 * Tries to change the series type. Returns true if successful.
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ChartType} sType - Chart type.
@@ -17067,7 +17095,7 @@
 	};
 
 	/**
-	 * Returns a chart type of the series.
+	 * Returns a chart type of the current series.
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {ChartType}
@@ -17768,8 +17796,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetRange.js
 	 */
@@ -18736,8 +18764,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position in the current element.
-	 * @param {Number} End - End position in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetRange.js
 	 */
