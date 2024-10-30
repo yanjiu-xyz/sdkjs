@@ -4102,10 +4102,18 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                 }
                 case para_Math_BreakOperator:
                 {
-                    var BrkLen = Item.Get_Width2()/AscWord.TEXTWIDTH_DIVIDER;
+					var BrkLen = Item.Get_Width2()/AscWord.TEXTWIDTH_DIVIDER;
 
-                    var bCompareOper = Item.Is_CompareOperator();
-                    var bOperBefore = this.ParaMath.Is_BrkBinBefore() == true;
+					var oFirstContent	= (PRS.Word === false && this.Content.length > 0)
+						? this.Content[0]
+						: null;
+					var strFirstLetter	= oFirstContent !== null
+						? String.fromCharCode(oFirstContent.value)
+						: "";
+					var isFirstOperator	= PRS.Word === false && AscMath.MathLiterals.operator.SearchU(strFirstLetter);
+
+                    var bCompareOper	= Item.Is_CompareOperator();
+                    var bOperBefore		= isFirstOperator || this.ParaMath.Is_BrkBinBefore() == true;
 
                     var bOperInEndContent = bOperBefore === false && bEndRunToContent === true && Pos == ContentLen - 1 && Word == true, // необходимо для того, чтобы у контентов мат объектов (к-ые могут разбиваться на строки) не было отметки Set_LineBreakPos, иначе скобка (или GapLeft), перед которой стоит break_Operator, перенесется на следующую строку (без текста !)
                         bLowPriority      = bCompareOper == false && bContainCompareOper == false;
