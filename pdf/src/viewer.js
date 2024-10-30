@@ -4540,11 +4540,11 @@
 				}
 			}
 
-			if (aDeleted[curIndex]) {
-				for (let j = 0; j < aDeleted[curIndex].length; j++) {
+			if (aDeleted[originIndex]) {
+				for (let j = 0; j < aDeleted[originIndex].length; j++) {
 					oMemory.WriteByte(AscCommon.CommandType.ctAnnotFieldDelete);
 					oMemory.WriteLong(8);
-					oMemory.WriteLong(aDeleted[curIndex][j]);
+					oMemory.WriteLong(aDeleted[originIndex][j]);
 				}
 			}
 

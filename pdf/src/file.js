@@ -2887,7 +2887,8 @@ void main() {\n\
                 page.originRotate   = page["Rotate"];
                 page.Rotate         = page["Rotate"];
             }
-
+            file.originalPagesCount = file.pages.length;
+            
             //file.cacheManager = new AscCommon.CCacheManager();
         }
     };
