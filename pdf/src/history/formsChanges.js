@@ -78,10 +78,10 @@ CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
 		nFlags |= 2;
 
 	if (undefined === this.Old)
-		nFlags |= 3;
+		nFlags |= 4;
 
 	if (Array.isArray(this.New) || Array.isArray(this.Old))
-		nFlags |= 4;
+		nFlags |= 8;
 
 	Writer.WriteLong(nFlags);
 
@@ -106,7 +106,7 @@ CChangesPDFFormValue.prototype.ReadFromBinary = function(Reader)
 	var nFlags = Reader.GetLong();
 
 	let isArrayValue = false;
-	if (nFlags & 4)
+	if (nFlags & 8)
 		isArrayValue = true;
 
 	if (nFlags & 1)
@@ -119,7 +119,7 @@ CChangesPDFFormValue.prototype.ReadFromBinary = function(Reader)
 	else
 		this.New = isArrayValue ? JSON.parse(Reader.GetString2()) : Reader.GetString2();
 
-	if (nFlags & 3)
+	if (nFlags & 4)
 		this.Old = undefined;
 	else
 		this.Old = isArrayValue ? JSON.parse(Reader.GetString2()) : Reader.GetString2();
@@ -272,7 +272,7 @@ CChangesPDFListFormCurIdxs.prototype.WriteToBinary = function(Writer)
 		nFlags |= 2;
 
 	if (undefined === this.Old)
-		nFlags |= 3;
+		nFlags |= 4;
 
 	Writer.WriteLong(nFlags);
 
@@ -305,7 +305,7 @@ CChangesPDFListFormCurIdxs.prototype.ReadFromBinary = function(Reader)
 	else
 		this.New = JSON.parse(Reader.GetString2());
 
-	if (nFlags & 3)
+	if (nFlags & 4)
 		this.Old = undefined;
 	else
 		this.Old = JSON.parse(Reader.GetString2());
@@ -363,10 +363,10 @@ CChangesPDFPushbuttonImage.prototype.WriteToBinary = function(Writer)
 		nFlags |= 2;
 
 	if (undefined === this.New)
-		nFlags |= 3;
+		nFlags |= 4;
 
 	if (undefined === this.Old)
-		nFlags |= 4;
+		nFlags |= 8;
 	
 
 	Writer.WriteLong(nFlags);
@@ -404,12 +404,12 @@ CChangesPDFPushbuttonImage.prototype.ReadFromBinary = function(Reader)
 	else
 		this.APType = Reader.GetLong();
 
-	if (nFlags & 3)
+	if (nFlags & 4)
 		this.New = undefined;
 	else
 		this.New = Reader.GetString2();
 
-	if (nFlags & 4)
+	if (nFlags & 8)
 		this.Old = undefined;
 	else
 		this.Old = Reader.GetString2();
