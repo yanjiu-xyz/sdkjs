@@ -16378,6 +16378,7 @@
 				}
 				t.model.workbook.handlers.trigger("asc_onHideMathTrack");
 				t.model.workbook.handlers.trigger("asc_onHideSpecialPasteOptions");
+				t.model.workbook.handlers.trigger("asc_onHideComment");
 				fullUpdate = true;
 			} else {
 				t.model.setDisplayGridlines(val);
