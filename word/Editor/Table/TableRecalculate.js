@@ -2619,9 +2619,19 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             // Такие ячейки мы обсчитываем, если либо сейчас происходит переход на новую страницу, либо
             // это последняя ячейка в объединении.
             // Обсчет такик ячеек произошел ранее
-
-            Cell.Temp.Y = Y_content_start;
-
+			
+			let clipTop    = undefined;
+			let clipBottom = undefined;
+			if (Asc.linerule_Exact === RowH.HRule)
+			{
+				clipTop    = Y;
+				clipBottom = Y + RowHValue;
+			}
+			
+			Cell.Temp.Y = Y_content_start;
+			Cell.Temp.ClipTop    = Y;
+			Cell.Temp.ClipBottom = Y + RowHValue;
+			
             // Сохраняем ссылку на исходную ячейку
 			var oOriginCell = Cell;
             if ( VMergeCount > 1 )
@@ -2645,9 +2655,15 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 					X_content_end   = Page.X + oTempCellMetrics.X_content_end;
 
                     Y_content_start = Cell.Temp.Y + CellMar.Top.W;
+					
+					if (undefined !== Cell.Temp.ClipTop)
+					{
+						clipTop = Cell.Temp.ClipTop;
+						Cell.Temp.ClipBottom = clipBottom;
+					}
                 }
             }
-
+			
             if (true === Cell.IsVerticalText())
             {
                 VerticallCells.push(Cell);
@@ -2705,14 +2721,6 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             // Какие-то ячейки в строке могут быть не разбиты на строки, а какие то разбиты.
             // Здесь контролируем этот момент, чтобы у тех, которые не разбиты не вызывать
             // Recalculate_Page от несуществующих страниц.
-			
-			let clipTop    = undefined;
-			let clipBottom = undefined;
-			if (Asc.linerule_Exact === RowH.HRule)
-			{
-				clipTop    = Y;
-				clipBottom = Y + RowHValue;
-			}
 			
             var CellPageIndex = CurPage - Cell.Content.Get_StartPage_Relative();
             Cell.Content.Set_ClipInfo(CellPageIndex, Page.X + CellMetrics.X_cell_start, Page.X + CellMetrics.X_cell_end, clipTop, clipBottom);

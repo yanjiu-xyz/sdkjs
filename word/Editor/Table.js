@@ -5835,11 +5835,13 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 				{
 					let rectY = this.RowsInfo[RowIndex].Y[CurPage] + this.RowsInfo[RowIndex].TopDy[CurPage] + CellMar.Top.W + Y_offset;
 					let rectH = Bounds.Bottom - Bounds.Top;
-					if (Row.Get_Height().HRule === Asc.linerule_Exact)
+					if (Row.Get_Height().HRule === Asc.linerule_Exact
+						&& Cell.Temp
+						&& undefined !== Cell.Temp.ClipTop
+						&& undefined !== Cell.Temp.ClipBottom)
 					{
-						let yLimit = this.RowsInfo[RowIndex].Y[CurPage] + this.RowsInfo[RowIndex].H[CurPage];
-						if (rectY + rectH > yLimit)
-							rectH = Math.max(0, yLimit - rectY);
+						rectY = Math.max(rectY, Cell.Temp.ClipTop);
+						rectH = Math.min(rectH, Math.max(0, Cell.Temp.ClipBottom - rectY));
 					}
 					
 					this.DrawingDocument.AddPageSelection(PageAbs, X_start, rectY, X_end - X_start, rectH);
