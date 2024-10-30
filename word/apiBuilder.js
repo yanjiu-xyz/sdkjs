@@ -1258,7 +1258,7 @@
 			{
 				let temp	= nStartPos;
 				nStartPos	= nEndPos;
-				nEndPos			= temp;
+				nEndPos		= temp;
 				return;
 			}
 			
@@ -2889,7 +2889,11 @@
 			nEnd = -1;
 
 		if (nEnd > 0 && nStart > nEnd)
-			[nStart, nEnd] = [nEnd, nStart];
+		{
+			const temp = nStart;
+			nStart = nEnd;
+			nEnd = temp;
+		}
 
 		let nNewStartPos = this.GetStartPos() + nStart;
 		let nNewEndPos = nEnd < 0 ? this.GetEndPos() : nNewStartPos + (nEnd - nStart);
