@@ -5481,10 +5481,22 @@
 								eR && eR.updateData(updatedData, _arrAfterPromise[i].data);
 							}
 						}
-					} else {
-						if (eR) {
-							t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+					} else if (eR) {	 
+						/* 
+							if we haven't received data from an external source
+							leave the link in the wb.externalReferernces array and assign the values ​​as an error #REF 
+						*/
+						
+						if (eR.worksheets) {
+							let arr = [];
+							for (let i in eR.worksheets) {
+								arr.push(eR.worksheets[i]);
+							}
+
+							eR.updateData(arr, _arrAfterPromise[i].data, /* noData */ true);
 						}
+
+						t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
 					}
 				}
 

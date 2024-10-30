@@ -774,7 +774,7 @@ $(function () {
 
 		oParser.isParsed = false;
 		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1)");
-		assert.strictEqual(oParser.calculate().getValue(), 0, 'result after add reference');
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!", 'result after add reference');
 
 		//update external reference structure
 		initReference(wb.externalReferences[0], "Sheet1", "A1", [["1000"]], true);
@@ -892,7 +892,7 @@ $(function () {
 
 		oParser.isParsed = false;
 		assert.ok(oParser.parse(true, null, parseResult), "'" + fLink + "Sheet1" + "'" + "!A1");
-		assert.strictEqual(oParser.calculate().getValue().getValue(), "", 'result after add reference');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "#REF!", 'result after add reference');
 
 		//update external reference structure
 		initReference(wb.externalReferences[0], "Sheet1", "A1", [["1000"]], true);
@@ -914,7 +914,7 @@ $(function () {
 
 		oParser.isParsed = false;
 		assert.ok(oParser.parse(true, null, parseResult), "'" + sLink + "Sheet1" + "'" + "!A1");
-		assert.strictEqual(oParser.calculate().getValue().getValue(), "", 'result after add reference');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "#REF!", 'result after add reference');
 
 		initReference(wb.externalReferences[1], "Sheet1", "A1", [["1111"]], true);
 		assert.strictEqual(oParser.calculate().getValue().getValue(), 1111, 'EXTERNAL_AFTER_INIT');

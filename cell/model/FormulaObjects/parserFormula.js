@@ -2031,13 +2031,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return !!this.getRange();
 	};
 	cRef3D.prototype.getValue = function () {
-		var _r = this.getRange();
+		const t = this;
+		let _r = this.getRange();
 		if (!_r) {
 			return new cError(cErrorType.bad_reference);
 		}
 		var res;
 		_r.getLeftTopCellNoEmpty(function (cell) {
-			res = checkTypeCell(cell);
+			if (!cell && t.externalLink) {
+				// if we refer to a non-existent cell in external data, return a #REF error
+				res = new cError(cErrorType.bad_reference);
+			} else {
+				res = checkTypeCell(cell);
+			}
 		});
 		return res;
 	};

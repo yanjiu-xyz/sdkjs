@@ -15019,7 +15019,7 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 	
-	ExternalReference.prototype.updateData = function (arr, oPortalData) {
+	ExternalReference.prototype.updateData = function (arr, oPortalData, noData) {
 		var t = this;
 		var isChanged = false;
 		var cloneER = this.clone();
@@ -15060,14 +15060,14 @@ function RangeDataManagerElem(bbox, data)
 				if (index != null) {
 					var externalSheetDataSet = this.SheetDataSet[index];
 					if (externalSheetDataSet) {
-						if (externalSheetDataSet.updateFromSheet(t.worksheets[sheetName])) {
+						if (externalSheetDataSet.updateFromSheet(t.worksheets[sheetName], noData)) {
 							isChanged = true;
 						}
 					}
 					let externalDefName = this.getDefinedNamesBySheetIndex(index);
 					if (externalDefName) {
 						for (let i = 0; i < externalDefName.length; i++) {
-							if (externalDefName[i].updateFromSheet(t.worksheets[sheetName])) {
+							if (externalDefName[i].updateFromSheet(t.worksheets[sheetName], noData)) {
 								isChanged = true;
 							}
 						}
@@ -15612,7 +15612,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
-	ExternalSheetDataSet.prototype.updateFromSheet = function(sheet) {
+	ExternalSheetDataSet.prototype.updateFromSheet = function(sheet, noData) {
 		var isChanged = false;
 		if (sheet) {
 			var t = this;
@@ -15631,13 +15631,19 @@ function RangeDataManagerElem(bbox, data)
 					var range = sheet.getRange2(externalCell.Ref);
 					range._foreach(function (cell) {
 
-						let changedCell = externalCell.initFromCell(cell, true);
+						let changedCell = externalCell.initFromCell(cell, true, noData);
 						if (!isChanged) {
 							isChanged = changedCell;
 						}
 
 						var api_sheet = Asc['editor'];
 						var wb = api_sheet.wbModel;
+						
+						/* if we haven't received data from an external source, put #REF error for all cells */
+						if (noData) {
+							cell._setValue("#REF!");
+						}
+
 						wb.dependencyFormulas.addToChangedCell(cell);
 					});
 				}
@@ -15823,7 +15829,7 @@ function RangeDataManagerElem(bbox, data)
 
 		return newObj;
 	};
-	ExternalCell.prototype.initFromCell = function(cell, bUpdate) {
+	ExternalCell.prototype.initFromCell = function(cell, bUpdate, noData) {
 		var isChanged = false;
 		if (cell) {
 			var t = this;
@@ -15833,7 +15839,7 @@ function RangeDataManagerElem(bbox, data)
 				});
 			}
 
-			var newVal = cell.getValue();
+			let newVal = noData ? "#REF" : cell.getValue();
 			if (this.CellValue !== newVal) {
 				isChanged = true;
 				this.CellValue = newVal;
@@ -15852,6 +15858,11 @@ function RangeDataManagerElem(bbox, data)
 					cellValueType = Asc.ECellTypeType.celltypeError;
 					break;
 			}
+
+			if (noData) {
+				cellValueType = Asc.ECellTypeType.celltypeError;
+			}
+
 			if (this.CellType !== cellValueType) {
 				this.CellType = cellValueType;
 				isChanged = true;
