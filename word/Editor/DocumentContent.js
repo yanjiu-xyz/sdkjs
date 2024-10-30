@@ -1550,11 +1550,8 @@ CDocumentContent.prototype.Shift = function(CurPage, Dx, Dy)
 	this.Pages[CurPage].Shift(Dx, Dy);
 
 	if (this.ClipInfo[CurPage])
-	{
-		this.ClipInfo[CurPage].X0 += Dx;
-		this.ClipInfo[CurPage].X1 += Dx;
-	}
-
+		this.ClipInfo[CurPage].shift(Dx, Dy);
+	
 	var StartPos = this.Pages[CurPage].Pos;
 	var EndPos   = this.Pages[CurPage].EndPos;
 	for (var Index = StartPos; Index <= EndPos; Index++)
@@ -9286,6 +9283,17 @@ CDocumentRecalculateObject.prototype =
 			this.Y1 = clipRect.Y1;
 		else if (undefined !== clipRect.Y1 && null !== clipRect.Y1)
 			this.Y1 = Math.min(this.Y1, clipRect.Y1);
+	};
+	ClipRect.prototype.shift = function(dx, dy)
+	{
+		if (undefined !== this.X0)
+			this.X0 += dx;
+		if (undefined !== this.X1)
+			this.X1 += dx;
+		if (undefined !== this.Y0)
+			this.Y0 += dy;
+		if (undefined !== this.Y1)
+			this.Y1 += dy;
 	};
 	ClipRect.prototype.clone = function()
 	{
