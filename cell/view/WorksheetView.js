@@ -10550,9 +10550,21 @@
 			reinitScrollY = oldEnd !== vr.r2;
 		}*/
 
+		let t = this;
+		let isNeedExpand = function () {
+			//we must init scroll, if expand scroll range(calculate new rows height)
+			//todo need review
+			let controller = t.workbook.controller;
+			let scrollStep = controller.settings.vscrollStep;
+			if (!t.workbook.Api.isMobileVersion && !AscCommon.AscBrowser.isMacOs && !initRowsCount && t.workbook.getSmoothScrolling() && delta > 0 && t.model.getRowsCount() >
+				t.visibleRange.r2 && controller.vsbMax && scrollStep && controller.vsbMax < (t.getVerticalScrollRange() * scrollStep)) {
+				return true;
+			}
+			return false;
+		};
 
 		if ((reinitScrollY && !this.workbook.getSmoothScrolling()) || (reinitScrollY && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
-			(0 > delta && initRowsCount && this._initRowsCount()) || (this.workbook.getSmoothScrolling() && initRowsCount && this.nRowsCount !== gc_nMaxRow)) {
+			(0 > delta && initRowsCount && this._initRowsCount()) || (this.workbook.getSmoothScrolling() && initRowsCount && this.nRowsCount !== gc_nMaxRow) || isNeedExpand()) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
 		}
 		this._reinitializeScroll();
