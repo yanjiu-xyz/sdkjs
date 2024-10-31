@@ -10452,7 +10452,8 @@
 		this._updateDrawingArea();
 		
 		if (this.workbook.getSmoothScrolling()) {
-			ctx.AddClipRect(this.headersLeft - this.groupWidth, this.cellsTop, ctxW, ctxH);
+			ctx.AddClipRect(this.headersLeft - this.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
+			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(this.headersLeft - this.groupWidth, clearTop, ctxW, clearHeight);
 		}
 
         // Дорисовываем необходимое
@@ -10536,6 +10537,7 @@
 
 		if (this.workbook.getSmoothScrolling()) {
 			ctx.RemoveClipRect();
+			this.drawingGraphicCtx.RemoveClipRect && this.drawingGraphicCtx.RemoveClipRect();
 		}
 
         // Отрисовывать нужно всегда, вдруг бордеры
@@ -10825,7 +10827,8 @@
 		this._endRtlDrawingRendering();
 
 		if (this.workbook.getSmoothScrolling()) {
-			ctx.AddClipRect(this.cellsLeft, this.headersTop - this.groupHeight, ctxW, ctxH);
+			ctx.AddClipRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
+			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(clearLeft, y, clearWidth, ctxH);
 		}
 
         // Дорисовываем необходимое
@@ -10880,6 +10883,7 @@
 
 		if (this.workbook.getSmoothScrolling()) {
 			ctx.RemoveClipRect();
+			this.drawingGraphicCtx.RemoveClipRect && this.drawingGraphicCtx.RemoveClipRect();
 		}
 
         // Отрисовывать нужно всегда, вдруг бордеры
