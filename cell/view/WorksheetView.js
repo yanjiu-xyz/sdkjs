@@ -6094,6 +6094,9 @@
 			&& AscCommon.align_Center !== cellHA)) {
 			cellHA = AscCommon.align_Left;
 		}
+		if (this.getRightToLeft()) {
+			rect._x = this.getCtxWidth(ctx) - rect._x - rect._width;
+		}
 		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, cellHA);
 		rect._y = this._calcTextVertPos(rect._y, rect._height, bl, tm, align.getAlignVertical());
 		var dScale = asc_getcvt(0, 3, this._getPPIX());
@@ -6122,11 +6125,6 @@
 				var oMatrix = new AscCommon.CMatrix();
 				oMatrix.tx = rect._x;
 				oMatrix.ty = rect._y;
-				//TODO rtl!!! print + offset left side
-				if (this.getRightToLeft()) {
-					oMatrix.sx = -1;
-					oMatrix.tx = (this.getCtxWidth(ctx) * dScale) - oMatrix.tx;
-				}
 
 				graphics.transform3(oMatrix);
 				var shapeDrawer = new AscCommon.CShapeDrawer();
