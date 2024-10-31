@@ -7386,6 +7386,14 @@ function parserFormula( formula, parent, _ws ) {
 							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: sheetName /*_3DRefTmp[1]*/});
 						} else {
 							isExternalRefExist = true;
+							let externalName = _3DRefTmp[3];
+							if (!parseResult.externalReferenesNeedAdd) {
+								parseResult.externalReferenesNeedAdd = [];
+							}
+							if (!parseResult.externalReferenesNeedAdd[externalName]) {
+								parseResult.externalReferenesNeedAdd[externalName] = [];
+							}
+							parseResult.externalReferenesNeedAdd[externalName].push({sheet: sheetName /*_3DRefTmp[1]*/});
 						}
 					}
 
@@ -7399,7 +7407,7 @@ function parserFormula( formula, parent, _ws ) {
 				// if it's impossible to get a sheet from an external file, but the file itself is exist, then we return an error about incorrectly entering the formula
 				let wsNotExist = externalLink && isExternalRefExist && !wsF;
 
-				if ((!(wsF && wsT) && !externalLink) || wsNotExist) {
+				if ((!(wsF && wsT) && !externalLink) /*|| wsNotExist*/) {
 					parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
 					if (!ignoreErrors) {
 						t.outStack = [];

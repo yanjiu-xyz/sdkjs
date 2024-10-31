@@ -15018,11 +15018,24 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return res;
 	};
+
+	ExternalReference.prototype.removeSheetByName = function (sheetName) {
+		if (sheetName != null) {
+			let index = this.getSheetByName(sheetName);
+			if (index != null) {
+				this.SheetNames.splice(index, 1);
+				this.SheetDataSet.splice(index, 1);
+				delete this.worksheets[sheetName];
+			}
+		}
+	};
 	
 	ExternalReference.prototype.updateData = function (arr, oPortalData, noData) {
 		var t = this;
 		var isChanged = false;
 		var cloneER = this.clone();
+		
+		let existedWsArray = [];
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
@@ -15073,6 +15086,15 @@ function RangeDataManagerElem(bbox, data)
 						}
 					}
 				}
+			}
+			existedWsArray.push(sheetName);
+		}
+
+		// delete all non-existent sheets in ExternalReference
+		for (let wsName in this.worksheets) {
+			if (!existedWsArray.includes(wsName)) {
+				// throw an error if we referenced to one of the deleted sheets?
+				this.removeSheetByName(wsName);
 			}
 		}
 
