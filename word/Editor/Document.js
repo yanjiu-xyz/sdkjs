@@ -2824,6 +2824,7 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction)
 		if (arrChanges.length)
 			this.RecalculateByChanges(arrChanges);
 		
+		this.History.ClearRedo();
 		actionCompleted = false;
 	}
 	
