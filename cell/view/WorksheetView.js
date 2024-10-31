@@ -11017,10 +11017,12 @@
 		if (x >= this.cellsLeft) {
 			if (this.topLeftFrozenCell) {
 				cFrozen = this.topLeftFrozenCell.getCol0();
-				widthDiff += this._getColLeft(cFrozen) - this._getColLeft(0);
+				widthDiff = this._getColLeft(cFrozen) - this._getColLeft(0);
 				if (x < this.cellsLeft + widthDiff && 0 !== widthDiff) {
 					c = 0;
 					widthDiff = 0;
+				} else {
+					widthDiff -= this.getHorizontalScrollCorrect();
 				}
 			}
 			for (x1 = this.cellsLeft + widthDiff, c2 = this.nColsCount - 1; c <= c2; ++c, x1 = x2) {
@@ -11085,10 +11087,12 @@
 		if (y >= this.cellsTop) {
 			if (this.topLeftFrozenCell) {
 				rFrozen = this.topLeftFrozenCell.getRow0();
-				heightDiff += this._getRowTop(rFrozen) - this._getRowTop(0);
+				heightDiff = this._getRowTop(rFrozen) - this._getRowTop(0);
 				if (y < this.cellsTop + heightDiff && 0 !== heightDiff) {
 					r = 0;
 					heightDiff = 0;
+				} else {
+					heightDiff -= this.getScrollCorrect();
 				}
 			}
 			for (y1 = this.cellsTop + heightDiff, r2 = this.nRowsCount - 1; r <= r2; ++r, y1 = y2) {
