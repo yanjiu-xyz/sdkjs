@@ -6345,10 +6345,12 @@
 	 */
 	ApiDocument.prototype.SetFormsData = function(arrData)
 	{
-		if (!arrData || !Array.isArray(arrData))
-			return;
-		
-		this.Document.GetFormsManager().SetAllFormsData(arrData);
+		return executeNoFormLockCheck(function() {
+			if (!arrData || !Array.isArray(arrData))
+				return;
+			
+			this.Document.GetFormsManager().SetAllFormsData(arrData);
+		}, this);
 	};
 	/**
 	 * Sets the change tracking mode.
