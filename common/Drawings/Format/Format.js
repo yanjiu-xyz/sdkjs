@@ -1815,7 +1815,22 @@
 				oMod.name = name;
 				while (reader.MoveToNextAttribute()) {
 					if (reader.GetNameNoNS() === "val") {
-						oMod.val = reader.GetValueInt();
+						let sVal = reader.GetValue();
+						let nLen = sVal.length;
+						if(typeof sVal === "string" && nLen > 0) {
+							if ((nLen - 1) === sVal.indexOf("%")) {
+								sVal.substring(0, nLen - 1);
+								let dVal = parseFloat(sVal);
+								if (AscFormat.isRealNumber(dVal))
+									oMod.val = dVal * 1000 + 0.5 >> 0;
+							}
+							else {
+								let dVal = parseFloat(sVal);
+								if(AscFormat.isRealNumber(dVal)) {
+									oMod.val = dVal + 0.5 >> 0;
+								}
+							}
+						}
 						break;
 					}
 				}
