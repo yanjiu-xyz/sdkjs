@@ -2663,6 +2663,8 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 					}
                 }
             }
+	
+			Cell.Temp.UseClip = false;
 			
             if (true === Cell.IsVerticalText())
             {
@@ -2670,6 +2672,11 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 CurGridCol += GridSpan;
                 continue;
             }
+			
+			// Для случая, когда смерженная вертикально ячейка идет в строке не с точной высотой, а заканчивается
+			// в строке с точной высотой строки
+			if (Asc.linerule_Exact === RowH.HRule)
+				Cell.Temp.UseClip = true;
 			
 			if (null === CellSpacing)
 			{
@@ -2729,6 +2736,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 if ( true === bCanShift )
                 {
 					Cell.ShiftCell(0, ShiftDx, ShiftDy);
+					Cell.Content.Set_ClipInfo(CellPageIndex, Page.X + CellMetrics.X_cell_start, Page.X + CellMetrics.X_cell_end, clipTop, clipBottom);
                     Cell.Content.UpdateEndInfo();
                 }
                 else
@@ -2770,6 +2778,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                         MaxBotValue_vmerge = CellContentBounds_Bottom;
                 }
             }
+			
 
 			var nCurFootnotesHeight = oFootnotes ? oFootnotes.GetHeight(nPageAbs, nColumnAbs) : 0;
 			if (oFootnotes && nCurFootnotesHeight > nFootnotesHeight + 0.001)

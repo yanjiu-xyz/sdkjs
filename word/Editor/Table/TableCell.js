@@ -102,6 +102,10 @@ function CTableCell(Row, ColW)
         X_cell_end   : 0,
         Y_cell_start : 0,
         Y_cell_end   : 0,
+		
+		UseClip : false,
+		ClipTop : 0,
+		ClipBottom : 0,
 
         Y_VAlign_offset : [] // Сдвиг, который нужно сделать из-за VAlign (массив по страницам)
     };
@@ -1070,6 +1074,9 @@ CTableCell.prototype =
 
 	ShiftCell : function(CurPage, dX, dY)
     {
+		// TODO: По логике нужно тут двигать this.Temp.ClipTop/ClipBottom, но при пересчете мы их проставляем заново,
+		//       возможно сделать через флаг
+		
         if (true === this.IsVerticalText())
         {
             this.Temp.X_start += dX;

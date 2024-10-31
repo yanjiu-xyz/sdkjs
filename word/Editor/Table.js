@@ -5835,8 +5835,8 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 				{
 					let rectY = this.RowsInfo[RowIndex].Y[CurPage] + this.RowsInfo[RowIndex].TopDy[CurPage] + CellMar.Top.W + Y_offset;
 					let rectH = Bounds.Bottom - Bounds.Top;
-					if (Row.Get_Height().HRule === Asc.linerule_Exact
-						&& Cell.Temp
+					if (Cell.Temp
+						&& Cell.Temp.UseClip
 						&& undefined !== Cell.Temp.ClipTop
 						&& undefined !== Cell.Temp.ClipBottom)
 					{
