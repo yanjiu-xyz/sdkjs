@@ -1545,11 +1545,11 @@ CDocumentContent.prototype.GetAllFloatElements = function(FloatObjs)
 
 	return FloatObjs;
 };
-CDocumentContent.prototype.Shift = function(CurPage, Dx, Dy)
+CDocumentContent.prototype.Shift = function(CurPage, Dx, Dy, keepClip)
 {
 	this.Pages[CurPage].Shift(Dx, Dy);
 
-	if (this.ClipInfo[CurPage])
+	if (this.ClipInfo[CurPage] && true !== keepClip)
 		this.ClipInfo[CurPage].shift(Dx, Dy);
 	
 	var StartPos = this.Pages[CurPage].Pos;

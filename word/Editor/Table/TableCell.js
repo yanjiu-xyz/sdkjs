@@ -1097,9 +1097,9 @@ CTableCell.prototype =
         }
     },
 
-	ShiftCellContent : function(nCurPage, nShiftX, nShiftY)
+	ShiftCellContent : function(nCurPage, nShiftX, nShiftY, keepClip)
 	{
-		this.Content.Shift(nCurPage, nShiftX, nShiftY);
+		this.Content.Shift(nCurPage, nShiftX, nShiftY, keepClip);
 
 		var arrDrawings = this.Content.GetAllDrawingObjects();
 		for (var nIndex = 0, nCount = arrDrawings.length; nIndex < nCount; ++nIndex)
