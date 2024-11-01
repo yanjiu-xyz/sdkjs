@@ -7498,7 +7498,7 @@
 		}
 		let scrollCorrect = this.getScrollCorrect();
 		let frozenRow = checkFrozen && this.topLeftFrozenCell && this.topLeftFrozenCell.getRow0();
-		if (frozenRow && frozenRow >= nRow) {
+		if (frozenRow && frozenRow > nRow) {
 			scrollCorrect = 0;
 		}
 		return this._getRowTop(nRow) - this.cellsTop + scrollCorrect;
@@ -7510,7 +7510,7 @@
 		}
 		let scrollCorrect = this.getHorizontalScrollCorrect();
 		let frozenCol = checkFrozen && this.topLeftFrozenCell && this.topLeftFrozenCell.getCol0();
-		if (frozenCol && frozenCol >= nCol) {
+		if (frozenCol && frozenCol > nCol) {
 			scrollCorrect = 0;
 		}
 
@@ -8064,14 +8064,35 @@
             }
             if (0 <= cFrozen) {
                 oFrozenRange = new asc_Range(0, this.visibleRange.r1, cFrozen, this.visibleRange.r2);
-                res = drawFunction.call(this, oFrozenRange, this._getColLeft(0) - this.cellsLeft, offsetY, args);
-                if (!res) {
-                    return;
-                }
+
+				let clipX = this._getColLeft(oFrozenRange.c1) - offsetX + this.getHorizontalScrollCorrect();
+				let clipY = this._getRowTop(oFrozenRange.r1) - offsetY + this.getScrollCorrect();
+				let clipW = this._getColLeft(this.visibleRange.c2 + 1) - this._getColLeft(oFrozenRange.c1);
+				let clipH = this._getRowTop(this.visibleRange.r2 + 1) - this._getRowTop(oFrozenRange.r1);
+
+				this.overlayCtx.save().beginPath()
+					.rect(clipX, clipY, clipW, clipH)
+					.clip();
+				res = drawFunction.call(this, oFrozenRange, this._getColLeft(0) - this.cellsLeft, offsetY, args);
+				this.overlayCtx.restore();
+
+				if (!res) {
+					return;
+				}
             }
             if (0 <= rFrozen) {
                 oFrozenRange = new asc_Range(this.visibleRange.c1, 0, this.visibleRange.c2, rFrozen);
-                res = drawFunction.call(this, oFrozenRange, offsetX, this._getOffsetY(0, true), args);
+				let clipX = this._getColLeft(oFrozenRange.c1) - offsetX + this.getHorizontalScrollCorrect();
+				let clipY = this._getRowTop(oFrozenRange.r1) - offsetY + this.getScrollCorrect();
+				let clipW = this._getColLeft(this.visibleRange.c2 + 1) - this._getColLeft(oFrozenRange.c1);
+				let clipH = this._getRowTop(this.visibleRange.r2 + 1) - this._getRowTop(oFrozenRange.r1);
+
+				this.overlayCtx.save().beginPath()
+					.rect(clipX, clipY, clipW, clipH)
+					.clip();
+				res = drawFunction.call(this, oFrozenRange, offsetX, this._getOffsetY(0, true), args);
+				this.overlayCtx.restore();
+
                 if (!res) {
                     return;
                 }
@@ -8508,7 +8529,7 @@
             if (range.r1 !== this.visibleRange.r1) {
                 diffHeight = 0;
             }
-            offsetX = this._getOffsetX(range.c1) - diffWidth;
+            offsetX = this._getOffsetX(range.c1, true) - diffWidth;
             offsetY = this._getOffsetY(range.r1, true) - diffHeight;
         } else {
             offsetX = this._getOffsetX() - diffWidth;
