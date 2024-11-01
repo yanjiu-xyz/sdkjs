@@ -2631,6 +2631,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 			Cell.Temp.Y = Y_content_start;
 			Cell.Temp.ClipTop    = Y;
 			Cell.Temp.ClipBottom = Y + RowHValue;
+			Cell.Temp.ClipPage   = CurPage;
 			
             // Сохраняем ссылку на исходную ячейку
 			var oOriginCell = Cell;
@@ -2656,7 +2657,9 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
                     Y_content_start = Cell.Temp.Y + CellMar.Top.W;
 					
-					if (undefined !== Cell.Temp.ClipTop)
+					// TODO: Клип пока выставляем для первой страницы ячейки, по логике надо просто выставлять клип на
+					//       ячейку на текущей странице
+					if (undefined !== Cell.Temp.ClipTop && CurPage === Cell.Temp.ClipPage)
 					{
 						clipTop = Cell.Temp.ClipTop;
 						Cell.Temp.ClipBottom = clipBottom;
