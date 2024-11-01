@@ -333,9 +333,9 @@ CBlockLevelSdt.prototype.GetDirectTextPr = function()
 {
 	return this.Content.GetDirectTextPr();
 };
-CBlockLevelSdt.prototype.DrawSelectionOnPage = function(CurPage)
+CBlockLevelSdt.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
-	this.Content.DrawSelectionOnPage(CurPage);
+	this.Content.DrawSelectionOnPage(CurPage, clipInfo);
 };
 CBlockLevelSdt.prototype.GetSelectionBounds = function()
 {

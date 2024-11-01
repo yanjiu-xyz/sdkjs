@@ -347,7 +347,7 @@ CDocumentContentElementBase.prototype.GetDirectTextPr = function()
 {
 	return new CTextPr();
 };
-CDocumentContentElementBase.prototype.DrawSelectionOnPage = function(CurPage)
+CDocumentContentElementBase.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
 };
 CDocumentContentElementBase.prototype.StopSelection = function()
