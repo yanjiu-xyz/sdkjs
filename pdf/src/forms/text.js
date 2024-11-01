@@ -214,7 +214,7 @@
             return;
         }
 
-        if (isOnOpen == false && this.GetType() == AscPDF.FIELD_TYPES.text) {
+        if (isOnOpen == false && this.GetType() == AscPDF.FIELD_TYPES.text && typeof(displayValue) == "string") {
             let aChars      = displayValue.codePointsArray();
             let nCharsCount = AscWord.GraphemesCounter.GetCount(aChars, this.content.GetCalculatedTextPr());
             let nCharLimit  = this.GetCharLimit();

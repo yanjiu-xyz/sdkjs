@@ -759,8 +759,11 @@ var CPresentation = CPresentation || function(){};
                 
         let oOnFocus = oNextForm.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
-        if (oOnFocus && oOnFocus.Actions.length > 0)
+        if (oOnFocus && oOnFocus.Actions.length > 0) {
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this);
+            oActionsQueue.AddActions(oOnFocus.Actions);
+            oActionsQueue.Start();
+        }
         else
             callbackAfterFocus.bind(this)();
     };
@@ -842,8 +845,11 @@ var CPresentation = CPresentation || function(){};
         
         let oOnFocus = oNextForm.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
-        if (oOnFocus && oOnFocus.Actions.length > 0)
+        if (oOnFocus && oOnFocus.Actions.length > 0) {
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this);
+            oActionsQueue.AddActions(oOnFocus.Actions);
+            oActionsQueue.Start();
+        }
         else
             callbackAfterFocus.bind(this)();
     };
