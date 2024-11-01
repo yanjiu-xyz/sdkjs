@@ -10468,13 +10468,13 @@
 		}
         ctx.setFillStyle(this.settings.cells.defaultState.background)
           .fillRect(this.headersLeft - this.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
-        this.drawingGraphicCtx.clearRect(this.headersLeft - this.groupWidth, clearTop, ctxW, clearHeight);
+        this.drawingGraphicCtx.clearRect(this.headersLeft - this.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
 
 		this._updateDrawingArea();
 		
 		if (this.workbook.getSmoothScrolling()) {
 			ctx.AddClipRect(this.headersLeft - this.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
-			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(this.headersLeft - this.groupWidth, clearTop, ctxW, clearHeight);
+			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(this.headersLeft - this.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
 		}
 
         // Дорисовываем необходимое
@@ -10841,7 +10841,7 @@
 
         ctx.setFillStyle(this.settings.cells.defaultState.background)
           .fillRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
-        this.drawingGraphicCtx.clearRect(clearLeft, y, clearWidth, ctxH);
+        this.drawingGraphicCtx.clearRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
 
 		this._updateDrawingArea();
 
@@ -10849,7 +10849,7 @@
 
 		if (this.workbook.getSmoothScrolling()) {
 			ctx.AddClipRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
-			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(clearLeft, y, clearWidth, ctxH);
+			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
 		}
 
         // Дорисовываем необходимое
