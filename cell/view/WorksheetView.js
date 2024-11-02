@@ -10845,13 +10845,12 @@
 
 		this._updateDrawingArea();
 
-		this._endRtlDrawingRendering();
 
 		if (this.workbook.getSmoothScrolling()) {
-			ctx.AddClipRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
-			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
+			ctx.AddClipRect(clearLeft - clearOffset, y, clearWidth + clearOffset + this.getRightToLeftOffset(), ctxH);
+			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(clearLeft - clearOffset, y, clearWidth + clearOffset + this.getRightToLeftOffset(), ctxH);
 		}
-
+		this._endRtlDrawingRendering();
         // Дорисовываем необходимое
         if (dx < 0 || vr.c2 !== oldEnd || oldVCE_isPartial || (clearWidth !== 0 && this.workbook.getSmoothScrolling())) {
             var c1, c2;
