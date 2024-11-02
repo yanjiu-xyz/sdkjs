@@ -9865,8 +9865,9 @@ Paragraph.prototype.Remove_StartTabs = function(TabsCounter)
  * Применяем заданную нумерацию к данному параграфу (учитываем отступы, количество табов в начале параграфа и т.д.)
  * @param sNumId {string}
  * @param nLvl {number} 0..8
+ * @param checkIndents {boolean} - Подбирать ли уровень по отступам
  */
-Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
+Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl, checkIndents)
 {
 	var ParaPr    = this.Get_CompiledPr2(false).ParaPr;
 	var NumPr_old = this.GetNumPr();
@@ -9979,24 +9980,30 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 			// Если выделено несколько параграфов, тогда уже по сдвигу X определяем уровень данной нумерации
 
 			var LvlFound  = -1;
-			for (var LvlIndex = 0; LvlIndex < 9; ++LvlIndex)
+			if (false !== checkIndents)
 			{
-				var oNumLvl = oNum.GetLvl(LvlIndex);
-				if (oNumLvl)
+				for (var LvlIndex = 0; LvlIndex < 9; ++LvlIndex)
 				{
-					var oNumParaPr = oNumLvl.GetParaPr();
-
-					if (undefined != oNumParaPr.Ind && undefined != oNumParaPr.Ind.Left && X <= oNumParaPr.Ind.Left)
+					var oNumLvl = oNum.GetLvl(LvlIndex);
+					if (oNumLvl)
 					{
-						LvlFound = LvlIndex;
-						break;
+						var oNumParaPr = oNumLvl.GetParaPr();
+						
+						if (undefined != oNumParaPr.Ind && undefined != oNumParaPr.Ind.Left && X <= oNumParaPr.Ind.Left)
+						{
+							LvlFound = LvlIndex;
+							break;
+						}
 					}
 				}
+				if (-1 === LvlFound)
+					LvlFound = 0;
 			}
-
-			if (-1 === LvlFound)
-				LvlFound = 0;
-
+			else
+			{
+				LvlFound = undefined !== nLvl ? nLvl : 0;
+			}
+			
 			if (this.Pr.Ind && (undefined !== this.Pr.Ind || undefined !== this.Pr.Ind.Left))
 			{
 				AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
