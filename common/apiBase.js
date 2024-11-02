@@ -1570,6 +1570,8 @@
 	// CoAuthoring
 	baseEditorsApi.prototype._coAuthoringInit                    = function()
 	{
+		this.initCollaborativeEditing();
+		
 		var t = this;
 		//Если User не задан, отключаем коавторинг.
 		if (null == this.User || null == this.User.asc_getId())
@@ -1909,10 +1911,6 @@
 			}
 			// На старте не нужно ничего делать
 			if (isStartEvent) {
-				// TODO: Возможна ситуация, что это событие придет до onEndLoadSdk, и класс совместки еще не создан
-				//       Стоит перенести старт совместки после загрузки sdk, а если sdk не загружено, то тут просто пометить,
-				//       что надо будет начать совместку
-				t.initCollaborativeEditing();
 				t.startCollaborationEditing();
 			} else {
 				t._unlockDocument(isWaitAuth);
