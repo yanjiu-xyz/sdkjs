@@ -1848,8 +1848,14 @@ ParaDrawing.prototype.GetInnerForm = function()
 };
 ParaDrawing.prototype.Use_TextWrap = function()
 {
+	if (this.IsInline())
+		return false;
+	
+	// TODO: Проверить, возможно данную проверку можно заменить на Paragraph.IsInline()
 	// Если автофигура привязана к параграфу с рамкой, обтекание не делается
-	if (this.IsInline() || !this.Parent || !this.Parent.Get_FramePr || (null !== this.Parent.Get_FramePr() && undefined !== this.Parent.Get_FramePr()))
+	if (!this.Parent
+		|| !this.Parent.GetFramePr
+		|| (this.Parent.GetFramePr() && !this.Parent.GetFramePr().IsInline()))
 		return false;
 
 	// здесь должна быть проверка, нужно ли использовать обтекание относительно данного объекта,
