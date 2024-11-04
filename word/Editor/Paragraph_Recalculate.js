@@ -1497,6 +1497,9 @@ Paragraph.prototype.private_RecalculateLinePosition    = function(CurLine, CurPa
 
     Bottom  = Bottom2;
     Bottom += this.Lines[CurLine].Metrics.LineGap;
+	
+	if (this.Lines[CurLine].Metrics.LineGap < 0)
+		Bottom2 += this.Lines[CurLine].Metrics.LineGap;
 
     // Если данная строка последняя, тогда подкорректируем нижнюю границу
     if ( true === PRS.End )

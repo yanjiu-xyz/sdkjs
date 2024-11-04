@@ -1161,11 +1161,14 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
 
                 if (FrameH + FrameY > Page_H)
                     FrameY = Page_H - FrameH;
-
-                // TODO: Пересмотреть, почему эти погрешности возникают
-                // Избавляемся от погрешности
-                FrameY += 0.001;
-                FrameH -= 0.002;
+	
+				// Начинаем рамку с позиции начала следующего твипса, чтобы не было пересечений с объектами, заканчивающимися
+				// на текущем твипсе
+				// TODO: Проверить, нужно ли уменьшать размер рамки на 2 твипса (ранее уменьшали на 0.002, когда исправляли проблему с пересечением объектов в обтекании)
+				let twFrameY = AscCommon.MMToTwips(AscCommon.CorrectMMToTwips(FrameY));
+	
+				FrameY = AscCommon.TwipsToMM(twFrameY + 1);
+				FrameH -= AscCommon.TwipsToMM(2);
 
                 if (FrameY < 0)
                     FrameY = 0;
