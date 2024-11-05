@@ -705,6 +705,13 @@
 		this.iScroll._initEvents();
 	};
 
+	CMobileTouchManagerBase.prototype.isTouchMode = function()
+	{
+		if (this.isDesktopMode)
+			return this.desktopTouchState;
+		return true;
+	};
+
 	CMobileTouchManagerBase.prototype.checkTouchEvent = function(e)
 	{
 		if (!e)

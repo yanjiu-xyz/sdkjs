@@ -221,17 +221,20 @@ function CTableOutlineDr()
 		this.TrackOffsetX = 0;
 		this.TrackOffsetY = 0;
 
+		let drDoc = word_control.m_oDrawingDocument;
+		let isTouchMode = word_control.MobileTouchManager ? word_control.MobileTouchManager.isTouchMode() : false;
+
 		if (!this.TableMatrix || global_MatrixTransformer.IsIdentity(this.TableMatrix))
 		{
-			if (word_control.MobileTouchManager)
+			if (isTouchMode)
 			{
 				var _move_point = word_control.MobileTouchManager.TableMovePoint;
 
 				if (_move_point == null || pos.Page != _table_track.PageNum)
 					return false;
 
-				var _pos1 = word_control.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page);
-				var _pos2 = word_control.m_oDrawingDocument.ConvertCoordsToCursorWR(_move_point.X, _move_point.Y, pos.Page);
+				var _pos1 = drDoc.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page);
+				var _pos2 = drDoc.ConvertCoordsToCursorWR(_move_point.X, _move_point.Y, pos.Page);
 
 				var _eps = word_control.MobileTouchManager.TrackTargetEps;
 
@@ -369,7 +372,7 @@ function CTableOutlineDr()
 		}
 		else
 		{
-			if (word_control.MobileTouchManager)
+			if (isTouchMode)
 			{
 				var _invert = global_MatrixTransformer.Invert(this.TableMatrix);
 				var _posx = _invert.TransformPointX(pos.X, pos.Y);
@@ -809,7 +812,7 @@ function CTableOutlineDr()
 		if (null == this.TableOutline)
 			return;
 
-		if (word_control.MobileTouchManager)
+		if (word_control.MobileTouchManager && word_control.MobileTouchManager.isTouchMode())
 			return;
 
 		var _table_track = this.TableOutline;
@@ -3732,7 +3735,8 @@ function CDrawingDocument()
 	// recalculate
 	this.OnStartRecalculate = function (pageCount)
 	{
-		if (!this.m_oWordControl.MobileTouchManager)
+		let isTouchMode = this.m_oWordControl.MobileTouchManager ? this.m_oWordControl.MobileTouchManager.isTouchMode() : false;
+		if (!isTouchMode)
 			this.TableOutlineDr.TableOutline = null;
 
 		if (this.m_oWordControl)
@@ -3741,7 +3745,7 @@ function CDrawingDocument()
 		this.m_lCountCalculatePages = pageCount;
 		//console.log("start " + this.m_lCountCalculatePages);
 
-		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
+		if (isTouchMode)
 			this.m_oWordControl.MobileTouchManager.ClearContextMenu();
 
 		this.m_bIsDocumentCalculating = true;
@@ -4901,9 +4905,10 @@ function CDrawingDocument()
 
 	this.StartTrackTable = function (obj, transform)
 	{
-		if (this.m_oWordControl.MobileTouchManager)
+		let touchManager = this.m_oWordControl.MobileTouchManager;
+		if (touchManager && touchManager.isTouchMode())
 		{
-			if (!this.m_oWordControl.MobileTouchManager.TableStartTrack_Check)
+			if (!touchManager.TableStartTrack_Check)
 				return;
 		}
 
@@ -5823,7 +5828,8 @@ function CDrawingDocument()
 		this.m_oWordControl.UpdateHorRuler();
 		this.m_oWordControl.UpdateVerRuler();
 
-		if (this.m_oWordControl.MobileTouchManager)
+		if (this.m_oWordControl.MobileTouchManager &&
+			this.m_oWordControl.MobileTouchManager.isTouchMode())
 		{
 			this.m_oWordControl.MobileTouchManager.TableStartTrack_Check = true;
 			markup.Table.StartTrackTable();

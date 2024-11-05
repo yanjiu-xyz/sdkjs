@@ -436,6 +436,12 @@
 				var DrawingDocument = this.delegate.DrawingDocument;
 				var pos = DrawingDocument.ConvertCoordsFromCursorPage(global_mouseEvent.X, global_mouseEvent.Y, DrawingDocument.TableOutlineDr.CurrentPageIndex);
 
+				if (true === this.delegate.HtmlPage.m_bIsRuler)
+				{
+					pos.X -= 5;
+					pos.Y -= 7;
+				}
+
 				var _Transform = null;
 				if (DrawingDocument.TableOutlineDr)
 					_Transform = DrawingDocument.TableOutlineDr.TableMatrix;
@@ -624,16 +630,13 @@
 
 				this.Mode = AscCommon.MobileTouchMode.None;
 
-				var _xOffset = HtmlPage.X;
-				var _yOffset = HtmlPage.Y;
+				var pos = DrawingDocument.ConvertCoordsFromCursorPage(global_mouseEvent.X, global_mouseEvent.Y, DrawingDocument.TableOutlineDr.CurrentPageIndex);
 
 				if (true === HtmlPage.m_bIsRuler)
 				{
-					_xOffset += (5 * g_dKoef_mm_to_pix);
-					_yOffset += (7 * g_dKoef_mm_to_pix);
+					pos.X -= 5;
+					pos.Y -= 7;
 				}
-
-				var pos = DrawingDocument.ConvertCoordsFromCursorPage(global_mouseEvent.X, global_mouseEvent.Y, DrawingDocument.TableOutlineDr.CurrentPageIndex);
 
 				var _Transform = null;
 				if (DrawingDocument.TableOutlineDr)
