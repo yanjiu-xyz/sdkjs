@@ -10260,7 +10260,7 @@
 		if (defaultScrollPxStep < 1) {
 			return;
 		}
-		defaultScrollPxStep = Math.floor(defaultScrollPxStep)
+		defaultScrollPxStep = Math.floor(defaultScrollPxStep);
 
 		let deltaRows = 0, deltaCorrect = 0;
 		let currentScrollCorrect = this.getScrollCorrect();
@@ -10356,7 +10356,7 @@
         }
         start = fixStartRow.r1;
 
-        if (start === vr.r1 && !this.workbook.getSmoothScrolling()) {
+        if (start === vr.r1 && (!this.workbook.getSmoothScrolling() || (this.workbook.getSmoothScrolling() && currentScrollCorrect === deltaCorrect))) {
             if (reinitScrollY) {
             	this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
             	this._reinitializeScroll();
@@ -10392,7 +10392,7 @@
             // Полностью обновилась область
             this._prepareCellTextMetricsCache(vr);
         } else {
-            if (0 > delta) {
+            if (isReverse) {
                 // Идем вверх
                 this._prepareCellTextMetricsCache(new asc_Range(vr.c1, start, vr.c2, oldStart - 1));
             } else {
@@ -10486,7 +10486,7 @@
                     r2 = vr.r2;
                 } else {
                     r1 = vr.r1;
-                    r2 = delta < 0 ? (vr.r1 + (oldVR.r1 - vr.r1 - 1)) : (vr.r1 - 1 - delta);
+                    r2 = isReverse ? (vr.r1 + (oldVR.r1 - vr.r1 - 1)) : (vr.r1 - 1 - delta);
                 }
             } else {
                 r1 = vr.r1;
@@ -10577,7 +10577,7 @@
 			//todo need review
 			let controller = t.workbook.controller;
 			let scrollStep = controller.settings.vscrollStep;
-			if (!t.workbook.Api.isMobileVersion && !AscCommon.AscBrowser.isMacOs && !initRowsCount && t.workbook.getSmoothScrolling() && delta > 0 && t.model.getRowsCount() >
+			if (!t.workbook.Api.isMobileVersion && !AscCommon.AscBrowser.isMacOs && !initRowsCount && t.workbook.getSmoothScrolling() && !isReverse && t.model.getRowsCount() >
 				t.visibleRange.r2 && controller.vsbMax && scrollStep && controller.vsbMax < (t.getVerticalScrollRange() * scrollStep)) {
 				return true;
 			}
@@ -10585,7 +10585,7 @@
 		};
 
 		if ((reinitScrollY && !this.workbook.getSmoothScrolling()) || (reinitScrollY && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
-			(0 > delta && initRowsCount && this._initRowsCount()) || (this.workbook.getSmoothScrolling() && initRowsCount && this.nRowsCount !== gc_nMaxRow) || isNeedExpand()) {
+			(isReverse && initRowsCount && this._initRowsCount()) || (this.workbook.getSmoothScrolling() && initRowsCount && this.nRowsCount !== gc_nMaxRow) || isNeedExpand()) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
 		}
 		this._reinitializeScroll();
@@ -10650,7 +10650,7 @@
 		if (defaultScrollPxStep < 1) {
 			return;
 		}
-		defaultScrollPxStep = Math.ceil(defaultScrollPxStep)
+		defaultScrollPxStep = Math.ceil(defaultScrollPxStep);
 
 		let deltaCols = 0, deltaCorrect = 0;
 		let currentScrollCorrect = this.getHorizontalScrollCorrect();
@@ -10745,7 +10745,7 @@
         }
         start = fixStartCol.c1;
 
-        if (start === vr.c1 && !this.workbook.getSmoothScrolling()) {
+        if (start === vr.c1 && (!this.workbook.getSmoothScrolling() || (this.workbook.getSmoothScrolling() && currentScrollCorrect === deltaCorrect))) {
             if (reinitScrollX) {
 				this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
 				this._reinitializeScroll();
