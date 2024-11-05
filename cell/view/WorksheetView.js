@@ -10933,7 +10933,7 @@
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
 		}
 
-		if (initRowsCount) {
+		if (initColsCount) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount;
 		}
 		this._reinitializeScroll();
