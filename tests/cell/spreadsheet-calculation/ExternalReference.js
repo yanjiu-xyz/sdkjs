@@ -864,6 +864,22 @@ $(function () {
 		//remove external reference
 		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
 		assert.strictEqual(wb.externalReferences.length, 0, 'external_name_length_after_delete');
+		
+		// 4. Multiple reference in one string
+		//'[new.xlsx]Sheet1'!A1+'[new2.xlsx]Sheet1'!A1
+		let secondLink = '[new2.xlsx]';
+		oParser = new parserFormula("SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1+" + "'" + secondLink + "Sheet22" + "'" + "!A1" +")", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!test)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", '#NAME!');
+
+		assert.strictEqual(wb.externalReferences.length, 0, 'SUM_2_external_reference_length_before_add');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 2, 'SUM_2_external_reference_length_after_add');
+
+		//remove two external reference
+		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
+		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
+		assert.strictEqual(wb.externalReferences.length, 0, 'external_name_length_after_delete');
 	});
 
 	QUnit.test("Test: \"parse external reference tests\"", function (assert) {
@@ -885,7 +901,7 @@ $(function () {
 		oParser = new parserFormula("'" + fLink + "Sheet1" + "'" + "!A1", cellWithFormula, ws);
 		assert.ok(oParser.parse(true, null, parseResult), "'" + fLink + "Sheet1" + "'" + "!A1");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", '#NAME!');
-		
+
 		assert.strictEqual(wb.externalReferences.length, 0, 'Reference length before add the first link');
 		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 		assert.strictEqual(wb.externalReferences.length, 1, 'Reference length before add the second link');
