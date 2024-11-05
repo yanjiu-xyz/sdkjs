@@ -1192,7 +1192,9 @@
 		let row = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
 		let defaultScrollPxStep = Asc.round(this.getVScrollStep());
 		let beforeVisibleRangeHeight = this._getRowTop(row) - this.cellsTop;
-		beforeVisibleRangeHeight += this.getScrollCorrect();
+		if (AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
+			beforeVisibleRangeHeight += this.getScrollCorrect();
+		}
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep);
 	};
 
@@ -1237,7 +1239,10 @@
 		let col = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
 		let defaultScrollPxStep = Asc.round(this.getHScrollStep());
 		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft;
-		beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
+		if (AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
+			beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
+		}
+
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
 	};
 
@@ -10588,6 +10593,10 @@
 			(isReverse && initRowsCount && this._initRowsCount()) || (this.workbook.getSmoothScrolling() && initRowsCount && this.nRowsCount !== gc_nMaxRow) || isNeedExpand()) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
 		}
+
+		if (initRowsCount) {
+			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount;
+		}
 		this._reinitializeScroll();
 
         this.handlers.trigger("onDocumentPlaceChanged");
@@ -10924,7 +10933,9 @@
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
 		}
 
-
+		if (initRowsCount) {
+			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount;
+		}
 		this._reinitializeScroll();
 
         this.handlers.trigger("onDocumentPlaceChanged");
