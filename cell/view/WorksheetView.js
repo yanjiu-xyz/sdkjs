@@ -12392,17 +12392,17 @@
 
 		var scroll = 0;
 		if (arn.r1 < vr.r1) {
-			scroll = arn.r1 - vr.r1;
+			scroll = this._rowDiffToSmooth(arn.r1, vr.r1);
 		} else if (arn.r1 >= vr.r2) {
 			this.nRowsCount = arn.r2 + 1;
 
 			this._prepareCellTextMetricsCache(new asc_Range(vr.c1, vr.r2, vr.c2, arn.r2 + 1));
 			scroll = this.getVerticalScrollRange(true);
 
-			if (scroll > arn.r1) {
-				scroll = arn.r1;
+			if (scroll > this._rowToSmooth(arn.r1)) {
+				scroll = this._rowToSmooth(arn.r1);
 			}
-			scroll -= vr.r1 - (this.topLeftFrozenCell ? this.topLeftFrozenCell.getRow0() : 0);
+			scroll -= this._rowDiffToSmooth(vr.r1, (this.topLeftFrozenCell ? this.topLeftFrozenCell.getRow0() : 0));
 			this.nRowsCount = nRowsCount;
 		}
 		if (scroll) {
@@ -12412,14 +12412,14 @@
 
 		scroll = 0;
 		if (arn.c1 < vr.c1) {
-			scroll = arn.c1 - vr.c1;
+			scroll = this._colDiffToSmooth(arn.c1, vr.c1);
 		} else if (arn.c1 >= vr.c2) {
 			this.setColsCount(arn.c2 + 1 + 1);
 			scroll = this.getHorizontalScrollRange();
-			if (scroll > arn.c1) {
-				scroll = arn.c1;
+			if (scroll > this._colToSmooth(arn.c1)) {
+				scroll = this._colToSmooth(arn.c1);
 			}
-			scroll -= vr.c1 - (this.topLeftFrozenCell ? this.topLeftFrozenCell.getCol0() : 0);
+			scroll -= this._colDiffToSmooth(vr.c1, (this.topLeftFrozenCell ? this.topLeftFrozenCell.getCol0() : 0));
 			this.setColsCount(nColsCount);
 		}
 		if (scroll) {
@@ -12818,6 +12818,71 @@
 			//this.setScrollCorrect(0);
 		}
 		return offset;
+	};
+
+	WorksheetView.prototype._colDiffToSmooth = function (from, to) {
+		if (!this.workbook.getSmoothScrolling()) {
+			return from - to;
+		}
+
+		let x1 = this.getCellLeft(from);
+		let x2 = this.getCellLeft(to);
+		let colsWidth = x1 - x2;
+		let unitDeltaStep = this.getHScrollStep();
+		let res = colsWidth / unitDeltaStep;
+		res = res < 0 ? res - this.getHorizontalScrollCorrect() / unitDeltaStep : res + this.getHorizontalScrollCorrect() / unitDeltaStep;
+
+		return res;
+	};
+
+	WorksheetView.prototype._rowDiffToSmooth = function (from, to) {
+		if (!this.workbook.getSmoothScrolling()) {
+			return from - to;
+		}
+
+		let y1 = this.getCellTop(from);
+		let y2 = this.getCellTop(to);
+		let rowsHeight = y1 - y2;
+		let unitDeltaStep = this.getVScrollStep();
+		let res = rowsHeight / unitDeltaStep;
+		res = res < 0 ? res - this.getScrollCorrect() / unitDeltaStep : res + this.getScrollCorrect() / unitDeltaStep;
+
+		return res;
+	};
+
+	WorksheetView.prototype._colToSmooth = function (val) {
+		if (!this.workbook.getSmoothScrolling()) {
+			return val;
+		}
+
+		let x1 = this.getCellLeft(val);
+		let unitDeltaStep = this.getHScrollStep();
+		return x1 / unitDeltaStep;
+	};
+
+	WorksheetView.prototype._rowDiffToSmooth = function (from, to) {
+		if (!this.workbook.getSmoothScrolling()) {
+			return from - to;
+		}
+
+		let y1 = this.getCellTop(from);
+		let y2 = this.getCellTop(to);
+		let rowsHeight = y1 - y2;
+		let unitDeltaStep = this.getVScrollStep();
+		let res = rowsHeight / unitDeltaStep;
+		res = res < 0 ? res - this.getScrollCorrect() / unitDeltaStep : res + this.getScrollCorrect() / unitDeltaStep;
+
+		return res;
+	};
+
+	WorksheetView.prototype._rowToSmooth = function (val) {
+		if (!this.workbook.getSmoothScrolling()) {
+			return val;
+		}
+
+		let y1 = this.getCellTop(val);
+		let unitDeltaStep = this.getVScrollStep();
+		return y1 / unitDeltaStep;
 	};
 
 	WorksheetView.prototype.getSelectionRangeValue = function (absName, addSheet) {
