@@ -1189,10 +1189,11 @@
 		/*if (gc_nMaxRow === this.nRowsCount || this.model.isDefaultHeightHidden()) {
 			tmp -= 1;
 		}*/
+		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
 		let row = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
 		let defaultScrollPxStep = Asc.round(this.getVScrollStep());
 		let beforeVisibleRangeHeight = this._getRowTop(row) - this.cellsTop;
-		if (AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
+		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
 			beforeVisibleRangeHeight += this.getScrollCorrect();
 		}
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep);
@@ -1236,10 +1237,11 @@
 		/*if (gc_nMaxRow === this.nRowsCount || this.model.isDefaultHeightHidden()) {
 			tmp -= 1;
 		}*/
+		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
 		let col = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
 		let defaultScrollPxStep = Asc.round(this.getHScrollStep());
 		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft;
-		if (AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
+		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
 			beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
 		}
 
