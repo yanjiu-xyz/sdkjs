@@ -4005,7 +4005,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 
 	cBaseFunction.prototype.checkFormulaArray2 = function (arg, opt_bbox, opt_defName, parserFormula, bIsSpecialFunction, argumentsCount) {
-		if (AscCommonExcel.bIsSupportDynamicArrays) {
+		// if (AscCommonExcel.bIsSupportDynamicArrays) {
 			const t = this;
 			let res = null;
 			let functionsCanReturnArray = ["index"];
@@ -4057,7 +4057,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 					_checkArrayIndex = checkArrayIndex(j);
 					if (!_checkArrayIndex) {
-						if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type || cElementType.array === tempArg.type) {
+						if (/*cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type ||*/ cElementType.array === tempArg.type) {
 							res = true
 						}
 					}
@@ -4070,7 +4070,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			return res;
-		}
+		// }
 	};
 
 	cBaseFunction.prototype.getDynamicArraySize = function (arg) {
@@ -7816,8 +7816,8 @@ function parserFormula( formula, parent, _ws ) {
 		}
 	};
 
-	parserFormula.prototype.findRefByOutStack = function () {
-		if (AscCommonExcel.bIsSupportDynamicArrays) {
+	parserFormula.prototype.findRefByOutStack = function (forceCheck) {
+		if (AscCommonExcel.bIsSupportDynamicArrays || forceCheck) {
 			// using outStack, look at all the arguments in the formulas and compare them with the arrayIndex positions for this formula
 			// go through the stack in the same order as .calculate method
 			if (this.ref) {
@@ -7899,21 +7899,21 @@ function parserFormula( formula, parent, _ws ) {
 								arg.unshift(tempElem);
 							}
 
-							let formulaArray = null;
+							let isCanExpand = null;
 							if (currentElement.type === cElementType.func) {
-								formulaArray = cBaseFunction.prototype.checkFormulaArray2.call(currentElement, arg, opt_bbox, null, this, bIsSpecialFunction, argumentsCount);
+								isCanExpand = cBaseFunction.prototype.checkFormulaArray2.call(currentElement, arg, opt_bbox, null, this, bIsSpecialFunction, argumentsCount);
 							} else if (currentElement.type === cElementType.operator && currentElement.bArrayFormula) {
 								bIsSpecialFunction = true;
 							}
 
-							if(formulaArray) {
+							if(isCanExpand) {
 								isRef = true;
 							} else {
-								// todo results SEQUENCE, RANDARRAY etc... can return an array when using regular values ​​in arguments
+								/* results of SEQUENCE, RANDARRAY etc... can return an array when using regular values ​​in arguments */
 								_tmp = currentElement.Calculate(arg, opt_bbox, null, this.ws, bIsSpecialFunction);
 							}
 
-							if (isRef || (_tmp && (_tmp.type === cElementType.array || _tmp.type === cElementType.cellsRange || _tmp.type === cElementType.cellsRange3D))) {
+							if (isRef || (_tmp && (_tmp.type === cElementType.array /*|| _tmp.type === cElementType.cellsRange || _tmp.type === cElementType.cellsRange3D*/))) {
 								return true;
 							}
 
