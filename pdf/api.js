@@ -1849,7 +1849,17 @@
 		this.saveImageMap       = _images;
 		this.FontLoader.LoadDocumentFonts2([]);
 	};
-	
+	PDFEditorApi.prototype.asc_Print = function (options) {
+		let oDoc = this.getPDFDoc();
+		oDoc.BlurActiveObject();
+		oDoc.RecalculateAll();
+		AscCommon.DocumentEditorApi.prototype.asc_Print.call(this, options);
+	};
+	PDFEditorApi.prototype.asc_drawPrintPreview = function(index) {
+		let oDoc = this.getPDFDoc();
+		oDoc.BlurActiveObject();
+		AscCommon.DocumentEditorApi.prototype.asc_drawPrintPreview.call(this, index);
+	};
 	PDFEditorApi.prototype.initCollaborativeEditing = function() {
 		if (AscCommon.CollaborativeEditing)
 			return;
@@ -2630,6 +2640,8 @@
 	PDFEditorApi.prototype['asc_getHeaderFooterProperties']	= PDFEditorApi.prototype.asc_getHeaderFooterProperties;
 	PDFEditorApi.prototype['ChangeReaderMode']				= PDFEditorApi.prototype.ChangeReaderMode;
 	PDFEditorApi.prototype['asc_Save']						= PDFEditorApi.prototype.asc_Save;
+	PDFEditorApi.prototype['asc_Print']						= PDFEditorApi.prototype.asc_Print;
+	PDFEditorApi.prototype['asc_drawPrintPreview']			= PDFEditorApi.prototype.asc_drawPrintPreview;
 
 	PDFEditorApi.prototype['CheckChangedDocument']		   = PDFEditorApi.prototype.CheckChangedDocument;
 	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;
