@@ -4120,6 +4120,36 @@
 
 		return ctx.canvas;
 	};
+	CHtmlPage.prototype.GetPrintPage = function(nPage, nWidthPx, nHeightPx) {
+		let oFile = this.file;
+		let image = !oFile.pages[nPage].isConvertedToShapes ? this.file.getPage(nPage, nWidthPx, nHeightPx, undefined, 0xFFFFFF) : null;
+
+		if (!image) {
+			let pageColor = this.Api.getPageBackgroundColor();
+
+			image = document.createElement('canvas');
+
+			let ctx = image.getContext('2d');
+
+			image.width = nWidthPx;
+			image.height = nHeightPx;
+
+			ctx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
+			ctx.fillRect(0, 0, nWidthPx, nHeightPx);
+		}
+
+		image.requestWidth = nWidthPx;
+		image.requestHeight = nHeightPx;
+
+		let ctx = image.getContext('2d');
+
+		this._drawDrawingsOnCtx(nPage, ctx);
+		this._drawMarkupAnnotsOnCtx(nPage, ctx);
+		this._drawAnnotsOnCtx(nPage, ctx);
+		this._drawFieldsOnCtx(nPage, ctx);
+
+		return ctx.canvas;
+	};
     CHtmlPage.prototype._drawAnnotsOnCtx = function(nPage, ctx, isThumbnails) {
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
