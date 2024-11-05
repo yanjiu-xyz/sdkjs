@@ -1156,6 +1156,20 @@
 		if (AscCommon.AscBrowser.isSafari && AscCommon.AscBrowser.isMobile)
 			xPos = -100;
 
+		if (this.Api.editorId === AscCommon.c_oEditorId.Presentation)
+		{
+			let wordControl = this.Api.WordControl;
+			if (wordControl && wordControl.Thumbnails)
+			{
+				if (wordControl.m_bIsRuler &&
+					wordControl.Thumbnails.FocusObjType === FOCUS_OBJECT_MAIN)
+				{
+					xPos += ((5 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+					yPos += ((7 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+				}
+			}
+		}
+
 		this.HtmlDiv.style.left = xPos + this.FixedPosCheckElementX + "px";
 		this.HtmlDiv.style.top  = yPos + this.FixedPosCheckElementY + this.TargetOffsetY + this.HtmlAreaOffset + "px";
 
