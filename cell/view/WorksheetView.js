@@ -10388,7 +10388,7 @@
 
 
         var topOldStart = this._getRowTop(oldStart);
-        var dy = this.workbook.getSmoothScrolling() ? (isReverse ? -1 * defaultScrollPxStep : defaultScrollPxStep) : (this._getRowTop(start) - topOldStart);
+        var dy = (this._getRowTop(start) + deltaCorrect - (topOldStart + currentScrollCorrect));
 		this.workbook.getSmoothScrolling() && this.setScrollCorrect(deltaCorrect);
 
         // ToDo стоит тут переделать весь scroll
@@ -10777,7 +10777,7 @@
 		var oldEnd = vr.c2;
 
 		var leftOldStart = this._getColLeft(oldStart);
-		var dx = this.workbook.getSmoothScrolling() ? (isReverse ? -1 * defaultScrollPxStep : defaultScrollPxStep) : (this._getColLeft(start) - leftOldStart);
+		var dx = (this._getColLeft(start) + deltaCorrect - (leftOldStart + currentScrollCorrect));
 
         var oldW = ctxW - this.cellsLeft - Math.abs(dx);
         var scrollRight = (dx > 0 && oldW > 0);
