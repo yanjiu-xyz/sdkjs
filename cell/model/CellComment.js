@@ -950,11 +950,11 @@ CCellCommentator.prototype.cleanLastSelection = function() {
 		}
 
 		pos.dReverseLeftPX = this.worksheet.checkRtl(this.worksheet._getColLeft(left) - this.worksheet._getColLeft(fvc) +
-			headerCellsOffset.left + frozenOffset.offsetX);
+			headerCellsOffset.left + frozenOffset.offsetX - this.worksheet.getHorizontalScrollCorrect());
 		let colWidth = (this.worksheet.getRightToLeft() ? -1 : 1) * this.worksheet.getColumnWidth(left, 0);
 		pos.dLeftPX = pos.dReverseLeftPX + colWidth;
 		pos.dTopPX = this.worksheet._getRowTop(top) + ((this.worksheet._getRowHeight(top) / 2) | 0) -
-			this.worksheet._getRowTop(fvr) + headerCellsOffset.top + frozenOffset.offsetY;
+			this.worksheet._getRowTop(fvr) + headerCellsOffset.top + frozenOffset.offsetY - this.worksheet.getScrollCorrect();
 
 		pos.dLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dLeftPX);
 		pos.dTopPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dTopPX);
