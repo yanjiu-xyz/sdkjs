@@ -6567,9 +6567,7 @@ function CDrawingDocument()
 
 	this.IsMobileVersion = function ()
 	{
-		if (this.m_oWordControl.MobileTouchManager)
-			return true;
-		return false;
+		return this.m_oWordControl.m_oApi.isMobileVersion;
 	};
 
 	this.isButtonsDisabled = function()
