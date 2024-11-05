@@ -18442,7 +18442,16 @@
 			fl.textAlign = AscCommon.align_Center;
 		}
 
-		this.handlers.trigger("onScroll", this._calcActiveCellOffset());
+		let offset = this._calcActiveCellOffset();
+		if (this.topLeftFrozenCell) {
+			if (col < this.topLeftFrozenCell.getCol0()) {
+				offset.col = 0;
+			}
+			if (row < this.topLeftFrozenCell.getRow0()) {
+				offset.row = 0;
+			}
+		}
+		this.handlers.trigger("onScroll", offset);
 
 		bg = c.getFillColor();
 
