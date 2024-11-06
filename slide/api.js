@@ -6802,6 +6802,25 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onThumbnailsShow", bIsShow);
 	};
 
+	asc_docs_api.prototype.getTextInputOffset = function()
+	{
+		let ret = {
+			X : 0,
+			Y : 0
+		};
+		let wordControl = this.WordControl;
+		if (wordControl && wordControl.Thumbnails)
+		{
+			if (wordControl.m_bIsRuler &&
+				wordControl.Thumbnails.FocusObjType === FOCUS_OBJECT_MAIN)
+			{
+				ret.X += ((5 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+				ret.Y += ((7 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+			}
+		}
+		return ret;
+	};
+
 	asc_docs_api.prototype.getIsAnimPaneShow = function()
 	{
 		return this.WordControl.IsAnimPaneShown();
