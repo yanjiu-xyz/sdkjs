@@ -183,32 +183,8 @@
 		}
     };
     CPdfShape.prototype.GetAllFonts = function(fontMap) {
-        let oContent = this.GetDocContent();
-
         fontMap = fontMap || {};
-
-        if (!oContent)
-            return fontMap;
-
-        let oPara;
-        for (let nPara = 0, nCount = oContent.GetElementsCount(); nPara < nCount; nPara++) {
-            oPara = oContent.GetElement(nPara);
-            oPara.Get_CompiledPr().TextPr.Document_Get_AllFontNames(fontMap);
-
-            let oRun;
-            for (let nRun = 0, nRunCount = oPara.GetElementsCount(); nRun < nRunCount; nRun++) {
-                oRun = oPara.GetElement(nRun);
-                oRun.Get_CompiledTextPr().Document_Get_AllFontNames(fontMap);
-            }
-        }
-        
-        delete fontMap["+mj-lt"];
-        delete fontMap["+mn-lt"];
-        delete fontMap["+mj-ea"];
-        delete fontMap["+mn-ea"];
-        delete fontMap["+mj-cs"];
-        delete fontMap["+mn-cs"];
-        
+        AscFormat.CShape.prototype.getAllFonts.call(this, fontMap);
         return fontMap;
     };
 
