@@ -10823,7 +10823,7 @@
         // Перемещаем область
         var moveWidth = oldW - lastColWidth;
         if (moveWidth > 0) {
-            ctx.drawImage(ctx.getCanvas(), x, y, moveWidth, ctxH, x - dx, y, moveWidth, ctxH);
+            ctx.drawImage(ctx.getCanvas(), x + this.getRightToLeftOffset(), y, moveWidth, ctxH, x - dx + this.getRightToLeftOffset(), y, moveWidth, ctxH);
 
             // Заглушка для safari (http://bugzilla.onlyoffice.com/show_bug.cgi?id=25546). Режим 'copy' сначала затирает, а
             // потом рисует (а т.к. мы рисуем сами на себе, то уже картинка будет пустой)
@@ -10851,14 +10851,14 @@
 		}
 
         ctx.setFillStyle(this.settings.cells.defaultState.background)
-          .fillRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
+          .fillRect(clearLeft - clearOffset + this.getRightToLeftOffset(), y, clearWidth + clearOffset, ctxH);
         this.drawingGraphicCtx.clearRect(clearLeft - clearOffset, y, clearWidth + clearOffset, ctxH);
 
 		this._updateDrawingArea();
 
 
 		if (this.workbook.getSmoothScrolling()) {
-			ctx.AddClipRect(clearLeft - clearOffset, y, clearWidth + clearOffset + this.getRightToLeftOffset(), ctxH);
+			ctx.AddClipRect(clearLeft - clearOffset + this.getRightToLeftOffset(), y, clearWidth + clearOffset + this.getRightToLeftOffset(), ctxH);
 			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(clearLeft - clearOffset, y, clearWidth + clearOffset + this.getRightToLeftOffset(), ctxH);
 		}
 		this._endRtlDrawingRendering();
