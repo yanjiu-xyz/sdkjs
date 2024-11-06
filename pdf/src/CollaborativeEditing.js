@@ -48,6 +48,16 @@ function CPDFCollaborativeEditing(oDoc) {
 CPDFCollaborativeEditing.prototype = Object.create(AscCommon.CWordCollaborativeEditing.prototype);
 CPDFCollaborativeEditing.prototype.constructor = CPDFCollaborativeEditing;
 
+CPDFCollaborativeEditing.prototype.CheckWaitingImages = function (aImages) {
+    if (aImages.length !== 0) {
+        this.waitingImagesForLoad = true;
+    }
+};
+CPDFCollaborativeEditing.prototype.SendImagesCallback = function (aImages) {
+    this.waitingImagesForLoad = false;
+    let oApi = Asc.editor || Asc['editor'];
+    oApi.pre_Save(aImages);
+};
 CPDFCollaborativeEditing.prototype.Add_ForeignSelectedObject = function(UserId, oObject, UserShortId) {
     if (!this.m_oSelectedObjects[UserId]) {
         this.m_oSelectedObjects[UserId] = [];

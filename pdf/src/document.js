@@ -2800,7 +2800,7 @@ var CPresentation = CPresentation || function(){};
                 this.RemoveAnnot(oFreeText.GetId());
             }
         }
-        else if (oDrawing) {
+        else if (oDrawing && !Asc.editor.isRestrictionView()) {
             if (oDrawing.IsInTextBox()) {
                 oDrawing.Remove(nDirection, isCtrlKey);
                 oContent = oDrawing.GetDocContent();
