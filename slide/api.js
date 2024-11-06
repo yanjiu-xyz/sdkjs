@@ -6812,7 +6812,7 @@ background-repeat: no-repeat;\
 		if (wordControl && wordControl.Thumbnails)
 		{
 			if (wordControl.m_bIsRuler &&
-				wordControl.Thumbnails.FocusObjType === FOCUS_OBJECT_MAIN)
+				wordControl.Thumbnails.FocusObjType === AscCommon.FOCUS_OBJECT_MAIN)
 			{
 				ret.X += ((5 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 				ret.Y += ((7 * AscCommon.g_dKoef_mm_to_pix) >> 0);
