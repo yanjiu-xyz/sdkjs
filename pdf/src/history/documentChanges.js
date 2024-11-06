@@ -243,6 +243,9 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
 CChangesPDFDocumentAnnotsContent.prototype.private_GetContentChanges = function() {
     return this.Class.annotsContentChanges;
 };
+CChangesPDFDocumentAnnotsContent.prototype.GetContentChangesClass = function() {
+	return this.private_GetContentChanges();
+};
 
 // Similarly, implement classes for Fields and Drawings
 
@@ -444,6 +447,9 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
 CChangesPDFDocumentFieldsContent.prototype.private_GetContentChanges = function() {
     return this.Class.fieldsContentChanges;
 };
+CChangesPDFDocumentFieldsContent.prototype.GetContentChangesClass = function() {
+	return this.private_GetContentChanges();
+};
 
 /**
  * @constructor
@@ -624,6 +630,9 @@ CChangesPDFDocumentDrawingsContent.prototype.private_RemoveInArrayLoad = functio
 };
 CChangesPDFDocumentDrawingsContent.prototype.private_GetContentChanges = function() {
     return this.Class.drawingsContentChanges;
+};
+CChangesPDFDocumentDrawingsContent.prototype.GetContentChangesClass = function() {
+	return this.private_GetContentChanges();
 };
 
 /**

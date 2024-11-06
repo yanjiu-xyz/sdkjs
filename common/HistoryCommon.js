@@ -5006,6 +5006,13 @@
 	{
 		return true;
 	};
+	CChangesBaseContentChange.prototype.GetContentChangesClass = function()
+	{
+		if (this.Class && this.Class.m_oContentChanges)
+			return this.Class.m_oContentChanges;
+		
+		return null;
+	};
 	CChangesBaseContentChange.prototype.IsAdd = function()
 	{
 		return this.Add;
