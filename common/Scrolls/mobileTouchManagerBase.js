@@ -1662,30 +1662,32 @@
 		let srcW = srcR - srcX;
 		let srcH = srcB - srcY;
 
-		if (AscCommon.AscBrowser.isAppleDevices)
+		if (srcW > 0 && srcH > 0)
 		{
-			if (!this.glassCanvas)
-				this.glassCanvas = document.createElement("canvas");
-
-			if (glassSize !== this.glassCanvas.width || glassSize !== this.glassCanvas.height)
+			if (AscCommon.AscBrowser.isAppleDevices)
 			{
-				this.glassCanvas.width = glassSize;
-				this.glassCanvas.width = glassSize;
+				if (!this.glassCanvas)
+					this.glassCanvas = document.createElement("canvas");
+
+				if (glassSize !== this.glassCanvas.width || glassSize !== this.glassCanvas.height)
+				{
+					this.glassCanvas.width = glassSize;
+					this.glassCanvas.width = glassSize;
+				}
+				let ctxTmp = this.glassCanvas.getContext("2d");
+
+				let data1 = mainLayer.getContext("2d").getImageData(srcX, srcY, srcW, srcH);
+				ctxTmp.putImageData(data1, 0, 0);
+				ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+
+				let data2 = ctx.getImageData(srcX, srcY, srcW, srcH);
+				ctxTmp.putImageData(data2, 0, 0);
+				ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+			} else
+			{
+				ctx.drawImage(mainLayer, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+				ctx.drawImage(ctx.canvas, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
 			}
-			let ctxTmp = this.glassCanvas.getContext("2d");
-
-			let data1 = mainLayer.getContext("2d").getImageData(srcX, srcY, srcW, srcH);
-			ctxTmp.putImageData(data1, 0, 0);
-			ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
-
-			let data2 = ctx.getImageData(srcX, srcY, srcW, srcH);
-			ctxTmp.putImageData(data2, 0, 0);
-			ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
-		}
-		else
-		{
-			ctx.drawImage(mainLayer, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
-			ctx.drawImage(ctx.canvas, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
 		}
 
 		if (targetElement)
