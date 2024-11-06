@@ -634,10 +634,6 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 			return;
 		}
 
-		let isClip = false;
-		if (this.worksheet._clipDrawingRect(this.drawingCtx)) {
-			isClip = true;
-		}
 
 		this.worksheet._startRtlRendering(this.drawingCtx);
 
@@ -661,6 +657,12 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 				if (0 === metrics.width || 0 === metrics.height) {
 					continue;
 				}
+
+				let isClip = false;
+				if (this.worksheet._clipDrawingRect(this.drawingCtx, new Asc.Range(nCol, nRow, nCol, nRow))) {
+					isClip = true;
+				}
+
 				x = metrics.left + metrics.width;
 				y = metrics.top;
 				this.drawingCtx.beginPath();
@@ -668,12 +670,13 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 				this.drawingCtx.lineTo(x - borderW, y);
 				this.drawingCtx.lineTo(x - borderW, y + size);
 				this.drawingCtx.fill();
+
+				if (isClip) {
+					this.drawingCtx.RemoveClipRect();
+				}
 			}
 		}
 
-		if (isClip) {
-			this.drawingCtx.RemoveClipRect();
-		}
 		this.worksheet._endRtlRendering();
 	};
 
@@ -937,24 +940,28 @@ CCellCommentator.prototype.cleanLastSelection = function() {
 		var left = mergedRange ? mergedRange.c2 : comment.nCol;
 		var top = mergedRange ? mergedRange.r1 : comment.nRow;
 
+		let scrollCorrectX = this.worksheet.getHorizontalScrollCorrect();
+		let scrollCorrectY = this.worksheet.getScrollCorrect();
 		var frozenOffset = this.worksheet.getFrozenPaneOffset();
 		if (this.worksheet.topLeftFrozenCell) {
 			if (comment.nCol < fvc) {
 				frozenOffset.offsetX = 0;
 				fvc = 0;
+				scrollCorrectX = 0;
 			}
 			if (comment.nRow < fvr) {
 				frozenOffset.offsetY = 0;
 				fvr = 0;
+				scrollCorrectY = 0;
 			}
 		}
 
 		pos.dReverseLeftPX = this.worksheet.checkRtl(this.worksheet._getColLeft(left) - this.worksheet._getColLeft(fvc) +
-			headerCellsOffset.left + frozenOffset.offsetX - this.worksheet.getHorizontalScrollCorrect());
+			headerCellsOffset.left + frozenOffset.offsetX - scrollCorrectX);
 		let colWidth = (this.worksheet.getRightToLeft() ? -1 : 1) * this.worksheet.getColumnWidth(left, 0);
 		pos.dLeftPX = pos.dReverseLeftPX + colWidth;
 		pos.dTopPX = this.worksheet._getRowTop(top) + ((this.worksheet._getRowHeight(top) / 2) | 0) -
-			this.worksheet._getRowTop(fvr) + headerCellsOffset.top + frozenOffset.offsetY - this.worksheet.getScrollCorrect();
+			this.worksheet._getRowTop(fvr) + headerCellsOffset.top + frozenOffset.offsetY - scrollCorrectY;
 
 		pos.dLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dLeftPX);
 		pos.dTopPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dTopPX);
@@ -1031,6 +1038,13 @@ CCellCommentator.prototype.selectComment = function(id) {
 
 		metrics = this.worksheet.getCellMetrics(col, row, true);
 		if (metrics) {
+
+			let isClip = false;
+			let mc = this.model.getMergedByCell(row, col);
+			if (this.worksheet._clipDrawingRect(this.overlayCtx, mc ? mc : new Asc.Range(col, row, col, row))) {
+				isClip = true;
+			}
+
 			var extraOffset = 1;
 			this.overlayCtx.ctx.globalAlpha = 0.2;
 			this.overlayCtx.beginPath();
@@ -1045,6 +1059,10 @@ CCellCommentator.prototype.selectComment = function(id) {
 			this.overlayCtx.setFillStyle(this.commentFillColor);
 			this.overlayCtx.fillRect(x, y, width, height);
 			this.overlayCtx.ctx.globalAlpha = 1;
+
+			if (isClip) {
+				this.overlayCtx.RemoveClipRect();
+			}
 		}
 	}
 };

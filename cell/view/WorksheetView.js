@@ -1094,8 +1094,8 @@
             vr = this.visibleRange;
         }
 
-        offsetX += this._getOffsetX(vr.c1);
-        offsetY += this._getOffsetY(vr.r1);
+        offsetX += this._getOffsetX(vr.c1, true);
+        offsetY += this._getOffsetY(vr.r1, true);
 
         return vr.contains(col, row) ? new asc_VR(vr, offsetX, offsetY) : null;
     };
