@@ -2341,7 +2341,7 @@ CInlineLevelSdt.prototype.SelectListItem = function(sValue)
 		if (!this.IsPlaceHolder())
 		{
 			this.SelectAll();
-			this.Remove();
+			this.Remove(1, true);
 			this.RemoveSelection();
 		}
 		else
