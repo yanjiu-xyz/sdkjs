@@ -3150,24 +3150,60 @@
 			}
 			return _ret;
 		};
+		CBlipFill.prototype.reduceSize = function (nW, nH, nMaxSize) {
+			let dWK = nW / nMaxSize;
+			let dHK = nH / nMaxSize;
+			let dK = Math.max(dWK, dHK);
+			let oResult = {W: nW, H: nH};
+			if (dK > 1) {
+				oResult.W = ((nW / dK) + 0.5 >> 0);
+				oResult.H = ((nH / dK) + 0.5 >> 0);
+			}
+			return oResult;
+		};
 		CBlipFill.prototype.getBase64Data = function (bReduce, bReturnOrigIfCantDraw) {
-			var sRasterImageId = this.RasterImageId;
+			let sRasterImageId = this.RasterImageId;
 			if (typeof sRasterImageId !== "string" || sRasterImageId.length === 0) {
 				return null;
 			}
-			var oApi = Asc.editor || editor;
-			var sDefaultResult = sRasterImageId;
+			let oApi = Asc.editor || editor;
+			let sDefaultResult = sRasterImageId;
+			const nMaxSize = 640;
 			if(bReturnOrigIfCantDraw === false) {
 				sDefaultResult = null;
+			}
+			if (window["NATIVE_EDITOR_ENJINE"] && window["native"]) {
+				let sSrc = AscCommon.getFullImageSrc2(sRasterImageId);
+				let oImageSize = AscCommon.getSourceImageSize(sSrc);
+				let nW = Math.max(oImageSize.width, 1);
+				let nH = Math.max(oImageSize.height, 1);
+				if (bReduce) {
+					let oReducedSize = this.reduceSize(nW, nH, nMaxSize);
+					nW = oReducedSize.W;
+					nH = oReducedSize.H;
+				}
+				let oCanvas = new AscCommon.CNativeGraphics();
+				oCanvas.width = nW;
+				oCanvas.height = nH;
+				oCanvas.create(window["native"], oCanvas.width, oCanvas.height, oCanvas.width, oCanvas.height);
+				oCanvas.transform(1, 0, 0, 1, 0, 0);
+				oCanvas.drawImage(sSrc, 0, 0, oCanvas.width, oCanvas.height);
+				let sResult;
+				try {
+					sResult = oCanvas.toDataURL("image/png");
+				} catch (err) {
+					sResult = sDefaultResult;
+				}
+				return {img: sResult, w: oCanvas.width, h: oCanvas.height};
 			}
 			if (!oApi) {
 				return {img: sDefaultResult, w: null, h: null};
 			}
-			var oImageLoader = oApi.ImageLoader;
+			let oImageLoader = oApi.ImageLoader;
 			if (!oImageLoader) {
 				return {img: sDefaultResult, w: null, h: null};
 			}
-			var oImage = oImageLoader.map_image_index[AscCommon.getFullImageSrc2(sRasterImageId)];
+			let oImage = oImageLoader.map_image_index[AscCommon.getFullImageSrc2(sRasterImageId)];
 			if (!oImage || !oImage.Image || oImage.Status !== AscFonts.ImageLoadStatus.Complete) {
 				return {img: sDefaultResult, w: null, h: null};
 			}
@@ -3175,20 +3211,15 @@
 			if (sRasterImageId.indexOf("data:") === 0 && sRasterImageId.indexOf("base64") > 0) {
 				return {img: sRasterImageId, w: oImage.Image.width, h: oImage.Image.height};
 			}
-			var sResult = sDefaultResult;
+			let sResult = sDefaultResult;
 			if (!window["NATIVE_EDITOR_ENJINE"]) {
-				var oCanvas = document.createElement("canvas");
-				var nW = Math.max(oImage.Image.width, 1);
-				var nH = Math.max(oImage.Image.height, 1);
+				let oCanvas = document.createElement("canvas");
+				let nW = Math.max(oImage.Image.width, 1);
+				let nH = Math.max(oImage.Image.height, 1);
 				if (bReduce) {
-					var nMaxSize = 640;
-					var dWK = nW / nMaxSize;
-					var dHK = nH / nMaxSize;
-					var dK = Math.max(dWK, dHK);
-					if (dK > 1) {
-						nW = ((nW / dK) + 0.5 >> 0);
-						nH = ((nH / dK) + 0.5 >> 0);
-					}
+					let oReducedSize = this.reduceSize(nW, nH, nMaxSize);
+					nW = oReducedSize.W;
+					nH = oReducedSize.H;
 				}
 				oCanvas.width = nW;
 				oCanvas.height = nH;
