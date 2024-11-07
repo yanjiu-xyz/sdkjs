@@ -6034,7 +6034,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.IsAsyncOpenDocumentImages     = function()
 	{
-		return !this.isReporterMode;
+		return !this.isReporterMode && !this.asc_IsStartDemonstrationOnOpen();
 	};
 	asc_docs_api.prototype.asyncImagesDocumentStartLoaded      = function(aImages)
 	{

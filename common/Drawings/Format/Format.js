@@ -6326,6 +6326,9 @@
 			if (ln.w != null) {
 				this.setW(ln.w);
 			}
+			else if(ln.isNoFillLine && ln.isNoFillLine()) {
+				this.setW(0);
+			}
 		};
 		CLn.prototype.calculate = function (theme, slide, layout, master, RGBA, colorMap) {
 			if (isRealObject(this.Fill)) {

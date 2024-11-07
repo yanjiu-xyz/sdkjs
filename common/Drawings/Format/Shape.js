@@ -2234,50 +2234,22 @@
 
 		CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr, bWordArtTransform, bIgnoreInsets) {
 			oMatrix.Reset();
-			var _shape_transform = this.localTransform;
-			var _content_height = oContent.GetSummaryHeight();
-			var _l, _t, _r, _b;
-			var _t_x_lt, _t_y_lt, _t_x_rt, _t_y_rt, _t_x_lb, _t_y_lb, _t_x_rb, _t_y_rb;
-			var l_ins = bIgnoreInsets ? 0 : (AscFormat.isRealNumber(oBodyPr.lIns) ? oBodyPr.lIns : 2.54);
-			var t_ins = bIgnoreInsets ? 0 : (AscFormat.isRealNumber(oBodyPr.tIns) ? oBodyPr.tIns : 1.27);
-			var r_ins = bIgnoreInsets ? 0 : (AscFormat.isRealNumber(oBodyPr.rIns) ? oBodyPr.rIns : 2.54);
-			var b_ins = bIgnoreInsets ? 0 : (AscFormat.isRealNumber(oBodyPr.bIns) ? oBodyPr.bIns : 1.27);
+			let _shape_transform = this.localTransform;
+			let _content_height = oContent.GetSummaryHeight();
+			let _l, _t, _r, _b;
+			let _t_x_lt, _t_y_lt, _t_x_rt, _t_y_rt, _t_x_lb, _t_y_lb, _t_x_rb, _t_y_rb;
 
-			var oRect = this.getTextRect();
+
+
+			let oRect = this.getTextRect();
 			if (this.txXfrm) {
 				return this.checkTransformTextMatrixSmartArt(oMatrix, oContent, oBodyPr, bWordArtTransform, bIgnoreInsets);
 			}
-
-			if (this.bWordShape) {
-				var oPen = this.pen;
-				if (oPen && oPen.isVisible()) {
-					var penW = (oPen.w == null) ? 12700 : parseInt(oPen.w);
-					penW /= 36000.0;
-					switch (oPen.algn) {
-						case 1: {
-							break;
-						}
-						default: {
-							penW /= 2.0;
-							break;
-						}
-					}
-
-					l_ins += penW;
-					r_ins += penW;
-					t_ins += penW;
-					b_ins += penW;
-				}
-			}
-
-			let oForm = this.isForm && this.isForm() ? this.getInnerForm() : null;
-			if (oForm) {
-				let nFormHorPadding = this.getFormHorPadding();
-				l_ins = nFormHorPadding;
-				r_ins = nFormHorPadding;
-				t_ins = 0;
-				b_ins = 0;
-			}
+			let oInsets = this.getInsets({bIgnoreInsets: bIgnoreInsets});
+			let l_ins = oInsets.lIns;
+			let t_ins = oInsets.tIns;
+			let r_ins = oInsets.rIns;
+			let b_ins = oInsets.bIns;
 
 			_l = oRect.l + l_ins;
 			_t = oRect.t + t_ins;
@@ -2333,6 +2305,7 @@
 			var oClipRect;
 			var Diff = 1.6;
 
+			const oForm = this.isForm && this.isForm() ? this.getInnerForm() : null;
 			if (oForm) {
 				if (oForm.IsMultiLineForm())
 					_vertical_shift = 0;
@@ -3859,53 +3832,16 @@
 
 
 		CShape.prototype.recalculateDocContent = function (oDocContent, oBodyPr) {
-			var nStartPage = this.Get_AbsolutePage ? this.Get_AbsolutePage() : 0;
-			var oRet = {w: 0, h: 0, contentH: 0};
-			var l_ins, t_ins, r_ins, b_ins;
-			if (oBodyPr) {
-				l_ins = AscFormat.isRealNumber(oBodyPr.lIns) ? oBodyPr.lIns : 2.54;
-				r_ins = AscFormat.isRealNumber(oBodyPr.rIns) ? oBodyPr.rIns : 2.54;
-				t_ins = AscFormat.isRealNumber(oBodyPr.tIns) ? oBodyPr.tIns : 1.27;
-				b_ins = AscFormat.isRealNumber(oBodyPr.bIns) ? oBodyPr.bIns : 1.27;
-			} else {
-				l_ins = 2.54;
-				r_ins = 2.54;
-				t_ins = 1.27;
-				b_ins = 1.27;
-			}
-			if (this.bWordShape) {
-				var oPen = this.pen;
-				if (oPen) {
-					var penW = (oPen.w == null) ? 12700 : parseInt(oPen.w);
-					penW /= 36000.0;
-					switch (oPen.algn) {
-						case 1: {
-							break;
-						}
-						default: {
-							penW /= 2.0;
-							break;
-						}
-					}
-
-					l_ins += penW;
-					r_ins += penW;
-					t_ins += penW;
-					b_ins += penW;
-				}
-			}
-
-			let oForm = this.isForm && this.isForm() ? this.getInnerForm() : null;
-			if (oForm) {
-				let nFormHorPadding = this.getFormHorPadding();
-				l_ins = nFormHorPadding;
-				r_ins = nFormHorPadding;
-				t_ins = 0;
-				b_ins = 0;
-			}
-
-			var oRect = this.getTextRect();
-			var w, h;
+			let nStartPage = this.Get_AbsolutePage ? this.Get_AbsolutePage() : 0;
+			let oRet = {w: 0, h: 0, contentH: 0};
+			let oInsets = this.getInsets({bIgnoreInsets: false});
+			const oForm = this.isForm && this.isForm() ? this.getInnerForm() : null;
+			let l_ins = oInsets.lIns;
+			let t_ins = oInsets.tIns;
+			let r_ins = oInsets.rIns;
+			let b_ins = oInsets.bIns;
+			let oRect = this.getTextRect();
+			let w, h;
 			w = oRect.r - oRect.l - (l_ins + r_ins);
 			h = oRect.b - oRect.t - (t_ins + b_ins);
 			if (oBodyPr.wrap === AscFormat.nTWTNone) {
@@ -4487,15 +4423,23 @@
 
 		};
 
-		CShape.prototype.getInsets = function (properties) {
-			const oBodyPr = properties.bodyPr || this.getBodyPr && this.getBodyPr();
+		CShape.prototype.getInsets = function (properties) {;
 			properties = properties || {};
+			const oBodyPr = properties.bodyPr || this.getBodyPr && this.getBodyPr()
 			let lIns = 0, tIns = 0, rIns = 0, bIns = 0;
 			if (!properties.bIgnoreInsets) {
-				lIns = (AscFormat.isRealNumber(oBodyPr.lIns) ? oBodyPr.lIns : 2.54);
-				tIns = (AscFormat.isRealNumber(oBodyPr.tIns) ? oBodyPr.tIns : 1.27);
-				rIns = (AscFormat.isRealNumber(oBodyPr.rIns) ? oBodyPr.rIns : 2.54);
-				bIns = (AscFormat.isRealNumber(oBodyPr.bIns) ? oBodyPr.bIns : 1.27);
+				if(oBodyPr) {
+					lIns = (AscFormat.isRealNumber(oBodyPr.lIns) ? oBodyPr.lIns : 2.54);
+					tIns = (AscFormat.isRealNumber(oBodyPr.tIns) ? oBodyPr.tIns : 1.27);
+					rIns = (AscFormat.isRealNumber(oBodyPr.rIns) ? oBodyPr.rIns : 2.54);
+					bIns = (AscFormat.isRealNumber(oBodyPr.bIns) ? oBodyPr.bIns : 1.27);
+				}
+				else {
+					lIns = 2.54;
+					tIns = 1.27;
+					rIns = 2.54;
+					bIns = 1.27;
+				}
 			}
 
 			if (this.bWordShape) {
