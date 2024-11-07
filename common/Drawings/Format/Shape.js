@@ -3875,7 +3875,7 @@
 			}
 			if (this.bWordShape) {
 				var oPen = this.pen;
-				if (oPen && oPen.isVisible()) {
+				if (oPen) {
 					var penW = (oPen.w == null) ? 12700 : parseInt(oPen.w);
 					penW /= 36000.0;
 					switch (oPen.algn) {
