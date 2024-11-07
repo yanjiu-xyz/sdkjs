@@ -5827,6 +5827,15 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 1.32);
 		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), 3.33);
 
+		// for bug 71525
+		oParser = new parserFormula('ROUNDUP(8.175,3)', "A1", ws);
+		assert.ok(oParser.parse(), "ROUNDUP(8.175,3)");
+		assert.strictEqual(oParser.calculate().getValue(), 8.175, "Result of ROUNDUP(8.175,3)");
+
+		oParser = new parserFormula('ROUNDUP(8.17529,5)', "A1", ws);
+		assert.ok(oParser.parse(), "ROUNDUP(8.17529,5)");
+		assert.strictEqual(oParser.calculate().getValue(), 8.17529, "Result of ROUNDUP(8.17529,5)");
+
 	});
 
 
