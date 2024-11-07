@@ -22458,7 +22458,7 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 			oRes.SelectThisElement();
 		}
 		
-		//this.DrawingDocument.scrollToTarget();
+		this.DrawingDocument.scrollToTarget();
 	}
 };
 CDocument.prototype.TurnComboBoxFormValue = function(oForm, isNext)
