@@ -1965,6 +1965,13 @@
         return res;
 	}
 
+    function checkMaxCellLength(text) {
+        if (text && text.length > Asc.c_oAscMaxCellOrCommentLength) {
+            text = text.slice(0, Asc.c_oAscMaxCellOrCommentLength);
+        }
+        return text;
+    }
+
     //TODO копия кода из serialize2
     function BinaryCustomsTableWriter(memory, CustomXmls)
     {
@@ -7890,7 +7897,7 @@
             {
                 if(null == tempValue.text)
                     tempValue.text = "";
-                tempValue.text += this.stream.GetString2LE(length);
+                tempValue.text = checkMaxCellLength(this.stream.GetString2LE(length));
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -7913,7 +7920,7 @@
             {
                 if(null == oRun.text)
                     oRun.text = "";
-                oRun.text += this.stream.GetString2LE(length);
+                oRun.text = checkMaxCellLength(this.stream.GetString2LE(length));
             }
             else
                 res = c_oSerConstants.ReadUnknown;
