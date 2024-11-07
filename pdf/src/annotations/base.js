@@ -429,9 +429,9 @@
             let aPath;
             for (let i = 0; i < this._gestures.length; i++) {
                 aPath = this._gestures[i];
-                for (let j = 0; j < aPath.length; j++) {
-                    aPath[j].x += nDeltaX;
-                    aPath[j].y += nDeltaY;
+                for (let j = 0; j < aPath.length; j+=2) {
+                    aPath[j] += nDeltaX;
+                    aPath[j+1] += nDeltaY;
                 }
             }
         }
