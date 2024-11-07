@@ -1218,7 +1218,21 @@ CInlineLevelSdt.prototype.SelectContentControl = function()
 		&& arrDrawings.length > 0
 		&& (oLogicDocument = this.GetLogicDocument()))
 	{
-		oLogicDocument.Select_DrawingObject(arrDrawings[0].GetId());
+		let drawing = null;
+		if (this.IsFixedForm())
+		{
+			let parentShape = this.GetParagraph().GetParentShape();
+			if (parentShape)
+				drawing = parentShape.GetParaDrawing();
+		}
+		else
+		{
+			drawing = arrDrawings[0];
+		}
+		
+		if (drawing)
+			oLogicDocument.Select_DrawingObject(drawing.GetId());
+		
 		return;
 	}
 
