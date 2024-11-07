@@ -2763,7 +2763,7 @@
 			let oDoc = this.getPDFDoc();
 			Asc.editor.checkLastWork();
 			
-			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress || Asc.editor.waitingImagesForLoad) {
+			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress || AscCommon.CollaborativeEditing.waitingImagesForLoad) {
 				this.paint();
 				return;
 			}
