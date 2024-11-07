@@ -256,6 +256,9 @@ ParaDrawing.prototype.GetSearchElementId = function(bNext, bCurrent)
 };
 ParaDrawing.prototype.FindNextFillingForm = function(isNext, isCurrent)
 {
+	if (isCurrent && this.IsForm())
+		return null;
+	
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.FindNextFillingForm === "function")
 		return this.GraphicObj.FindNextFillingForm(isNext, isCurrent);
 
