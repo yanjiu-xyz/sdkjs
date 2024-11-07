@@ -10256,7 +10256,7 @@
     };
 
     WorksheetView.prototype.scrollVertical = function (delta, editor, initRowsCount) {
-
+		let t = this;
         var vr = this.visibleRange;
         var fixStartRow = new asc_Range(vr.c1, vr.r1, vr.c2, vr.r1);
 
@@ -10478,11 +10478,6 @@
         this.drawingGraphicCtx.clearRect(this.headersLeft - this.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
 
 		this._updateDrawingArea();
-		
-		if (this.workbook.getSmoothScrolling()) {
-			ctx.AddClipRect(this.headersLeft - this.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
-			this.drawingGraphicCtx.AddClipRect && this.drawingGraphicCtx.AddClipRect(this.headersLeft - this.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
-		}
 
         // Дорисовываем необходимое
         if (dy < 0 || vr.r2 !== oldEnd || oldVRE_isPartial || dx !== 0 || (clearHeight !== 0 && this.workbook.getSmoothScrolling())) {
@@ -10513,12 +10508,21 @@
                 r2 = r1;
             }
 
+            let startClip = function () {
+                if (t.workbook.getSmoothScrolling()) {
+                    ctx.AddClipRect(t.headersLeft - t.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
+                    t.drawingGraphicCtx.AddClipRect && t.drawingGraphicCtx.AddClipRect(t.headersLeft - t.groupWidth, clearTop - clearOffset, ctxW, clearHeight + clearOffset);
+                }
+            };
+
             var range = new asc_Range(vr.c1, r1, vr.c2, r2);
             if (dx === 0) {
+                startClip();
                 this._drawRowHeaders(null, r1, r2);
             } else {
                 // redraw all headres, because number of decades in row index has been changed
                 this._drawRowHeaders(null);
+                startClip();
                 if (dx < 0) {
                     // draw last column
                     var r_;
@@ -10578,7 +10582,6 @@
 			reinitScrollY = oldEnd !== vr.r2;
 		}*/
 
-		let t = this;
 		let isNeedExpand = function () {
 			//we must init scroll, if expand scroll range(calculate new rows height)
 			//todo need review
