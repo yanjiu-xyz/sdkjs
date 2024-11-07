@@ -6405,6 +6405,11 @@ function CDrawingDocument()
             this.UpdateTarget(this.m_dTargetX, this.m_dTargetY, this.m_lTargetPage);
         }
     };
+	
+	this.scrollToTarget = function()
+	{
+		this.scrollToTargetOnRecalculate(-1, this.m_arrPages.length);
+	};
 
 	this.ChangePageAttack = function (pageIndex)
 	{
