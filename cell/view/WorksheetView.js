@@ -10961,6 +10961,18 @@
         return this;
     };
 
+	WorksheetView.prototype.executeScrollDefaultStep = function (callback) {
+		let oView = this.workbook && this.workbook.controller && this.workbook.controller.settings;
+		let defaultStep = 10;
+		let realVScrollPxStep = this.vScrollPxStep;
+		let realHScrollPxStep = this.hScrollPxStep;
+		this.vScrollPxStep = oView ? oView.vscrollStep : defaultStep;
+		this.hScrollPxStep = oView ? oView.hscrollStep : defaultStep;
+		callback();
+		this.vScrollPxStep = realVScrollPxStep;
+		this.hScrollPxStep = realHScrollPxStep;
+	};
+
     // ----- Selection -----
 
     // x,y - абсолютные координаты относительно листа (без учета заголовков)
