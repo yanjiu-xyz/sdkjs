@@ -668,8 +668,15 @@
                     var aChildren = this.getChildrenTimeNodes();
                     var oThis = this;
 
-                    if (oEndSync) {
-                        oEndSync.fillTrigger(oPlayer, oTrigger);
+                    if(oPlayer instanceof CDemoAnimPlayer) {
+                        oTrigger.addTrigger(function () {
+                            for (var nChild = 0; nChild < aChildren.length; ++nChild) {
+                                if (!aChildren[nChild].isAtEnd() && (!aChildren[nChild].repeatCount || !aChildren[nChild].repeatCount.isIndefinite())) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        });
                     }
                     else {
                         oTrigger.addTrigger(function () {
@@ -683,6 +690,10 @@
                             }
                             return true;
                         });
+                    }
+
+                    if (oEndSync) {
+                        oEndSync.fillTrigger(oPlayer, oTrigger);
                     }
                     return oTrigger;
                 }
@@ -2701,13 +2712,14 @@
                             ? this.getLastFiniteEffect(aEffectsForDemo)
                             : this.getLastFiniteEffect(oEffectCopy.originalNode.getTimeNodeWithLvl(2).getAllAnimEffects());
 
-                        if (lastFiniteEffect === oEffectCopy) {
+                        if (lastFiniteEffect === oEffectCopy || aEffectCopies.length === 1) {
                             oEffectCopy.cTn.changeRepeatCount(1000);
                         } else {
-                            const oEndSync = new CCond();
-                            oEndSync.setEvt(COND_EVNT_ON_END);
-                            oEndSync.setTn(lastFiniteEffect.copyNode.getAttributesObject().id);
-                            oEffectCopy.cTn.setEndSync(oEndSync);
+                            oEffectCopy.cTn.setEndCondLst(new CCondLst());
+                            const oCond = new CCond();
+                            oCond.setEvt(COND_EVNT_ON_END);
+                            oCond.setTn(lastFiniteEffect.copyNode.getAttributesObject().id);
+                            oEffectCopy.cTn.endCondLst.push(oCond);
                         }
                     }
 
