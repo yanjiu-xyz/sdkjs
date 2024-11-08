@@ -536,13 +536,17 @@ CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemove
 {
 	if (this.IsPlaceHolder())
 	{
-		let logicDocument = this.GetLogicDocument();
+		let logicDocument  = this.GetLogicDocument();
+		let isRemoveOnDrag = logicDocument ? logicDocument.DragAndDropAction : false;
 		
-		if (!this.CanBeDeleted() && !bOnAddText)
+		if (!this.CanBeDeleted() && (!bOnAddText || isRemoveOnDrag))
 			return true;
 		
 		if (bOnAddText || !(logicDocument && logicDocument.IsDocumentEditor() && logicDocument.IsFillingFormMode()))
 			this.private_ReplacePlaceHolderWithContent();
+		
+		if (isRemoveOnDrag)
+			return false;
 		
 		return !!bOnAddText;
 	}
