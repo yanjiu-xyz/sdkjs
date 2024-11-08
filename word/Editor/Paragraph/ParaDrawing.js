@@ -2126,10 +2126,7 @@ ParaDrawing.prototype.AddToDocument = function(oAnchorPos, oRunPr, oRun, oPictur
 		oSdt.ReplacePlaceHolderWithContent();
 		oSdt.AddToContent(0, oDrawingRun);
 		oInsertParagraph.AddToContent(0, oSdt);
-
-		let oFormPr = oPictureCC.GetFormPr();
-		if (oFormPr)
-			oSdt.SetFormPr(oFormPr.Copy());
+		oPictureCC.private_CopyPrTo(oSdt);
 	}
 	else
 	{
