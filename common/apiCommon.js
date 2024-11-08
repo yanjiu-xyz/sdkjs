@@ -5203,7 +5203,7 @@ function (window, undefined) {
 
 					oShape.setVerticalAlign(1);//ctr
 				}
-
+				oShape.setVertOverflowType(AscFormat.nVOTOverflow);
 				if (Array.isArray(obj['margins']) && obj['margins'].length === 4) {
 					oShape.setPaddings({
 						Left: obj['margins'][0],
