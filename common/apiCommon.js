@@ -5077,7 +5077,13 @@ function (window, undefined) {
 			let ctx = canvasTransparent.getContext("2d");
 			ctx.globalAlpha = this.transparent;
 			ctx.drawImage(this.image, 0, 0);
-			this.imageBase64 = canvasTransparent.toDataURL("image/png");
+			try {
+				this.imageBase64 = canvasTransparent.toDataURL("image/png");
+			}
+			catch (e) {
+				this.imageBase64 = undefined;
+				this.api.sendEvent("asc_onError", Asc.c_oAscError.ID.CannotSaveWatermark, Asc.c_oAscError.Level.NoCritical);
+			}
 			canvasTransparent = null;
 		};
 		this.EndRenderer = function () {
@@ -5087,6 +5093,9 @@ function (window, undefined) {
 			this.imageBase64 = undefined;
 		};
 		this.DrawOnRenderer = function (renderer, w, h) {
+			if(!this.imageBase64) {
+				return;
+			}
 			let wMM = this.width * AscCommon.g_dKoef_pix_to_mm / this.zoom;
 			let hMM = this.height * AscCommon.g_dKoef_pix_to_mm / this.zoom;
 			let x = (w - wMM) / 2;
@@ -5189,6 +5198,10 @@ function (window, undefined) {
 				let align = obj['align'];
 				if (undefined != align) {
 					oShape.setVerticalAlign(align);
+				}
+				else {
+
+					oShape.setVerticalAlign(1);//ctr
 				}
 
 				if (Array.isArray(obj['margins']) && obj['margins'].length === 4) {

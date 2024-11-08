@@ -131,6 +131,8 @@
 			ConvertationOpenLimitError : -84,
 			ConvertationOpenFormat     : -85,
 
+			CannotSaveWatermark     : -86,
+
 			UserDrop : -100,
 			Warning  : -101,
 			UpdateVersion : -102,
