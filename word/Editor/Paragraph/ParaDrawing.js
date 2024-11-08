@@ -3302,9 +3302,14 @@ ParaDrawing.prototype.CheckDeletingLock = function()
 	
 	if (logicDocument && logicDocument.IsDocumentEditor())
 	{
-		// Если в форму зайти нельзя, то и не проверяем можно ли удалять её внутреннюю часть
+		// Если в форму зайти нельзя, то проверяем можно ли удалять её внутреннюю часть
 		if (form && this.IsForm() && !form.CanPlaceCursorInside())
+		{
+			if (Asc.c_oAscSdtLockType.SdtLocked === form.GetContentControlLock() || Asc.c_oAscSdtLockType.SdtContentLocked === form.GetContentControlLock())
+				AscCommon.CollaborativeEditing.Add_CheckLock(true);
+			
 			return;
+		}
 		
 		if (!this.LogicDocument.CanEdit() || this.LogicDocument.IsFillingFormMode())
 		{
