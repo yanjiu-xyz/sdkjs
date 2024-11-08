@@ -5464,6 +5464,13 @@ function (window, undefined) {
 			this.zoom = 1;
 			this.calculatezoom = 0;
 			this.CheckParams();
+
+			if (this.contentObjects && "string" === typeof this.contentObjects["fill"])
+			{
+				this.imageBackgroundUrl = this.contentObjects["fill"];
+				this.imageBackground = {};
+			}
+
 			this.Generate();
 		};
 	}
