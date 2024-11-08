@@ -337,6 +337,7 @@
 	prot['ConvertationSaveError']            = prot.ConvertationSaveError;
 	prot['ConvertationOpenLimitError']       = prot.ConvertationOpenLimitError;
 	prot['ConvertationOpenFormat']       	 = prot.ConvertationOpenFormat;
+	prot['CannotSaveWatermark']       	     = prot.CannotSaveWatermark;
 	prot['UserDrop']                         = prot.UserDrop;
 	prot['Warning']                          = prot.Warning;
 	prot['UpdateVersion']                    = prot.UpdateVersion;
