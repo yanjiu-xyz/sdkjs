@@ -18405,8 +18405,28 @@ Paragraph.prototype.Document_Is_SelectionLocked = function(CheckType)
 	var arrContentControls = this.GetSelectedContentControls();
 	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
 	{
-		if (arrContentControls[nIndex].IsSelectionUse() === isSelectionUse)
-			arrContentControls[nIndex].Document_Is_SelectionLocked(CheckType);
+		let cc     = arrContentControls[nIndex];
+		let paraCC = cc.GetParagraph();
+		if (!paraCC)
+			continue;
+		
+		if (paraCC !== this)
+		{
+			// Проверяем типы, при которых произойдет удаление элемента, содержащего данный контрол
+			if (CheckType !== AscCommon.changestype_Paragraph_AddText
+				&& CheckType !== AscCommon.changestype_Remove
+				&& CheckType !== AscCommon.changestype_Delete
+				&& CheckType !== AscCommon.changestype_Document_Content
+				&& CheckType !== AscCommon.changestype_Paragraph_Content)
+				continue;
+			
+			if (Asc.c_oAscSdtLockType.SdtLocked === cc.GetContentControlLock() || Asc.c_oAscSdtLockType.SdtContentLocked === cc.GetContentControlLock())
+				AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		}
+		else if (cc.IsSelectionUse() === isSelectionUse)
+		{
+			cc.Document_Is_SelectionLocked(CheckType);
+		}
 	}
 
 	// Проверка для специального случая, когда мы переносим текст из параграфа в него самого. В такой ситуации надо

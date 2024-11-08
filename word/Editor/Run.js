@@ -11292,6 +11292,18 @@ ParaRun.prototype.GetFootnoteRefsInRange = function(arrFootnotes, _CurLine, _Cur
 			arrFootnotes.push(this.Content[CurPos]);
 	}
 };
+ParaRun.prototype.GetSelectedContentControls = function(arrContentControls)
+{
+	let startPos = (this.Selection.StartPos < this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos);
+	let endPos   = (this.Selection.StartPos < this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos);
+	
+	for (let i = startPos; i < endPos; ++i)
+	{
+		let item = this.Content[i];
+		if (item.IsDrawing())
+			item.GetAllContentControls(arrContentControls);
+	}
+};
 ParaRun.prototype.GetAllContentControls = function(arrContentControls)
 {
 	if (!arrContentControls)
