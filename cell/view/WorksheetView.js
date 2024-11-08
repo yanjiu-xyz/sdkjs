@@ -16494,6 +16494,14 @@
 				t.workbook.checkScrollRtl(val);
 				if (t.objectRender) {
 					t.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: 0});
+					let drawings = t.objectRender.controller.getDrawingObjects();
+					for (var i = 0; i < drawings.length; ++i) {
+						if (!drawings[i].group) {
+							AscFormat.CheckSpPrXfrm3(drawings[i], true);
+						} else {
+							AscFormat.CheckSpPrXfrm(drawings[i], true);
+						}
+					}
 				}
 				t.model.workbook.handlers.trigger("asc_onHideMathTrack");
 				t.model.workbook.handlers.trigger("asc_onHideSpecialPasteOptions");
