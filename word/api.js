@@ -2276,17 +2276,7 @@ background-repeat: no-repeat;\
 		if (options && options.advancedOptions)
 			desktopOptions["nativeOptions"] = options.advancedOptions.asc_getNativeOptions();
 
-		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-		{
-			var viewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
-			if (window["AscDesktopEditor"] && !window["AscDesktopEditor"]["IsLocalFile"]() && window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"])
-			{
-				if (!window["AscDesktopEditor"]["IsCachedPdfCloudPrintFileInfo"]())
-					window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"](AscCommon.Base64.encode(viewer.getFileNativeBinary()));
-			}
-			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "");
-		}
-		else
+		if (!this.isPdfEditor())
 		{
 			if (options && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))
 			{

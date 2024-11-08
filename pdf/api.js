@@ -2393,7 +2393,22 @@
 			if (!window["AscDesktopEditor"]["IsCachedPdfCloudPrintFileInfo"]())
 				window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"](AscCommon.Base64.encode(viewer.getFileNativeBinary()));
 		}
-		window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "");
+
+		if (window["AscDesktopEditor"])
+		{
+			let isCloud = !this.isLocalMode() && window["AscDesktopEditor"]["emulateCloudPrinting"];
+			if (isCloud)
+				window["AscDesktopEditor"]["emulateCloudPrinting"](true);
+
+			let changes = viewer.Save();
+
+			if (isCloud)
+				window["AscDesktopEditor"]["emulateCloudPrinting"](false);
+
+			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "",
+				changes ? AscCommon.Base64.encode(changes) : "", this.DocumentUrl);
+		}
+
 		return true;
 	};
 	PDFEditorApi.prototype.asyncImagesDocumentEndLoaded = function() {
