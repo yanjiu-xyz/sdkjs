@@ -2245,7 +2245,7 @@
 			if (this.txXfrm) {
 				return this.checkTransformTextMatrixSmartArt(oMatrix, oContent, oBodyPr, bWordArtTransform, bIgnoreInsets);
 			}
-			let oInsets = this.getInsets({bIgnoreInsets: bIgnoreInsets});
+			let oInsets = this.getInsets({bIgnoreInsets: bIgnoreInsets, bodyPr: oBodyPr});
 			let l_ins = oInsets.lIns;
 			let t_ins = oInsets.tIns;
 			let r_ins = oInsets.rIns;
@@ -3834,7 +3834,7 @@
 		CShape.prototype.recalculateDocContent = function (oDocContent, oBodyPr) {
 			let nStartPage = this.Get_AbsolutePage ? this.Get_AbsolutePage() : 0;
 			let oRet = {w: 0, h: 0, contentH: 0};
-			let oInsets = this.getInsets({bIgnoreInsets: false});
+			let oInsets = this.getInsets({bIgnoreInsets: false, bodyPr: oBodyPr});
 			const oForm = this.isForm && this.isForm() ? this.getInnerForm() : null;
 			let l_ins = oInsets.lIns;
 			let t_ins = oInsets.tIns;
