@@ -648,6 +648,8 @@
 
 		this.isOnlyDemonstration = false;
 
+		this.mouseMode = "select";
+
 
 		this.presentationViewMode = Asc.c_oAscPresentationViewMode.normal;
 
@@ -9360,7 +9362,14 @@ background-repeat: no-repeat;\
 			return;
 		oLogicDocument.RemoveCustomProperty(idx);
 	};
-	
+
+	asc_docs_api.prototype.asc_setViewerTargetType = function(mode)
+	{
+		this.mouseMode = mode;
+		if (this.WordControl)
+			this.WordControl.setMouseMode(mode);
+	};
+
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
@@ -9922,6 +9931,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_CanDeleteMaster"] = asc_docs_api.prototype.asc_CanDeleteMaster;
 	asc_docs_api.prototype["asc_CanDeleteLayout"] = asc_docs_api.prototype.asc_CanDeleteLayout;
 	asc_docs_api.prototype["asc_IsMasterMode"] = asc_docs_api.prototype.asc_IsMasterMode;
+
+	asc_docs_api.prototype["asc_setViewerTargetType"] = asc_docs_api.prototype.asc_setViewerTargetType;
 	
 
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;
