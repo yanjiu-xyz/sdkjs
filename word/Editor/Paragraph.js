@@ -12210,6 +12210,21 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 
 	return null;
 };
+Paragraph.prototype.GetLayout = function(contentPos, useWrap)
+{
+	let drawing = {
+		Use_TextWrap : function()
+		{
+			return useWrap;
+		},
+		IsLayoutInCell : function()
+		{
+			return false;
+		}
+	};
+	
+	return this.Get_Layout(contentPos, drawing);
+};
 Paragraph.prototype.Get_AnchorPos = function(Drawing)
 {
 	var ContentPos = this.Get_DrawingObjectContentPos(Drawing.Get_Id());
