@@ -6310,7 +6310,6 @@ var CPresentation = CPresentation || function(){};
 		this.runInput = null;
 		
 		if (this.canSquashChanges()) {
-			console.log("squash")
 			this.undoAll();
 			
 			this.textController.GetDocContent().SetSelectionState(this.contentState);
@@ -6318,9 +6317,6 @@ var CPresentation = CPresentation || function(){};
 			this.pdfDocument.DoAction(function() {
 				this.textController.EnterText(codePoints);
 			}, AscDFH.historydescription_Document_AddLetter, this);
-		}
-		else {
-			console.log("NO squash");
 		}
 		
 		this.inUse = false;

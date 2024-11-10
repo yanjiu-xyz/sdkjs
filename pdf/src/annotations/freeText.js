@@ -731,7 +731,7 @@
                     oLastUsedPara.Set_Align(AscPDF.getInternalAlignByPdfType(oRCInfo["alignment"]));
                 }
                 else {
-                    oRun.Add(AscPDF.codePointToRunElement(nCharCode));
+                    oRun.AddToContentToEnd(AscPDF.codePointToRunElement(nCharCode));
                 }
             }
         }
