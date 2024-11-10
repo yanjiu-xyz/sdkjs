@@ -182,11 +182,40 @@
 			oContent.RecalculateCurPos();
 		}
     };
-    CPdfShape.prototype.GetAllFonts = function(fontMap) {
-        fontMap = fontMap || {};
-        AscFormat.CShape.prototype.getAllFonts.call(this, fontMap);
-        return fontMap;
-    };
+	CPdfShape.prototype.GetAllFonts = function(fontMap) {
+		fontMap = fontMap || {};
+		
+		let docContent = this.GetDocContent();
+		if (!docContent)
+			return fontMap;
+		
+		for (let i = 0, count = docContent.GetElementsCount(); i < count; ++i) {
+			let para = docContent.GetElement(i);
+			if (!para || !para.IsParagraph())
+				continue;
+			
+			para.Get_CompiledPr2(false).TextPr.Document_Get_AllFontNames(fontMap);
+			
+			if (para.Pr.Bullet)
+				para.Pr.Bullet.Get_AllFontNames(fontMap);
+			
+			if (para.Pr.DefaultRunPr)
+				para.Pr.DefaultRunPr.Document_Get_AllFontNames(fontMap);
+			
+			para.CheckRunContent(function(run) {
+				run.Get_CompiledPr(false).Document_Get_AllFontNames(fontMap);
+			});
+		}
+		
+		delete fontMap["+mj-lt"];
+		delete fontMap["+mn-lt"];
+		delete fontMap["+mj-ea"];
+		delete fontMap["+mn-ea"];
+		delete fontMap["+mj-cs"];
+		delete fontMap["+mn-cs"];
+		
+		return fontMap;
+	};
 
     CPdfShape.prototype.hitToAdjustment = function (x, y) {
         if (!AscFormat.canSelectDrawing(this)) {
