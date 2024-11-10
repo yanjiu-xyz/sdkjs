@@ -720,7 +720,10 @@
 		this.checkPointerMultiTouchRemove(e);
 
 		if (this.isViewMode() || isPreventDefault && !this.Api.getHandlerOnClick())
-			AscCommon.stopEvent(e);//AscCommon.g_inputContext.preventVirtualKeyboard(e);
+		{
+			AscCommon.stopEvent(e);
+			AscCommon.g_inputContext.preventVirtualKeyboard(e);
+		}
 
 		if (true !== this.iScroll.isAnimating)
 			this.CheckContextMenuTouchEnd(isCheckContextMenuMode, isCheckContextMenuSelect, isCheckContextMenuCursor, isCheckContextMenuTableRuler);

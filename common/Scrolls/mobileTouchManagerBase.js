@@ -38,6 +38,45 @@
 	var AscCommon = window['AscCommon'];
 	var global_mouseEvent = AscCommon.global_mouseEvent;
 
+	/*
+	function CVirtualKeyboard()
+	{
+		this.checkSupport = false;
+		this.isShow = false;
+
+		try
+		{
+			if ("virtualKeyboard" in navigator)
+			{
+				this.checkSupport = true;
+
+				if (navigator.virtualKeyboard.addEventListener)
+				{
+					navigator.virtualKeyboard.addEventListener("geometrychange", function(event) {
+						alert(JSON.stringify(event.target.boundingRect));
+					});
+				}
+			}
+		}
+		catch (err)
+		{
+			this.checkSupport = false;
+		}
+
+		this.isSupport = function()
+		{
+			return this.checkSupport;
+		};
+
+		this.isVisible = function()
+		{
+			return this.isShow;
+		};
+	}
+
+	AscCommon.virtualKeyboard = new CVirtualKeyboard();
+	*/
+
 	AscCommon.MobileTouchMode =
 		{
 			None       : 0,

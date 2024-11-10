@@ -495,16 +495,26 @@ function (window, undefined)
 	{
 		return this.Api.controller._onMouseUp(this._convertLogicToEvent(e, x, y, page));
 	};
+	CMobileDelegateEditorCell.prototype.extendPointerEvent = function(e)
+	{
+		try {
+			e.button = 0;
+		} catch(err) {
+		}
+	};
 	CMobileDelegateEditorCell.prototype.Drawing_OnMouseDown = function(e)
 	{
+		this.extendPointerEvent(e);
 		return this.Api.controller._onMouseDown(e);
 	};
 	CMobileDelegateEditorCell.prototype.Drawing_OnMouseMove = function(e)
 	{
+		this.extendPointerEvent(e);
 		return this.Api.controller._onMouseMove(e);
 	};
 	CMobileDelegateEditorCell.prototype.Drawing_OnMouseUp = function(e)
 	{
+		this.extendPointerEvent(e);
 		return this.Api.controller._onMouseUp(e);
 	};
 
