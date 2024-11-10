@@ -2817,21 +2817,27 @@
 
 				if (!isStretchPaint)
 				{
+					let isClearAttack = this.isClearPages;
+					if (page.Image && page.createdInStretchMode === true)
+					{
+						isClearAttack = true;
+						delete page.createdInStretchMode;
+					}
+
 					if (!this.file.cacheManager)
 					{
-						if (this.isClearPages || (page.Image && ((page.Image.requestWidth !== w) || (page.Image.requestHeight !== h))))
+						if (isClearAttack || (page.Image && ((page.Image.requestWidth !== w) || (page.Image.requestHeight !== h))))
 							delete page.Image;
 					}
 					else
 					{
-						if (this.isClearPages || (page.Image && ((page.Image.requestWidth < w) || (page.Image.requestHeight < h))))
+						if (isClearAttack || (page.Image && ((page.Image.requestWidth < w) || (page.Image.requestHeight < h))))
 						{
 							if (this.file.cacheManager)
 								this.file.cacheManager.unlock(page.Image);
 
 							delete page.Image;
 						}
-						
 					}
 				}
 
@@ -2861,6 +2867,9 @@
 					let tmpPageCtx = page.Image.getContext('2d');
 					tmpPageCtx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
 					tmpPageCtx.fillRect(0, 0, w, h);
+
+					if (isStretchPaint)
+						page.createdInStretchMode = true;
 				}
 
 				if (bRedrawAnnotsOnMainLayer) {
