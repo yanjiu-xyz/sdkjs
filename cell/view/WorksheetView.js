@@ -16514,6 +16514,7 @@
 							AscFormat.CheckSpPrXfrm(drawings[i], true);
 						}
 					}
+					t.objectRender.controller.recalculate(true);
 				}
 				t.model.workbook.handlers.trigger("asc_onHideMathTrack");
 				t.model.workbook.handlers.trigger("asc_onHideSpecialPasteOptions");
