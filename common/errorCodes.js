@@ -131,6 +131,8 @@
 			ConvertationOpenLimitError : -84,
 			ConvertationOpenFormat     : -85,
 
+			CannotSaveWatermark     : -86,
+
 			UserDrop : -100,
 			Warning  : -101,
 			UpdateVersion : -102,
@@ -335,6 +337,7 @@
 	prot['ConvertationSaveError']            = prot.ConvertationSaveError;
 	prot['ConvertationOpenLimitError']       = prot.ConvertationOpenLimitError;
 	prot['ConvertationOpenFormat']       	 = prot.ConvertationOpenFormat;
+	prot['CannotSaveWatermark']       	     = prot.CannotSaveWatermark;
 	prot['UserDrop']                         = prot.UserDrop;
 	prot['Warning']                          = prot.Warning;
 	prot['UpdateVersion']                    = prot.UpdateVersion;

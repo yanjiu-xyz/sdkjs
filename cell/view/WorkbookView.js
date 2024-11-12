@@ -1277,21 +1277,41 @@
 		}
 	};
 
-  WorkbookView.prototype._onScrollY = function(pos, initRowsCount) {
-    var ws = this.getWorksheet();
-    var delta = !this.getSmoothScrolling() ? (asc_round(pos - ws.getFirstVisibleRow(true))) : (pos - ws.getFirstVisibleRowSmoothScroll(true));
-    if (delta !== 0) {
-      ws.scrollVertical(delta, this.cellEditor, initRowsCount);
-    }
-  };
+	WorkbookView.prototype._onScrollY = function (pos, initRowsCount, bDefaultStep) {
+		let ws = this.getWorksheet();
+		let t = this;
+		let doScroll = function () {
+			var delta = !t.getSmoothScrolling() ? (asc_round(pos - ws.getFirstVisibleRow(true))) : (pos - ws.getFirstVisibleRowSmoothScroll(true));
+			if (delta !== 0) {
+				ws.scrollVertical(delta, t.cellEditor, initRowsCount);
+			}
+		}
+		if (bDefaultStep) {
+			ws.executeScrollDefaultStep(function () {
+				doScroll();
+			})
+		} else {
+			doScroll();
+		}
+	};
 
-  WorkbookView.prototype._onScrollX = function(pos, initColsCount) {
-    var ws = this.getWorksheet();
-    var delta = !this.getSmoothScrolling() ? (asc_round(pos - ws.getFirstVisibleCol(true))) : (pos - ws.getFirstVisibleColSmoothScroll(true));
-    if (delta !== 0) {
-      ws.scrollHorizontal(delta, this.cellEditor, initColsCount);
-    }
-  };
+	WorkbookView.prototype._onScrollX = function (pos, initColsCount, bDefaultStep) {
+		let ws = this.getWorksheet();
+		let t = this;
+		let doScroll = function () {
+			var delta = !t.getSmoothScrolling() ? (asc_round(pos - ws.getFirstVisibleCol(true))) : (pos - ws.getFirstVisibleColSmoothScroll(true));
+			if (delta !== 0) {
+				ws.scrollHorizontal(delta, t.cellEditor, initColsCount);
+			}
+		}
+		if (bDefaultStep) {
+			ws.executeScrollDefaultStep(function () {
+				doScroll();
+			})
+		} else {
+			doScroll();
+		}
+	};
 
   WorkbookView.prototype._onSetSelection = function(range) {
     var ws = this.getWorksheet();
@@ -5481,10 +5501,22 @@
 								eR && eR.updateData(updatedData, _arrAfterPromise[i].data);
 							}
 						}
-					} else {
-						if (eR) {
-							t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+					} else if (eR) {	 
+						/* 
+							if we haven't received data from an external source
+							leave the link in the wb.externalReferernces array and assign the values ​​as an error #REF 
+						*/
+						
+						if (eR.worksheets) {
+							let arr = [];
+							for (let i in eR.worksheets) {
+								arr.push(eR.worksheets[i]);
+							}
+
+							eR.updateData(arr, _arrAfterPromise[i].data, /* noData */ true);
 						}
+
+						t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
 					}
 				}
 
@@ -5733,6 +5765,7 @@
 				wsChangingCell = this.model.getWorksheetByName(sSheetName);
 			}
 		}
+		sExpectedValue = sExpectedValue.replace(/,/g, ".");
 
 		let t = this;
 		let callback = function (isSuccess) {

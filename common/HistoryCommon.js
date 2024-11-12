@@ -4318,6 +4318,7 @@
 	AscDFH.historyitem_Pdf_Form_Change_Display	= AscDFH.historyitem_type_Pdf_Form | 4;
 	
 	AscDFH.historyitem_Pdf_List_Form_Cur_Idxs	= AscDFH.historyitem_type_Pdf_List_Form | 1;
+	AscDFH.historyitem_Pdf_List_Form_Top_Idx	= AscDFH.historyitem_type_Pdf_List_Form | 2;
 
 
 	AscDFH.historyitem_Pdf_Pushbutton_Image		= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
@@ -5004,6 +5005,13 @@
 	CChangesBaseContentChange.prototype.IsContentChange = function()
 	{
 		return true;
+	};
+	CChangesBaseContentChange.prototype.GetContentChangesClass = function()
+	{
+		if (this.Class && this.Class.m_oContentChanges)
+			return this.Class.m_oContentChanges;
+		
+		return null;
 	};
 	CChangesBaseContentChange.prototype.IsAdd = function()
 	{

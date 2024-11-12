@@ -334,11 +334,25 @@
 		this.LoadFonts = function(fonts, callback)
 		{
 			let fontMap = {}
-			for (let name in fonts)
+			
+			if (fonts && Array.isArray(fonts))
 			{
-				fontMap[name] = AscFonts.g_fontApplication.GetFontInfo(name);
-				fontMap[name].NeedStyles = 15;
+				for (let i = 0; i < fonts.length; ++i)
+				{
+					let name = fonts[i];
+					fontMap[name] = AscFonts.g_fontApplication.GetFontInfo(name);
+					fontMap[name].NeedStyles = 15;
+				}
 			}
+			else
+			{
+				for (let name in fonts)
+				{
+					fontMap[name] = AscFonts.g_fontApplication.GetFontInfo(name);
+					fontMap[name].NeedStyles = 15;
+				}
+			}
+			
 			
 			let globalLoader = this;
 			

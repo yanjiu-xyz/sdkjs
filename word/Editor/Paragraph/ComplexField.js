@@ -412,6 +412,18 @@ ParaFieldChar.prototype.PreDelete = function()
 	if (this.LogicDocument && this.ComplexField)
 		this.LogicDocument.ValidateComplexField(this.ComplexField);
 };
+ParaFieldChar.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
+{
+	if (!this.ComplexField
+		|| !this.ComplexField.IsFormField()
+		|| !this.ComplexField.IsFormFieldEnabled())
+		return null;
+	
+	if (isNext)
+		return (this.IsBegin() && (!isCurrent || isNext) ? this.ComplexField : null);
+	else
+		return (this.IsEnd() && (!isCurrent || isNext) ? this.ComplexField : null);
+};
 
 /**
  * Класс представляющий символ инструкции сложного поля
@@ -2142,3 +2154,4 @@ window['AscCommonWord'].CComplexField = CComplexField;
 window['AscWord'] = window['AscWord'] || {};
 window['AscWord'].getRefInstruction = getRefInstruction;
 window['AscWord'].CComplexField = CComplexField;
+window['AscWord'].ComplexField = CComplexField;

@@ -1470,6 +1470,16 @@ CSelectedElementsInfo.prototype.GetField = function()
 {
     return this.m_oField;
 };
+CSelectedElementsInfo.prototype.GetFormField = function()
+{
+	for (let i = this.m_arrComplexFields.length - 1; i >= 0; --i)
+	{
+		let complexField = this.m_arrComplexFields[i];
+		if (complexField.IsFormField())
+			return complexField;
+	}
+	return null;
+};
 CSelectedElementsInfo.prototype.SetTable = function()
 {
     this.m_bTable = true;
@@ -2824,6 +2834,7 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction)
 		if (arrChanges.length)
 			this.RecalculateByChanges(arrChanges);
 		
+		this.History.ClearRedo();
 		actionCompleted = false;
 	}
 	
@@ -5211,11 +5222,14 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
 
         if (FrameH + FrameY > Page_H)
             FrameY = Page_H - FrameH;
-
-        // TODO: Пересмотреть, почему эти погрешности возникают
-        // Избавляемся от погрешности
-        FrameY += 0.001;
-        FrameH -= 0.002;
+	
+		// Начинаем рамку с позиции начала следующего твипса, чтобы не было пересечений с объектами, заканчивающимися
+		// на текущем твипсе
+		// TODO: Проверить, нужно ли уменьшать размер рамки на 2 твипса (ранее уменьшали на 0.002, когда исправляли проблему с пересечением объектов в обтекании)
+		let twFrameY = AscCommon.MMToTwips(AscCommon.CorrectMMToTwips(FrameY));
+	
+		FrameY = AscCommon.TwipsToMM(twFrameY + 1);
+		FrameH -= AscCommon.TwipsToMM(2);
 
         if (FrameY < 0)
             FrameY = 0;
@@ -21812,6 +21826,27 @@ CDocument.prototype.controller_UpdateSelectionState = function()
 	if (this.HandleOformSelectionInEditMode())
 		return;
 	
+	let _t = this;
+	function isInCheckBox()
+	{
+		let selectedInfo = _t.GetSelectedElementsInfo();
+		
+		let inlineCC = selectedInfo.GetInlineLevelSdt();
+		if (inlineCC && inlineCC.IsCheckBox())
+			return true;
+		
+		let blockCC = selectedInfo.GetBlockLevelSdt();
+		if (blockCC && blockCC.IsCheckBox())
+			return true;
+		
+		let simpleField = selectedInfo.GetField();
+		if (simpleField && simpleField.IsFormCheckBox())
+			return true;
+		
+		let formField = selectedInfo.GetFormField();
+		return (formField && formField.IsFormCheckBox());
+	}
+	
 	if (true === this.Selection.Use)
 	{
 		// Выделение нумерации
@@ -21859,12 +21894,8 @@ CDocument.prototype.controller_UpdateSelectionState = function()
 				this.DrawingDocument.TargetStart();
 				this.DrawingDocument.TargetShow();
 
-				if (this.IsFillingFormMode())
-				{
-					var oContentControl = this.GetContentControl();
-					if (oContentControl && oContentControl.IsCheckBox())
-						this.DrawingDocument.TargetEnd();
-				}
+				if (this.IsFillingFormMode() && isInCheckBox())
+					this.DrawingDocument.TargetEnd();
 			}
 		}
 	}
@@ -21877,13 +21908,9 @@ CDocument.prototype.controller_UpdateSelectionState = function()
 
 		this.DrawingDocument.SelectEnabled(false);
 		this.DrawingDocument.TargetShow();
-
-		if (this.IsFillingFormMode())
-		{
-			var oContentControl = this.GetContentControl();
-			if (oContentControl && oContentControl.IsCheckBox())
-				this.DrawingDocument.TargetEnd();
-		}
+		
+		if (this.IsFillingFormMode() && isInCheckBox())
+			this.DrawingDocument.TargetEnd();
 	}
 };
 CDocument.prototype.controller_GetSelectionState = function()
@@ -22291,6 +22318,7 @@ CDocument.prototype.IsInFormField = function(isAllowComplexForm, isCheckCurrentU
 	var oField        = oSelectedInfo.GetField();
 	var oInlineSdt    = oSelectedInfo.GetInlineLevelSdt();
 	var oBlockSdt     = oSelectedInfo.GetBlockLevelSdt();
+	let formField     = oSelectedInfo.GetFormField();
 	
 	if (oInlineSdt && oInlineSdt.IsContentControlEquation())
 		return false;
@@ -22303,7 +22331,10 @@ CDocument.prototype.IsInFormField = function(isAllowComplexForm, isCheckCurrentU
 	// оInlineSdt отдает нам нижний уровень, если на нем у нас ComplexField, значит мы находимся внутри текста,
 	// в такой ситуации мы отдаем, что ме не находимся в форме, чтобы запретить редактирование в этой части формы
 	// Когда мы будем находится внутри простой формы, находящейся в сложной, то oInlineSdt вернет именно проостую форму
-	return !!(oBlockSdt || (oInlineSdt && (!oInlineSdt.IsComplexForm() || isAllowComplexForm)) || (oField && AscWord.fieldtype_FORMTEXT === oField.Get_FieldType()));
+	return !!(oBlockSdt
+		|| (oInlineSdt && (!oInlineSdt.IsComplexForm() || isAllowComplexForm))
+		|| (oField && AscWord.fieldtype_FORMTEXT === oField.Get_FieldType())
+		|| formField);
 };
 CDocument.prototype.IsFormFieldEditing = function()
 {
@@ -22317,6 +22348,8 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 		oForm.SelectContentControl();
 	else if ((oForm = oInfo.GetField()) instanceof ParaField)
 		oForm.SelectThisElement();
+	else if ((oForm = oInfo.GetFormField()) instanceof AscWord.ComplexField)
+		oForm.SelectFieldValue();
 
 	this.DrawingObjects.resetDrawStateBeforeAction();
 	var oRes = null;
@@ -22453,6 +22486,12 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 		{
 			oRes.SelectThisElement();
 		}
+		else if (oRes instanceof AscWord.ComplexField)
+		{
+			oRes.SelectFieldValue();
+		}
+		
+		this.DrawingDocument.scrollToTarget();
 	}
 };
 CDocument.prototype.TurnComboBoxFormValue = function(oForm, isNext)

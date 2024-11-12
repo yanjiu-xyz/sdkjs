@@ -815,17 +815,7 @@ void main() {\n\
                             return { Line : _line, Glyph : _glyph };
                         }
 
-                        if (_distX >= 0 && _distX <= _lineWidth)
-                            tmp = Math.abs(y - _lineY);
-                        else if (_distX < 0)
-                        {
-                            tmp = Math.sqrt((x - _lineX) * (x - _lineX) + (y - _lineY) * (y - _lineY));
-                        }
-                        else
-                        {
-                            var _xx1 = _lineX + _lineWidth;
-                            tmp = Math.sqrt((x - _xx1) * (x - _xx1) + (y - _lineY) * (y - _lineY));
-                        }
+                        tmp = Math.abs(y - _lineY);
 
                         if (tmp < _minDist)
                         {
@@ -2887,7 +2877,8 @@ void main() {\n\
                 page.originRotate   = page["Rotate"];
                 page.Rotate         = page["Rotate"];
             }
-
+            file.originalPagesCount = file.pages.length;
+            
             //file.cacheManager = new AscCommon.CCacheManager();
         }
     };

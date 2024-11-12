@@ -429,9 +429,9 @@
             let aPath;
             for (let i = 0; i < this._gestures.length; i++) {
                 aPath = this._gestures[i];
-                for (let j = 0; j < aPath.length; j++) {
-                    aPath[j].x += nDeltaX;
-                    aPath[j].y += nDeltaY;
+                for (let j = 0; j < aPath.length; j+=2) {
+                    aPath[j] += nDeltaX;
+                    aPath[j+1] += nDeltaY;
                 }
             }
         }
@@ -1276,7 +1276,7 @@
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
-        this.draw(memory.AnnotsRenderer); // для каждой страницы инициализируется свой renderer
+        this.draw(memory.docRenderer); // для каждой страницы инициализируется свой renderer
 
         // запись длины комманд
         let nEndPos = memory.GetCurPosition();

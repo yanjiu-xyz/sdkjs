@@ -2031,13 +2031,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return !!this.getRange();
 	};
 	cRef3D.prototype.getValue = function () {
-		var _r = this.getRange();
+		const t = this;
+		let _r = this.getRange();
 		if (!_r) {
 			return new cError(cErrorType.bad_reference);
 		}
 		var res;
 		_r.getLeftTopCellNoEmpty(function (cell) {
-			res = checkTypeCell(cell);
+			if (!cell && t.externalLink) {
+				// if we refer to a non-existent cell in external data, return a #REF error
+				res = new cError(cErrorType.bad_reference);
+			} else {
+				res = checkTypeCell(cell);
+			}
 		});
 		return res;
 	};
@@ -3064,15 +3070,26 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return this.array;
 	};
-	cArray.prototype.fillFromArray = function (arr) {
+	cArray.prototype.fillFromArray = function (arr, fChangeElems) {
 		if (arr && arr.length !== undefined) {
 			this.array = arr;
 			this.rowCount = arr.length;
 			for (var i = 0; i < arr.length; i++) {
 				this.countElementInRow[i] = arr[i].length;
 				this.countElement += arr[i].length;
+				if (fChangeElems){
+					for (let j = 0; j < arr[i].length; j++) {
+						let changeRes = fChangeElems(arr[i][j]);
+						if (changeRes !== null) {
+							arr[i][j] = changeRes;
+						} else {
+							return null;
+						}
+					}
+				}
 			}
 		}
+		return true;
 	};
 	cArray.prototype.fillEmptyFromRange = function (range) {
 		if(!range) {
@@ -3173,6 +3190,34 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getFirstElement = function () {
 		return this.getElementRowCol(0,0);	
+	};
+	//check two-dimensional array
+	cArray.prototype.checkValidArray = function (array, bConvertToValid) {
+		if (!array || !array.length) {
+			return false;
+		}
+		let isOneDimensional = null;
+		for (let i = 0; i < array.length; i++) {
+			if (Array.isArray(array[i])) {
+				if (isOneDimensional) {
+					return false;
+				}
+				for (let j = 0; j < array[i].length; j++) {
+					if (Array.isArray(array[i][j])) {
+						return false;
+					}
+				}
+				isOneDimensional = false;
+			} else if (isOneDimensional === null) {
+				isOneDimensional = true;
+			}
+		}
+		if (isOneDimensional && bConvertToValid) {
+			let temp = [];
+			temp.push(array);
+			array = temp;
+		}
+		return array;
 	};
 
 
@@ -3960,7 +4005,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 
 	cBaseFunction.prototype.checkFormulaArray2 = function (arg, opt_bbox, opt_defName, parserFormula, bIsSpecialFunction, argumentsCount) {
-		if (AscCommonExcel.bIsSupportDynamicArrays) {
+		// if (AscCommonExcel.bIsSupportDynamicArrays) {
 			const t = this;
 			let res = null;
 			let functionsCanReturnArray = ["index"];
@@ -4012,7 +4057,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 					_checkArrayIndex = checkArrayIndex(j);
 					if (!_checkArrayIndex) {
-						if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type || cElementType.array === tempArg.type) {
+						if (/*cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type ||*/ cElementType.array === tempArg.type) {
 							res = true
 						}
 					}
@@ -4025,7 +4070,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			return res;
-		}
+		// }
 	};
 
 	cBaseFunction.prototype.getDynamicArraySize = function (arg) {
@@ -7341,10 +7386,18 @@ function parserFormula( formula, parent, _ws ) {
 							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: sheetName /*_3DRefTmp[1]*/});
 						} else {
 							isExternalRefExist = true;
+							let externalName = _3DRefTmp[3];
+							if (!parseResult.externalReferenesNeedAdd) {
+								parseResult.externalReferenesNeedAdd = [];
+							}
+							if (!parseResult.externalReferenesNeedAdd[externalName]) {
+								parseResult.externalReferenesNeedAdd[externalName] = [];
+							}
+							parseResult.externalReferenesNeedAdd[externalName].push({sheet: sheetName /*_3DRefTmp[1]*/});
 						}
 					}
 
-					wsF = t.wb.getExternalWorksheet(externalLink, sheetName /*_3DRefTmp[1]*/);
+					wsF = sheetName ? t.wb.getExternalWorksheet(externalLink, sheetName /*_3DRefTmp[1]*/) : null;
 					wsT = wsF;
 				} else {
 					wsF = t.wb.getWorksheetByName(sheetName/*_3DRefTmp[1]*/);
@@ -7354,7 +7407,7 @@ function parserFormula( formula, parent, _ws ) {
 				// if it's impossible to get a sheet from an external file, but the file itself is exist, then we return an error about incorrectly entering the formula
 				let wsNotExist = externalLink && isExternalRefExist && !wsF;
 
-				if ((!(wsF && wsT) && !externalLink) || wsNotExist) {
+				if ((!(wsF && wsT) && !externalLink) /*|| wsNotExist*/) {
 					parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
 					if (!ignoreErrors) {
 						t.outStack = [];
@@ -7763,8 +7816,8 @@ function parserFormula( formula, parent, _ws ) {
 		}
 	};
 
-	parserFormula.prototype.findRefByOutStack = function () {
-		if (AscCommonExcel.bIsSupportDynamicArrays) {
+	parserFormula.prototype.findRefByOutStack = function (forceCheck) {
+		if (AscCommonExcel.bIsSupportDynamicArrays || forceCheck) {
 			// using outStack, look at all the arguments in the formulas and compare them with the arrayIndex positions for this formula
 			// go through the stack in the same order as .calculate method
 			if (this.ref) {
@@ -7846,21 +7899,21 @@ function parserFormula( formula, parent, _ws ) {
 								arg.unshift(tempElem);
 							}
 
-							let formulaArray = null;
+							let isCanExpand = null;
 							if (currentElement.type === cElementType.func) {
-								formulaArray = cBaseFunction.prototype.checkFormulaArray2.call(currentElement, arg, opt_bbox, null, this, bIsSpecialFunction, argumentsCount);
+								isCanExpand = cBaseFunction.prototype.checkFormulaArray2.call(currentElement, arg, opt_bbox, null, this, bIsSpecialFunction, argumentsCount);
 							} else if (currentElement.type === cElementType.operator && currentElement.bArrayFormula) {
 								bIsSpecialFunction = true;
 							}
 
-							if(formulaArray) {
+							if(isCanExpand) {
 								isRef = true;
 							} else {
-								// todo results SEQUENCE, RANDARRAY etc... can return an array when using regular values ​​in arguments
+								/* results of SEQUENCE, RANDARRAY etc... can return an array when using regular values ​​in arguments */
 								_tmp = currentElement.Calculate(arg, opt_bbox, null, this.ws, bIsSpecialFunction);
 							}
 
-							if (isRef || (_tmp && (_tmp.type === cElementType.array || _tmp.type === cElementType.cellsRange || _tmp.type === cElementType.cellsRange3D))) {
+							if (isRef || (_tmp && (_tmp.type === cElementType.array /*|| _tmp.type === cElementType.cellsRange || _tmp.type === cElementType.cellsRange3D*/))) {
 								return true;
 							}
 

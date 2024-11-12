@@ -1798,6 +1798,22 @@ function(window, undefined) {
 		}
 		return true;
 	};
+	CChartSpace.prototype.isSupported = function () {
+		if(this.isChartEx()) {
+			const aSeries = this.getAllSeries();
+			if(aSeries.length === 0) {
+				return true;
+			}
+			for (let nSer = 0; nSer < aSeries.length; nSer++) {
+				let oSeries = aSeries[nSer];
+				if(oSeries.isSupported()) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return true;
+	};
 	CChartSpace.prototype.getSortedChartsId = function () {
 		if (this.chartObj) {
 			return this.chartObj._sortChartsForDrawing(this);
@@ -3814,31 +3830,18 @@ function(window, undefined) {
 		if (this.chart) {
 			if (this.chart.plotArea) {
 				this.chart.plotArea.updatePosition(posX, posY);
-				if (this.isChartEx()) {
-					const cachedData = this.chart.plotArea.plotAreaRegion ? this.chart.plotArea.plotAreaRegion.cachedData : null;
-					if (cachedData && cachedData.compiledDlbs) {
-						for (let i = 0; i < cachedData.compiledDlbs.length; i++) {
-							cachedData.compiledDlbs[i].compiledDlb.updatePosition(posX, posY);
+				var series = this.getAllSeries();
+				for (var i = 0; i < series.length; ++i) {
+					var ser = series[i];
+					var pts = ser.getNumPts();
+					for (var j = 0; j < pts.length; ++j) {
+						if (pts[j].compiledDlb) {
+							pts[j].compiledDlb.updatePosition(posX, posY);
 						}
 					}
-				} else {
-					var aCharts = this.chart.plotArea.charts;
-					for (var t = 0; t < aCharts.length; ++t) {
-						var oChart = aCharts[t];
-						var series = oChart.series;
-						for (var i = 0; i < series.length; ++i) {
-							var ser = series[i];
-							var pts = ser.getNumPts();
-							for (var j = 0; j < pts.length; ++j) {
-								if (pts[j].compiledDlb) {
-									pts[j].compiledDlb.updatePosition(posX, posY);
-								}
-							}
-							let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
-							if(oTrendlineLbl) {
-								oTrendlineLbl.updatePosition(posX, posY);
-							}
-						}
+					let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+					if(oTrendlineLbl) {
+						oTrendlineLbl.updatePosition(posX, posY);
 					}
 				}
 				var aAxes = this.chart.plotArea.axId;
@@ -3981,6 +3984,10 @@ function(window, undefined) {
 				}
 				for (i = 0; i < plot_area.charts.length; ++i) {
 					plot_area.charts[i].getAllRasterImages(images);
+				}
+
+				if(plot_area.plotAreaRegion) {
+					plot_area.plotAreaRegion.getAllRasterImages(images);
 				}
 			}
 		}
@@ -4482,20 +4489,20 @@ function(window, undefined) {
 			const nDefaultPosition = seria.dataLabels.pos ? seria.dataLabels.pos : AscFormat.DATA_LABEL_POS_OUT_END;
 			default_lbl.initDefault(nDefaultPosition);
 			cachedData.compiledDlbs = [];
-			for (let i in results) {
+			let aPts = seria.getValPts();
+			for(let nPt = 0; nPt < aPts.length; ++nPt) {
+				let pt = aPts[nPt];
 				const compiled_dlb = new AscFormat.CDLbl();
-				const pt = {};
 				compiled_dlb.merge(default_lbl);
 				pt.compiledDlb = compiled_dlb;
 				pt.compiledDlb.chart = this;
 				pt.compiledDlb.series = seria;
-				pt.compiledDlb.pt = obtainData(cachedData, i);
+				pt.compiledDlb.pt = pt;
 				pt.compiledDlb.setShowChartExVal(true);
 				pt.compiledDlb.recalculate();
 				if (cachedData.funnel && pt.compiledDlb.pt <= 0) {
 					pt.compiledDlb = default_lbl;
 				}
-				cachedData.compiledDlbs.push(pt);
 			}
 		}
 	}
@@ -6199,7 +6206,13 @@ function(window, undefined) {
 					aOrderedSeries = aOrderedSeries.concat(aChartSeries);
 				}
 			}
+
 			series = aOrderedSeries;
+			for(let nS = series.length - 1; nS > -1; --nS) {
+				if(series[nS].hidden) {
+					series.splice(nS, 1);
+				}
+			}
 			let calc_entry, union_marker, entry;
 			let max_width = 0, cur_width, max_font_size = 0, cur_font_size, ser, b_line_series;
 			let b_no_line_series = false;
@@ -6269,6 +6282,7 @@ function(window, undefined) {
 						nSerType === AscDFH.historyitem_type_BubbleSeries ||
 						nSerType === AscDFH.historyitem_type_AreaSeries ||
 						nSerType === AscDFH.historyitem_type_PieSeries ||
+						nSerType === AscDFH.historyitem_type_Series ||
 						(nSerType === AscDFH.historyitem_type_RadarSeries &&
 							ser.parent && ser.parent.isFilled())) {
 
@@ -7581,6 +7595,14 @@ function(window, undefined) {
 						default_brush = CreateUnifillSolidFillSchemeColor(8, 0.95000);
 				}
 			}
+			if(this.isChartEx()) {
+				if (this.chartStyle && this.chartColors) {
+					let oSpPr = this.getSpPrFormStyleEntry(this.chartStyle.plotArea, this.chartColors.generateColors(1), 0);
+					if(oSpPr && oSpPr.Fill) {
+						default_brush.merge(oSpPr.Fill);
+					}
+				}
+			}
 			if (plot_area.spPr && plot_area.spPr.Fill) {
 				default_brush.merge(plot_area.spPr.Fill);
 			}
@@ -7620,6 +7642,14 @@ function(window, undefined) {
 			B: 0,
 			A: 255
 		}, this.clrMapOvr);
+		if(this.isChartEx()) {
+			if (this.chartStyle && this.chartColors) {
+				let oSpPr = this.getSpPrFormStyleEntry(this.chartStyle.chartArea, this.chartColors.generateColors(1), 0);
+				if(oSpPr && oSpPr.ln) {
+					default_line.merge(oSpPr.ln);
+				}
+			}
+		}
 		this.pen = default_line;
 		checkBlackUnifill(this.pen.Fill, true);
 	};
@@ -7632,6 +7662,14 @@ function(window, undefined) {
 		else
 			default_brush = CreateUnifillSolidFillSchemeColor(8, 0);
 
+		if(this.isChartEx()) {
+			if (this.chartStyle && this.chartColors) {
+				let oSpPr = this.getSpPrFormStyleEntry(this.chartStyle.chartArea, this.chartColors.generateColors(1), 0);
+				if(oSpPr && oSpPr.Fill) {
+					default_brush.merge(oSpPr.Fill);
+				}
+			}
+		}
 		if (this.spPr && this.spPr.Fill) {
 			default_brush.merge(this.spPr.Fill);
 		}
@@ -7863,10 +7901,20 @@ function(window, undefined) {
 				let base_line_fills = null;
 				if (style.line1 === EFFECT_SUBTLE && oChartSpace.style === 34)
 					base_line_fills = getArrayFillsFromBase(style.line2, nColorsCount);
+
+
 				for (let nSer = 0; nSer < aSeries.length; ++nSer) {
 					let oSeries = aSeries[nSer];
 					var compiled_brush = new AscFormat.CUniFill();
 					compiled_brush.merge(base_fills[oSeries.getIdx()]);
+					if(oSeries.isChartEx()) {
+						if (oChartSpace.chartStyle && oChartSpace.chartColors) {
+							let oSpPr = oChartSpace.getSpPrFormStyleEntry(oChartSpace.chartStyle.dataPoint, oChartSpace.chartColors.generateColors(aSeries.length), oSeries.idx);
+							if(oSpPr && oSpPr.Fill) {
+								compiled_brush.merge(oSpPr.Fill);
+							}
+						}
+					}
 					if (oSeries.spPr && oSeries.spPr.Fill) {
 						compiled_brush.merge(oSeries.spPr.Fill);
 					}
@@ -7897,6 +7945,14 @@ function(window, undefined) {
 						compiled_line.Fill.merge(style.line2[0]);
 					else if (base_line_fills)
 						compiled_line.Fill.merge(base_line_fills[oSeries.idx]);
+					if(oSeries.isChartEx()) {
+						if (oChartSpace.chartStyle && oChartSpace.chartColors) {
+							let oSpPr = oChartSpace.getSpPrFormStyleEntry(oChartSpace.chartStyle.dataPoint, oChartSpace.chartColors.generateColors(aSeries.length), oSeries.idx);
+							if(oSpPr && oSpPr.ln) {
+								compiled_line.merge(oSpPr.ln);
+							}
+						}
+					}
 					if (oSeries.spPr && oSeries.spPr.ln) {
 						compiled_line.merge(oSeries.spPr.ln);
 					}
@@ -8868,34 +8924,25 @@ function(window, undefined) {
 				// graphics._l(oChartSize.startX + 0, oChartSize.startY + oChartSize.h);
 				// graphics._z();
 				// graphics.ds();
-				if (isChartEx) {
-					const cachedData = this.chart.plotArea.plotAreaRegion ? this.chart.plotArea.plotAreaRegion.cachedData : null;
-					if (cachedData && cachedData.compiledDlbs) {
-						for (let i = 0; i < cachedData.compiledDlbs.length; i++) {
-							cachedData.compiledDlbs[i].compiledDlb.draw(graphics);
+				var series = this.getAllSeries();
+				let bPie = false;
+				for (var i = 0; i < series.length; ++i) {
+					var ser = series[i];
+					if(ser.parent.getObjectType() === AscDFH.historyitem_type_PieChart) {
+						if(bPie) {
+							continue;
+						}
+						bPie = true;
+					}
+					var pts = ser.getNumPts();
+					for (var j = 0; j < pts.length; ++j) {
+						if (pts[j].compiledDlb) {
+							pts[j].compiledDlb.draw(graphics);
 						}
 					}
-				} else {
-					var aCharts = this.chart.plotArea.charts;
-					for (var t = 0; t < aCharts.length; ++t) {
-						var oChart = aCharts[t];
-						if (oChart && oChart.series) {
-							var series = oChart.series;
-							var _len = oChart.getObjectType() === AscDFH.historyitem_type_PieChart ? 1 : series.length;
-							for (var i = 0; i < _len; ++i) {
-								var ser = series[i];
-								var pts = ser.getNumPts();
-								for (var j = 0; j < pts.length; ++j) {
-									if (pts[j].compiledDlb) {
-										pts[j].compiledDlb.draw(graphics);
-									}
-								}
-								let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
-								if(oTrendlineLbl) {
-									oTrendlineLbl.draw(graphics);
-								}
-							}
-						}
+					let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+					if(oTrendlineLbl) {
+						oTrendlineLbl.draw(graphics);
 					}
 				}
 				for (var i = 0; i < this.chart.plotArea.axId.length; ++i) {

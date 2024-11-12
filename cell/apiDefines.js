@@ -116,7 +116,8 @@ var c_oAscSelectionDialogType = {
 
 var c_oAscScrollType = {
   ScrollVertical: 1,
-  ScrollHorizontal: 2
+  ScrollHorizontal: 2,
+  ScrollInitRowsColsCount: 4
 };
 
 var c_oAscHyperlinkType = {

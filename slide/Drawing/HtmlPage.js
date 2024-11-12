@@ -294,6 +294,8 @@ function CEditorPage(api)
 
 	this.paintMessageLoop = new AscCommon.PaintMessageLoop(40);
 
+	this.MouseHandObject = null;
+
 	this.m_oApi = api;
 	var oThis   = this;
 
@@ -602,6 +604,11 @@ function CEditorPage(api)
 		this.m_oOverlay.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, -1);
 		this.m_oOverlay.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right | g_anchor_bottom);
 		this.m_oMainView.AddControl(this.m_oOverlay);
+
+		if (!this.m_oApi.isReporterMode)
+		{
+			this.setMouseMode(this.m_oApi.mouseMode);
+		}
 
 		if (this.m_oApi.isReporterMode)
 		{
@@ -3254,6 +3261,28 @@ function CEditorPage(api)
 			return oThis.m_oNotesApi.onMouseUp(e);
 	};
 
+	this.setMouseMode = function(mouseMode)
+	{
+		switch (mouseMode)
+		{
+			case "hand":
+			{
+				this.MouseHandObject = {
+					check : function(_this, _pos) {
+						return true;
+					}
+				};
+				break;
+			}
+			case "select":
+			default:
+			{
+				this.MouseHandObject = null;
+			}
+
+		}
+	};
+
 	this.onMouseDown = function(e)
 	{
 		if (oThis.MobileTouchManager && oThis.MobileTouchManager.checkTouchEvent(e))
@@ -3326,6 +3355,21 @@ function CEditorPage(api)
 			if (pos.Page == -1)
 				return;
 
+			if (oWordControl.MouseHandObject)
+			{
+				if (oWordControl.MouseHandObject.check(oWordControl, pos))
+				{
+					oWordControl.MouseHandObject.X = global_mouseEvent.X;
+					oWordControl.MouseHandObject.Y = global_mouseEvent.Y;
+					oWordControl.MouseHandObject.Active = true;
+					oWordControl.MouseHandObject.ScrollX = oWordControl.m_dScrollX;
+					oWordControl.MouseHandObject.ScrollY = oWordControl.m_dScrollY;
+					oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grabbing);
+					AscCommon.stopEvent(e);
+					return;
+				}
+			}
+
 			var ret = oWordControl.m_oDrawingDocument.checkMouseDown_Drawing(pos);
 			if (ret === true)
 			{
@@ -3392,6 +3436,52 @@ function CEditorPage(api)
 
 		AscCommon.check_MouseMoveEvent(e);
 		var pos = oWordControl.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
+
+		if (oWordControl.MouseHandObject)
+		{
+			if (oWordControl.MouseHandObject.Active)
+			{
+				oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grabbing);
+
+				var scrollX = global_mouseEvent.X - oWordControl.MouseHandObject.X;
+				var scrollY = global_mouseEvent.Y - oWordControl.MouseHandObject.Y;
+
+				if (oWordControl.m_bIsHorScrollVisible)
+				{
+					let scrollPosX = oWordControl.MouseHandObject.ScrollX - scrollX;
+					if (scrollPosX < 0)
+						scrollPosX = 0;
+					if (scrollPosX > oWordControl.m_dScrollX_max)
+						scrollPosX = oWordControl.m_dScrollX_max;
+					oWordControl.m_oScrollHorApi.scrollToX(scrollPosX);
+				}
+
+				let scrollPosY = oWordControl.MouseHandObject.ScrollY - scrollY;
+				if (scrollPosY < oWordControl.SlideScrollMIN)
+					scrollPosY = oWordControl.SlideScrollMIN;
+				if (scrollPosY > oWordControl.SlideScrollMAX)
+					scrollPosY = oWordControl.SlideScrollMAX;
+				oWordControl.m_oScrollVerApi.scrollToY(scrollPosY);
+				return;
+			}
+			else if (!global_mouseEvent.IsLocked)
+			{
+				if (oWordControl.MouseHandObject.check(oWordControl, pos))
+				{
+					oThis.m_oApi.sync_MouseMoveStartCallback();
+					oThis.m_oApi.sync_MouseMoveCallback(new AscCommon.CMouseMoveData());
+					oThis.m_oApi.sync_MouseMoveEndCallback();
+
+					oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grab);
+
+					oWordControl.StartUpdateOverlay();
+					oWordControl.OnUpdateOverlay();
+					oWordControl.EndUpdateOverlay();
+					return;
+				}
+			}
+		}
+
 		if (pos.Page == -1)
 			return;
 
@@ -3497,6 +3587,14 @@ function CEditorPage(api)
 
 		AscCommon.check_MouseUpEvent(e);
 
+		if (oWordControl.MouseHandObject && oWordControl.MouseHandObject.Active)
+		{
+			oWordControl.MouseHandObject.Active = false;
+			oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grab);
+			oWordControl.m_bIsMouseLock = false;
+			return;
+		}
+
 		if (oWordControl.m_oDrawingDocument.IsEmptyPresentation)
 			return;
 
@@ -3578,6 +3676,12 @@ function CEditorPage(api)
 			clearInterval(oWordControl.m_oTimerScrollSelect);
 			oWordControl.m_oTimerScrollSelect = -1;
 		}
+
+		if (oWordControl.MouseHandObject && oWordControl.MouseHandObject.Active)
+		{
+			oWordControl.MouseHandObject.Active = false;
+			oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grab);
+		}
 	};
 
 	this.onMouseUpExternal = function(x, y)
@@ -3602,6 +3706,14 @@ function CEditorPage(api)
 		global_mouseEvent.UnLockMouse();
 
 		global_mouseEvent.IsPressed = false;
+
+		if (oWordControl.MouseHandObject && oWordControl.MouseHandObject.Active)
+		{
+			oWordControl.MouseHandObject.Active = false;
+			oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grab);
+			oWordControl.m_bIsMouseLock = false;
+			return;
+		}
 
 		if (oWordControl.m_oDrawingDocument.IsEmptyPresentation)
 			return;

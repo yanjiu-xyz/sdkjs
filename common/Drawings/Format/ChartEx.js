@@ -2668,6 +2668,7 @@ function (window, undefined) {
 			oPt.setIdx(nPtIdx);
 			oPt.setVal(dVal);
 			oLvl.addPt(oPt);
+			oPt.setFormatCode(oCell.getNumFormatStr());
 		}
 	};
 
@@ -2987,6 +2988,11 @@ function (window, undefined) {
 	CPlotAreaRegion.prototype.getAllSeries = function () {
 		return [].concat(this.series);
 	};
+	CPlotAreaRegion.prototype.getAllRasterImages = function (images) {
+		for(let nIdx = 0; nIdx < this.series.length; ++nIdx) {
+			this.series[nIdx].getAllRasterImages(images);
+		}
+	};
 
 	// PlotSurface
 	drawingsChangesMap[AscDFH.historyitem_PlotSurface_SetSpPr] = function (oClass, value) {
@@ -3138,7 +3144,15 @@ function (window, undefined) {
 	}
 
 	InitClass(CSeries, AscFormat.CSeriesBase, AscDFH.historyitem_type_Series);
-
+	CSeries.prototype.isSupported = function () {
+		let nType = this.layoutId;
+		if(nType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN ||
+			nType === AscFormat.SERIES_LAYOUT_WATERFALL ||
+			nType === AscFormat.SERIES_LAYOUT_FUNNEL) {
+			return true;
+		}
+		return false;
+	};
 	CSeries.prototype.fillObject = function (oCopy) {
 		AscFormat.CSeriesBase.prototype.fillObject.call(this, oCopy);
 		if (this.dataLabels) {
@@ -3273,9 +3287,20 @@ function (window, undefined) {
 		}
 		return null;
 	};
+	CSeries.prototype.getAllRasterImages = function (images) {
+		for (let nDpt = 0; nDpt < this.dPt.length; ++nDpt) {
+			let oDPt = this.dPt[nDpt];
+			if(oDPt && oDPt.spPr) {
+				oDPt.spPr.checkBlipFillRasterImage(images);
+			}
+		}
+	};
 	CSeries.prototype.getValPts = function () {
 		const numLit = this.getValLit();
 		return numLit ? numLit.pts : [];
+	};
+	CSeries.prototype.getNumPts = function() {
+		return this.getValPts();
 	};
 	CSeries.prototype.getCatLit = function (type) {
 		let oSeriesData = this.getData();
@@ -3306,18 +3331,27 @@ function (window, undefined) {
 		}
 		return null;
 	};
+	CSeries.prototype.getPtByIdx = function (idx) {
+		let aPts = this.getNumPts();
+		for (let nIdx = 0; nIdx < aPts.length; ++nIdx) {
+			if (aPts[nIdx].idx === idx) {
+				return aPts[nIdx];
+			}
+		}
+		return null;
+	};
 	CSeries.prototype.getPtPen = function (nIdx) {
-		let oDpt = this.getDptByIdx(nIdx);
-		if (oDpt && oDpt.pen) {
-			return oDpt.pen;
+		let oPt = this.getPtByIdx(nIdx);
+		if (oPt && oPt.pen) {
+			return oPt.pen;
 		}
 		return this.compiledSeriesPen;
 	};
 
 	CSeries.prototype.getPtBrush = function (nIdx) {
-		let oDpt = this.getDptByIdx(nIdx);
-		if (oDpt && oDpt.brush) {
-			return oDpt.brush;
+		let oPt = this.getPtByIdx(nIdx);
+		if (oPt && oPt.brush) {
+			return oPt.brush;
 		}
 		return this.compiledSeriesBrush;
 	};

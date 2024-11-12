@@ -5827,6 +5827,15 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 1.32);
 		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), 3.33);
 
+		// for bug 71525
+		oParser = new parserFormula('ROUNDUP(8.175,3)', "A1", ws);
+		assert.ok(oParser.parse(), "ROUNDUP(8.175,3)");
+		assert.strictEqual(oParser.calculate().getValue(), 8.175, "Result of ROUNDUP(8.175,3)");
+
+		oParser = new parserFormula('ROUNDUP(8.17529,5)', "A1", ws);
+		assert.ok(oParser.parse(), "ROUNDUP(8.17529,5)");
+		assert.strictEqual(oParser.calculate().getValue(), 8.17529, "Result of ROUNDUP(8.17529,5)");
+
 	});
 
 
@@ -21263,37 +21272,31 @@ $(function () {
 		ws.getRange2("G100").setValue("3");
 		ws.getRange2("G101").setValue("1");
 		
-		oParser = new parserFormula( "HLOOKUP(A100:C100,A100:C100,1)", "A2", ws );
+		// TODO: review tests with ranges after adding dynamic arrays
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 0, 0);
+		oParser = new parserFormula( "HLOOKUP(A100:C100,A100:C100,1)", cellWithFormula, ws );
 		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C100,A100:C100,1)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of HLOOKUP(A100:C100,A100:C100,1)[0,0]");
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of HLOOKUP(A100:C100,A100:C100,1)[0,1]");
-		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 40, "Result of HLOOKUP(A100:C100,A100:C100,1)[0,2]");
+		assert.strictEqual(array.getValue(), 2, "Result of HLOOKUP(A100:C100,A100:C100,1)");
 
-		oParser = new parserFormula("HLOOKUP(5,A100:C100,E100:G100)", "A2", ws);
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 0, 4);
+		oParser = new parserFormula("HLOOKUP(5,A100:C100,E100:G100)", cellWithFormula, ws);
 		assert.ok(oParser.parse(), "Parse HLOOKUP(5,A100:C100,E100:G100)");
-		assert.strictEqual(oParser.calculate().getValue(), "#REF!", "Result of HLOOKUP(5,A100:C100,E100:G100)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of HLOOKUP(5,A100:C100,E100:G100)");
 
-		oParser = new parserFormula( "HLOOKUP(5,A100:C100,E101:G101)", "A2", ws );
+		oParser = new parserFormula( "HLOOKUP(5,A100:C100,E101:G101)", cellWithFormula, ws );
 		assert.ok( oParser.parse() , "Parse HLOOKUP(5,A100:C100,E101:G101)");
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E101:G101)[0,0]");
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E101:G101)[0,1]");
-		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E101:G101)[0,2]");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of HLOOKUP(5,A100:C100,E101:G101)");
 
 		oParser = new parserFormula( "HLOOKUP(5,A100:C100,E100:E102)", "A2", ws );
 		assert.ok( oParser.parse() , "Parse HLOOKUP(5,A100:C100,E100:E102)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E100:E102)[0,0]");
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E100:E102)[1,0]");
-		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 4, "Result of HLOOKUP(5,A100:C100,E100:E102)[2,0]");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of HLOOKUP(5,A100:C100,E100:E102)");
 
 		oParser = new parserFormula( "HLOOKUP(A100:C100,A100:C100,F100)", "A2", ws );
 		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C100,A100:C100,F100)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#REF!", "Result of HLOOKUP(A100:C100,A100:C100,F100)[0,0]");
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "#REF!", "Result of HLOOKUP(A100:C100,A100:C100,F100)[0,1]");
-		assert.strictEqual(array.getElementRowCol(0,2).getValue(), "#REF!", "Result of HLOOKUP(A100:C100,A100:C100,F100)[0,2]");
+		assert.strictEqual(array.getValue(), "#REF!", "Result of HLOOKUP(A100:C100,A100:C100,F100)");
 
 		oParser = new parserFormula( "HLOOKUP(A100:C100+{0,1},A100:C100,E100:G102,FALSE)", "A2", ws );
 		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C100+{0,1},A100:C100,E100:G101,FALSE)");
@@ -21304,19 +21307,12 @@ $(function () {
 		oParser = new parserFormula( "HLOOKUP(A100:C100,A100:C101,2)", "A2", ws );
 		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C100,A100:C101,2)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of HLOOKUP(A100:C100,A100:C101,2)[0,0]");
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 2, "Result of HLOOKUP(A100:C100,A100:C101,2)[0,1]");
-		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 3, "Result of HLOOKUP(A100:C100,A100:C101,2)[0,2]");
+		assert.strictEqual(array.getValue(), 1, "Result of HLOOKUP(A100:C100,A100:C101,2)");
 
 		oParser = new parserFormula( "HLOOKUP(A100:C101,A100:C100,E100)", "A2", ws );
 		assert.ok( oParser.parse() , "Parse HLOOKUP(A100:C101,A100:C100,E100)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of HLOOKUP(A100:C101,A100:C100,E100)[0,0]");
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of HLOOKUP(A100:C101,A100:C100,E100)[0,1]");
-		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 40, "Result of HLOOKUP(A100:C101,A100:C100,E100)[0,2]");
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "#N/A", "Result of HLOOKUP(A100:C101,A100:C100,E100)[1,0]");
-		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 2, "Result of HLOOKUP(A100:C101,A100:C100,E100)[1,1]");
-		assert.strictEqual(array.getElementRowCol(1,2).getValue(), 2, "Result of HLOOKUP(A100:C101,A100:C100,E100)[1,2]");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of HLOOKUP(A100:C101,A100:C100,E100)");
 
 	
 	});
@@ -21459,19 +21455,18 @@ $(function () {
 
 		oParser = new parserFormula("VLOOKUP(5,A100:B102,E100:G100)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(5,A100:B102,E100:G100)");
-		assert.strictEqual(oParser.calculate().getValue(), "#REF!", "Result of VLOOKUP(5,A1:B3,E1:G1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of VLOOKUP(5,A100:B102,E1:G1)");
 
 		oParser = new parserFormula("VLOOKUP(5,A100:B102,{1,2,3})", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(5,A100:B102,{1,2,3})");
-		assert.strictEqual(oParser.calculate().getValue(), "#REF!", "Result of VLOOKUP(5,A1:B3,{1,2,3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!", "Result of VLOOKUP(5,A100:B102,{1,2,3})");
 		
 
 		oParser = new parserFormula("VLOOKUP(5,A100:B102,E101:G101)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(5,A100:B102,E101:G101)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 4, "Result of VLOOKUP(5,A100:B102,E101:G101)[0,0]");
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 4, "Result of VLOOKUP(5,A100:B102,E101:G101)[0,1]");
-		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 4, "Result of VLOOKUP(5,A100:B102,E101:G101)[0,2]");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of VLOOKUP(5,A100:B102,E101:G101)[0,0]");
+		// TODO: review tests with ranges after adding dynamic arrays
 
 		oParser = new parserFormula("VLOOKUP(5,A100:B102,{1,1,1})", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(5,A100:B102,{1,1,1})");
@@ -21484,9 +21479,8 @@ $(function () {
 		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,E100)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,E100)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP(A100:A102,A100:B102,E100)[0,0]");
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of VLOOKUP(A100:A102,A100:B102,E100)[1,0]");
-		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 40, "Result of VLOOKUP(A100:A102,A100:B102,E100)[2,0]");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of VLOOKUP(A100:A102,A100:B102,E100)[0,0]");
+
 
 		oParser = new parserFormula("VLOOKUP({2;4;40},A100:B102,E100)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP({2;4;40},A100:B102,E100)");
@@ -21499,9 +21493,7 @@ $(function () {
 		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,F100)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,F100)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of VLOOKUP(A100:A102,A100:B102,F100)[0,0]");
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, "Result of VLOOKUP(A100:A102,A100:B102,F100)[1,0]");
-		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 3, "Result of VLOOKUP(A100:A102,A100:B102,F100)[2,0]");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of VLOOKUP(A100:A102,A100:B102,F100)[0,0]");
 
 		oParser = new parserFormula("VLOOKUP({2;4;40},A100:B102,F100)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP({2;4;40},A100:B102,F100)");
@@ -21514,9 +21506,7 @@ $(function () {
 		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,E100:G100)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,E100:G100)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP(A100:A102,A100:B102,E100:G100)[0,0]");
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of VLOOKUP(A100:A102,A100:B102,E100:G100)[1,0]");
-		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 40, "Result of VLOOKUP(A100:A102,A100:B102,E100:G100)[2,0]");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of VLOOKUP(A100:A102,A100:B102,E100:G100)");
 
 		oParser = new parserFormula("VLOOKUP({2;4;40},A100:B102,{1,2,3})", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP({2;4;40},A100:B102,{1,2,3})");
@@ -21529,9 +21519,7 @@ $(function () {
 		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,E100:G101)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,E100:G101)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 2, "Result of VLOOKUP(A100:A102,A100:B102,E100:G101)[0,0]");
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, "Result of VLOOKUP(A100:A102,A100:B102,E100:G101)[1,0]");
-		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 40, "Result of VLOOKUP(A100:A102,A100:B102,E100:G101)[2,0]");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of VLOOKUP(A100:A102,A100:B102,E100:G101)[0,0]");
 
 		oParser = new parserFormula("VLOOKUP({2;4;40},A100:B102,{1,2,3;1,1,1})", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP({2;4;40},A100:B102,{1,2,3;1,1,1})");
@@ -21544,17 +21532,12 @@ $(function () {
 		oParser = new parserFormula("VLOOKUP(A100:A101,A100:B102,F100:G101)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A101,A100:B102,F100:G101)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of VLOOKUP(A100:A101,A100:B102,F100:G101)[0,0]");
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, "Result of VLOOKUP(A100:A101,A100:B102,F100:G101)[1,0]");
-
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of VLOOKUP(A100:A101,A100:B102,F100:G101)[0,0]");
 
 		oParser = new parserFormula("VLOOKUP(A100:A102,A100:B102,G100:G101)", "A2", ws);
 		assert.ok(oParser.parse(), "Parse VLOOKUP(A100:A102,A100:B102,G100:G101)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#REF!", "Result of VLOOKUP(A100:A102,A100:B102,G100:G101)[0,0]");
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "#REF!", "Result of VLOOKUP(A100:A102,A100:B102,G100:G101)[1,0]");
-		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "#REF!", "Result of VLOOKUP(A100:A102,A100:B102,G100:G101)[2,0]");
-
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of VLOOKUP(A100:A102,A100:B102,G100:G101)[0,0]");
 
 		oParser = new parserFormula('VLOOKUP(,A502:C510,2)', "A2", ws);
 		assert.ok(oParser.parse());
@@ -21937,46 +21920,46 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 
+		// TODO: review tests with ranges after adding dynamic arrays
 		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,B102:B105)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,B102:B105)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue().getValue(), "a", "Result of LOOKUP(A102:A102,A102:A105,B102:B105)");
+		assert.strictEqual(array.getValue().getValue(), "a", "Result of LOOKUP(A102:A102,A102:A105,B102:B105)");
 
 		oParser = new parserFormula("LOOKUP(A102:A103,A102:A105,B102:B105)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(A102:A103,A102:A105,B102:B105)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue().getValue(), "a", "Result of LOOKUP(A102:A103,A102:A105,B102:B105)");
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "#N/A", "Result of LOOKUP(A102:A103,A102:A105,B102:B105)");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of LOOKUP(A102:A103,A102:A105,B102:B105)");
 
 		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,TRUE)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,TRUE)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "TRUE", "Result of LOOKUP(A102:A102,A102:A105,TRUE)");
+		assert.strictEqual(array.getValue(), "TRUE", "Result of LOOKUP(A102:A102,A102:A105,TRUE)");
 
 		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,1)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,1)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of LOOKUP(A102:A102,A102:A105,1)");
+		assert.strictEqual(array.getValue(), 1, "Result of LOOKUP(A102:A102,A102:A105,1)");
 
 		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,a)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,a)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#NAME?", "Result of LOOKUP(A102:A102,A102:A105,a)");
+		assert.strictEqual(array.getValue(), "#NAME?", "Result of LOOKUP(A102:A102,A102:A105,a)");
 
 		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,A102:A102)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,A102:A102)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of LOOKUP(A102:A102,A102:A105,A102:A102)");
+		assert.strictEqual(array.getValue(), 1, "Result of LOOKUP(A102:A102,A102:A105,A102:A102)");
 
 		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,A103:A103)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,A103:A103)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "", "Result of LOOKUP(A102:A102,A102:A105,A103:A103)");
+		assert.strictEqual(array.getValue(), "", "Result of LOOKUP(A102:A102,A102:A105,A103:A103)");
 
 		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,A104:A104)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,A104:A104)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 3, "Result of LOOKUP(A102:A102,A102:A105,A104:A104)");
+		assert.strictEqual(array.getValue(), 3, "Result of LOOKUP(A102:A102,A102:A105,A104:A104)");
 
 		oParser = new parserFormula("LOOKUP(A102,A102:A105,)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(1,A102:A105,)");
@@ -22827,7 +22810,7 @@ $(function () {
 		ws.getRange2("C305").setValue("#N/A");
 		ws.getRange2("C306").setValue("");
 
-		/* TODO this is cross tests, return back after implementing the @ sign for array formulas
+
 		let bbox = ws.getRange2("D200").bbox;
 		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
@@ -22845,7 +22828,7 @@ $(function () {
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 3, "MATCH_19");
-		*/ 
+		
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D202", ws);
 		oParser.setArrayFormulaRef(ws.getRange2("A100").bbox);
 		assert.ok(oParser.parse());
@@ -33671,15 +33654,16 @@ $(function () {
 
 		ws.getRange2("C3").setValue("=SIN(A1:A3)", null, null, bboxParent);
 
+		// TODO: review tests with ranges after adding dynamic arrays and add findRefByOutStack formula to use in tests
 		oParser = new parserFormula('A1:A3', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:A3');
 		formulaInfo = ws.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
-		assert.strictEqual(applyByArray, true, 'Is =A1:A3 array formula');
-		assert.strictEqual(resultRow, 3, 'Rows in =A1:A3');
-		assert.strictEqual(resultCol, 1, 'Cols in =A1:A3');
+		assert.strictEqual(applyByArray, false, 'Is =A1:A3 array formula');
+		assert.strictEqual(resultRow, false, 'Rows in =A1:A3');
+		assert.strictEqual(resultCol, false, 'Cols in =A1:A3');
 
 		
 		oParser = new parserFormula('{1;2;3}', cellWithFormula, ws);
@@ -33698,9 +33682,9 @@ $(function () {
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
-		assert.strictEqual(applyByArray, true, 'Is =A1:C1 array formula');
-		assert.strictEqual(resultRow, 1, 'Rows in =A1:C1');
-		assert.strictEqual(resultCol, 3, 'Cols in =A1:C1');
+		assert.strictEqual(applyByArray, false, 'Is =A1:C1 array formula');
+		assert.strictEqual(resultRow, false, 'Rows in =A1:C1');
+		assert.strictEqual(resultCol, false, 'Cols in =A1:C1');
 
 		oParser = new parserFormula('{1,2,3}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{1,2,3}');
@@ -33718,9 +33702,9 @@ $(function () {
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
-		assert.strictEqual(applyByArray, true, 'Is =A1:C3 array formula');
-		assert.strictEqual(resultRow, 3, 'Rows in =A1:C3');
-		assert.strictEqual(resultCol, 3, 'Cols in =A1:C3');
+		assert.strictEqual(applyByArray, false, 'Is =A1:C3 array formula');
+		assert.strictEqual(resultRow, false, 'Rows in =A1:C3');
+		assert.strictEqual(resultCol, false, 'Cols in =A1:C3');
 
 		oParser = new parserFormula('{1,2;3,4}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{1,2;3,4}');
@@ -33798,9 +33782,9 @@ $(function () {
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
-		assert.strictEqual(applyByArray, true, 'Is =A:A array formula');
-		assert.strictEqual(resultRow, AscCommon.gc_nMaxRow, 'Rows in =A:A from D1');
-		assert.strictEqual(resultCol, 1, 'Cols in =A:A from D1');
+		assert.strictEqual(applyByArray, false, 'Is =A:A array formula');
+		assert.strictEqual(resultRow, false /*AscCommon.gc_nMaxRow*/, 'Rows in =A:A from D1');
+		assert.strictEqual(resultCol, false, 'Cols in =A:A from D1');
 
 		oParser = new parserFormula('A1:XFD1', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:XFD1');
@@ -33808,9 +33792,9 @@ $(function () {
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
-		assert.strictEqual(applyByArray, true, 'Is =A1:XFD1 array formula');
-		assert.strictEqual(resultRow, 1, 'Rows in =A1:XFD1 from D1');
-		assert.strictEqual(resultCol, AscCommon.gc_nMaxCol - 3, 'Cols in =A1:XFD1 from D1');
+		assert.strictEqual(applyByArray, false, 'Is =A1:XFD1 array formula');
+		assert.strictEqual(resultRow, false, 'Rows in =A1:XFD1 from D1');
+		assert.strictEqual(resultCol, false /*AscCommon.gc_nMaxCol - 3*/, 'Cols in =A1:XFD1 from D1');
 		
 
 		oParser = new parserFormula('SIN(A1)', cellWithFormula, ws);
@@ -33820,8 +33804,8 @@ $(function () {
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
 		assert.strictEqual(applyByArray, false, 'Is =SIN(A1) array formula');
-		assert.strictEqual(resultRow, 1, 'Rows in =SIN(A1)');
-		assert.strictEqual(resultCol, 1, 'Cols in =SIN(A1)');
+		assert.strictEqual(resultRow, false, 'Rows in =SIN(A1)');
+		assert.strictEqual(resultCol, false, 'Cols in =SIN(A1)');
 		
 
 		oParser = new parserFormula('SUM(A1:A3)', cellWithFormula, ws);
@@ -33831,8 +33815,8 @@ $(function () {
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
 		assert.strictEqual(applyByArray, false, 'Is =SUM(A1:A3) array formula');
-		assert.strictEqual(resultRow, 1, 'Rows in =SUM(A1:A3)');
-		assert.strictEqual(resultCol, 1, 'Cols in =SUM(A1:A3)');
+		assert.strictEqual(resultRow, false, 'Rows in =SUM(A1:A3)');
+		assert.strictEqual(resultCol, false, 'Cols in =SUM(A1:A3)');
 
 
 		oParser = new parserFormula('SUM(A1:A3+A1:A3)', cellWithFormula, ws);
@@ -33842,8 +33826,8 @@ $(function () {
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
 		assert.strictEqual(applyByArray, false, 'Is =SUM(A1:A3+A1:A3) array formula');
-		assert.strictEqual(resultRow, 1, 'Rows in =SUM(A1:A3+A1:A3)');
-		assert.strictEqual(resultCol, 1, 'Cols in =SUM(A1:A3+A1:A3)');
+		assert.strictEqual(resultRow, false, 'Rows in =SUM(A1:A3+A1:A3)');
+		assert.strictEqual(resultCol, false, 'Cols in =SUM(A1:A3+A1:A3)');
 
 		oParser = new parserFormula('SUM(A1:A3+A1:A3)+A1:A3', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SUM(A1:A3+A1:A3)+A1:A3');
@@ -33863,8 +33847,8 @@ $(function () {
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
 		assert.strictEqual(applyByArray, false, 'Is =SUM(SIN(A1:A3)+A1:A3) array formula');
-		assert.strictEqual(resultRow, 1, 'Rows in =SUM(SIN(A1:A3)+A1:A3)');
-		assert.strictEqual(resultCol, 1, 'Cols in =SUM(SIN(A1:A3)+A1:A3)');
+		assert.strictEqual(resultRow, false, 'Rows in =SUM(SIN(A1:A3)+A1:A3)');
+		assert.strictEqual(resultCol, false, 'Cols in =SUM(SIN(A1:A3)+A1:A3)');
 
 
 		oParser = new parserFormula('SUM(SIN(SUM(A1:A3)))', cellWithFormula, ws);
@@ -33874,8 +33858,8 @@ $(function () {
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
 		assert.strictEqual(applyByArray, false, 'Is =SUM(SIN(SUM(A1:A3))) array formula');
-		assert.strictEqual(resultRow, 1, 'Rows in =SUM(SIN(SUM(A1:A3)))');
-		assert.strictEqual(resultCol, 1, 'Cols in =SUM(SIN(SUM(A1:A3)))');
+		assert.strictEqual(resultRow, false, 'Rows in =SUM(SIN(SUM(A1:A3)))');
+		assert.strictEqual(resultCol, false, 'Cols in =SUM(SIN(SUM(A1:A3)))');
 
 
 		oParser = new parserFormula('SIN(SUM(SIN(A1:A3)))', cellWithFormula, ws);
@@ -33885,8 +33869,8 @@ $(function () {
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
 		assert.strictEqual(applyByArray, false, 'Is =SIN(SUM(SIN(A1:A3))) array formula');
-		assert.strictEqual(resultRow, 1, 'Rows in =SIN(SUM(SIN(A1:A3)))');
-		assert.strictEqual(resultCol, 1, 'Cols in =SIN(SUM(SIN(A1:A3)))');
+		assert.strictEqual(resultRow, false, 'Rows in =SIN(SUM(SIN(A1:A3)))');
+		assert.strictEqual(resultCol, false, 'Cols in =SIN(SUM(SIN(A1:A3)))');
 
 
 		oParser = new parserFormula('COS(SIN(A1)*SUM(A1:A3)+A1:A3)', cellWithFormula, ws);

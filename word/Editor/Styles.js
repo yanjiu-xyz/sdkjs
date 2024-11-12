@@ -10356,12 +10356,12 @@ CDocumentBorder.prototype =
     {
         // Double   : Size
         // Long     : Space
-        // Byte     : Value
+        // Long     : Value
         // Variable : Color
 
         Writer.WriteDouble( this.Size );
         Writer.WriteLong( this.Space );
-        Writer.WriteByte( this.Value );
+        Writer.WriteLong( this.Value );
         this.Color.Write_ToBinary( Writer );
         if(this.Unifill)
         {
@@ -10393,7 +10393,7 @@ CDocumentBorder.prototype =
 
         this.Size  = Reader.GetDouble();
         this.Space = Reader.GetLong();
-        this.Value = Reader.GetByte();
+        this.Value = Reader.GetLong();
         this.Color.Read_FromBinary( Reader );
         if(Reader.GetBool())
         {

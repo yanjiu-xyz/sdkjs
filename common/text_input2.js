@@ -1156,6 +1156,13 @@
 		if (AscCommon.AscBrowser.isSafari && AscCommon.AscBrowser.isMobile)
 			xPos = -100;
 
+		if (this.Api.editorId === AscCommon.c_oEditorId.Presentation)
+		{
+			let offset = this.Api.getTextInputOffset();
+			xPos += offset.X;
+			yPos += offset.Y;
+		}
+
 		this.HtmlDiv.style.left = xPos + this.FixedPosCheckElementX + "px";
 		this.HtmlDiv.style.top  = yPos + this.FixedPosCheckElementY + this.TargetOffsetY + this.HtmlAreaOffset + "px";
 

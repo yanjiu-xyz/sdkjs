@@ -999,7 +999,10 @@
 		this.checkPointerMultiTouchRemove(e);
 
 		if (this.Api.isViewMode || isPreventDefault)
-            AscCommon.stopEvent(e);//AscCommon.g_inputContext.preventVirtualKeyboard(e);
+		{
+			AscCommon.stopEvent(e);
+			AscCommon.g_inputContext.preventVirtualKeyboard(e);
+		}
 
         if (AscCommon.g_inputContext.isHardCheckKeyboard)
             isPreventDefault ? AscCommon.g_inputContext.preventVirtualKeyboard_Hard() : AscCommon.g_inputContext.enableVirtualKeyboard_Hard();

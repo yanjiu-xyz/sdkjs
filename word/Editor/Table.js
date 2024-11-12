@@ -5648,7 +5648,13 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 							var _Y_old = this.Markup.Rows[this.Selection.Data2.Index - 1].Y + this.Markup.Rows[this.Selection.Data2.Index - 1].H;
 							var Dy     = _Y - _Y_old;
 							var NewH   = this.Markup.Rows[this.Selection.Data2.Index - 1].H + Dy;
-							this.Content[RowIndex - 1].Set_Height(NewH, linerule_AtLeast);
+							
+							let row   = this.GetRow(RowIndex - 1);
+							let hRule = row.GetHeight().HRule;
+							if (Asc.linerule_Auto === hRule)
+								hRule = Asc.linerule_AtLeast;
+							
+							row.SetHeight(NewH, hRule);
 						}
 					}
 				}
@@ -5765,7 +5771,7 @@ CTable.prototype.Selection_Stop = function()
 	var Cell             = this.Content[this.Selection.StartPos.Pos.Row].Get_Cell(this.Selection.StartPos.Pos.Cell);
 	Cell.Content_Selection_Stop();
 };
-CTable.prototype.DrawSelectionOnPage = function(CurPage)
+CTable.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
 	if (false === this.Selection.Use)
 		return;
@@ -5827,7 +5833,18 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage)
 				}
 				else
 				{
-					this.DrawingDocument.AddPageSelection(PageAbs, X_start, this.RowsInfo[RowIndex].Y[CurPage] + this.RowsInfo[RowIndex].TopDy[CurPage] + CellMar.Top.W + Y_offset, X_end - X_start, Bounds.Bottom - Bounds.Top);
+					let rectY = this.RowsInfo[RowIndex].Y[CurPage] + this.RowsInfo[RowIndex].TopDy[CurPage] + CellMar.Top.W + Y_offset;
+					let rectH = Bounds.Bottom - Bounds.Top;
+					if (Cell.Temp
+						&& Cell.Temp.UseClip
+						&& undefined !== Cell.Temp.ClipTop
+						&& undefined !== Cell.Temp.ClipBottom)
+					{
+						rectY = Math.max(rectY, Cell.Temp.ClipTop);
+						rectH = Math.min(rectH, Math.max(0, Cell.Temp.ClipBottom - rectY));
+					}
+					
+					this.DrawingDocument.AddPageSelection(PageAbs, X_start, rectY, X_end - X_start, rectH);
 				}
 			}
 			break;
@@ -5836,7 +5853,7 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage)
 		{
 			var Cell         = this.Content[this.Selection.StartPos.Pos.Row].Get_Cell(this.Selection.StartPos.Pos.Cell);
 			var Cell_PageRel = CurPage - Cell.Content.Get_StartPage_Relative();
-			Cell.Content_DrawSelectionOnPage(Cell_PageRel);
+			Cell.Content_DrawSelectionOnPage(Cell_PageRel, clipInfo);
 			break;
 		}
 	}
@@ -7320,7 +7337,10 @@ CTable.prototype.MoveCursorToCell = function(bNext)
 
 						oCheckAutoCorrectPara = null;
 					}
-
+					if(this.Parent && this.Parent.checkExtentsByDocContent)
+					{
+						this.Parent.checkExtentsByDocContent();
+					}
 					this.LogicDocument.Recalculate();
 					this.LogicDocument.FinalizeAction();
 				}
@@ -10106,7 +10126,7 @@ CTable.prototype.RemoveTableRow = function(Ind)
 		Rows_to_delete[0] = Ind;
 
 	if (Rows_to_delete.length <= 0)
-		return;
+		return true;
 
 	// Строки мы удаляем либо по 1, либо непрервным блоком. При удалении мы
 	// смотрим на следующую строку после удаляемого блока и проверяем, если
@@ -10145,7 +10165,6 @@ CTable.prototype.RemoveTableRow = function(Ind)
 
 	if (isTrackRevisions)
 	{
-		// Удаляем строки
 		for (var nIndex = Rows_to_delete.length - 1; nIndex >= 0; --nIndex)
 		{
 			var oRow = this.GetRow(Rows_to_delete[nIndex]);
@@ -10172,42 +10191,37 @@ CTable.prototype.RemoveTableRow = function(Ind)
 	}
 	else
 	{
-		// Удаляем строки
 		for (var Index = Rows_to_delete.length - 1; Index >= 0; Index--)
 		{
 			this.private_RemoveRow(Rows_to_delete[Index]);
 		}
 	}
-
-	// Возвращаем курсор
-	this.DrawingDocument.TargetStart();
-	this.DrawingDocument.TargetShow();
-
-	this.DrawingDocument.SelectEnabled(false);
-
+	
 	// При удалении последней строки, надо сообщить об этом родительскому классу
 	if (this.Content.length <= 0)
 		return false;
-
-	// Перемещаем курсор в начало следующей строки
-	var CurRow   = Math.min(Rows_to_delete[0], this.Content.length - 1);
-	var Row      = this.Content[CurRow];
-	this.CurCell = Row.Get_Cell(0);
-	this.CurCell.Content.MoveCursorToStartPos();
-
-	var PageNum = 0;
-	for (PageNum = 0; PageNum < this.Pages.length - 1; PageNum++)
-	{
-		if (CurRow <= this.Pages[PageNum + 1].FirstRow)
-			break;
-	}
-
-	this.Markup.Internal.RowIndex  = CurRow;
-	this.Markup.Internal.CellIndex = 0;
-	this.Markup.Internal.PageNum   = PageNum;
-
+	
 	this.Recalc_CompiledPr2();
-
+	
+	// Перемещаем курсор в начало следующей строки, либо в следующий параграф
+	let curRow = Rows_to_delete[0];
+	if (curRow >= this.Content.length)
+	{
+		let nextPara = this.GetNextParagraph();
+		if (nextPara)
+		{
+			nextPara.MoveCursorToStartPos();
+			nextPara.Document_SetThisElementCurrent(true);
+			return;
+		}
+		
+		curRow = this.Content.length - 1;
+	}
+	
+	this.CurCell = this.GetRow(curRow).GetCell(0);
+	this.CurCell.Content.MoveCursorToStartPos();
+	this.Document_SetThisElementCurrent(true);
+	
 	return true;
 };
 /**

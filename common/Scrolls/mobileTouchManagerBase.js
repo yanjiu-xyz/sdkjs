@@ -38,6 +38,45 @@
 	var AscCommon = window['AscCommon'];
 	var global_mouseEvent = AscCommon.global_mouseEvent;
 
+	/*
+	function CVirtualKeyboard()
+	{
+		this.checkSupport = false;
+		this.isShow = false;
+
+		try
+		{
+			if ("virtualKeyboard" in navigator)
+			{
+				this.checkSupport = true;
+
+				if (navigator.virtualKeyboard.addEventListener)
+				{
+					navigator.virtualKeyboard.addEventListener("geometrychange", function(event) {
+						alert(JSON.stringify(event.target.boundingRect));
+					});
+				}
+			}
+		}
+		catch (err)
+		{
+			this.checkSupport = false;
+		}
+
+		this.isSupport = function()
+		{
+			return this.checkSupport;
+		};
+
+		this.isVisible = function()
+		{
+			return this.isShow;
+		};
+	}
+
+	AscCommon.virtualKeyboard = new CVirtualKeyboard();
+	*/
+
 	AscCommon.MobileTouchMode =
 		{
 			None       : 0,
@@ -703,6 +742,13 @@
 		this.eventsElement = _id;
 		this.iScroll.eventsElement = this.eventsElement;
 		this.iScroll._initEvents();
+	};
+
+	CMobileTouchManagerBase.prototype.isTouchMode = function()
+	{
+		if (this.isDesktopMode)
+			return this.desktopTouchState;
+		return true;
 	};
 
 	CMobileTouchManagerBase.prototype.checkTouchEvent = function(e)
@@ -1655,30 +1701,32 @@
 		let srcW = srcR - srcX;
 		let srcH = srcB - srcY;
 
-		if (AscCommon.AscBrowser.isAppleDevices)
+		if (srcW > 0 && srcH > 0)
 		{
-			if (!this.glassCanvas)
-				this.glassCanvas = document.createElement("canvas");
-
-			if (glassSize !== this.glassCanvas.width || glassSize !== this.glassCanvas.height)
+			if (AscCommon.AscBrowser.isAppleDevices)
 			{
-				this.glassCanvas.width = glassSize;
-				this.glassCanvas.width = glassSize;
+				if (!this.glassCanvas)
+					this.glassCanvas = document.createElement("canvas");
+
+				if (glassSize !== this.glassCanvas.width || glassSize !== this.glassCanvas.height)
+				{
+					this.glassCanvas.width = glassSize;
+					this.glassCanvas.width = glassSize;
+				}
+				let ctxTmp = this.glassCanvas.getContext("2d");
+
+				let data1 = mainLayer.getContext("2d").getImageData(srcX, srcY, srcW, srcH);
+				ctxTmp.putImageData(data1, 0, 0);
+				ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+
+				let data2 = ctx.getImageData(srcX, srcY, srcW, srcH);
+				ctxTmp.putImageData(data2, 0, 0);
+				ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+			} else
+			{
+				ctx.drawImage(mainLayer, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+				ctx.drawImage(ctx.canvas, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
 			}
-			let ctxTmp = this.glassCanvas.getContext("2d");
-
-			let data1 = mainLayer.getContext("2d").getImageData(srcX, srcY, srcW, srcH);
-			ctxTmp.putImageData(data1, 0, 0);
-			ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
-
-			let data2 = ctx.getImageData(srcX, srcY, srcW, srcH);
-			ctxTmp.putImageData(data2, 0, 0);
-			ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
-		}
-		else
-		{
-			ctx.drawImage(mainLayer, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
-			ctx.drawImage(ctx.canvas, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
 		}
 
 		if (targetElement)

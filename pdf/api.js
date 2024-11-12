@@ -1759,9 +1759,7 @@
 		}
 	};
 	PDFEditorApi.prototype.CheckChangedDocument = function() {
-		let oDoc = this.getPDFDoc();
-
-		if (true === oDoc.History.Have_Changes()) {
+		if (true === AscCommon.History.Have_Changes()) {
 			this.SetDocumentModified(true);
 		}
 		else {
@@ -1772,6 +1770,9 @@
 	};
 	PDFEditorApi.prototype._autoSaveInner = function() {
 		let _curTime = new Date();
+		let oDoc = this.getPDFDoc();
+		let oHistory = oDoc.History;
+
 		if (null === this.lastSaveTime) {
 			this.lastSaveTime = _curTime;
 		}
@@ -1786,8 +1787,8 @@
 		}
 		else {
 			let _bIsWaitScheme = false;
-			if (AscCommon.History.Points && AscCommon.History.Index >= 0 && AscCommon.History.Index < AscCommon.History.Points.length) {
-				if ((_curTime - AscCommon.History.Points[AscCommon.History.Index].Time) < this.intervalWaitAutoSave) {
+			if (oHistory.Points && oHistory.Index >= 0 && oHistory.Index < oHistory.Points.length) {
+				if ((_curTime - oHistory.Points[oHistory.Index].Time) < this.intervalWaitAutoSave) {
 					_bIsWaitScheme = true;
 				}
 			}
@@ -1797,13 +1798,19 @@
 					this.autoSaveGapFast;
 
 				if ((_curTime - this.lastSaveTime) > _interval) {
-					if (AscCommon.History.Have_Changes(true) == true) {
+					if (oHistory.Have_Changes(true) == true && oDoc.LocalHistory !== AscCommon.History) {
 						this.asc_Save(true);
 					}
 					this.lastSaveTime = _curTime;
 				}
 			}
 		}
+	};
+	PDFEditorApi.prototype.asc_Save = function (isAutoSave, isIdle) {
+		let oDoc = this.getPDFDoc();
+		if (!isAutoSave)
+			oDoc.BlurActiveObject();
+		AscCommon.DocumentEditorApi.prototype.asc_Save.call(this, isAutoSave, isIdle);
 	};
 	PDFEditorApi.prototype._coAuthoringInitEnd = function() {
 		AscCommon.DocumentEditorApi.prototype._coAuthoringInitEnd.call(this);
@@ -1842,7 +1849,17 @@
 		this.saveImageMap       = _images;
 		this.FontLoader.LoadDocumentFonts2([]);
 	};
-	
+	PDFEditorApi.prototype.asc_Print = function (options) {
+		let oDoc = this.getPDFDoc();
+		oDoc.BlurActiveObject();
+		oDoc.RecalculateAll();
+		AscCommon.DocumentEditorApi.prototype.asc_Print.call(this, options);
+	};
+	PDFEditorApi.prototype.asc_drawPrintPreview = function(index) {
+		let oDoc = this.getPDFDoc();
+		oDoc.BlurActiveObject();
+		AscCommon.DocumentEditorApi.prototype.asc_drawPrintPreview.call(this, index);
+	};
 	PDFEditorApi.prototype.initCollaborativeEditing = function() {
 		if (AscCommon.CollaborativeEditing)
 			return;
@@ -2376,7 +2393,22 @@
 			if (!window["AscDesktopEditor"]["IsCachedPdfCloudPrintFileInfo"]())
 				window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"](AscCommon.Base64.encode(viewer.getFileNativeBinary()));
 		}
-		window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "");
+
+		if (window["AscDesktopEditor"])
+		{
+			let isCloud = !this.isLocalMode() && window["AscDesktopEditor"]["emulateCloudPrinting"];
+			if (isCloud)
+				window["AscDesktopEditor"]["emulateCloudPrinting"](true);
+
+			let changes = viewer.Save();
+
+			if (isCloud)
+				window["AscDesktopEditor"]["emulateCloudPrinting"](false);
+
+			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "",
+				changes ? AscCommon.Base64.encode(changes) : "", this.DocumentUrl);
+		}
+
 		return true;
 	};
 	PDFEditorApi.prototype.asyncImagesDocumentEndLoaded = function() {
@@ -2622,6 +2654,9 @@
 	PDFEditorApi.prototype['asc_SetTextFormDatePickerDate']	= PDFEditorApi.prototype.asc_SetTextFormDatePickerDate;
 	PDFEditorApi.prototype['asc_getHeaderFooterProperties']	= PDFEditorApi.prototype.asc_getHeaderFooterProperties;
 	PDFEditorApi.prototype['ChangeReaderMode']				= PDFEditorApi.prototype.ChangeReaderMode;
+	PDFEditorApi.prototype['asc_Save']						= PDFEditorApi.prototype.asc_Save;
+	PDFEditorApi.prototype['asc_Print']						= PDFEditorApi.prototype.asc_Print;
+	PDFEditorApi.prototype['asc_drawPrintPreview']			= PDFEditorApi.prototype.asc_drawPrintPreview;
 
 	PDFEditorApi.prototype['CheckChangedDocument']		   = PDFEditorApi.prototype.CheckChangedDocument;
 	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;

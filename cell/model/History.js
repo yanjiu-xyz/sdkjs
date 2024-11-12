@@ -576,9 +576,13 @@ CHistory.prototype.RedoAdd = function(oRedoObjectParam, Class, Type, sheetid, ra
 					if(changedObject){
 						var fChangesClass = AscDFH.changesFactory[nChangesType];
 						if (fChangesClass){
+							let color = null;
+							if (AscCommon.CollaborativeEditing.isCollaboration())
+								color = new CDocumentColor(255, 255, 255);
+							
 							var oChange = new fChangesClass(changedObject);
 							oChange.ReadFromBinary(Data.oBinaryReader);
-							oChange.Load(new CDocumentColor(255, 255, 255));
+							oChange.Load(color);
 						}
 					}
 				}

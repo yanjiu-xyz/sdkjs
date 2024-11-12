@@ -3410,7 +3410,8 @@ function CEditorPage(api)
 			}
 
 			var _table_outline = drDoc.TableOutlineDr.TableOutline;
-			if (_table_outline != null && !this.MobileTouchManager)
+			let isTouchMode = this.MobileTouchManager ? this.MobileTouchManager.isTouchMode() : false;
+			if (_table_outline != null && !isTouchMode)
 			{
 				var _page = _table_outline.PageNum;
 				if (_page >= drDoc.m_lDrawingFirst && _page <= drDoc.m_lDrawingEnd)
