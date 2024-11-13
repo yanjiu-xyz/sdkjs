@@ -214,6 +214,7 @@
 			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
 			"word/Editor/DocumentContentElementBase.js",
 			"word/Editor/ParagraphContentBase.js",
+			"word/Editor/annotations/paragraph-perm.js",
 			"word/Editor/Bookmarks.js",
 			"word/Editor/Comments.js",
 			"word/Editor/CommentsChanges.js",

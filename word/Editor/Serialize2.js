@@ -452,7 +452,10 @@ var c_oSerParType = {
 	BookmarkEnd: 24,
 	MRun: 25,
 	AltChunk: 26,
-	DocParts: 27
+	DocParts: 27,
+	PermStart: 28,
+	PermEnd: 29,
+	JsaProjectExternal: 30
 };
 var c_oSerGlossary = {
 	DocPart: 0,
@@ -11279,8 +11282,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 		} else if (c_oSerParType.JsaProject === type) {
 			this.Document.DrawingDocument.m_oWordControl.m_oApi.macros.SetData(AscCommon.GetStringUtf8(this.stream, length));
-		} else
-            res = c_oSerConstants.ReadUnknown;
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
         return res;
     };
 	this.ReadDocParts = function (type, length, glossary) {
@@ -11423,7 +11427,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
     };
     this.ReadParagraphContent = function (type, length, paragraphContent)
     {
-        var res = c_oSerConstants.ReadOk;
+        var res = c_oSerConstants.ReadUnknown;
         var oThis = this;
 		let paragraph = paragraphContent.GetParagraph();
         if (c_oSerParType.Run === type)
@@ -11612,8 +11616,15 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, paragraphContent, false);
 		} else if ( c_oSerParType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, paragraphContent);
-		} else
-		    res = c_oSerConstants.ReadUnknown;
+		} else if (c_oSerParType.PermStart === type) {
+			res = this.bcr.Read1(length, function(t, l){
+				return oThis.ReadComment(t,l, oCommon);
+			});
+			console.log("PermStart");
+		} else if (c_oSerParType.PermEnd === type) {
+			console.log("PermEnd");
+		}
+		
         return res;
     };
 	this.AppendQuoteToCurrentComments = function(text) {
@@ -11819,6 +11830,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		else
             res = c_oSerConstants.ReadUnknown;
         return res;
+	};
+	this.ReadPerm = function(type, length)
+	{
+		let res = c_oSerConstants.ReadUnknown;
+		if (c_oSer_CommentsType.Id === type)
+			oComments.Id = this.stream.GetULongLE();
+		return res;
 	};
 	this.ReadRun = function (type, length, run)
     {
