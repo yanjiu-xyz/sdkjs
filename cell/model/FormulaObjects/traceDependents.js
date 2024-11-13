@@ -1417,7 +1417,7 @@ function (window, undefined) {
 					this._lockChangeDocument = null;
 					let t = this;
 					if (t.isHaveData() && arg2) {
-						if (AscCommon.gc_nMaxRow0 <= arg2.r2 && AscCommon.gc_nMaxCol0 <= arg2.c2) {
+						if (Asc.c_oAscSelectionType.RangeMax === arg2.getType()) {
 							t.clearAll();
 							break;
 						}
