@@ -703,6 +703,15 @@ var c_oSer_CommentsType = {
 	UserData: 15
 };
 
+var c_oSerPermission = {
+	Id                   : 0,
+	DisplacedByCustomXml : 1,
+	ColFirst             : 2,
+	ColLast              : 3,
+	Ed                   : 4,
+	EdGroup              : 5
+};
+
 var c_oSer_StyleType = {
     Character: 1,
     Numbering: 2,
@@ -11831,12 +11840,24 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
             res = c_oSerConstants.ReadUnknown;
         return res;
 	};
-	this.ReadPerm = function(type, length)
+	this.ReadPermStart = function(type, length)
 	{
 		let res = c_oSerConstants.ReadUnknown;
+
 		if (c_oSer_CommentsType.Id === type)
 			oComments.Id = this.stream.GetULongLE();
+		
+		if (c_oSerBookmark.Id === type) {
+			bookmark.BookmarkId = this.stream.GetULongLE();
+		} else if (c_oSerBookmark.Name === type) {
+			bookmark.BookmarkName = this.stream.GetString2LE(length);
+		}
+		
 		return res;
+	};
+	this.ReadPermEnd = function(type, length)
+	{
+	
 	};
 	this.ReadRun = function (type, length, run)
     {
