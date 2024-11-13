@@ -138,13 +138,13 @@
 		
 		if (undefined !== this.ed)
 		{
-			writer.WriteByte(this.ed);
+			writer.WriteString2(this.ed);
 			flags |= 8;
 		}
 		
 		if (undefined !== this.edGrp)
 		{
-			writer.WriteString2(this.edGrp);
+			writer.WriteByte(this.edGrp);
 			flags |= 16;
 		}
 		
@@ -170,10 +170,10 @@
 			this.displacedByCustomXml = reader.GetByte();
 		
 		if (flags & 8)
-			this.ed = reader.GetByte();
+			this.ed = reader.GetString2();
 		
 		if (flags & 16)
-			this.edGrp = reader.GetString();
+			this.edGrp = reader.GetByte();
 	};
 	
 	/**
