@@ -11436,7 +11436,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
     };
     this.ReadParagraphContent = function (type, length, paragraphContent)
     {
-        var res = c_oSerConstants.ReadUnknown;
+        var res = c_oSerConstants.ReadOk;
         var oThis = this;
 		let paragraph = paragraphContent.GetParagraph();
         if (c_oSerParType.Run === type)
@@ -11626,12 +11626,17 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if ( c_oSerParType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, paragraphContent);
 		} else if (c_oSerParType.PermStart === type) {
-			res = this.bcr.Read1(length, function(t, l){
-				return oThis.ReadComment(t,l, oCommon);
-			});
-			console.log("PermStart");
+			let permPr = {};
+			res = this.ReadPermPr(length, permPr);
+			let permStart = AscWord.ParagraphPermStart.fromObject(permPr);
+			paragraphContent.AddToContentToEnd(permStart);
 		} else if (c_oSerParType.PermEnd === type) {
-			console.log("PermEnd");
+			let permPr = {};
+			res = this.ReadPermPr(length, permPr);
+			let permEnd = AscWord.ParagraphPermEnd.fromObject(permPr);
+			paragraphContent.AddToContentToEnd(permEnd);
+		} else {
+			res = c_oSerConstants.ReadUnknown;
 		}
 		
         return res;
@@ -11840,24 +11845,27 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
             res = c_oSerConstants.ReadUnknown;
         return res;
 	};
-	this.ReadPermStart = function(type, length)
+	this.ReadPermPr = function(length, permPr)
 	{
-		let res = c_oSerConstants.ReadUnknown;
-
-		if (c_oSer_CommentsType.Id === type)
-			oComments.Id = this.stream.GetULongLE();
-		
-		if (c_oSerBookmark.Id === type) {
-			bookmark.BookmarkId = this.stream.GetULongLE();
-		} else if (c_oSerBookmark.Name === type) {
-			bookmark.BookmarkName = this.stream.GetString2LE(length);
-		}
-		
-		return res;
-	};
-	this.ReadPermEnd = function(type, length)
-	{
-	
+		let stream = this.bcr.stream;
+		return this.bcr.Read1(length, function(type, length) {
+			if (c_oSerPermission.Id === type)
+				permPr.id = stream.GetString2LE(length);
+			else if (c_oSerPermission.DisplacedByCustomXml === type)
+				permPr.displacedByCustomXml = stream.GetUChar();
+			else if (c_oSerPermission.ColFirst === type)
+				permPr.colFirst = stream.GetULongLE();
+			else if (c_oSerPermission.ColLast === type)
+				permPr.colLast = stream.GetULongLE();
+			else if (c_oSerPermission.Ed === type)
+				permPr.ed = stream.GetString2LE(length);
+			else if (c_oSerPermission.EdGroup === type)
+				permPr.edGrp = stream.GetUChar();
+			else
+				return c_oSerConstants.ReadUnknown;
+			
+			return c_oSerConstants.ReadOk;
+		});
 	};
 	this.ReadRun = function (type, length, run)
     {

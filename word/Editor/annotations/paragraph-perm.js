@@ -99,7 +99,7 @@
 	ParagraphPermStart.fromObject = function(obj)
 	{
 		if (!obj)
-			return null;
+			obj = {};
 		
 		return new ParagraphPermStart(obj.id, obj.colFirst, obj.colLast, obj.displacedByCustomXml, obj.ed, obj.edGrp);
 	};
