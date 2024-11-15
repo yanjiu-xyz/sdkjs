@@ -60,6 +60,10 @@
 	{
 		return new this.constructor();
 	};
+	ParagraphPermBase.prototype.isStart = function()
+	{
+		return true;
+	};
 	ParagraphPermBase.prototype.getRangeId = function()
 	{
 		return this.rangeId;
@@ -124,6 +128,15 @@
 		
 		return new ParagraphPermStart(obj.id, obj.colFirst, obj.colLast, obj.displacedByCustomXml, obj.ed, obj.edGrp);
 	};
+	ParagraphPermStart.prototype.isStart = function()
+	{
+		return true;
+	};
+	ParagraphPermStart.prototype.Draw_HighLights = function(PDSH)
+	{
+		PDSH.addPermRange(this.rangeId);
+	};
+	ParagraphPermStart
 	ParagraphPermStart.prototype.Copy = function()
 	{
 		return new ParagraphPermStart(this.rangeId, this.colFirst, this.colLast, this.displacedByCustomXml, this.ed, this.edGrp);
@@ -218,6 +231,14 @@
 			return null;
 		
 		return new ParagraphPermEnd(obj.id);
+	};
+	ParagraphPermEnd.prototype.isStart = function()
+	{
+		return false;
+	};
+	ParagraphPermEnd.prototype.Draw_HighLights = function(PDSH)
+	{
+		PDSH.removePermRange(this.rangeId);
 	};
 	ParagraphPermEnd.prototype.Copy = function()
 	{

@@ -2673,6 +2673,23 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 				pGraphics.df();
 				Element = aHigh.Get_Next();
 			}
+			
+			//----------------------------------------------------------------------------------------------------------
+			// Рисуем выделение разрешенных областей
+			//----------------------------------------------------------------------------------------------------------
+			let aPerm = PDSH.Perm;
+			Element   = aPerm.Get_Next();
+			while (null != Element)
+			{
+				if (!pGraphics.set_fillColor)
+					pGraphics.b_color1(Element.r, Element.g, Element.b, 255);
+				else
+					pGraphics.set_fillColor(Element.r, Element.g, Element.b);
+				
+				pGraphics.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
+				pGraphics.df();
+				Element = aPerm.Get_Next();
+			}
 
 			//----------------------------------------------------------------------------------------------------------
 			// Рисуем комментарии
@@ -19056,6 +19073,7 @@ function CParagraphPageEndInfo()
 {
     this.Comments      = []; // Массив незакрытых комментариев на данной странице
 	this.ComplexFields = []; // Массив незакрытых полей на данной странице
+	this.PermRanges    = []; // Массив незакрытых разрешенных областей
 
     this.RunRecalcInfo = null;
 	this.RecalcId     = -1;
@@ -19064,16 +19082,18 @@ CParagraphPageEndInfo.prototype.Copy = function()
 {
 	var oInfo = new CParagraphPageEndInfo();
 
-	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
 	{
 		oInfo.Comments.push(this.Comments[nIndex]);
 	}
 
-	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.ComplexFields[nIndex].ComplexField.IsUse())
 			oInfo.ComplexFields.push(this.ComplexFields[nIndex].Copy());
 	}
+	
+	oInfo.PermRanges = this.PermRanges.slice();
 
 	return oInfo;
 };
@@ -19095,23 +19115,35 @@ CParagraphPageEndInfo.prototype.GetComments = function()
 {
 	return this.Comments;
 };
+CParagraphPageEndInfo.prototype.GetPermRanges = function()
+{
+	return this.PermRanges;
+};
 CParagraphPageEndInfo.prototype.IsEqual = function(oEndInfo)
 {
-	if (this.Comments.length !== oEndInfo.Comments.length || this.ComplexFields.length !== oEndInfo.ComplexFields.length)
+	if (this.Comments.length !== oEndInfo.Comments.length
+		|| this.ComplexFields.length !== oEndInfo.ComplexFields.length
+		|| this.PermRanges.length !== oEndInfo.PermRanges.length)
 		return false;
 
-	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.Comments[nIndex] !== oEndInfo.Comments[nIndex])
 			return false;
 	}
 
-	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		if (!this.ComplexFields[nIndex].IsEqual(oEndInfo.ComplexFields[nIndex]))
 			return false;
 	}
-
+	
+	for (let index = 0, count = this.PermRanges.length; index < count; ++index)
+	{
+		if (this.PermRanges[index] !== oEndInfo.PermRanges[index])
+			return false;
+	}
+	
 	return true;
 };
 CParagraphPageEndInfo.prototype.CheckRecalcId = function(recalcId)
