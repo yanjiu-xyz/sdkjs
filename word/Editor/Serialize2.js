@@ -5484,6 +5484,12 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 				case para_RevisionMove:
 					WiteMoveRange(this.bs, this.saveParams, item);
 					break;
+				case para_PermStart:
+				case para_PermEnd:
+					this.bs.WriteItem(para_PermStart === item.Type ? c_oSerParType.PermStart : c_oSerParType.PermEnd, function() {
+						oThis.WritePermPr(item);
+					});
+					break;
             }
         }
         if ((bLastRun && bUseSelection && !par.Selection_CheckParaEnd()) || (selectedAll != undefined && selectedAll === false) )
@@ -5853,6 +5859,37 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (undefined !== textInput.type) {
 			this.bs.WriteItem(c_oSerFFData.TIType, function() {
 				oThis.memory.WriteByte(textInput.type);
+			});
+		}
+	};
+	this.WritePermPr = function(permMark) {
+		let _t = this;
+		if (undefined !== permMark.getRangeId()) {
+			this.memory.WriteByte(c_oSerPermission.Id);
+			this.memory.WriteString2(permMark.getRangeId());
+		}
+		if (undefined !== permMark.getColFirst()) {
+			this.bs.WriteItem(c_oSerPermission.ColFirst, function() {
+				_t.memory.WriteLong(permMark.getColFirst());
+			});
+		}
+		if (undefined !== permMark.getColLast()) {
+			this.bs.WriteItem(c_oSerPermission.ColLast, function() {
+				_t.memory.WriteLong(permMark.getColLast());
+			});
+		}
+		if (undefined !== permMark.getDisplacedByCustomXml()) {
+			this.bs.WriteItem(c_oSerPermission.DisplacedByCustomXml, function() {
+				_t.memory.WriteByte(permMark.getDisplacedByCustomXml());
+			});
+		}
+		if (undefined !== permMark.getEd()) {
+			this.memory.WriteByte(c_oSerPermission.Ed);
+			this.memory.WriteString2(permMark.getEd());
+		}
+		if (undefined !== permMark.getEdGrp()) {
+			this.bs.WriteItem(c_oSerPermission.EdGroup, function() {
+				_t.memory.WriteByte(permMark.getEdGrp());
 			});
 		}
 	};

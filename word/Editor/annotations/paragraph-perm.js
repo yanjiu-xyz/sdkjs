@@ -45,10 +45,9 @@
 		AscCommon.g_oTableId.Add(this, this.Id);
 	}
 	
-	ParagraphPermBase.prototype             = Object.create(CParagraphContentBase.prototype);
+	ParagraphPermBase.prototype = Object.create(CParagraphContentBase.prototype);
 	ParagraphPermBase.prototype.constructor = ParagraphPermBase;
 	
-	ParagraphPermBase.Type = para_Unknown;
 	ParagraphPermBase.prototype.Get_Id = function()
 	{
 		return this.Id;
@@ -61,9 +60,29 @@
 	{
 		return new this.constructor();
 	};
-	ParagraphPermBase.prototype.GetRangeId = function()
+	ParagraphPermBase.prototype.getRangeId = function()
 	{
 		return this.rangeId;
+	};
+	ParagraphPermBase.prototype.getColFirst = function()
+	{
+		return this.colFirst;
+	};
+	ParagraphPermBase.prototype.getColLast = function()
+	{
+		return this.colLast;
+	};
+	ParagraphPermBase.prototype.getDisplacedByCustomXml = function()
+	{
+		return this.displacedByCustomXml;
+	};
+	ParagraphPermBase.prototype.getEd = function()
+	{
+		return this.ed;
+	};
+	ParagraphPermBase.prototype.getEdGrp = function()
+	{
+		return this.edGrp;
 	};
 	//----------------------------------------------------------------------------------------------------------------------
 	// Collaboration
@@ -92,10 +111,12 @@
 		this.edGrp                = undefined !== edGrp && null !== edGrp ? edGrp : undefined;
 		
 		ParagraphPermBase.call(this);
+		
+		this.Type = para_PermStart;
 	}
 	ParagraphPermStart.prototype = Object.create(ParagraphPermBase.prototype);
 	ParagraphPermStart.prototype.constructor = ParagraphPermStart;
-	ParagraphPermStart.Type = para_PermStart;
+	
 	ParagraphPermStart.fromObject = function(obj)
 	{
 		if (!obj)
@@ -185,10 +206,12 @@
 	{
 		this.rangeId = rangeId;
 		ParagraphPermBase.call(this);
+		
+		this.Type = para_PermEnd;
 	}
 	ParagraphPermEnd.prototype = Object.create(ParagraphPermBase.prototype);
 	ParagraphPermEnd.prototype.constructor = ParagraphPermEnd;
-	ParagraphPermEnd.Type = para_PermStart;
+	
 	ParagraphPermEnd.fromObject = function(obj)
 	{
 		if (!obj)
