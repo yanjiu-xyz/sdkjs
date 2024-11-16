@@ -19101,6 +19101,7 @@ CParagraphPageEndInfo.prototype.SetFromPRSI = function(PRSI)
 {
 	this.Comments      = PRSI.Comments;
 	this.ComplexFields = PRSI.ComplexFields;
+	this.PermRanges    = PRSI.PermRanges;
 };
 CParagraphPageEndInfo.prototype.GetComplexFields = function()
 {

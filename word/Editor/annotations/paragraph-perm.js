@@ -136,7 +136,14 @@
 	{
 		PDSH.addPermRange(this.rangeId);
 	};
-	ParagraphPermStart
+	ParagraphPermStart.prototype.Recalculate_PageEndInfo = function(PRSI, curLine, curRange)
+	{
+		PRSI.addPermRange(this.rangeId);
+	};
+	ParagraphPermStart.prototype.RecalculateEndInfo = function(PRSI)
+	{
+		PRSI.addPermRange(this.rangeId);
+	};
 	ParagraphPermStart.prototype.Copy = function()
 	{
 		return new ParagraphPermStart(this.rangeId, this.colFirst, this.colLast, this.displacedByCustomXml, this.ed, this.edGrp);
@@ -239,6 +246,14 @@
 	ParagraphPermEnd.prototype.Draw_HighLights = function(PDSH)
 	{
 		PDSH.removePermRange(this.rangeId);
+	};
+	ParagraphPermEnd.prototype.Recalculate_PageEndInfo = function(PRSI, curLine, curRange)
+	{
+		PRSI.removePermRange(this.rangeId);
+	};
+	ParagraphPermEnd.prototype.RecalculateEndInfo = function(PRSI)
+	{
+		PRSI.removePermRange(this.rangeId);
 	};
 	ParagraphPermEnd.prototype.Copy = function()
 	{
