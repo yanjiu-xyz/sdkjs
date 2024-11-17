@@ -101,6 +101,8 @@
 		this.highlight = highlight_None;
 		this.shdColor  = null;
 		this.shd       = null;
+		
+		this.permColor = null;
 	}
 	ParagraphHighlightDrawState.prototype.init = function(paragraph, graphics)
 	{
@@ -116,6 +118,14 @@
 		this.DrawSolvedComments = commentManager && commentManager.isUseSolved();
 		this.DrawMMFields       = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.isHighlightMailMergeFields();
 		this.currentCommentId   = commentManager ? commentManager.getCurrentCommentId() : -1;
+		
+		this.permColor = new AscWord.CDocumentColor(233, 233, 233, 255);
+		if (logicDocument && logicDocument.IsDocumentEditor())
+		{
+			let docApi = logicDocument.GetApi();
+			if (docApi.isRestrictionView() || docApi.isRestrictionComments())
+				this.permColor = new AscWord.CDocumentColor(255, 254, 213, 255);
+		}
 	};
 	ParagraphHighlightDrawState.prototype.resetPage = function(page)
 	{
@@ -456,8 +466,8 @@
 		if ((flags & FLAG_COLLABORATION) && collColor)
 			this.Coll.Add(startY, endY, startX, endX, 0, collColor.r, collColor.g, collColor.b);
 		
-		if (flags & FLAG_PERM_RANGE)
-			this.Perm.Add(startY, endY, startX, endX, 0, 255, 0, 0);
+		if (flags & FLAG_PERM_RANGE && this.permColor)
+			this.Perm.Add(startY, endY, startX, endX, 0, this.permColor.r, this.permColor.g, this.permColor.b);
 	};
 	ParagraphHighlightDrawState.prototype.pushHyperlink = function(hyperlink)
 	{
