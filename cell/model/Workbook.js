@@ -2522,7 +2522,7 @@
 
 		AscFormat.ExecuteNoHistory(function () {
 			this.CustomProperties = new AscCommon.CCustomProperties();
-		}, this, []);
+		}, this, [], true);
 
 		this.theme = null;
 		this.clrSchemeMap = null;
