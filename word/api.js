@@ -2497,8 +2497,9 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.Document_Undo();
 			
 			_logicDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
-			AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
-			_logicDoc.FinalizeAction();
+			AscCommon.Editor_Paste_Exec(this, null, null, null, null, props, function () {
+				_logicDoc.FinalizeAction();
+			});
 		}
 	};
 	
