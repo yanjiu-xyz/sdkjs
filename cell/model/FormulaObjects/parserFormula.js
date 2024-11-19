@@ -9263,8 +9263,12 @@ function parserFormula( formula, parent, _ws ) {
 	 */
 	function CalcRecursion() {
 		this.nLevel = 0;
-		this.nIterStep = 1;
 		this.bIsForceBacktracking = false;
+		this.bIsProcessRecursion = false;
+		this.aElems = [];
+		this.aElemsPart = [];
+
+		this.nIterStep = 1;
 		this.oStartCellIndex = null;
 		this.nRecursionCounter = 0;
 		this.oGroupChangedCells = null;
@@ -9298,6 +9302,10 @@ function parserFormula( formula, parent, _ws ) {
 	 * @param {boolean} bIsForceBacktracking
 	 */
 	CalcRecursion.prototype.setIsForceBacktracking = function (bIsForceBacktracking) {
+		if (!this.getIsForceBacktracking()) {
+			this.aElemsPart = [];
+			this.aElems.push(this.aElemsPart);
+		}
 		this.bIsForceBacktracking = bIsForceBacktracking;
 	};
 	/**
@@ -9309,6 +9317,22 @@ function parserFormula( formula, parent, _ws ) {
 	CalcRecursion.prototype.getIsForceBacktracking = function () {
 		return this.bIsForceBacktracking;
 	};
+	/**
+	 * Method sets a flag who recognizes work with aElems in _checkDirty method is already in process.
+	 * @memberof CalcRecursion
+	 * @param {boolean} bIsProcessRecursion
+	 */
+	CalcRecursion.prototype.setIsProcessRecursion = function (bIsProcessRecursion) {
+		this.bIsProcessRecursion = bIsProcessRecursion;
+	};
+	/**
+	 * Method returns a flag who recognizes work with aElems in _checkDirty method is already in process.
+	 * @memberof CalcRecursion
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.getIsProcessRecursion = function () {
+		return this.bIsProcessRecursion;
+	}
 	/**
 	 * Method increases recursion level. Uses for tracking a level of recursion in _checkDirty method.
 	 * @memberof CalcRecursion
@@ -9349,6 +9373,32 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		return res;
+	};
+	/**
+	 * Method inserts cells which need to be processed in _checkDirty method again.
+	 * Uses for formula chains that reached max recursion level.
+	 * @memberof CalcRecursion
+	 * @param {{ws:Worksheet, nRow:number, nCol:number}} oCellCoordinate
+	 */
+	CalcRecursion.prototype.insert = function (oCellCoordinate) {
+		this.aElemsPart.push(oCellCoordinate);
+	};
+	/**
+	 * Method executes callback for each cell from aElems in reverse order.
+	 * aElems stores cell coordinates which need to be processed in _checkDirty method again.
+	 * @memberof CalcRecursion
+	 * @param {Function} fCallback
+	 */
+	CalcRecursion.prototype.foreachInReverse = function (fCallback) {
+		for (let i = this.aElems.length - 1; i >= 0; i--) {
+			let aElemsPart = this.aElems[i];
+			for (let j = 0, length = aElemsPart.length; j < length; j++) {
+				fCallback(aElemsPart[j]);
+				if (this.getIsForceBacktracking()) {
+					return;
+				}
+			}
+		}
 	};
 	/**
 	 * Method increases iteration step.
