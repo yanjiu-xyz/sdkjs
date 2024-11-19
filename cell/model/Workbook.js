@@ -14877,7 +14877,7 @@
 			return oSheetListeners.areaMap[sAreaIndex];
 		} else if (oSheetListeners.cellMap.hasOwnProperty(nCellIndex)) {
 			return oSheetListeners.cellMap[nCellIndex];
-		} else {
+		} else if (aOutStack && aOutStack.length) {
 			for (let nIndex in oSheetListeners.areaMap) {
 				if (oSheetListeners.areaMap[nIndex].bbox.contains(this.nCol, this.nRow)
 					&& !_isExcludeFormula(aOutStack, oSheetListeners.areaMap[nIndex])) {
