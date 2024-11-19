@@ -8350,10 +8350,8 @@ function BinaryFileReader(doc, openParams)
 				api.sync_AddComment( oNewComment.Id, oNewComment.Data );
 			}
 		}
-		//remove bookmarks without end
-		this.oReadResult.deleteMarkupStartWithoutEnd(this.oReadResult.bookmarksStarted);
-		//todo crush
-		// this.oReadResult.deleteMarkupStartWithoutEnd(this.oReadResult.moveRanges);
+		
+		this.oReadResult.deleteMarkupStartWithoutEnd();
 
 		if (this.oReadResult.DocumentContent.length > 0) {
 			this.Document.ReplaceContent(this.oReadResult.DocumentContent);
@@ -8738,11 +8736,9 @@ function BinaryFileReader(doc, openParams)
 				api.sync_AddComment( oNewComment.Id, oNewComment.Data );
 			}
 		}
-		//remove bookmarks without end
-		this.oReadResult.deleteMarkupStartWithoutEnd(this.oReadResult.bookmarksStarted);
-		//todo crush
-		// this.oReadResult.deleteMarkupStartWithoutEnd(this.oReadResult.moveRanges);
-
+		
+		this.oReadResult.deleteMarkupStartWithoutEnd();
+		
 		for (var i = 0, length = this.oReadResult.aTableCorrect.length; i < length; ++i) {
 			var table = this.oReadResult.aTableCorrect[i];
 			table.ReIndexing(0);
@@ -11328,6 +11324,10 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 		} else if (c_oSerParType.JsaProject === type) {
 			this.Document.DrawingDocument.m_oWordControl.m_oApi.macros.SetData(AscCommon.GetStringUtf8(this.stream, length));
+		} else if (c_oSerParType.PermStart === type) {
+			res = this.ReadPermStart(length, null);
+		} else if (c_oSerParType.PermEnd === type) {
+			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -11663,15 +11663,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if ( c_oSerParType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, paragraphContent);
 		} else if (c_oSerParType.PermStart === type) {
-			let permPr = {};
-			res = this.ReadPermPr(length, permPr);
-			let permStart = AscWord.ParagraphPermStart.fromObject(permPr);
-			paragraphContent.AddToContentToEnd(permStart);
+			res = this.ReadPermStart(length, paragraphContent);
 		} else if (c_oSerParType.PermEnd === type) {
-			let permPr = {};
-			res = this.ReadPermPr(length, permPr);
-			let permEnd = AscWord.ParagraphPermEnd.fromObject(permPr);
-			paragraphContent.AddToContentToEnd(permEnd);
+			res = this.ReadPermEnd(length, paragraphContent);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -11881,6 +11875,28 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		else
             res = c_oSerConstants.ReadUnknown;
         return res;
+	};
+	this.ReadPermStart = function(length, paragraphContent)
+	{
+		if ((typeof AscWord === "undefined") || (typeof AscWord.ParagraphPermStart === "undefined"))
+			return c_oSerConstants.ReadUnknown;
+		
+		let permPr = {};
+		let res = this.ReadPermPr(length, permPr);
+		let permStart = AscWord.ParagraphPermStart.fromObject(permPr);
+		this.oReadResult.addPermStart(paragraphContent, permStart);
+		return res;
+	};
+	this.ReadPermEnd = function(length, paragraphContent)
+	{
+		if ((typeof AscWord === "undefined") || (typeof AscWord.ParagraphPermEnd === "undefined"))
+			return c_oSerConstants.ReadUnknown;
+		
+		let permPr = {};
+		let res = this.ReadPermPr(length, permPr);
+		let permStart = AscWord.ParagraphPermEnd.fromObject(permPr);
+		this.oReadResult.addPermEnd(paragraphContent, permStart);
+		return res;
 	};
 	this.ReadPermPr = function(length, permPr)
 	{
@@ -17364,6 +17380,7 @@ function DocReadResult(doc) {
 	this.endnotes = {};
 	this.endnoteRefs = [];
 	this.bookmarksStarted = {};
+	this.permRangesStarted = {};
 	this.moveRanges = {};
 	this.Application;
 	this.AppVersion;
@@ -17443,6 +17460,39 @@ DocReadResult.prototype = {
 			this.toNextPar.push({type: para_RevisionMove, elem: elem, id: id});
 		}
 	},
+	addPermStart: function(paragraphContent, elem, canAddToNext) {
+		let rangeId = elem.getRangeId();
+		if (undefined === rangeId || null === rangeId)
+			return;
+		
+		if (this.bCopyPaste)
+			return;
+		
+		if (paragraphContent)
+		{
+			this.permRangesStarted[rangeId] = {parent : paragraphContent, elem : elem};
+			paragraphContent.AddToContentToEnd(elem);
+		}
+		else if (canAddToNext)
+		{
+			this.toNextPar.push(elem);
+		}
+	},
+	addPermEnd: function(paragraphContent, elem, canAddToNext) {
+		let rangeId = elem.getRangeId();
+		if (!this.permRangesStarted[rangeId])
+			return;
+		
+		if (paragraphContent)
+		{
+			delete this.permRangesStarted[rangeId];
+			paragraphContent.AddToContentToEnd(elem);
+		}
+		else if (canAddToNext)
+		{
+			this.toNextPar.push(elem);
+		}
+	},
 	addToNextPar: function(par) {
 		if (this.toNextPar.length > 0) {
 			for (var i = 0; i < this.toNextPar.length; i++) {
@@ -17462,13 +17512,26 @@ DocReadResult.prototype = {
 							this.addMoveRangeEnd(par, elem.elem, elem.id, false);
 						}
 						break;
+					case para_PermStart:
+						this.addPermStart(par, elem.elem, false);
+						break;
+					case para_PermEnd:
+						this.addPermEnd(par, elem.elem, false);
+						break;
 				}
 			}
 			this.toNextPar = [];
 		}
 		this.lastPar = par;
 	},
-	deleteMarkupStartWithoutEnd: function(elems) {
+	deleteMarkupStartWithoutEnd: function() {
+		this._deleteMarkupStartWithoutEnd(this.bookmarksStarted);
+		this._deleteMarkupStartWithoutEnd(this.permRangesStarted);
+		//todo crush
+		// this._deleteMarkupStartWithoutEnd(this.moveRanges);
+	},
+	
+	_deleteMarkupStartWithoutEnd: function(elems) {
 		for (var id in elems) {
 			if (elems.hasOwnProperty(id)) {
 				let elem = elems[id];
