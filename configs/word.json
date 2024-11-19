@@ -179,6 +179,7 @@
 			"word/Editor/ParagraphContentBase.js",
 			"word/Editor/Comments.js",
 			"word/Editor/CommentsChanges.js",
+			"word/Editor/annotations/annotation-mark-base.js",
 			"word/Editor/annotations/paragraph-perm.js",
 			"word/Editor/Bookmarks.js",
 			"word/Editor/StylesChanges.js",

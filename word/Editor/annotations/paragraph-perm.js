@@ -47,6 +47,7 @@
 	
 	ParagraphPermBase.prototype = Object.create(CParagraphContentBase.prototype);
 	ParagraphPermBase.prototype.constructor = ParagraphPermBase;
+	ParagraphPermBase.assign(ParagraphPermBase.prototype, AscWord.AnnotationMarkBase.prototype);
 	
 	ParagraphPermBase.prototype.Get_Id = function()
 	{
@@ -59,6 +60,21 @@
 	ParagraphPermBase.prototype.Copy = function()
 	{
 		return new this.constructor();
+	};
+	ParagraphPermBase.prototype.PreDelete = function()
+	{
+		let logicDocument = this.GetLogicDocument();
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor()
+			|| !logicDocument.IsActionStarted())
+			return;
+		
+		
+		
+	};
+	ParagraphPermBase.prototype.isPermMark = function()
+	{
+		return true;
 	};
 	ParagraphPermBase.prototype.isStart = function()
 	{
