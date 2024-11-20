@@ -2184,6 +2184,9 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     // Класс, управляющий полями
     this.FieldsManager = new CDocumentFieldsManager();
+	
+	if (typeof AscWord.PermRangesManager !== "undefined")
+		this.PermRangesManager = new AscWord.PermRangesManager(this);
 
     // Класс, управляющий закладками
 	if (typeof CBookmarksManager !== "undefined")
@@ -3018,6 +3021,9 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 	if (this.Action.Additional.ContentControlChange)
 		this.private_FinalizeContentControlChange();
 	
+	if (this.Action.Additional.DeletedAnnotationMarks)
+		this.private_FinalizeDeletingAnnotationsMarks();
+	
 	if (this.OFormDocument)
 		this.OFormDocument.onEndAction();
 	
@@ -3236,6 +3242,22 @@ CDocument.prototype.private_FinalizeContentControlChange = function()
 	{
 		this.Api.asc_OnChangeContentControl(this.Action.Additional.ContentControlChange[sId]);
 	}
+};
+CDocument.prototype.private_FinalizeDeletingAnnotationsMarks = function()
+{
+	let docState = this.SaveDocumentState();
+	
+	let permMarks = this.Action.Additional.DeletedAnnotationMarks.perm;
+	for (let rangeId in permMarks)
+	{
+		let info = permMarks[rangeId];
+		if (info.start && info.end)
+			continue;
+		
+		
+	}
+	
+	this.LoadDocumentState(docState);
 };
 CDocument.prototype.private_FinalizeCheckFocusAndBlurCC = function()
 {
@@ -25791,6 +25813,30 @@ CDocument.prototype.AddParaMath = function(nType)
 
 	this.UpdateSelection();
 	this.UpdateInterface();
+};
+CDocument.prototype.OnDeleteAnnotationMark = function(mark)
+{
+	if (!this.Action.Start || this.Action.UndoRedo)
+		return;
+	
+	if (!this.Action.Additional.DeletedAnnotationMarks)
+		this.Action.Additional.DeletedAnnotationMarks = {perm : {}, comments : {}, bookmarks : {}};
+	
+	if (mark.isPerm())
+	{
+		let permMarks = this.Action.Additional.DeletedAnnotationMarks.perm;
+		let rangeId   = mark.getRangeId();
+		if (permMarks[rangeId])
+			permMarks[rangeId] = {};
+		
+		let docPos = mark.GetDocumentPositionFromObject();
+		if (mark.isStart())
+			permMarks[rangeId].start = {mark : mark, docPos : docPos};
+		else
+			permMarks[rangeId].end = {mark : mark, docPos : docPos};
+		
+		this.CollaborativeEditing.Add_DocumentPosition(docPos);
+	}
 };
 CDocument.prototype.OnChangeContentControl = function(oControl)
 {

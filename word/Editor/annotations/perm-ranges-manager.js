@@ -34,48 +34,69 @@
 
 (function()
 {
+	let marksToCheck = [];
+	
 	/**
-	 * Base class for annotation marks like bookmarkStart/bookmarkEnd/permStart/permEnd/commentStart/commentEnd
+	 * @param logicDocument {AscWord.Document}
 	 * @constructor
 	 */
-	function AnnotationMarkBase()
+	function PermRangesManager(logicDocument)
 	{
+		this.logicDocument = logicDocument
+		
+		this.ranges = {};
 	}
 	
-	AnnotationMarkBase.prototype.isPermMark = function()
+	PermRangesManager.prototype.addMark = function(mark)
 	{
-		return false;
-	};
-	AnnotationMarkBase.prototype.isCommentMark = function()
-	{
-		return false;
-	};
-	AnnotationMarkBase.prototype.isBookmarkMark = function()
-	{
-		return false;
-	};
-	AnnotationMarkBase.prototype.isStart = function()
-	{
-		return false;
-	};
-	AnnotationMarkBase.prototype.isEnd = function()
-	{
-		return false;
-	};
-	AnnotationMarkBase.prototype.isUseInDocument = function()
-	{
-		// TODO: Check appearance of this mark in the paragraph
-		let paragraph = this.getParagraph();
-		if (!paragraph)
-			return false;
+		let rangeId = mark.getRangeId();
+		if (!this.ranges[rangeId])
+			this.ranges[rangeId] = {};
 		
-		return paragraph.IsUseInDocument();
+		if (mark.isStart())
+			this.ranges[rangeId].start = mark;
+		else
+			this.ranges[rangeId].end = mark;
 	};
-	AnnotationMarkBase.prototype.getParagraph = function()
+	PermRangesManager.prototype.getStartMark = function(rangeId)
 	{
-		return this.GetParagraph();
+		this.updateMarks();
+		
+		if (!this.ranges[rangeId] || !this.ranges[rangeId].start)
+			return null
+		
+		return this.ranges[rangeId].start;
 	};
+	PermRangesManager.prototype.getEndMark = function(rangeId)
+	{
+		this.updateMarks();
+		
+		if (!this.ranges[rangeId] || !this.ranges[rangeId].end)
+			return null;
+		
+		return this.ranges[rangeId].end;
+	};
+	PermRangesManager.prototype.updateMarks = function()
+	{
+		for (let i = 0, count = marksToCheck.length; i < count; ++i)
+		{
+			let mark = marksToCheck[i];
+			if (!mark.isUseInDocument())
+				continue;
+			
+			this.addMark(mark);
+		}
+		
+		marksToCheck.length = 0;
+	};
+	
+	function registerPermRangeMark(mark)
+	{
+		marksToCheck.push(mark);
+	}
 	//--------------------------------------------------------export----------------------------------------------------
-	AscWord.AnnotationMarkBase = AnnotationMarkBase;
+	AscWord.PermRangesManager = PermRangesManager;
+	AscWord.registerPermRangeMark = registerPermRangeMark;
+	
 })();
 

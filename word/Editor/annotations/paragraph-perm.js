@@ -34,6 +34,7 @@
 
 (function()
 {
+	
 	/**
 	 * @constructor
 	 * @extends {CParagraphContentBase}
@@ -47,7 +48,7 @@
 	
 	ParagraphPermBase.prototype = Object.create(CParagraphContentBase.prototype);
 	ParagraphPermBase.prototype.constructor = ParagraphPermBase;
-	ParagraphPermBase.assign(ParagraphPermBase.prototype, AscWord.AnnotationMarkBase.prototype);
+	Object.assign(ParagraphPermBase.prototype, AscWord.AnnotationMarkBase.prototype);
 	
 	ParagraphPermBase.prototype.Get_Id = function()
 	{
@@ -64,19 +65,17 @@
 	ParagraphPermBase.prototype.PreDelete = function()
 	{
 		let logicDocument = this.GetLogicDocument();
-		if (!logicDocument
-			|| !logicDocument.IsDocumentEditor()
-			|| !logicDocument.IsActionStarted())
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
 			return;
 		
-		
-		
+		logicDocument.OnDeleteAnnotationMark(this);
+	};
+	ParagraphPermBase.prototype.SetParagraph = function(p)
+	{
+		CParagraphContentBase.prototype.SetParagraph.call(this, p);
+		AscWord.registerPermRangeMark(this);
 	};
 	ParagraphPermBase.prototype.isPermMark = function()
-	{
-		return true;
-	};
-	ParagraphPermBase.prototype.isStart = function()
 	{
 		return true;
 	};
@@ -255,9 +254,9 @@
 		
 		return new ParagraphPermEnd(obj.id);
 	};
-	ParagraphPermEnd.prototype.isStart = function()
+	ParagraphPermEnd.prototype.isEnd = function()
 	{
-		return false;
+		return true;
 	};
 	ParagraphPermEnd.prototype.Draw_HighLights = function(PDSH)
 	{

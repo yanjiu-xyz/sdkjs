@@ -12729,23 +12729,20 @@ Paragraph.prototype.PreDelete = function()
 	// Кроме этого, если тут начинались или заканчивались комметарии, то их тоже
 	// удаляем.
 
+	let logicDocument = this.GetLogicDocument();
 	for (var Index = 0; Index < this.Content.length; Index++)
 	{
 		var Item = this.Content[Index];
 
 		if (Item.PreDelete)
 			Item.PreDelete(true);
-
-		if(this.LogicDocument)
+		
+		if (logicDocument && logicDocument.IsDocumentEditor())
 		{
-			if (para_Comment === Item.Type  && true === this.LogicDocument.RemoveCommentsOnPreDelete)
-			{
-				this.LogicDocument.RemoveComment(Item.CommentId, true, false);
-			}
+			if (para_Comment === Item.Type && true === logicDocument.RemoveCommentsOnPreDelete)
+				logicDocument.RemoveComment(Item.CommentId, true, false);
 			else if (para_Bookmark === Item.Type)
-			{
-				this.LogicDocument.GetBookmarksManager().SetNeedUpdate(true);
-			}
+				logicDocument.GetBookmarksManager().SetNeedUpdate(true);
 		}
 	}
 
