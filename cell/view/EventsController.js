@@ -2174,6 +2174,11 @@
 				}
 			}
 
+			if (event.shiftKey) {
+				deltaX = deltaY;
+				deltaY = 0;
+			}
+
 			if (this.smoothWheelCorrector && !wb.smoothScroll) {
 				deltaX = this.smoothWheelCorrector.get_DeltaX(deltaX);
 				deltaY = this.smoothWheelCorrector.get_DeltaY(deltaY);
