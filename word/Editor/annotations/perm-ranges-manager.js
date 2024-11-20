@@ -89,6 +89,14 @@
 		
 		marksToCheck.length = 0;
 	};
+	/**
+	 * Проверяем заданный отрезок, если он невалидный или пустой, тогда удаляем его из документа
+	 * @param {number} rangeId
+	 */
+	PermRangesManager.prototype.checkRange = function(rangeId)
+	{
+		// TODO: implement
+	};
 	
 	function registerPermRangeMark(mark)
 	{

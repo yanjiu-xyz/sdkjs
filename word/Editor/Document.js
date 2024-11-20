@@ -3252,9 +3252,40 @@ CDocument.prototype.private_FinalizeDeletingAnnotationsMarks = function()
 	{
 		let info = permMarks[rangeId];
 		if (info.start && info.end)
+		{
+			this.CollaborativeEditing.Remove_DocumentPosition(info.start.docPos);
+			this.CollaborativeEditing.Remove_DocumentPosition(info.end.docPos);
+			this.PermRangesManager.checkRange(rangeId);
 			continue;
+		}
 		
+		let docPos = info.start ? info.start.docPos : info.end.docPos;
+		let mark   = info.start ? info.start.mark : info.end.mark;
 		
+		let actualMark = info.start ? this.PermRangesManager.getStartMark(rangeId) : this.PermRangesManager.getEndMark(rangeId);
+		if ((actualMark && actualMark !== mark) || mark.isUseInDocument())
+		{
+			this.CollaborativeEditing.Remove_DocumentPosition(docPos);
+			this.PermRangesManager.checkRange(rangeId);
+			continue;
+		}
+		
+		this.CollaborativeEditing.Update_DocumentPosition(docPos);
+		let lastClass = docPos[docPos.length - 1].Class;
+		
+		if (lastClass instanceof AscWord.Paragraph || lastClass instanceof AscWord.ParagraphContentWithParagraphLikeContent)
+		{
+			let newPosition = Math.min(lastClass.GetElementsCount(), Math.max(docPos[docPos.length - 1].Position, 0));
+			lastClass.AddToContent(newPosition, mark);
+		}
+		else
+		{
+			// TODO: Сделать ветку, если последний элемент Document/DocumentContent
+			// Ничего не делаем, отрезок должен удалиться на PermRangesManager.checkRange
+		}
+		
+		this.CollaborativeEditing.Remove_DocumentPosition(docPos);
+		this.PermRangesManager.checkRange(rangeId);
 	}
 	
 	this.LoadDocumentState(docState);
@@ -25822,11 +25853,11 @@ CDocument.prototype.OnDeleteAnnotationMark = function(mark)
 	if (!this.Action.Additional.DeletedAnnotationMarks)
 		this.Action.Additional.DeletedAnnotationMarks = {perm : {}, comments : {}, bookmarks : {}};
 	
-	if (mark.isPerm())
+	if (mark.isPermMark())
 	{
 		let permMarks = this.Action.Additional.DeletedAnnotationMarks.perm;
 		let rangeId   = mark.getRangeId();
-		if (permMarks[rangeId])
+		if (!permMarks[rangeId])
 			permMarks[rangeId] = {};
 		
 		let docPos = mark.GetDocumentPositionFromObject();

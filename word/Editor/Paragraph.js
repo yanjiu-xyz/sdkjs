@@ -13599,15 +13599,15 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 		//    добавляем в начало нового параграфа.
 
 		var NewContent = this.Content.slice(nCurPos + 1);
-
+		
+		this.Internal_Content_Remove2(nCurPos + 1, this.Content.length - nCurPos - 1);
+		this.CheckParaEnd();
+		
 		// Очищаем новый параграф и добавляем в него Right элемент и NewContent
 		oNewParagraph.Internal_Content_Remove2(0, oNewParagraph.Content.length);
 		oNewParagraph.ConcatContent(NewContent);
 		oNewParagraph.Internal_Content_Add(0, NewElement);
 		oNewParagraph.CorrectContent();
-
-		this.Internal_Content_Remove2(nCurPos + 1, this.Content.length - nCurPos - 1);
-		this.CheckParaEnd();
 	}
 
 	if (false !== localTrack)

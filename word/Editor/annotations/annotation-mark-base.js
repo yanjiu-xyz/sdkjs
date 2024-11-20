@@ -69,7 +69,7 @@
 		if (!paragraph)
 			return false;
 		
-		return paragraph.IsUseInDocument();
+		return (paragraph && !!paragraph.Get_PosByElement(this));
 	};
 	AnnotationMarkBase.prototype.getParagraph = function()
 	{

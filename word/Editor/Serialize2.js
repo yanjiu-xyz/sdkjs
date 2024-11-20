@@ -12908,8 +12908,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, null, false);
 		} else if (c_oSerDocTableType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, this.oReadResult.lastPar, true);
-		} else
-            res = c_oSerConstants.ReadUnknown;
+		} else if (c_oSerParType.PermStart === type) {
+			res = this.ReadPermStart(length, null);
+		} else if (c_oSerParType.PermEnd === type) {
+			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
         return res;
     };
     this.Read_Row = function(type, length, Row)
@@ -12961,8 +12966,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, null, false);
 		} else if (c_oSerDocTableType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, this.oReadResult.lastPar, true);
-		} else
-            res = c_oSerConstants.ReadUnknown;
+		} else if (c_oSerParType.PermStart === type) {
+			res = this.ReadPermStart(length, null);
+		} else if (c_oSerParType.PermEnd === type) {
+			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
         return res;
     };
     this.ReadCell = function(type, length, cell)
@@ -13895,8 +13905,13 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, paragraphContent, false);
 		} else if (c_oSer_OMathContentType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, paragraphContent);
-		} else
-            res = c_oSerConstants.ReadUnknown;
+		} else if (c_oSerParType.PermStart === type) {
+			res = this.ReadPermStart(length, null);
+		} else if (c_oSerParType.PermEnd === type) {
+			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
 
 		if (oElem && bLast)
 			oElem.Correct_Content(false);

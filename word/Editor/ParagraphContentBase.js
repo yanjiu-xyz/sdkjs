@@ -4965,3 +4965,6 @@ function private_ParagraphContentChangesCheckLock(lockData)
 			lockData.lock();
 	}
 }
+//--------------------------------------------------------export----------------------------------------------------
+AscWord.ParagraphContentBase                     = CParagraphContentBase;
+AscWord.ParagraphContentWithParagraphLikeContent = CParagraphContentWithParagraphLikeContent;
