@@ -847,6 +847,13 @@ CParagraphContentBase.prototype.IsStartFromNewLine = function()
 	return false;
 };
 /**
+ * Удаляем из параграфа заданный элемент, если он тут есть
+ * @param element
+ */
+CParagraphContentBase.prototype.RemoveElement = function(element)
+{
+};
+/**
  * Пробегаемся по все ранам с заданной функцией
  * @param fCheck - функция проверки содержимого рана
  * @param {AscWord.CParagraphContentPos} oStartPos
@@ -4627,6 +4634,23 @@ CParagraphContentWithParagraphLikeContent.prototype.CanAddComment = function()
 	}
 
 	return true;
+};
+CParagraphContentWithParagraphLikeContent.prototype.RemoveElement = function(element)
+{
+	for (let i = 0, count = this.Content.length; i < count; ++i)
+	{
+		let item = this.Content[i];
+		if (item === element)
+		{
+			this.RemoveFromContent(i, 1);
+			return true;
+		}
+		else if (item.RemoveElement(element))
+		{
+			return true;
+		}
+	}
+	return false;
 };
 CParagraphContentWithParagraphLikeContent.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {

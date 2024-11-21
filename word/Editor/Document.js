@@ -2951,6 +2951,9 @@ CDocument.prototype.FinalizeUndoRedoAction = function()
 	if (this.Action.Additional.ContentControlChange)
 		this.private_FinalizeContentControlChange();
 	
+	this.Comments.CheckMarks();
+	this.PermRangesManager.updateMarks();
+	
 	this.Action.UndoRedo   = false;
 	this.Action.Additional = {};
 	
@@ -2990,6 +2993,7 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 	this.Action.Additional.Start = true;
 	
 	this.Comments.CheckMarks();
+	this.PermRangesManager.updateMarks();
 
 	if (this.Action.Additional.TrackMove)
 		this.private_FinalizeRemoveTrackMove();

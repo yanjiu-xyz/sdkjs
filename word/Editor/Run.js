@@ -11219,8 +11219,12 @@ ParaRun.prototype.RemoveElement = function(oElement)
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
 		if (oElement === this.Content[nIndex])
-			return this.RemoveFromContent(nIndex, 1, true);
+		{
+			this.RemoveFromContent(nIndex, 1, true);
+			return true;
+		}
 	}
+	return false;
 };
 ParaRun.prototype.GotoFootnoteRef = function(isNext, isCurrent, isStepOver, isStepFootnote, isStepEndnote)
 {

@@ -95,7 +95,60 @@
 	 */
 	PermRangesManager.prototype.checkRange = function(rangeId)
 	{
-		// TODO: implement
+		this.updateMarks();
+		
+		if (!this._isValidRange(rangeId) || this._isEmptyRange(rangeId))
+			this.removeRange(rangeId);
+	};
+	PermRangesManager.prototype.removeRange = function(rangeId)
+	{
+		if (!this.ranges[rangeId])
+			return;
+		
+		if (this.ranges[rangeId].start)
+			this.ranges[rangeId].start.removeMark();
+		
+		if (this.ranges[rangeId].end)
+			this.ranges[rangeId].end.removeMark();
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	PermRangesManager.prototype._isValidRange = function(rangeId)
+	{
+		if (!this.ranges[rangeId])
+			return false;
+		
+		let start = this.ranges[rangeId].start;
+		let end   = this.ranges[rangeId].end;
+		
+		if (!start || !end || !start.isUseInDocument() || !end.isUseInDocument())
+			return false;
+		
+		let startPos = start.getPositionInDocument();
+		let endPos   = end.getPositionInDocument();
+		
+		if (!startPos || !endPos)
+			return false;
+		
+		return AscWord.CompareDocumentPositions(startPos, endPos) <= 0;
+	};
+	PermRangesManager.prototype._isEmptyRange = function(rangeId)
+	{
+		// Здесь мы считаем, что заданный отрезок валидный
+		
+		// let state = this.logicDocument.SaveDocumentState();
+		//
+		// let startPos = this.ranges[rangeId].start.getPositionInDocument();
+		// let endPos   = this.ranges[rangeId].end.getPositionInDocument();
+		//
+		//
+		// this.logicDocument.SetSelectionBy
+		//
+		//
+		// this.logicDocument.LoadDocumentState(state);
+		
+		return false;
 	};
 	
 	function registerPermRangeMark(mark)

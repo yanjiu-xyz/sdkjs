@@ -18117,24 +18117,24 @@ Paragraph.prototype.AddTrackMoveMark = function(isFrom, isStart, sMarkId)
 };
 /**
  * Удаляем из параграфа заданный элемент, если он тут есть
- * @param oElement
+ * @param element
  */
-Paragraph.prototype.RemoveElement = function(oElement)
+Paragraph.prototype.RemoveElement = function(element)
 {
-	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	for (let i = 0, count = this.Content.length; i < count; ++i)
 	{
-		var oItem = this.Content[nPos];
-		if (oItem === oElement)
+		let item = this.Content[i];
+		if (item === element)
 		{
-			this.Internal_Content_Remove(nPos);
-			nPos--;
-			nCount--;
+			this.RemoveFromContent(i, 1);
+			return true;
 		}
-		else if (oItem.RemoveElement)
+		else if (item.RemoveElement(element))
 		{
-			oItem.RemoveElement(oElement);
+			return true;
 		}
 	}
+	return false;
 };
 /**
  * Пробегаемся по все ранам с заданной функцией

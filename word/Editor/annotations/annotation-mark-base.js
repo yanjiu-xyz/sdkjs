@@ -75,6 +75,18 @@
 	{
 		return this.GetParagraph();
 	};
+	AnnotationMarkBase.prototype.removeMark = function()
+	{
+		let paragraph = this.getParagraph();
+		if (!paragraph)
+			return false;
+		
+		return paragraph.RemoveElement(this);
+	};
+	AnnotationMarkBase.prototype.getPositionInDocument = function()
+	{
+		return this.GetDocumentPositionFromObject();
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.AnnotationMarkBase = AnnotationMarkBase;
 })();
