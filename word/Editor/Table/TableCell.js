@@ -2771,6 +2771,10 @@ CTableCell.prototype.OnContentChange = function()
 	if (table)
 		table.OnContentChange();
 };
+CTableCell.prototype.PreDelete = function()
+{
+	this.Content.PreDelete();
+};
 
 
 function CTableCellRecalculateObject()
