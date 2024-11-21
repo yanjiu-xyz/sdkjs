@@ -611,6 +611,18 @@ Paragraph.prototype.GetAllParaMaths = function(arrParaMaths)
 
 	return arrParaMaths;
 };
+Paragraph.prototype.GetAllPermRangeMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	for (let i = 0, count = this.Content.length; i < count; ++i)
+	{
+		this.Content[i].GetAllPermRangeMarks(marks);
+	}
+	
+	return marks;
+};
 
 Paragraph.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 {

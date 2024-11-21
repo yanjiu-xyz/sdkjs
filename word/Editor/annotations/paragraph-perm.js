@@ -75,6 +75,10 @@
 		CParagraphContentBase.prototype.SetParagraph.call(this, p);
 		AscWord.registerPermRangeMark(this);
 	};
+	ParagraphPermBase.prototype.GetAllPermRangeMarks = function(marks)
+	{
+		marks.push(this);
+	};
 	ParagraphPermBase.prototype.isPermMark = function()
 	{
 		return true;

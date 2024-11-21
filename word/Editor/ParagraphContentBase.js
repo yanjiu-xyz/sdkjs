@@ -966,6 +966,11 @@ CParagraphContentBase.prototype.createDuplicateForSmartArt = function(oPr)
  */
 CParagraphContentBase.prototype.CalculateTextToTable = function(oEngine){};
 
+CParagraphContentBase.prototype.GetAllPermRangeMarks = function(marks)
+{
+	return [];
+};
+
 /**
  * Это базовый класс для элементов содержимого(контент) параграфа, у которых есть свое содержимое.
  * @constructor
@@ -2408,6 +2413,18 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_Text = function(Text)
     {
         this.Content[CurPos].Get_Text( Text );
     }
+};
+CParagraphContentWithParagraphLikeContent.prototype.GetAllPermRangeMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	for (let i = 0, count = this.Content.length; i < count; ++i)
+	{
+		this.Content[i].GetAllPermRangeMarks(marks);
+	}
+	
+	return marks;
 };
 CParagraphContentWithParagraphLikeContent.prototype.GetAllParagraphs = function(Props, ParaArray)
 {
