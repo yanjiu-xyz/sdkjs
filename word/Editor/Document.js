@@ -23670,6 +23670,19 @@ CDocument.prototype.UpdateFields = function(isBySelection)
 	}
 
 };
+CDocument.prototype.GetPermRangesByContentPos = function(docPos)
+{
+	if (!docPos)
+		return [];
+	
+	this.SetContentPosition(docPos, 0, 0);
+	
+	let currentParagraph = this.controller_GetCurrentParagraph(true, null);
+	if (!currentParagraph)
+		return [];
+	
+	return currentParagraph.GetCurrentPermRanges();
+};
 /**
  * Получаем ссылку на класс, управляющий закладками
  * @returns {CBookmarksManager}

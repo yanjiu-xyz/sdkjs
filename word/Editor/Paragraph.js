@@ -16755,6 +16755,22 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 		return oContentControl;
 	}
 };
+Paragraph.prototype.GetCurrentPermRanges = function()
+{
+	let permRanges = [];
+	
+	let endInfo = this.GetEndInfoByPage(-1);
+	if (endInfo)
+		permRanges = endInfo.GetPermRanges().slice();
+	
+	let endPos = Math.min(this.CurPos.ContentPos, this.Content.length - 1);
+	for (let pos = 0; pos <= endPos; ++pos)
+	{
+		this.Content[pos].GetCurrentPermRanges(permRanges, pos === endPos);
+	}
+	
+	return permRanges;
+};
 Paragraph.prototype.GetCurrentComplexFields = function(bReturnFieldPos)
 {
 	var arrComplexFields = [];

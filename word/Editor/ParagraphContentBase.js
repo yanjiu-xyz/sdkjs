@@ -71,6 +71,9 @@ CParagraphContentBase.prototype.IsStopCursorOnEntryExit = function()
 CParagraphContentBase.prototype.PreDelete = function()
 {
 };
+CParagraphContentBase.prototype.GetCurrentPermRanges = function(permRanges, isCurrent)
+{
+};
 /**
  * Выствялем параграф, в котром лежит данный элемент
  * @param {Paragraph} oParagraph
@@ -4583,6 +4586,14 @@ CParagraphContentWithParagraphLikeContent.prototype.PreDelete = function()
 	}
 
 	this.RemoveSelection();
+};
+CParagraphContentWithParagraphLikeContent.prototype.GetCurrentPermRanges = function(permRanges, isCurrent)
+{
+	let endPos = isCurrent ? Math.min(this.State.ContentPos, this.Content.length - 1) : this.Content.length - 1;
+	for (let pos = 0; pos <= endPos; ++pos)
+	{
+		this.Content[pos].GetCurrentPermRanges(permRanges, isCurrent && pos === endPos);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.GetCurrentComplexFields = function(arrComplexFields, isCurrent, isFieldPos)
 {

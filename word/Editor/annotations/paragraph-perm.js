@@ -163,6 +163,15 @@
 	{
 		PRSI.addPermRange(this.rangeId);
 	};
+	ParagraphPermStart.prototype.GetCurrentPermRanges = function(permRanges, isCurrent)
+	{
+		let pos = permRanges.indexOf(this.rangeId);
+		// TODO: Такого не должно быть
+		if (-1 !== pos)
+			return;
+		
+		permRanges.push(this.rangeId);
+	};
 	ParagraphPermStart.prototype.Copy = function()
 	{
 		return new ParagraphPermStart(this.rangeId, this.colFirst, this.colLast, this.displacedByCustomXml, this.ed, this.edGrp);
@@ -273,6 +282,19 @@
 	ParagraphPermEnd.prototype.RecalculateEndInfo = function(PRSI)
 	{
 		PRSI.removePermRange(this.rangeId);
+	};
+	ParagraphPermEnd.prototype.GetCurrentPermRanges = function(permRanges, isCurrent)
+	{
+		let pos = permRanges.indexOf(this.rangeId);
+		
+		// TODO: Такого не должно быть
+		if (-1 === pos)
+			return;
+		
+		if (pos === permRanges.length - 1)
+			--permRanges.length;
+		else
+			permRanges.splice(pos, 1);
 	};
 	ParagraphPermEnd.prototype.Copy = function()
 	{
