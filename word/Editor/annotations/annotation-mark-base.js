@@ -64,7 +64,6 @@
 	};
 	AnnotationMarkBase.prototype.isUseInDocument = function()
 	{
-		// TODO: Check appearance of this mark in the paragraph
 		let paragraph = this.getParagraph();
 		if (!paragraph)
 			return false;

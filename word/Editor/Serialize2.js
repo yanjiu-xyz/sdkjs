@@ -491,7 +491,9 @@ var c_oSerDocTableType = {
 	MoveFromRangeStart: 14,
 	MoveFromRangeEnd: 15,
 	MoveToRangeStart: 16,
-	MoveToRangeEnd: 17
+	MoveToRangeEnd: 17,
+	PermStart: 18,
+	PermEnd: 19
 };
 var c_oSerRunType = {
     run:0,
@@ -966,7 +968,22 @@ var c_oSer_OMathContentType = {
 	MoveFromRangeStart: 68,
 	MoveFromRangeEnd: 69,
 	MoveToRangeStart: 70,
-	MoveToRangeEnd: 71
+	MoveToRangeEnd: 71,
+	AnnotationRef: 72,
+	CommentReference: 73,
+	ContentPart: 74,
+	Cr: 75,
+	EndnoteRef: 76,
+	EndnoteReference: 77,
+	FootnoteRef: 78,
+	FootnoteReference: 79,
+	LastRenderedPageBreak: 80,
+	NoBreakHyphen: 81,
+	SoftHyphen: 82,
+	Sym: 83,
+	Tab: 84,
+	PermStart: 85,
+	PermEnd: 86
 };
 var c_oSer_HyperlinkType = {
     Content: 0,
@@ -12908,9 +12925,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, null, false);
 		} else if (c_oSerDocTableType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, this.oReadResult.lastPar, true);
-		} else if (c_oSerParType.PermStart === type) {
+		} else if (c_oSerDocTableType.PermStart === type) {
 			res = this.ReadPermStart(length, null);
-		} else if (c_oSerParType.PermEnd === type) {
+		} else if (c_oSerDocTableType.PermEnd === type) {
 			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
@@ -12966,9 +12983,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, null, false);
 		} else if (c_oSerDocTableType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, this.oReadResult.lastPar, true);
-		} else if (c_oSerParType.PermStart === type) {
+		} else if (c_oSerDocTableType.PermStart === type) {
 			res = this.ReadPermStart(length, null);
-		} else if (c_oSerParType.PermEnd === type) {
+		} else if (c_oSerDocTableType.PermEnd === type) {
 			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
@@ -13905,10 +13922,10 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, paragraphContent, false);
 		} else if (c_oSer_OMathContentType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, paragraphContent);
-		} else if (c_oSerParType.PermStart === type) {
-			res = this.ReadPermStart(length, null);
-		} else if (c_oSerParType.PermEnd === type) {
-			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
+		} else if (c_oSer_OMathContentType.PermStart === type) {
+			res = this.ReadPermStart(length, paragraphContent);
+		} else if (c_oSer_OMathContentType.PermEnd === type) {
+			res = this.ReadPermEnd(length, paragraphContent);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
