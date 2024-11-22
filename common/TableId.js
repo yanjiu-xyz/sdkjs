@@ -376,7 +376,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_FunctionValue     ]     = AscFormat.FunctionValue;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParagraphPermStart]     = AscWord.ParagraphPermStart;
-		this.m_oFactoryClass[AscDFH.historyitem_type_ParagraphPermEnd]       = AscWord.ParagraphPermEnd;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ParagraphPermEnd  ]     = AscWord.ParagraphPermEnd;
 
 		if (window['AscCommonSlide'])
 		{

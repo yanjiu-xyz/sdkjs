@@ -317,7 +317,7 @@
 	};
 	ParagraphPermEnd.prototype.Write_ToBinary2 = function(writer)
 	{
-		writer.WriteLong(AscDFH.historyitem_type_ParagraphPermStart);
+		writer.WriteLong(AscDFH.historyitem_type_ParagraphPermEnd);
 		
 		writer.WriteString2("" + this.Id);
 		writer.WriteString2("" + this.rangeId);
