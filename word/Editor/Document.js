@@ -13378,7 +13378,44 @@ CDocument.prototype.IsCursorInHyperlink = function(bCheckEnd)
  */
 CDocument.prototype.CanPerformAction = function(isIgnoreCanEditFlag)
 {
-	return !((!this.CanEdit() && true !== isIgnoreCanEditFlag) || (true === this.CollaborativeEditing.Get_GlobalLock()));
+	return (this.IsPermRangeEditing() || !((!this.CanEdit() && true !== isIgnoreCanEditFlag) || (true === this.CollaborativeEditing.Get_GlobalLock())));
+};
+CDocument.prototype.IsPermRangeEditing = function()
+{
+	if (this.Api.isViewMode || !(this.Api.isRestrictionComments() || this.Api.isRestrictionView()))
+		return false;
+	
+	// TODO: Пока запрещаем любые действия, связанные с выделением автофигур
+	if (this.IsTextSelectionUse())
+	{
+		if (true !== this.Selection.Use || this.Controller !== this.LogicDocumentController)
+			return;
+		
+		// Надо проверить, что у нас начало и конец попали хотя бы в один общий промежуток
+		let startPos = this.GetContentPosition(true, true);
+		let endPos   = this.GetContentPosition(true, false);
+		
+		let startRanges = this.GetPermRangesByContentPos(startPos);
+		let endRanges   = this.GetPermRangesByContentPos(endPos);
+		
+		if (endRanges.length < 0)
+			return false;
+		
+		for (let iRange = 0, rangeCount = endRanges.length; iRange < rangeCount; ++iRange)
+		{
+			if (-1 !== startRanges.indexOf(endRanges[iRange]))
+				return true;
+		}
+		
+		return false;
+	}
+	else if (!this.IsSelectionUse())
+	{
+		let currentPos = this.GetContentPosition();
+		return this.GetPermRangesByContentPos(currentPos).length > 0;
+	}
+	
+	return false;
 };
 CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, AdditionalData, DontLockInFastMode, isIgnoreCanEditFlag, fCallback)
 {
@@ -23675,13 +23712,17 @@ CDocument.prototype.GetPermRangesByContentPos = function(docPos)
 	if (!docPos)
 		return [];
 	
+	let state = this.SaveDocumentState();
+	
 	this.SetContentPosition(docPos, 0, 0);
 	
+	let result = [];
 	let currentParagraph = this.controller_GetCurrentParagraph(true, null);
-	if (!currentParagraph)
-		return [];
+	if (currentParagraph)
+		result = currentParagraph.GetCurrentPermRanges();
 	
-	return currentParagraph.GetCurrentPermRanges();
+	this.LoadDocumentState(state);
+	return result;
 };
 /**
  * Получаем ссылку на класс, управляющий закладками
