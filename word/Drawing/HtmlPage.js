@@ -2380,9 +2380,18 @@ function CEditorPage(api)
 		deltaX >>= 0;
 		deltaY >>= 0;
 
-		if (0 != deltaX)
+		let isSupportDirections2 = false;
+		if (!isSupportDirections2)
+		{
+			if (Math.abs(deltaY) >= Math.abs(deltaX))
+				deltaX = 0;
+			else
+				deltaY = 0;
+		}
+
+		if (0 !== deltaX)
 			oThis.m_oScrollHorApi.scrollBy(deltaX, 0, false);
-		else if (0 != deltaY)
+		if (0 !== deltaY)
 			oThis.m_oScrollVerApi.scrollBy(0, deltaY, false);
 
 		// здесь - имитируем моус мув ---------------------------
