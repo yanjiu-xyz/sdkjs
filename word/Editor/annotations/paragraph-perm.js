@@ -79,6 +79,21 @@
 	{
 		marks.push(this);
 	};
+	/**
+	 * Очень важно, что в режимах комментирования и просмотра, мы проход через данный элемент считаем как перемещение курсора,
+	 * т.к. на этом завязано выделение текущего слова и применение настроек к текущему слову (оно должно применяться
+	 * только к той части, что внутри разрешенного диапазона)
+	 * @returns {boolean}
+	 */
+	ParagraphPermBase.prototype.IsStopCursorOnEntryExit = function()
+	{
+		let logicDocument = this.GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return false;
+		
+		let api = logicDocument.GetApi();
+		return api.isRestrictionComments() || api.isRestrictionView();
+	};
 	ParagraphPermBase.prototype.isPermMark = function()
 	{
 		return true;
