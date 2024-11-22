@@ -139,18 +139,17 @@
 	{
 		// Здесь мы считаем, что заданный отрезок валидный
 		
-		// let state = this.logicDocument.SaveDocumentState();
-		//
-		// let startPos = this.ranges[rangeId].start.getPositionInDocument();
-		// let endPos   = this.ranges[rangeId].end.getPositionInDocument();
-		//
-		//
-		// this.logicDocument.SetSelectionBy
-		//
-		//
-		// this.logicDocument.LoadDocumentState(state);
+		let state = this.logicDocument.SaveDocumentState();
+
+		let startPos = this.ranges[rangeId].start.getPositionInDocument();
+		let endPos   = this.ranges[rangeId].end.getPositionInDocument();
 		
-		return false;
+		this.logicDocument.SetSelectionByContentPositions(startPos, endPos);
+		let result = this.logicDocument.IsSelectionEmpty();
+		
+		this.logicDocument.LoadDocumentState(state);
+		
+		return result;
 	};
 	
 	function registerPermRangeMark(mark)
