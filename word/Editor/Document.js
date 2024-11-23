@@ -13374,17 +13374,123 @@ CDocument.prototype.IsCursorInHyperlink = function(bCheckEnd)
  * Данная функция вызывается в основной функции проверки лока совместного редактирования, но есть действия, которые
  * не требуют проверки лока совместки, в таких случая перед выполнением действия надо вызывать эту проверку
  * @param [isIgnoreCanEditFlag=false]
+ * @param [checkType=undefined]
+ * @param [additionalData=undefined]
  * @returns {boolean}
  */
-CDocument.prototype.CanPerformAction = function(isIgnoreCanEditFlag)
+CDocument.prototype.CanPerformAction = function(isIgnoreCanEditFlag, checkType, additionalData)
 {
-	return (this.IsPermRangeEditing() || !((!this.CanEdit() && true !== isIgnoreCanEditFlag) || (true === this.CollaborativeEditing.Get_GlobalLock())));
+	return (this.IsPermRangeEditing(checkType, additionalData) || !((!this.CanEdit() && true !== isIgnoreCanEditFlag) || (true === this.CollaborativeEditing.Get_GlobalLock())));
 };
-CDocument.prototype.IsPermRangeEditing = function()
+/**
+ * Проверяем, что действие с заданным типом произойдет в разрешенной области
+ * @param changesType
+ * @param additionalData
+ * @returns {boolean}
+ */
+CDocument.prototype.IsPermRangeEditing = function(changesType, additionalData)
 {
 	if (this.Api.isViewMode || !(this.Api.isRestrictionComments() || this.Api.isRestrictionView()))
 		return false;
 	
+	if (!this._checkChangesTypeForPermRange(changesType, additionalData))
+		return false;
+	
+	if (AscCommon.changestype_None !== changesType && !this._checkPermRangeForCurrentSelection())
+		return false;
+	
+	if (additionalData)
+	{
+		if (AscCommon.changestype_2_InlineObjectMove === additionalData.Type)
+		{
+			// TODO: Надо проверить не целиком параграф, а только то место, куда происходит вставка
+			let pageNum = additionalData.PageNum;
+			let x       = additionalData.X;
+			let y       = additionalData.Y;
+			let para    = this.Get_NearestPos(pageNum, x, y).Paragraph;
+			return this._checkPermRangeForElement(para);
+		}
+		else if (AscCommon.changestype_2_Element_and_Type === additionalData.Type)
+		{
+			return (this._checkChangesTypeForPermRange(additionalData.CheckType)
+				&& this._checkPermRangeForElement(additionalData.Element));
+		}
+		else if (AscCommon.changestype_2_ElementsArray_and_Type === oAdditionalData.Type)
+		{
+			if (!this._checkChangesTypeForPermRange(additionalData.CheckType))
+				return false;
+			
+			for (let i = 0, count = additionalData.Elements.length; i < count; ++i)
+			{
+				if (!this._checkPermRangeForElement(additionalData.Elements[i]))
+					return false;
+			}
+			return true;
+		}
+		else if (AscCommon.changestype_2_Element_and_Type_Array === oAdditionalData.Type)
+		{
+			for (let i = 0, count = Math.min(additionalData.Elements.length, additionalData.CheckTypes.length); i < count; ++i)
+			{
+				if (!this._checkChangesTypeForPermRange(additionalData.CheckTypes[i]))
+					return false;
+				
+				if (!this._checkPermRangeForElement(additionalData.Elements[i]))
+					return false;
+			}
+			return true;
+		}
+		else if (AscCommon.changestype_2_AdditionalTypes === oAdditionalData.Type)
+		{
+			if (!this._checkPermRangeForCurrentSelection())
+				return false;
+			
+			for (let i = 0, count = oAdditionalData.Types.length; i < count; ++i)
+			{
+				if (!this._checkChangesTypeForPermRange(additionalData.Types[i]))
+					return false;
+			}
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	return true;
+};
+CDocument.prototype._checkActionForPermRange = function(changesType, additionalData)
+{
+	if (undefined === changesType || (AscCommon.changestype_None === changesType && undefined === additionalData))
+		return false;
+	
+	if (AscCommon.changestype_None !== changesType && !this._checkChangesTypeForPermRange(changesType))
+		return false;
+	
+	return (!additionalData || !this._checkChangesTypeForPermRange(additionalData.CheckType))
+};
+CDocument.prototype._checkChangesTypeForPermRange = function(changesType)
+{
+	// TODO: Пока запрещаем любые действия с автофигурами
+	// Разрешаем только действия, связанные с текущим выделением, либо выбранным элементом, любые глобальные изменения,
+	// например, изменения секции или настроек документа - запрещаем
+	return (AscCommon.changestype_Paragraph_Content === changesType
+		|| AscCommon.changestype_Paragraph_Properties === changesType
+		|| AscCommon.changestype_Paragraph_AddText === changesType
+		|| AscCommon.changestype_Paragraph_TextProperties === changesType
+		|| AscCommon.changestype_Document_Content === changesType
+		|| AscCommon.changestype_Document_Content_Add === changesType
+		|| AscCommon.changestype_Table_Properties === changesType
+		|| AscCommon.changestype_Table_RemoveCells === changesType
+		|| AscCommon.changestype_ContentControl_Remove === changesType
+		|| AscCommon.changestype_ContentControl_Properties === changesType
+		|| AscCommon.changestype_ContentControl_Add === changesType
+		|| AscCommon.changestype_Remove === changesType
+		|| AscCommon.changestype_Delete === changesType
+		|| AscCommon.changestype_Text_Props === changesType);
+};
+CDocument.prototype._checkPermRangeForCurrentSelection = function()
+{
 	// TODO: Пока запрещаем любые действия, связанные с выделением автофигур
 	if (this.IsTextSelectionUse())
 	{
@@ -13417,12 +13523,22 @@ CDocument.prototype.IsPermRangeEditing = function()
 	
 	return false;
 };
+CDocument.prototype._checkPermRangeForElement = function(element)
+{
+	if (!element
+		&& !(element instanceof AscWord.Paragraph)
+		&& !(element instanceof AscWord.Table)
+		&& !(element instanceof AscWord.BlockLevelSdt))
+		return false;
+	
+	return false;
+};
 CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, AdditionalData, DontLockInFastMode, isIgnoreCanEditFlag, fCallback)
 {
 	if (this.IsActionStarted() && this.IsPostActionLockCheck())
 		return false;
 	
-	if (!this.CanPerformAction(isIgnoreCanEditFlag))
+	if (!this.CanPerformAction(isIgnoreCanEditFlag, CheckType, AdditionalData))
 	{
 		if (fCallback)
 			fCallback(true);
