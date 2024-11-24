@@ -112,6 +112,7 @@
 		this.nativeFocusElementNoRemoveOnElementFocus = false;
 		this.InterfaceEnableKeyEvents = true;
 		this.isNoClearOnFocus = false;
+		this.isGlobalDisableFocus = false;
 
 		this.ReadOnlyCounter = 0;
 
@@ -879,7 +880,8 @@
 					return;
 			}
 
-			focusHtmlElement(this.HtmlArea);
+			if (!this.isGlobalDisableFocus)
+				focusHtmlElement(this.HtmlArea);
 		}
 	};
 	CTextInputPrototype.externalEndCompositeInput = function()
@@ -1072,7 +1074,7 @@
 			_elem.style.height = _elemSrc.style.height;
 		}
 
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 		{
 			var _elem1 = document.getElementById("area_id_parent");
 			var _elem2 = document.getElementById("area_id");
@@ -1143,7 +1145,7 @@
 	};
 	CTextInputPrototype.move = function(x, y)
 	{
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 			return;
 
 		var oTarget = document.getElementById(this.TargetId);

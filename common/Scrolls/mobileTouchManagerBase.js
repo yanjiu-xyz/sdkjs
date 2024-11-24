@@ -254,6 +254,10 @@
 	{
 		return false;
 	};
+	CMobileDelegateSimple.prototype.IsLockedZoom = function()
+	{
+		return false;
+	};
 
 	/**
 	 * @extends {CMobileDelegateSimple}
@@ -611,6 +615,10 @@
 	{
 		return false;//(null != this.DrawingDocument.m_oDocumentRenderer);
 	};
+	CMobileDelegateSimple.prototype.IsLockedZoom = function()
+	{
+		return this.HtmlPage.ReaderModeCurrent === 1;
+	};
 	CMobileDelegateEditor.prototype.IsNativeViewer = function()
 	{
 		if (null != this.DrawingDocument.m_oDocumentRenderer)
@@ -670,7 +678,7 @@
 		this.TimeDown          = 0;
 		this.DownPoint         = null;
 		this.DownPointOriginal = {X : 0, Y : 0};
-		this.MoveMinDist       = 50;
+		this.MoveMinDist       = 20;
 		this.isGlassDrawed     = false;
 
 		this.MoveAfterDown     = false;
@@ -734,6 +742,11 @@
 
 		this.isShowingContextMenu = false;
 		this.isMobileContextMenuShowResize = false;
+
+		// On Android, there is no way to show the keyboard except onclick
+		// TODO: may be exist another way??
+		this.isCheckFocusOnClick = AscCommon.AscBrowser.isAndroid;
+		this.isCheckFocusOnClickValue = false;
 	}
 
 	CMobileTouchManagerBase.prototype.initEvents = function(_id)
@@ -1331,7 +1344,9 @@
 		{
 			that.ContextMenuShowTimerId = -1;
 			var _pos = that.delegate.GetContextMenuPosition();
+			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = true;
 			that.Api.sendEvent("asc_onShowPopMenu", _pos.X, _pos.Y, (_pos.Mode > 1) ? true : false);
+			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = false;
 		}, 500);
 	};
 
@@ -2657,13 +2672,34 @@
 		return _count;
 	};
 
-	CMobileTouchManagerBase.prototype.showKeyboard = function()
+	CMobileTouchManagerBase.prototype.showKeyboard = function(isForce)
 	{
 		if (AscCommon.g_inputContext)
 		{
-			if (this.ContextMenuLastMode ==  AscCommon.MobileTouchContextMenuType.Target)
+			if (this.ContextMenuLastMode ===  AscCommon.MobileTouchContextMenuType.Target || isForce === true)
 				AscCommon.g_inputContext.HtmlArea.focus();
+
+			if (this.isCheckFocusOnClick)
+				this.isCheckFocusOnClickValue = true;
 		}
+	};
+
+	CMobileTouchManagerBase.prototype.addClickElement = function(elems)
+	{
+		for (let i = 0, len = elems.length; i < len; i++)
+			elems[i].onclick = this.onClickElement.bind(this);
+	};
+
+	CMobileTouchManagerBase.prototype.onClickElement = function(e)
+	{
+		if (this.isCheckFocusOnClickValue === true)
+		{
+			if (AscCommon.g_inputContext)
+				AscCommon.g_inputContext.HtmlArea.focus();
+			this.isCheckFocusOnClickValue = false;
+		}
+
+		this.checkHandlersOnClick();
 	};
 
 	CMobileTouchManagerBase.prototype.scrollTo = function(x, y)
