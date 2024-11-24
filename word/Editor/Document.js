@@ -13393,11 +13393,23 @@ CDocument.prototype.IsPermRangeEditing = function(changesType, additionalData)
 	if (this.Api.isViewMode || !(this.Api.isRestrictionComments() || this.Api.isRestrictionView()))
 		return false;
 	
-	if (!this._checkChangesTypeForPermRange(changesType, additionalData))
-		return false;
-	
-	if (AscCommon.changestype_None !== changesType && !this._checkPermRangeForCurrentSelection())
-		return false;
+	if (AscCommon.changestype_None !== changesType)
+	{
+		if (AscCommon.changestype_Table_Properties === changesType || AscCommon.changestype_Table_RemoveCells === changesType)
+		{
+			let currentTable = this.GetCurrentTable();
+			if (!currentTable || !currentTable.isWholeElementInPermRange())
+				return false;
+		}
+		else
+		{
+			if (!this._checkChangesTypeForPermRangeForSelection(changesType))
+				return false;
+			
+			if (!this._checkPermRangeForCurrentSelection())
+				return false;
+		}
+	}
 	
 	if (additionalData)
 	{
@@ -13485,6 +13497,18 @@ CDocument.prototype._checkChangesTypeForPermRange = function(changesType)
 		|| AscCommon.changestype_ContentControl_Remove === changesType
 		|| AscCommon.changestype_ContentControl_Properties === changesType
 		|| AscCommon.changestype_ContentControl_Add === changesType
+		|| AscCommon.changestype_Remove === changesType
+		|| AscCommon.changestype_Delete === changesType
+		|| AscCommon.changestype_Text_Props === changesType);
+};
+CDocument.prototype._checkChangesTypeForPermRangeForSelection = function(changesType)
+{
+	return (AscCommon.changestype_Paragraph_Content === changesType
+		|| AscCommon.changestype_Paragraph_Properties === changesType
+		|| AscCommon.changestype_Paragraph_AddText === changesType
+		|| AscCommon.changestype_Paragraph_TextProperties === changesType
+		|| AscCommon.changestype_Document_Content === changesType
+		|| AscCommon.changestype_Document_Content_Add === changesType
 		|| AscCommon.changestype_Remove === changesType
 		|| AscCommon.changestype_Delete === changesType
 		|| AscCommon.changestype_Text_Props === changesType);

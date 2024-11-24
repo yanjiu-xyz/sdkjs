@@ -1419,8 +1419,8 @@ CDocumentContentElementBase.prototype.isWholeElementInPermRange = function()
 	let prevPara = this.GetPrevParagraph();
 	let nextPara = this.GetNextParagraph();
 	
-	let startRanges = prevPara ? prevPara.GetEndInfo() : [];
-	let endRanges   = nextPara ? nextPara.GetEndInfoByPage(-1) : [];
+	let startRanges = prevPara ? prevPara.GetEndInfo().GetPermRanges() : [];
+	let endRanges   = nextPara ? nextPara.GetEndInfoByPage(-1).GetPermRanges() : [];
 	
 	return AscWord.PermRangesManager.isInPermRange(startRanges, endRanges);
 };
