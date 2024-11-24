@@ -133,6 +133,16 @@ CDocumentContentElementBase.prototype.GetPrevDocumentElement = function()
 
 	return oPrev;
 };
+CDocumentContentElementBase.prototype.GetNextParagraphInDocument = function()
+{
+	let next = this.GetNextDocumentElement();
+	return next ? next.GetFirstParagraph() : null;
+};
+CDocumentContentElementBase.prototype.GetPrevParagraphInDocument = function()
+{
+	let prev = this.GetPrevDocumentElement();
+	return prev ? prev.GetLastParagraph() : null;
+};
 CDocumentContentElementBase.prototype.GetParent = function()
 {
 	return this.Parent;
@@ -1416,11 +1426,29 @@ CDocumentContentElementBase.prototype.isPreventedPreDelete = function()
 };
 CDocumentContentElementBase.prototype.isWholeElementInPermRange = function()
 {
-	let prevPara = this.GetPrevParagraph();
-	let nextPara = this.GetNextParagraph();
+	// TODO: В таблицах GetNextDocumentElement/GetPrevDocumentElement не работает, надо проверить не баг ли это
+	//       по логике оба варианта должны выдавать одинаковый результат
 	
-	let startRanges = prevPara ? prevPara.GetEndInfo().GetPermRanges() : [];
-	let endRanges   = nextPara ? nextPara.GetEndInfoByPage(-1).GetPermRanges() : [];
+	// let prevPara = this.GetPrevParagraphInDocument();
+	// let nextPara = this.GetNextParagraphInDocument();
+	//
+	// let startRanges = prevPara ? prevPara.GetEndInfo().GetPermRanges() : [];
+	// let endRanges   = nextPara ? nextPara.GetEndInfoByPage(-1).GetPermRanges() : [];
+	
+	let startPara = this.GetFirstParagraph();
+	let endPara   = this.GetLastParagraph();
+	
+	if (!startPara
+		|| !endPara
+		|| !startPara.IsRecalculated()
+		|| !endPara.IsRecalculated())
+		return false;
+	
+	let startInfo = startPara.GetEndInfoByPage(-1);
+	let endInfo   = endPara.GetEndInfo();
+	
+	let startRanges = startInfo ? startInfo.GetPermRanges() : [];
+	let endRanges   = endInfo ? endInfo.GetPermRanges() : [];
 	
 	return AscWord.PermRangesManager.isInPermRange(startRanges, endRanges);
 };

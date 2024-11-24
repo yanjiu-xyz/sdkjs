@@ -13401,6 +13401,18 @@ CDocument.prototype.IsPermRangeEditing = function(changesType, additionalData)
 			if (!currentTable || !currentTable.isWholeElementInPermRange())
 				return false;
 		}
+		else if (AscCommon.changestype_Paragraph_Properties === changesType)
+		{
+			let selectedParagraphs = this.GetSelectedParagraphs();
+			if (!this._checkPermRangeForCurrentSelection())
+				return false;
+			
+			if (0 !== selectedParagraphs.length && !this._checkPermRangeForElement(selectedParagraphs[0]))
+				return false;
+			
+			if (selectedParagraphs.length > 1 && !this._checkPermRangeForElement(selectedParagraphs[selectedParagraphs.length - 1]))
+				return false;
+		}
 		else
 		{
 			if (!this._checkChangesTypeForPermRangeForSelection(changesType))
