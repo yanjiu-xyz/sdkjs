@@ -5145,7 +5145,7 @@ function (window, undefined) {
 				}
 
 				let _oldTrackRevision = false;
-				if (oApi.getEditorId() === AscCommon.c_oEditorId.Word && oApi.WordControl && !oApi.isPdfEditor())
+				if (oApi.getEditorId() === AscCommon.c_oEditorId.Word && oApi.WordControl && oApi.WordControl.m_oLogicDocument && !oApi.isPdfEditor())
 					_oldTrackRevision = oApi.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
 
 				if (false !== _oldTrackRevision)
