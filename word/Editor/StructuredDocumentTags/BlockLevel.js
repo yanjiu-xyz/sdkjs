@@ -2725,3 +2725,4 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;
 window['AscCommonWord'].type_BlockLevelSdt = type_BlockLevelSdt;
 window["AscWord"].CBlockLevelSdt = CBlockLevelSdt;
+window["AscWord"].BlockLevelSdt = CBlockLevelSdt;

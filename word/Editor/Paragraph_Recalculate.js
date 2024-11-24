@@ -4342,6 +4342,7 @@ function CParagraphRecalculateStateInfo()
 	this.fast          = false;
     this.Comments      = [];
     this.ComplexFields = [];
+	this.PermRanges    = [];
 }
 CParagraphRecalculateStateInfo.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
 CParagraphRecalculateStateInfo.prototype.constructor = CParagraphRecalculateStateInfo;
@@ -4353,34 +4354,28 @@ CParagraphRecalculateStateInfo.prototype.isFastRecalculation = function()
 {
 	return this.fast;
 };
-CParagraphRecalculateStateInfo.prototype.Reset = function(PrevInfo)
+CParagraphRecalculateStateInfo.prototype.Reset = function(prevInfo)
 {
-	if (null !== PrevInfo && undefined !== PrevInfo)
+	this.Comments      = [];
+	this.ComplexFields = [];
+	this.PermRanges    = [];
+	
+	if (!prevInfo)
+		return;
+	
+	if (prevInfo.Comments)
+		this.Comments = prevInfo.Comments.slice();
+
+	if (prevInfo.ComplexFields)
 	{
-		this.Comments      = [];
-		this.ComplexFields = [];
-
-		if (PrevInfo.Comments)
+		for (let index = 0, count = prevInfo.ComplexFields.length; index < count; ++index)
 		{
-			for (var nIndex = 0, nCount = PrevInfo.Comments.length; nIndex < nCount; ++nIndex)
-			{
-				this.Comments[nIndex] = PrevInfo.Comments[nIndex];
-			}
-		}
-
-		if (PrevInfo.ComplexFields)
-		{
-			for (var nIndex = 0, nCount = PrevInfo.ComplexFields.length; nIndex < nCount; ++nIndex)
-			{
-				this.ComplexFields[nIndex] = PrevInfo.ComplexFields[nIndex].Copy();
-			}
+			this.ComplexFields[index] = prevInfo.ComplexFields[index].Copy();
 		}
 	}
-	else
-	{
-		this.Comments      = [];
-		this.ComplexFields = [];
-	}
+	
+	if (prevInfo.PermRanges)
+		this.PermRanges = prevInfo.PermRanges.slice();
 };
 CParagraphRecalculateStateInfo.prototype.AddComment = function(Id)
 {
@@ -4397,6 +4392,21 @@ CParagraphRecalculateStateInfo.prototype.RemoveComment = function(Id)
 			break;
 		}
 	}
+};
+CParagraphRecalculateStateInfo.prototype.addPermRange = function(rangeId)
+{
+	this.PermRanges.push(rangeId);
+};
+CParagraphRecalculateStateInfo.prototype.removePermRange = function(rangeId)
+{
+	let pos = this.PermRanges.indexOf(rangeId);
+	if (-1 === pos)
+		return;
+	
+	if (this.PermRanges.length - 1 === pos)
+		--this.PermRanges.length;
+	else
+		this.PermRanges.splice(pos, 1);
 };
 CParagraphRecalculateStateInfo.prototype.processFieldChar = function(oFieldChar)
 {

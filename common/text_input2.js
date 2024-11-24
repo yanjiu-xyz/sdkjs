@@ -1223,16 +1223,6 @@
 		let oldDisableKeyboard = this.isDisableKeyboard;
 		this.isDisableKeyboard = this.Api.isViewMode;
 
-		if (!this.isDisableKeyboard)
-		{
-			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
-			{
-				// в пдф даем комментировать и заполнять формы во вью с сохранением в копию
-				if (!this.Api.isPdfEditor())
-					this.isDisableKeyboard = true;
-			}
-		}
-
 		if (oldDisableKeyboard !== this.isDisableKeyboard)
 		{
 			this.setReadOnlyWrapper(false);
