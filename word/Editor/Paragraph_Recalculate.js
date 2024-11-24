@@ -2082,6 +2082,8 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
                 return PRSA.RecalcResult;
             }
         }
+		
+		Range.XEndVisible = PRSA.X;
     }
 
     return PRSA.RecalcResult;
@@ -2992,24 +2994,26 @@ CParaLineMetrics.prototype.Reset = function()
 
 function CParaLineRange(X, XEnd)
 {
-    this.X         = X;    // Начальная позиция отрезка без учета прилегания содержимого
-    this.XVisible  = 0;    // Начальная позиция отрезка с учетом прилегания содержимого
-    this.XEnd      = XEnd; // Предельное значение по X для данного отрезка
-    this.StartPos  = 0;    // Позиция в контенте параграфа, с которой начинается данный отрезок
-    this.EndPos    = 0;    // Позиция в контенте параграфа, на которой заканчиваетсяданный отрезок
-    this.W         = 0;
-    this.Spaces    = 0;    // Количество пробелов в отрезке, без учета пробелов в конце отрезка
-	this.WEnd      = 0;    // Если есть знак конца параграфа в данном отрезке, то это его ширина
-	this.WBreak    = 0;    // Если в конце отрезка есть разрыв строки/колонки/страницы
+	this.X           = X;    // Начальная позиция отрезка без учета прилегания содержимого
+	this.XVisible    = 0;    // Начальная позиция отрезка с учетом прилегания содержимого
+	this.XEnd        = XEnd; // Предельное значение по X для данного отрезка
+	this.XEndVisible = X;    // Где фактически заканчивается содержимое в данном отрезке
+	this.StartPos    = 0;    // Позиция в контенте параграфа, с которой начинается данный отрезок
+	this.EndPos      = 0;    // Позиция в контенте параграфа, на которой заканчиваетсяданный отрезок
+	this.W           = 0;
+	this.Spaces      = 0;    // Количество пробелов в отрезке, без учета пробелов в конце отрезка
+	this.WEnd        = 0;    // Если есть знак конца параграфа в данном отрезке, то это его ширина
+	this.WBreak      = 0;    // Если в конце отрезка есть разрыв строки/колонки/страницы
 }
 
 CParaLineRange.prototype =
 {
     Shift : function(Dx, Dy)
     {
-        this.X        += Dx;
-        this.XEnd     += Dx;
-        this.XVisible += Dx;
+		this.X           += Dx;
+		this.XEnd        += Dx;
+		this.XVisible    += Dx;
+		this.XEndVisible += Dx;
     },
 
     Copy : function()
@@ -3019,6 +3023,7 @@ CParaLineRange.prototype =
         NewRange.X           = this.X;
         NewRange.XVisible    = this.XVisible;
         NewRange.XEnd        = this.XEnd;
+		NewRange.XEndVisible = this.XEndVisible;
         NewRange.StartPos    = this.StartPos;
         NewRange.EndPos      = this.EndPos;
         NewRange.W           = this.W;
