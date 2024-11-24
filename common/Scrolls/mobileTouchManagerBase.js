@@ -2686,22 +2686,20 @@
 
 	CMobileTouchManagerBase.prototype.addClickElement = function(elems)
 	{
-		if (!this.isCheckFocusOnClick)
-			return;
 		for (let i = 0, len = elems.length; i < len; i++)
 			elems[i].onclick = this.onClickElement.bind(this);
 	};
 
 	CMobileTouchManagerBase.prototype.onClickElement = function(e)
 	{
-		if (AscCommon.g_inputContext)
+		if (this.isCheckFocusOnClickValue === true)
 		{
-			if (this.isCheckFocusOnClickValue)
-			{
+			if (AscCommon.g_inputContext)
 				AscCommon.g_inputContext.HtmlArea.focus();
-				this.isCheckFocusOnClickValue = false;
-			}
+			this.isCheckFocusOnClickValue = false;
 		}
+
+		this.checkHandlersOnClick();
 	};
 
 	CMobileTouchManagerBase.prototype.scrollTo = function(x, y)

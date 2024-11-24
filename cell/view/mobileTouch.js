@@ -1039,6 +1039,7 @@ function (window, undefined)
 	{
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
+		this.removeHandlersOnClick();
 		return this.onTouchStart(e);
 	};
 	CMobileTouchManager.prototype.mainOnTouchMove = function(e)

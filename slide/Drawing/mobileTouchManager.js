@@ -1021,6 +1021,8 @@
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
 
+		this.removeHandlersOnClick();
+
 		if (!this.Api.asc_IsFocus())
 			this.Api.asc_enableKeyEvents(true);
 
