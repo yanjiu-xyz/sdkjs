@@ -1414,6 +1414,16 @@ CDocumentContentElementBase.prototype.isPreventedPreDelete = function()
 	let logicDocument = this.GetLogicDocument();
 	return !logicDocument || !logicDocument.IsDocumentEditor() || logicDocument.isPreventedPreDelete();
 };
+CDocumentContentElementBase.prototype.isWholeElementInPermRange = function()
+{
+	let prevPara = this.GetPrevParagraph();
+	let nextPara = this.GetNextParagraph();
+	
+	let startRanges = prevPara ? prevPara.GetEndInfo() : [];
+	let endRanges   = nextPara ? nextPara.GetEndInfoByPage(-1) : [];
+	
+	return AscWord.PermRangesManager.isInPermRange(startRanges, endRanges);
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

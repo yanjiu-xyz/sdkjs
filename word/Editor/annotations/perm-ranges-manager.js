@@ -47,6 +47,27 @@
 		this.ranges = {};
 	}
 	
+	/**
+	 * Статический метод, который проверяет попадаем ли целиком в разрешенный диапазон по заданным стартовому и
+	 * конечному диапазонам
+	 * @param startRanges
+	 * @param endRanges
+	 */
+	PermRangesManager.isInPermRange = function(startRanges, endRanges)
+	{
+		// TODO: Пока мы просто проверяем само наличие диапазона, в будущем надо проверяеть пользователя
+		
+		if (endRanges.length < 0)
+			return false;
+		
+		for (let iRange = 0, rangeCount = endRanges.length; iRange < rangeCount; ++iRange)
+		{
+			if (-1 !== startRanges.indexOf(endRanges[iRange]))
+				return true;
+		}
+		
+		return false;
+	};
 	PermRangesManager.prototype.addMark = function(mark)
 	{
 		let rangeId = mark.getRangeId();

@@ -13503,17 +13503,7 @@ CDocument.prototype._checkPermRangeForCurrentSelection = function()
 		
 		let startRanges = this.GetPermRangesByContentPos(startPos);
 		let endRanges   = this.GetPermRangesByContentPos(endPos);
-		
-		if (endRanges.length < 0)
-			return false;
-		
-		for (let iRange = 0, rangeCount = endRanges.length; iRange < rangeCount; ++iRange)
-		{
-			if (-1 !== startRanges.indexOf(endRanges[iRange]))
-				return true;
-		}
-		
-		return false;
+		return AscWord.PermRangesManager.isInPermRange(startRanges, endRanges);
 	}
 	else if (!this.IsSelectionUse())
 	{
@@ -13531,7 +13521,7 @@ CDocument.prototype._checkPermRangeForElement = function(element)
 		&& !(element instanceof AscWord.BlockLevelSdt))
 		return false;
 	
-	return false;
+	return element.isWholeElementInPermRange();
 };
 CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, AdditionalData, DontLockInFastMode, isIgnoreCanEditFlag, fCallback)
 {
@@ -15842,7 +15832,7 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 		state.AnchorDistance = xyInfo.Y - viewPort[0].Y;
 	}
 };
-CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State)
+CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State, updateSelection)
 {
 	this.CollaborativeEditing.UpdateDocumentPositionsByState(State);
 
@@ -15900,16 +15890,19 @@ CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State)
 		this.ViewPosition = null;
 	}
 
-	this.UpdateSelection();
-
+	// TODO: По-хорошему, надо чтобы те места откуда вызывался данный метод сами обновляли состояние, если там оно нужно
+	//       тогда не пришлось бы делать такие заглушки для мест, где это обновление мешает (например при перетаскивании
+	//       линеек таблицы)
+	if (false !== updateSelection)
+		this.UpdateSelection();
 };
 CDocument.prototype.SaveDocumentState = function(isRemoveSelection)
 {
 	return this.Save_DocumentStateBeforeLoadChanges(isRemoveSelection);
 };
-CDocument.prototype.LoadDocumentState = function(oState)
+CDocument.prototype.LoadDocumentState = function(oState, updateSelection)
 {
-	return this.Load_DocumentStateAfterLoadChanges(oState);
+	return this.Load_DocumentStateAfterLoadChanges(oState, updateSelection);
 };
 CDocument.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth, StartFlag, EndFlag)
 {
@@ -23837,7 +23830,7 @@ CDocument.prototype.GetPermRangesByContentPos = function(docPos)
 	if (currentParagraph)
 		result = currentParagraph.GetCurrentPermRanges();
 	
-	this.LoadDocumentState(state);
+	this.LoadDocumentState(state, false);
 	return result;
 };
 /**
