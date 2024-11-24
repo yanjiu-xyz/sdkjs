@@ -154,7 +154,7 @@
 				return;
 			}
 
-			if (this.view.Api.isMobileVersion) {
+			if (this.view.Api.isUseOldMobileVersion()) {
 				/*раньше события на ресайз вызывался из меню через контроллер. теперь контроллер в меню не доступен, для ресайза подписываемся на глобальный ресайз от window.*/
 				window.addEventListener("resize", function () {
 					self._onWindowResize.apply(self, arguments);

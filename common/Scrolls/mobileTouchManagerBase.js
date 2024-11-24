@@ -254,6 +254,10 @@
 	{
 		return false;
 	};
+	CMobileDelegateSimple.prototype.IsLockedZoom = function()
+	{
+		return false;
+	};
 
 	/**
 	 * @extends {CMobileDelegateSimple}
@@ -611,6 +615,10 @@
 	{
 		return false;//(null != this.DrawingDocument.m_oDocumentRenderer);
 	};
+	CMobileDelegateSimple.prototype.IsLockedZoom = function()
+	{
+		return this.HtmlPage.ReaderModeCurrent === 1;
+	};
 	CMobileDelegateEditor.prototype.IsNativeViewer = function()
 	{
 		if (null != this.DrawingDocument.m_oDocumentRenderer)
@@ -670,7 +678,7 @@
 		this.TimeDown          = 0;
 		this.DownPoint         = null;
 		this.DownPointOriginal = {X : 0, Y : 0};
-		this.MoveMinDist       = 50;
+		this.MoveMinDist       = 20;
 		this.isGlassDrawed     = false;
 
 		this.MoveAfterDown     = false;
@@ -2657,11 +2665,11 @@
 		return _count;
 	};
 
-	CMobileTouchManagerBase.prototype.showKeyboard = function()
+	CMobileTouchManagerBase.prototype.showKeyboard = function(isForce)
 	{
 		if (AscCommon.g_inputContext)
 		{
-			if (this.ContextMenuLastMode ==  AscCommon.MobileTouchContextMenuType.Target)
+			if (this.ContextMenuLastMode ===  AscCommon.MobileTouchContextMenuType.Target || isForce === true)
 				AscCommon.g_inputContext.HtmlArea.focus();
 		}
 	};

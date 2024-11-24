@@ -1072,7 +1072,7 @@
 			_elem.style.height = _elemSrc.style.height;
 		}
 
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 		{
 			var _elem1 = document.getElementById("area_id_parent");
 			var _elem2 = document.getElementById("area_id");
@@ -1143,7 +1143,7 @@
 	};
 	CTextInputPrototype.move = function(x, y)
 	{
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 			return;
 
 		var oTarget = document.getElementById(this.TargetId);

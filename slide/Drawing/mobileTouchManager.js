@@ -1010,6 +1010,9 @@
 		if (true !== this.iScroll.isAnimating)
 			this.CheckContextMenuTouchEnd(isCheckContextMenuMode, isCheckContextMenuSelect, isCheckContextMenuCursor, isCheckContextMenuTableRuler);
 
+		if (!isPreventDefault && this.Api.isMobileVersion && !this.Api.isUseOldMobileVersion())
+			this.showKeyboard();
+
 		return false;
 	};
 

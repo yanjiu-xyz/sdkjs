@@ -67,7 +67,7 @@
 	var isUsePointerEvents = true;
 	if (AscBrowser.isChrome && (AscBrowser.chromeVersion <= 70)) // xp
 		isUsePointerEvents = false;
-	else if (AscBrowser.isSafari && (AscBrowser.safariVersion < 17004001))
+	else if (AscBrowser.isSafari && (AscBrowser.safariVersion < 15000000))
 		isUsePointerEvents = false;
 	else if (AscBrowser.isIE)
 		isUsePointerEvents = false;

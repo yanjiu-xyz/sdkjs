@@ -495,7 +495,7 @@ function CEditorPage(api)
 
 	this.initEventsMobile = function()
 	{
-		if (this.m_oApi.isMobileVersion)
+		if (this.m_oApi.isUseOldMobileVersion())
 		{
 			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "word_mobile_element" } );
 			this.MobileTouchManager.Init(this.m_oApi);
