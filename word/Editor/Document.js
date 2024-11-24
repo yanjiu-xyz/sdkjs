@@ -9154,7 +9154,7 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		case Asc.c_oAscDocumentShortcutType.EditRedo:
 		{
-			if (this.CanEdit() || this.IsEditCommentsMode() || this.IsFillingFormMode())
+			if (!this.IsViewMode() && !this.IsViewModeInReview())
 				this.Document_Redo();
 
 			bRetValue = keydownresult_PreventAll;
@@ -9162,7 +9162,7 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		case Asc.c_oAscDocumentShortcutType.EditUndo:
 		{
-			if ((this.CanEdit() || this.IsEditCommentsMode() || this.IsFillingFormMode()) && !this.IsViewModeInReview())
+			if (!this.IsViewMode() && !this.IsViewModeInReview())
 				this.Document_Undo();
 
 			bRetValue = keydownresult_PreventAll;
