@@ -535,6 +535,8 @@ function CEditorPage(api)
 			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "word_mobile_element", desktopMode : true } );
 			this.MobileTouchManager.Init(this.m_oApi);
 			this.MobileTouchManager.Resize();
+
+			this.MobileTouchManager.addClickElement([this.m_oEditor.HtmlElement, this.m_oOverlay.HtmlElement]);
 		}
 	};
 

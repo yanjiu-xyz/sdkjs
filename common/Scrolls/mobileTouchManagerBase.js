@@ -742,6 +742,11 @@
 
 		this.isShowingContextMenu = false;
 		this.isMobileContextMenuShowResize = false;
+
+		// On Android, there is no way to show the keyboard except onclick
+		// TODO: may be exist another way??
+		this.isCheckFocusOnClick = AscCommon.AscBrowser.isAndroid;
+		this.isCheckFocusOnClickValue = false;
 	}
 
 	CMobileTouchManagerBase.prototype.initEvents = function(_id)
@@ -1339,7 +1344,9 @@
 		{
 			that.ContextMenuShowTimerId = -1;
 			var _pos = that.delegate.GetContextMenuPosition();
+			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = true;
 			that.Api.sendEvent("asc_onShowPopMenu", _pos.X, _pos.Y, (_pos.Mode > 1) ? true : false);
+			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = false;
 		}, 500);
 	};
 
@@ -2671,6 +2678,29 @@
 		{
 			if (this.ContextMenuLastMode ===  AscCommon.MobileTouchContextMenuType.Target || isForce === true)
 				AscCommon.g_inputContext.HtmlArea.focus();
+
+			if (this.isCheckFocusOnClick)
+				this.isCheckFocusOnClickValue = true;
+		}
+	};
+
+	CMobileTouchManagerBase.prototype.addClickElement = function(elems)
+	{
+		if (!this.isCheckFocusOnClick)
+			return;
+		for (let i = 0, len = elems.length; i < len; i++)
+			elems[i].onclick = this.onClickElement.bind(this);
+	};
+
+	CMobileTouchManagerBase.prototype.onClickElement = function(e)
+	{
+		if (AscCommon.g_inputContext)
+		{
+			if (this.isCheckFocusOnClickValue)
+			{
+				AscCommon.g_inputContext.HtmlArea.focus();
+				this.isCheckFocusOnClickValue = false;
+			}
 		}
 	};
 

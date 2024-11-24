@@ -3260,6 +3260,9 @@ var editor;
 
 			if (this.isUseOldMobileVersion())
 				this.wb.MobileTouchManager.initEvents(AscCommon.g_inputContext.HtmlArea.id);
+
+			if (this.controller)
+				this.wb.MobileTouchManager.addClickElement([this.controller.element]);
 		}
 
 		this.asc_CheckGuiControlColors();
