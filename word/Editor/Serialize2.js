@@ -1742,6 +1742,48 @@ function readBookmarkEnd(length, bcr, oReadResult, paragraphContent) {
 	oReadResult.addBookmarkEnd(paragraphContent, bookmark, true);
 	return res;
 }
+function readPermStart(length, bcr, oReadResult, paragraphContent) {
+	if ((typeof AscWord === "undefined") || (typeof AscWord.ParagraphPermStart === "undefined"))
+		return c_oSerConstants.ReadUnknown;
+	
+	let permPr = {};
+	let res = readPermPr(length, bcr, permPr);
+	let permStart = AscWord.ParagraphPermStart.fromObject(permPr);
+	oReadResult.addPermStart(paragraphContent, permStart);
+	return res;
+}
+function readPermEnd(length, bcr, oReadResult, paragraphContent) {
+	if ((typeof AscWord === "undefined") || (typeof AscWord.ParagraphPermEnd === "undefined"))
+		return c_oSerConstants.ReadUnknown;
+	
+	let permPr = {};
+	let res = readPermPr(length, bcr, permPr);
+	let permEnd = AscWord.ParagraphPermEnd.fromObject(permPr);
+	oReadResult.addPermEnd(paragraphContent, permEnd);
+	return res;
+}
+function readPermPr(length, bcr, permPr) {
+	let stream = bcr.stream;
+	return bcr.Read1(length, function(type, length) {
+		if (c_oSerPermission.Id === type)
+			permPr.id = stream.GetString2LE(length);
+		else if (c_oSerPermission.DisplacedByCustomXml === type)
+			permPr.displacedByCustomXml = stream.GetUChar();
+		else if (c_oSerPermission.ColFirst === type)
+			permPr.colFirst = stream.GetULongLE();
+		else if (c_oSerPermission.ColLast === type)
+			permPr.colLast = stream.GetULongLE();
+		else if (c_oSerPermission.Ed === type)
+			permPr.ed = stream.GetString2LE(length);
+		else if (c_oSerPermission.EdGroup === type)
+			permPr.edGrp = stream.GetUChar();
+		else
+			return c_oSerConstants.ReadUnknown;
+		
+		return c_oSerConstants.ReadOk;
+	});
+}
+
 function initMathRevisions(elem ,props, reader) {
     if(props.del) {
         elem.SetReviewTypeWithInfo(reviewtype_Remove, props.del, false);
@@ -11342,9 +11384,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerParType.JsaProject === type) {
 			this.Document.DrawingDocument.m_oWordControl.m_oApi.macros.SetData(AscCommon.GetStringUtf8(this.stream, length));
 		} else if (c_oSerParType.PermStart === type) {
-			res = this.ReadPermStart(length, null);
+			res = readPermStart(length, this.bcr, this.oReadResult, null);
 		} else if (c_oSerParType.PermEnd === type) {
-			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
+			res = readPermEnd(length, this.bcr, this.oReadResult, this.oReadResult.lastPar);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -11680,9 +11722,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if ( c_oSerParType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, paragraphContent);
 		} else if (c_oSerParType.PermStart === type) {
-			res = this.ReadPermStart(length, paragraphContent);
+			res = readPermStart(length, this.bcr, this.oReadResult, paragraphContent);
 		} else if (c_oSerParType.PermEnd === type) {
-			res = this.ReadPermEnd(length, paragraphContent);
+			res = readPermEnd(length, this.bcr, this.oReadResult, paragraphContent);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -11892,50 +11934,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		else
             res = c_oSerConstants.ReadUnknown;
         return res;
-	};
-	this.ReadPermStart = function(length, paragraphContent)
-	{
-		if ((typeof AscWord === "undefined") || (typeof AscWord.ParagraphPermStart === "undefined"))
-			return c_oSerConstants.ReadUnknown;
-		
-		let permPr = {};
-		let res = this.ReadPermPr(length, permPr);
-		let permStart = AscWord.ParagraphPermStart.fromObject(permPr);
-		this.oReadResult.addPermStart(paragraphContent, permStart);
-		return res;
-	};
-	this.ReadPermEnd = function(length, paragraphContent)
-	{
-		if ((typeof AscWord === "undefined") || (typeof AscWord.ParagraphPermEnd === "undefined"))
-			return c_oSerConstants.ReadUnknown;
-		
-		let permPr = {};
-		let res = this.ReadPermPr(length, permPr);
-		let permStart = AscWord.ParagraphPermEnd.fromObject(permPr);
-		this.oReadResult.addPermEnd(paragraphContent, permStart);
-		return res;
-	};
-	this.ReadPermPr = function(length, permPr)
-	{
-		let stream = this.bcr.stream;
-		return this.bcr.Read1(length, function(type, length) {
-			if (c_oSerPermission.Id === type)
-				permPr.id = stream.GetString2LE(length);
-			else if (c_oSerPermission.DisplacedByCustomXml === type)
-				permPr.displacedByCustomXml = stream.GetUChar();
-			else if (c_oSerPermission.ColFirst === type)
-				permPr.colFirst = stream.GetULongLE();
-			else if (c_oSerPermission.ColLast === type)
-				permPr.colLast = stream.GetULongLE();
-			else if (c_oSerPermission.Ed === type)
-				permPr.ed = stream.GetString2LE(length);
-			else if (c_oSerPermission.EdGroup === type)
-				permPr.edGrp = stream.GetUChar();
-			else
-				return c_oSerConstants.ReadUnknown;
-			
-			return c_oSerConstants.ReadOk;
-		});
 	};
 	this.ReadRun = function (type, length, run)
     {
@@ -12926,9 +12924,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerDocTableType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, this.oReadResult.lastPar, true);
 		} else if (c_oSerDocTableType.PermStart === type) {
-			res = this.ReadPermStart(length, null);
+			res = readPermStart(length, this.bcr, this.oReadResult, null);
 		} else if (c_oSerDocTableType.PermEnd === type) {
-			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
+			res = readPermEnd(length, this.bcr, this.oReadResult, this.oReadResult.lastPar);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -12984,9 +12982,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerDocTableType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, this.oReadResult.lastPar, true);
 		} else if (c_oSerDocTableType.PermStart === type) {
-			res = this.ReadPermStart(length, null);
+			res = readPermStart(length, this.bcr, this.oReadResult, null);
 		} else if (c_oSerDocTableType.PermEnd === type) {
-			res = this.ReadPermEnd(length, this.oReadResult.lastPar);
+			res = readPermEnd(length, this.bcr, this.oReadResult, this.oReadResult.lastPar);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -13923,9 +13921,9 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
 		} else if (c_oSer_OMathContentType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, paragraphContent);
 		} else if (c_oSer_OMathContentType.PermStart === type) {
-			res = this.ReadPermStart(length, paragraphContent);
+			res = readPermStart(length, this.bcr, this.oReadResult, paragraphContent);
 		} else if (c_oSer_OMathContentType.PermEnd === type) {
-			res = this.ReadPermEnd(length, paragraphContent);
+			res = readPermEnd(length, this.bcr, this.oReadResult, paragraphContent);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
