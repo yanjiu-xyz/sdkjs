@@ -617,6 +617,8 @@
 	};
 	CMobileDelegateEditor.prototype.IsLockedZoom = function()
 	{
+		// Fix after testing...
+		return false;
 		return this.HtmlPage.ReaderModeCurrent === 1;
 	};
 	CMobileDelegateEditor.prototype.IsNativeViewer = function()
