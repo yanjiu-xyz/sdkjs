@@ -4564,6 +4564,10 @@
 
 		this.updateDarkMode();
 	};
+	baseEditorsApi.prototype.canEnterText = function()
+	{
+		return this.canEdit();
+	};
 	baseEditorsApi.prototype.updateDarkMode = function()
 	{
 	};

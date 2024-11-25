@@ -13590,7 +13590,11 @@ background-repeat: no-repeat;\
 
 		return true;
 	};
-	
+	asc_docs_api.prototype.canEnterText = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		return logicDocument ? logicDocument.canEnterText() : false;
+	};
 	asc_docs_api.prototype.updateDarkMode = function()
 	{
 		if (!this.WordControl || !this.WordControl.m_oDrawingDocument)

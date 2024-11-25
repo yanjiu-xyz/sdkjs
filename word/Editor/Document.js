@@ -10360,6 +10360,21 @@ CDocument.prototype.CorrectEnterText = function(oldValue, newValue)
 
 	return true;
 };
+CDocument.prototype.canEnterText = function()
+{
+	if (this.IsSelectionUse() && !this.IsTextSelectionUse())
+		return false;
+	
+	if (this.Api.isViewMode)
+		return false;
+	
+	if (this.Api.isRestrictionComments() || this.Api.isRestrictionView())
+		return this._checkPermRangeForCurrentSelection();
+	else if (this.IsFillingFormMode())
+		return this.IsInFormField(false, true);
+	
+	return this.CanEdit();
+};
 CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 {
 	if (PageIndex < 0)
