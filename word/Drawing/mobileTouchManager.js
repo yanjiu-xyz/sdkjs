@@ -377,7 +377,8 @@
 				}
 				else
 				{
-					this.iScroll._move(e);
+					if (this.MoveAfterDown)
+						this.iScroll._move(e);
 					AscCommon.stopEvent(e);
 				}
 				break;
