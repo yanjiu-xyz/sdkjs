@@ -1225,6 +1225,27 @@
 		let oldDisableKeyboard = this.isDisableKeyboard;
 		this.isDisableKeyboard = this.Api.isViewMode;
 
+		if (!this.isDisableKeyboard)
+		{
+			switch (this.Api.editorId)
+			{
+				case AscCommon.c_oEditorId.Word:
+				{
+					// use canEnterText instead this
+					break;
+				}
+				case AscCommon.c_oEditorId.Presentation:
+				case AscCommon.c_oEditorId.Spreadsheet:
+				{
+					if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
+						this.isDisableKeyboard = true;
+					break;
+				}
+				default:
+					break;
+			}
+		}
+
 		if (oldDisableKeyboard !== this.isDisableKeyboard)
 		{
 			this.setReadOnlyWrapper(false);

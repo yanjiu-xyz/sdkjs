@@ -1643,7 +1643,7 @@
 				return res;
 			}
 			if (touchManager)
-				touchManager.checkMouseFocus(e);
+				touchManager.checkMouseFocus(event);
 
 			var t = this;
 			asc["editor"].checkInterfaceElementBlur();

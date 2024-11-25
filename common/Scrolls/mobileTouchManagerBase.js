@@ -2686,7 +2686,16 @@
 	{
 		if (AscCommon.g_inputContext)
 		{
-			if (this.ContextMenuLastMode ===  AscCommon.MobileTouchContextMenuType.Target || isForce === true)
+			let isShow = (isForce === true) ? true : false;
+			if (!isShow)
+			{
+				if (this.ContextMenuLastMode ===  AscCommon.MobileTouchContextMenuType.Target)
+				{
+					if (this.Api.canEnterText())
+						isShow = true;
+				}
+			}
+			if (isShow)
 				AscCommon.g_inputContext.HtmlArea.focus();
 
 			if (this.isCheckFocusOnClick)
