@@ -13439,7 +13439,7 @@ CDocument.prototype.IsPermRangeEditing = function(changesType, additionalData)
 			return (this._checkChangesTypeForPermRange(additionalData.CheckType)
 				&& this._checkPermRangeForElement(additionalData.Element));
 		}
-		else if (AscCommon.changestype_2_ElementsArray_and_Type === oAdditionalData.Type)
+		else if (AscCommon.changestype_2_ElementsArray_and_Type === additionalData.Type)
 		{
 			if (!this._checkChangesTypeForPermRange(additionalData.CheckType))
 				return false;
@@ -13451,7 +13451,7 @@ CDocument.prototype.IsPermRangeEditing = function(changesType, additionalData)
 			}
 			return true;
 		}
-		else if (AscCommon.changestype_2_Element_and_Type_Array === oAdditionalData.Type)
+		else if (AscCommon.changestype_2_Element_and_Type_Array === additionalData.Type)
 		{
 			for (let i = 0, count = Math.min(additionalData.Elements.length, additionalData.CheckTypes.length); i < count; ++i)
 			{
@@ -13463,12 +13463,12 @@ CDocument.prototype.IsPermRangeEditing = function(changesType, additionalData)
 			}
 			return true;
 		}
-		else if (AscCommon.changestype_2_AdditionalTypes === oAdditionalData.Type)
+		else if (AscCommon.changestype_2_AdditionalTypes === additionalData.Type)
 		{
 			if (!this._checkPermRangeForCurrentSelection())
 				return false;
 			
-			for (let i = 0, count = oAdditionalData.Types.length; i < count; ++i)
+			for (let i = 0, count = additionalData.Types.length; i < count; ++i)
 			{
 				if (!this._checkChangesTypeForPermRange(additionalData.Types[i]))
 					return false;
