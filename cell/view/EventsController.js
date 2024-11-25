@@ -1642,6 +1642,8 @@
 				touchManager.stopTouchingInProcess();
 				return res;
 			}
+			if (touchManager)
+				touchManager.checkMouseFocus(e);
 
 			var t = this;
 			asc["editor"].checkInterfaceElementBlur();

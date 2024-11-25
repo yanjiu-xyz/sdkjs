@@ -764,6 +764,16 @@
 		return true;
 	};
 
+	CMobileTouchManagerBase.prototype.checkMouseFocus = function(e)
+	{
+		// mobile version does not get focus with mouse events
+		if (this.Api.isMobileVersion && e && "mouse" === e.pointerType)
+		{
+			if (AscCommon.g_inputContext)
+				AscCommon.g_inputContext.setInterfaceEnableKeyEvents(true);
+		}
+	};
+
 	CMobileTouchManagerBase.prototype.checkTouchEvent = function(e)
 	{
 		if (!e)
