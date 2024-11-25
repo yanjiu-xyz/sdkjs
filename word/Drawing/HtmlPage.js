@@ -2297,7 +2297,7 @@ function CEditorPage(api)
 			// пошлем сначала моусдаун
 			//oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
-		if(!oThis.checkFinishEyedropper())
+		if (!oThis.checkFinishEyedropper())
 		{
 			if (bIsSendedToEditor)
 				oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
@@ -2307,8 +2307,12 @@ function CEditorPage(api)
 			oWordControl.MouseDownDocumentCounter = 0;
 
 		oWordControl.m_bIsMouseUpSend = false;
-		oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-		oWordControl.m_oLogicDocument.Document_UpdateRulersState();
+
+		if (bIsSendedToEditor)
+		{
+			oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+			oWordControl.m_oLogicDocument.Document_UpdateRulersState();
+		}
 
 		oWordControl.EndUpdateOverlay();
 	};

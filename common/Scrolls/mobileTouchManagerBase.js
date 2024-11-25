@@ -615,7 +615,7 @@
 	{
 		return false;//(null != this.DrawingDocument.m_oDocumentRenderer);
 	};
-	CMobileDelegateSimple.prototype.IsLockedZoom = function()
+	CMobileDelegateEditor.prototype.IsLockedZoom = function()
 	{
 		return this.HtmlPage.ReaderModeCurrent === 1;
 	};
