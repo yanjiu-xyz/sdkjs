@@ -207,7 +207,7 @@ function CEditorPage(api)
 	this.IsInitControl = false;
 
 	// paint loop
-	this.paintMessageLoop = new AscCommon.PaintMessageLoop(40);
+	this.paintMessageLoop = new AscCommon.PaintMessageLoop(40, api);
 
 	this.m_oApi = api;
 	var oThis   = this;
