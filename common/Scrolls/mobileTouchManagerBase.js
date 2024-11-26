@@ -1252,7 +1252,7 @@
 		}
 
 		var _new_value = this.delegate.GetZoomFit();
-		if (this.isDesktopMode)
+		if (this.isDesktopMode && !this.Api.isMobileVersion)
 		{
 			let c_min_zoom_value = 50; // delegate method
 			if (_new_value > c_min_zoom_value)
