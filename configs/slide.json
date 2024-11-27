@@ -150,6 +150,7 @@
 			"cell/model/Workbook.js",
 			"cell/model/Serialize.js",
 			"cell/model/CellInfo.js",
+			"cell/model/HeaderFooter.js",
 			"cell/view/DrawingObjectsController.js",
 			
 			"word/Editor/Paragraph/RunContent/Types.js",
