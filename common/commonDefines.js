@@ -1070,7 +1070,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var ST_ChildOrderType = {
 		b: 0,
-		t: 1	
+		t: 1
 	}
 
 	var ST_AlgorithmType = {
@@ -1097,7 +1097,7 @@ window.AscCommon.g_cIsBeta = "false";
 		equ:  1,
 		gte:  2,
 		lte:  3
-	} 
+	}
 
 	var ST_ElementType = {
 		all:      0,
@@ -2438,9 +2438,9 @@ window.AscCommon.g_cIsBeta = "false";
 		pasteOnlyFormula: 1,
 		formulaNumberFormat: 2,
 		formulaAllFormatting: 3,
-		formulaWithoutBorders: 4, 
+		formulaWithoutBorders: 4,
 		formulaColumnWidth: 5,
-		mergeConditionalFormating: 6, 
+		mergeConditionalFormating: 6,
 		pasteOnlyValues: 7,
 		valueNumberFormat: 8,
 		valueAllFormating: 9,
@@ -3773,8 +3773,36 @@ window.AscCommon.g_cIsBeta = "false";
 		Shape: "Shape",
 		OleObject: "OleObject"
 	};
+	
+	// 17.18.21 ST_EdGrp
+	const ST_EdGrp = {
+		administrators : 0,
+		contributors   : 1,
+		current        : 2,
+		editors        : 3,
+		everyone       : 4,
+		none           : 5,
+		owners         : 6
+	};
+	
+	window['Asc']['ST_EdGrp'] = window['Asc'].ST_EdGrp = ST_EdGrp;
+	ST_EdGrp['administrators'] = ST_EdGrp.administrators;
+	ST_EdGrp['contributors']   = ST_EdGrp.contributors;
+	ST_EdGrp['current']        = ST_EdGrp.current;
+	ST_EdGrp['editors']        = ST_EdGrp.editors;
+	ST_EdGrp['everyone']       = ST_EdGrp.everyone;
+	ST_EdGrp['none']           = ST_EdGrp.none;
 
-
+	// 17.18.13 ST_DisplacedByCustomXml
+	const ST_DisplacedByCustomXml = {
+		next : 0,
+		prev : 1
+	};
+	window['Asc']['ST_DisplacedByCustomXml'] = window['Asc'].ST_DisplacedByCustomXml = ST_DisplacedByCustomXml;
+	ST_DisplacedByCustomXml['next'] = ST_DisplacedByCustomXml.next;
+	ST_DisplacedByCustomXml['prev'] = ST_DisplacedByCustomXml.prev;
+	
+	
 	var c_oAscDateTimeFormat = {};
 	c_oAscDateTimeFormat[lcid_arSA] = [
 		"dd/MM/yyyy",

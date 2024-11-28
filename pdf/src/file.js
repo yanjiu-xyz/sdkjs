@@ -150,6 +150,7 @@
     	this.isUse3d = false;
     	this.cacheManager = null;
     	this.logging = true;
+        this.type = -1;
 
     	this.Selection = {
             Page1 : 0,
@@ -661,6 +662,13 @@ void main() {\n\
         if (!stream)
             return { Line : -1, Glyph : -1 };
 
+        if (this.type === 2)
+        {
+            let k = 72 / 96;
+            x *= k;
+            y *= k;
+        }
+
         // textline parameters
         var _line = -1;
         var _glyph = -1;
@@ -815,7 +823,17 @@ void main() {\n\
                             return { Line : _line, Glyph : _glyph };
                         }
 
-                        tmp = Math.abs(y - _lineY);
+                        if (_distX >= 0 && _distX <= _lineWidth)
+                            tmp = Math.abs(y - _lineY);
+                        else if (_distX < 0)
+                        {
+                            tmp = Math.sqrt((x - _lineX) * (x - _lineX) + (y - _lineY) * (y - _lineY));
+                        }
+                        else
+                        {
+                            var _xx1 = _lineX + _lineWidth;
+                            tmp = Math.sqrt((x - _xx1) * (x - _xx1) + (y - _lineY) * (y - _lineY));
+                        }
 
                         if (tmp < _minDist)
                         {
@@ -2814,6 +2832,8 @@ void main() {\n\
         var error = file.nativeFile["loadFromData"](data);
         if (0 === error)
         {
+            file.type = file.nativeFile["getType"]();
+
             file.nativeFile["onRepaintPages"] = function(pages) {
                 file.onRepaintPages && file.onRepaintPages(pages);
             };
@@ -2859,6 +2879,8 @@ void main() {\n\
         var error = file.nativeFile["loadFromDataWithPassword"](password);
         if (0 === error)
         {
+            file.type = file.nativeFile["getType"]();
+
             file.nativeFile["onRepaintPages"] = function(pages) {
                 file.onRepaintPages && file.onRepaintPages(pages);
             };

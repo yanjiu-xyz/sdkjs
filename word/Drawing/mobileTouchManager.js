@@ -153,6 +153,9 @@
 			}
 		}
 
+		if (!isLockedTouch && this.delegate.IsLockedZoom())
+			isLockedTouch = true;
+
 		if (!isLockedTouch && (2 === touchesCount))
 		{
 			this.Mode = AscCommon.MobileTouchMode.Zoom;
@@ -374,7 +377,8 @@
 				}
 				else
 				{
-					this.iScroll._move(e);
+					if (this.MoveAfterDown)
+						this.iScroll._move(e);
 					AscCommon.stopEvent(e);
 				}
 				break;
@@ -731,6 +735,9 @@
 		if (AscCommon.g_inputContext.isHardCheckKeyboard)
 			isPreventDefault ? AscCommon.g_inputContext.preventVirtualKeyboard_Hard() : AscCommon.g_inputContext.enableVirtualKeyboard_Hard();
 
+		if (!isPreventDefault && this.Api.isMobileVersion && !this.Api.isUseOldMobileVersion())
+			this.showKeyboard();
+
 		return false;
 	};
 
@@ -739,7 +746,9 @@
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
 
-		if (!this.Api.asc_IsFocus())
+		this.removeHandlersOnClick();
+
+		if (!this.Api.asc_IsFocus() && !this.Api.isMobileVersion)
 			this.Api.asc_enableKeyEvents(true);
 
 		var oWordControl = this.Api.WordControl;

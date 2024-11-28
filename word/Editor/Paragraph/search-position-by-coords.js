@@ -508,9 +508,9 @@
 				this.inTextPos = this.pos.Copy();
 				this.inTextX   = false;
 			}
-			else if (x > range.XVisible + range.W)
+			else if (x > range.XEndVisible)
 			{
-				this.setDiff(range.XVisible + range.W - x);
+				this.setDiff(range.XEndVisible - x);
 				this.pos       = para.Get_StartRangePos2(this.line, this.range);
 				this.inTextPos = this.pos.Copy();
 				this.inTextX   = false;
@@ -525,9 +525,9 @@
 				this.inTextPos = this.pos.Copy();
 				this.inTextX   = false;
 			}
-			else if (x > range.XVisible + range.W)
+			else if (x > range.XEndVisible)
 			{
-				this.setDiff(range.XVisible + range.W - x);
+				this.setDiff(range.XEndVisible - x);
 				this.pos       = para.Get_EndRangePos2(this.line, this.range);
 				this.inTextPos = this.pos.Copy();
 				this.inTextX   = false;

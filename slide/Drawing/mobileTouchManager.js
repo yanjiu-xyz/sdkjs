@@ -1010,6 +1010,9 @@
 		if (true !== this.iScroll.isAnimating)
 			this.CheckContextMenuTouchEnd(isCheckContextMenuMode, isCheckContextMenuSelect, isCheckContextMenuCursor, isCheckContextMenuTableRuler);
 
+		if (!isPreventDefault && this.Api.isMobileVersion && !this.Api.isUseOldMobileVersion())
+			this.showKeyboard();
+
 		return false;
 	};
 
@@ -1018,7 +1021,9 @@
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
 
-		if (!this.Api.asc_IsFocus())
+		this.removeHandlersOnClick();
+
+		if (!this.Api.asc_IsFocus() && !this.Api.isMobileVersion)
 			this.Api.asc_enableKeyEvents(true);
 
 		var oWordControl = this.Api.WordControl;

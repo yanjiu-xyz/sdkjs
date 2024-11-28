@@ -941,8 +941,8 @@ function (window, undefined)
 					this.Api.sendEvent("asc_onTapEvent", e);
 
 					var typeMenu = this.delegate.GetContextMenuType();
-					if (typeMenu == AscCommon.MobileTouchContextMenuType.Target ||
-						(typeMenu == AscCommon.MobileTouchContextMenuType.Select && this.delegate.IsInObject()))
+					if (typeMenu === AscCommon.MobileTouchContextMenuType.Target ||
+						(typeMenu === AscCommon.MobileTouchContextMenuType.Select && this.delegate.IsInObject()))
 						isPreventDefault = false;
 				}
 				else
@@ -973,6 +973,12 @@ function (window, undefined)
 				// TODO:
 				this.delegate.Drawing_OnMouseUp(e.changedTouches ? e.changedTouches[0] : e);
 				this.Mode = AscCommon.MobileTouchMode.None;
+
+				var typeMenu = this.delegate.GetContextMenuType();
+				if (typeMenu === AscCommon.MobileTouchContextMenuType.Target ||
+					(typeMenu === AscCommon.MobileTouchContextMenuType.Select && this.delegate.IsInObject()))
+					isPreventDefault = false;
+
 				break;
 			}
 			case AscCommon.MobileTouchMode.Select:
@@ -1008,7 +1014,7 @@ function (window, undefined)
 			this.delegate.Api.controller._onMouseMove(_e);
 		}
 
-		if (this.CellEditorType == Asc.c_oAscCellEditorState.editFormula)
+		if (this.CellEditorType === Asc.c_oAscCellEditorState.editFormula)
 			isPreventDefault = false;
 
 		if (this.Api.isViewMode || isPreventDefault)
@@ -1023,6 +1029,9 @@ function (window, undefined)
 		if (true !== this.iScroll.isAnimating && (this.CellEditorType != Asc.c_oAscCellEditorState.editFormula))
 			this.CheckContextMenuTouchEnd(isCheckContextMenuMode, isCheckContextMenuSelect, isCheckContextMenuCursor);
 
+		if (!isPreventDefault && this.Api.isMobileVersion && !this.Api.isUseOldMobileVersion())
+			this.showKeyboard(true);
+
 		return false;
 	};
 
@@ -1030,6 +1039,7 @@ function (window, undefined)
 	{
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
+		this.removeHandlersOnClick();
 		return this.onTouchStart(e);
 	};
 	CMobileTouchManager.prototype.mainOnTouchMove = function(e)

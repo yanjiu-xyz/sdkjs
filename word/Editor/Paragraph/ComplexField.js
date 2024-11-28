@@ -381,10 +381,12 @@ ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 };
 ParaFieldChar.prototype.SaveRecalculateObject = function(isCopy)
 {
-	return new AscWord.PageNumRecalculateObject(this.Type, this.graphemes, this.widths, this.Width, isCopy);
+	return new FieldCharRecalculateObject(this.Type, this.numText, this.checkBox, this.graphemes, this.widths, this.Width, isCopy);
 };
 ParaFieldChar.prototype.LoadRecalculateObject = function(recalcObj)
 {
+	this.numText      = recalcObj.numText;
+	this.checkBox     = recalcObj.checkBox;
 	this.graphemes    = recalcObj.graphemes;
 	this.widths       = recalcObj.widths;
 	this.Width        = recalcObj.width;
@@ -394,6 +396,8 @@ ParaFieldChar.prototype.PrepareRecalculateObject = function()
 {
 	this.graphemes = [];
 	this.widths    = [];
+	this.checkBox  = null;
+	this.numText   = null;
 };
 ParaFieldChar.prototype.IsValid = function()
 {
@@ -424,6 +428,19 @@ ParaFieldChar.prototype.FindNextFillingForm = function(isNext, isCurrent, isStar
 	else
 		return (this.IsEnd() && (!isCurrent || isNext) ? this.ComplexField : null);
 };
+
+/**
+ * @constructor
+ */
+function FieldCharRecalculateObject(type, numText, checkBox, graphemes, widths, totalWidth, isCopy)
+{
+	this.type      = type;
+	this.numText   = numText;
+	this.checkBox  = checkBox;
+	this.graphemes = graphemes && isCopy ? graphemes.slice() : graphemes;
+	this.widths    = widths && isCopy ? widths.slice() : widths;
+	this.width     = totalWidth;
+}
 
 /**
  * Класс представляющий символ инструкции сложного поля

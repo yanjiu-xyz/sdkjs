@@ -112,6 +112,7 @@
 		this.nativeFocusElementNoRemoveOnElementFocus = false;
 		this.InterfaceEnableKeyEvents = true;
 		this.isNoClearOnFocus = false;
+		this.isGlobalDisableFocus = false;
 
 		this.ReadOnlyCounter = 0;
 
@@ -121,8 +122,9 @@
 
 		// параметры для показа/скрытия виртуальной клавиатуры.
 		this.isHardCheckKeyboard = AscCommon.AscBrowser.isSailfish;
+
 		this.virtualKeyboardClickTimeout = -1;
-		this.virtualKeyboardClickPrevent = false;
+		this.virtualKeyboardReadOnly_ShowKeyboard = AscCommon.AscBrowser.isAndroid && AscCommon.AscBrowser.isMozilla;
 
 		// для сброса текста при фокусе
 		this.checkClearTextOnFocusTimerId = -1;
@@ -879,7 +881,8 @@
 					return;
 			}
 
-			focusHtmlElement(this.HtmlArea);
+			if (!this.isGlobalDisableFocus)
+				focusHtmlElement(this.HtmlArea);
 		}
 	};
 	CTextInputPrototype.externalEndCompositeInput = function()
@@ -942,7 +945,11 @@
 		{
 			_style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
 			_style += "color:transparent;caret-color:transparent;background:transparent;";
-			_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView && (AscCommon.AscBrowser.maxTouchPoints > 0)) ? "font-size:0px;" : "font-size:8px;";
+
+			if (this.Api.isUseOldMobileVersion())
+				_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView && (AscCommon.AscBrowser.maxTouchPoints > 0)) ? "font-size:0px;" : "font-size:8px;";
+			else
+				_style += "font-size:8px;";
 		}
 		else
 		{
@@ -1072,7 +1079,7 @@
 			_elem.style.height = _elemSrc.style.height;
 		}
 
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 		{
 			var _elem1 = document.getElementById("area_id_parent");
 			var _elem2 = document.getElementById("area_id");
@@ -1143,7 +1150,7 @@
 	};
 	CTextInputPrototype.move = function(x, y)
 	{
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 			return;
 
 		var oTarget = document.getElementById(this.TargetId);
@@ -1183,7 +1190,9 @@
 		if (AscCommon.AscBrowser.isAndroid)
 		{
 			this.setReadOnlyWrapper(true);
-			this.virtualKeyboardClickPrevent = true;
+
+			if (this.virtualKeyboardReadOnly_ShowKeyboard)
+				return;
 
 			this.virtualKeyboardClickTimeout = setTimeout(function ()
 			{
@@ -1199,6 +1208,9 @@
 
 		if (AscCommon.AscBrowser.isAndroid)
 		{
+			if (this.virtualKeyboardReadOnly_ShowKeyboard)
+				return;
+
 			if (-1 != this.virtualKeyboardClickTimeout)
 			{
 				clearTimeout(this.virtualKeyboardClickTimeout);
@@ -1206,7 +1218,6 @@
 			}
 
 			this.setReadOnlyWrapper(false);
-			this.virtualKeyboardClickPrevent = false;
 		}
 	};
 	CTextInputPrototype.preventVirtualKeyboard_Hard = function()
@@ -1218,6 +1229,22 @@
 		this.setReadOnlyWrapper(false);
 	};
 
+	CTextInputPrototype.showKeyboard = function()
+	{
+		if (this.virtualKeyboardReadOnly_ShowKeyboard)
+		{
+			if (this.HtmlArea.readOnly === true)
+			{
+				this.setReadOnlyWrapper(false);
+			}
+		}
+
+		if (!this.Api.asc_IsFocus())
+			this.Api.asc_enableKeyEvents(true);
+		else
+			focusHtmlElement(this.HtmlArea);
+	}
+
 	CTextInputPrototype.checkViewMode = function()
 	{
 		let oldDisableKeyboard = this.isDisableKeyboard;
@@ -1225,11 +1252,22 @@
 
 		if (!this.isDisableKeyboard)
 		{
-			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
+			switch (this.Api.editorId)
 			{
-				// в пдф даем комментировать и заполнять формы во вью с сохранением в копию
-				if (!this.Api.isPdfEditor())
-					this.isDisableKeyboard = true;
+				case AscCommon.c_oEditorId.Word:
+				{
+					// use canEnterText instead this
+					break;
+				}
+				case AscCommon.c_oEditorId.Presentation:
+				case AscCommon.c_oEditorId.Spreadsheet:
+				{
+					if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
+						this.isDisableKeyboard = true;
+					break;
+				}
+				default:
+					break;
 			}
 		}
 

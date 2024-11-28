@@ -154,7 +154,7 @@
 				return;
 			}
 
-			if (this.view.Api.isMobileVersion) {
+			if (this.view.Api.isUseOldMobileVersion()) {
 				/*раньше события на ресайз вызывался из меню через контроллер. теперь контроллер в меню не доступен, для ресайза подписываемся на глобальный ресайз от window.*/
 				window.addEventListener("resize", function () {
 					self._onWindowResize.apply(self, arguments);
@@ -1642,6 +1642,8 @@
 				touchManager.stopTouchingInProcess();
 				return res;
 			}
+			if (touchManager)
+				touchManager.checkMouseFocus(event);
 
 			var t = this;
 			asc["editor"].checkInterfaceElementBlur();
@@ -2172,6 +2174,11 @@
 					// Webkit
 					deltaY = -1 * event.wheelDeltaY / 40;
 				}
+			}
+
+			if (event.shiftKey) {
+				deltaX = deltaY;
+				deltaY = 0;
 			}
 
 			if (this.smoothWheelCorrector && !wb.smoothScroll) {

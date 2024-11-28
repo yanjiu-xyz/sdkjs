@@ -1033,11 +1033,11 @@
 			}
 		}
 
-		function ExecuteNoHistory(f, oThis, args) {
+		function ExecuteNoHistory(f, oThis, args, notOffTableId) {
 			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
 
 			var b_table_id = false;
-			if (g_oTableId && !g_oTableId.m_bTurnOff) {
+			if (!notOffTableId && g_oTableId && !g_oTableId.m_bTurnOff) {
 				g_oTableId.m_bTurnOff = true;
 				b_table_id = true;
 			}

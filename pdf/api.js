@@ -2379,6 +2379,14 @@
 		oDoc.SearchEngine.Show = isShow;
 		this.DocumentRenderer.onUpdateOverlay();
 	};
+	PDFEditorApi.prototype.canEnterText = function()
+	{
+		return this.canEdit();
+	};
+	PDFEditorApi.prototype.asc_GetTableOfContentsPr = function()
+	{
+		return null;
+	};
 	PDFEditorApi.prototype._printDesktop = function(options) {
 		if (!this.DocumentRenderer)
 			return false;
@@ -2767,5 +2775,7 @@
 	PDFEditorApi.prototype['asc_getTableStylesPreviews']	= PDFEditorApi.prototype.asc_getTableStylesPreviews;
 	PDFEditorApi.prototype['asc_GetSelectionBounds']		= PDFEditorApi.prototype.asc_GetSelectionBounds;
 	PDFEditorApi.prototype['asc_setPdfViewer']		        = PDFEditorApi.prototype.asc_setPdfViewer;
+
+	PDFEditorApi.prototype['asc_GetTableOfContentsPr']      = PDFEditorApi.prototype.asc_GetTableOfContentsPr;
 
 })(window, window.document);

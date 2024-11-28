@@ -292,7 +292,7 @@ function CEditorPage(api)
 	this.DrawingFreeze = false;
 	this.NoneRepaintPages = false;
 
-	this.paintMessageLoop = new AscCommon.PaintMessageLoop(40);
+	this.paintMessageLoop = new AscCommon.PaintMessageLoop(40, api);
 
 	this.MouseHandObject = null;
 
@@ -1514,7 +1514,7 @@ function CEditorPage(api)
 
 	this.initEventsMobile = function()
 	{
-		if (this.m_oApi.isMobileVersion)
+		if (this.m_oApi.isUseOldMobileVersion())
 		{
 			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "slides_mobile_element" } );
 			this.MobileTouchManager.Init(this.m_oApi);
@@ -1557,6 +1557,8 @@ function CEditorPage(api)
 		{
 			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "slides_mobile_element", desktopMode : true } );
 			this.MobileTouchManager.Init(this.m_oApi);
+
+			this.MobileTouchManager.addClickElement([this.m_oEditor.HtmlElement, this.m_oOverlay.HtmlElement]);
 
 			this.MobileTouchManagerThumbnails = new AscCommon.CMobileTouchManagerThumbnails( { eventsElement : "slides_mobile_element", desktopMode : true } );
 			this.MobileTouchManagerThumbnails.Init(this.m_oApi);
@@ -3293,6 +3295,9 @@ function CEditorPage(api)
 			return res;
 		}
 
+		if (oThis.MobileTouchManager)
+			oThis.MobileTouchManager.checkMouseFocus(e);
+
 		oThis.m_oApi.checkInterfaceElementBlur();
 		oThis.m_oApi.checkLastWork();
 
@@ -3830,9 +3835,18 @@ function CEditorPage(api)
 
 		oThis.m_nVerticalSlideChangeOnScrollEnabled = true;
 
-		if (0 != deltaX)
+		let isSupportDirections2 = false;
+		if (!isSupportDirections2)
+		{
+			if (Math.abs(deltaY) >= Math.abs(deltaX))
+				deltaX = 0;
+			else
+				deltaY = 0;
+		}
+
+		if (0 !== deltaX)
 			oThis.m_oScrollHorApi.scrollBy(deltaX, 0, false);
-		else if (0 != deltaY)
+		if (0 !== deltaY)
 			oThis.m_oScrollVerApi.scrollBy(0, deltaY, false);
 
 		oThis.m_nVerticalSlideChangeOnScrollEnabled = false;

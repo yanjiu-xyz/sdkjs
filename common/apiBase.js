@@ -2332,6 +2332,13 @@
 	{
 		return this.textArtPreviewManager.getWordArtPreviews();
 	};
+	baseEditorsApi.prototype.isUseOldMobileVersion       = function()
+	{
+		if (!this.isMobileVersion)
+			return false;
+		// return true for old scheme
+		return false;
+	};
 	// Add image
 	baseEditorsApi.prototype.AddImageUrl       = function(urls, imgProp, token, obj)
 	{
@@ -4556,6 +4563,10 @@
 		this.isDarkMode = isDarkMode;
 
 		this.updateDarkMode();
+	};
+	baseEditorsApi.prototype.canEnterText = function()
+	{
+		return this.canEdit();
 	};
 	baseEditorsApi.prototype.updateDarkMode = function()
 	{

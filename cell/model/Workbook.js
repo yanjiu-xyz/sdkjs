@@ -2522,7 +2522,7 @@
 
 		AscFormat.ExecuteNoHistory(function () {
 			this.CustomProperties = new AscCommon.CCustomProperties();
-		}, this, []);
+		}, this, [], true);
 
 		this.theme = null;
 		this.clrSchemeMap = null;
@@ -14877,7 +14877,7 @@
 			return oSheetListeners.areaMap[sAreaIndex];
 		} else if (oSheetListeners.cellMap.hasOwnProperty(nCellIndex)) {
 			return oSheetListeners.cellMap[nCellIndex];
-		} else {
+		} else if (aOutStack && aOutStack.length) {
 			for (let nIndex in oSheetListeners.areaMap) {
 				if (oSheetListeners.areaMap[nIndex].bbox.contains(this.nCol, this.nRow)
 					&& !_isExcludeFormula(aOutStack, oSheetListeners.areaMap[nIndex])) {
@@ -15263,8 +15263,8 @@
 		const t = this;
 		// Checks cell contains formula or formula is not calculated yet
 		if (this.getIsDirty()) {
-			g_cCalcRecursion.incLevel();
 			if (g_cCalcRecursion.checkLevel()) {
+				g_cCalcRecursion.incLevel();
 				const isCalc = this.getIsCalc();
 				this.setIsCalc(true);
 				const calculatedArrayFormulas = [];
@@ -15295,8 +15295,27 @@
 				});
 
 				g_cCalcRecursion.decLevel();
-				this.setIsCalc(false);
-				this.setIsDirty(false);
+				if (g_cCalcRecursion.getIsForceBacktracking()) {
+					g_cCalcRecursion.insert({ws: this.ws, nRow: this.nRow, nCol: this.nCol});
+					if (g_cCalcRecursion.getLevel() === 0 && !g_cCalcRecursion.getIsProcessRecursion()) {
+						g_cCalcRecursion.setIsProcessRecursion(true);
+						do {
+							g_cCalcRecursion.setIsForceBacktracking(false);
+							g_cCalcRecursion.foreachInReverse(function(oElem) {
+								oElem.ws._getCellNoEmpty(oElem.nRow, oElem.nCol, function(oCell) {
+									if(oCell && oCell.getIsDirty()) {
+										oCell.setIsCalc(false);
+										oCell._checkDirty();
+									}
+								});
+							});
+						} while (g_cCalcRecursion.getIsForceBacktracking());
+						g_cCalcRecursion.setIsProcessRecursion(false);
+					}
+				} else {
+					this.setIsCalc(false);
+					this.setIsDirty(false);
+				}
 			}
 		}
 	};
